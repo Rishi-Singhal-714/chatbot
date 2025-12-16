@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zulu Club Chat</title>
     <style>
+        /* [Keep all the CSS styles from the previous chat.html] */
         * {
             margin: 0;
             padding: 0;
@@ -63,9 +64,34 @@
             font-size: 18px;
         }
         
+        .setup-section .instructions {
+            background: #e0e7ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4f46e5;
+        }
+        
+        .setup-section .instructions h3 {
+            color: #4f46e5;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .setup-section .instructions ul {
+            padding-left: 20px;
+            color: #374151;
+        }
+        
+        .setup-section .instructions li {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
         .phone-input {
             display: flex;
             gap: 10px;
+            flex-direction: column;
         }
         
         .phone-input input {
@@ -288,8 +314,10 @@
         
         <div class="setup-section" id="setupSection">
             <h2>Enter your phone number to start chatting</h2>
+            
+            
             <div class="phone-input">
-                <input type="tel" id="phoneInput" placeholder="Enter phone number (e.g., 919999999999)" pattern="[0-9]{10,12}">
+                <input type="tel" id="phoneInput" placeholder="Enter phone number (e.g., 8368127760A or 9876543210)" pattern="[0-9]{10}[A-Za-z]?">
                 <button id="startChatBtn">Start Chat</button>
             </div>
         </div>
@@ -464,17 +492,62 @@
             
             // Show welcome message if no history
             if (chatMessages.children.length === 0) {
-                const welcomeHtml = `
-                    <div class="welcome-message">
-                        <h3>Welcome to Zulu Club! 👋</h3>
-                        <p>I'm your personal shopping assistant. I can help you with:</p>
-                        <p>• Product browsing and shopping</p>
-                        <p>• Seller information and partnerships</p>
-                        <p>• Company details and investor queries</p>
-                        <p>• Connecting with human agents</p>
-                        <p>Try asking: "Show me t-shirts" or "Tell me about Zulu Club"</p>
-                    </div>
-                `;
+                const basePhone = phone.replace(/[A-Za-z]$/, '');
+                const suffix = /[A-Za-z]$/.test(phone) ? phone.slice(-1).toUpperCase() : '';
+                
+                let welcomeHtml = '';
+                
+                if (['8368127760', '9717350080', '8860924190', '7483654620'].includes(basePhone)) {
+                    if (suffix === 'A') {
+                        welcomeHtml = `
+                            <div class="welcome-message">
+                                <h3>👔 Employee Admin Mode Activated</h3>
+                                <p>You're in <strong>Admin Mode</strong> (suffix: A)</p>
+                                <p>You can log:</p>
+                                <p>• <strong>Operation:</strong> ops message</p>
+                                <p>• <strong>Logistics:</strong> logistics message</p>
+                                <p>• <strong>Inventory:</strong> inventory message</p>
+                                <p>• <strong>Market:</strong> market message</p>
+                                <p>• <strong>Fixed:</strong> fixed message</p>
+                                <p>• <strong>Sales:</strong> sales message</p>
+                                <p>• <strong>Lead:</strong> lead message</p>
+                                <p>Try: "Operation: Need more staff tomorrow"</p>
+                            </div>
+                        `;
+                    } else if (suffix === 'U') {
+                        welcomeHtml = `
+                            <div class="welcome-message">
+                                <h3>👤 Employee User Mode</h3>
+                                <p>You're in <strong>User Mode</strong> (suffix: U)</p>
+                                <p>You'll chat as a regular user.</p>
+                                <p>Try asking: "Show me t-shirts" or "Tell me about Zulu Club"</p>
+                            </div>
+                        `;
+                    } else {
+                        welcomeHtml = `
+                            <div class="welcome-message">
+                                <h3>👔 Employee Mode (Default)</h3>
+                                <p>You're logged in as an employee (no suffix).</p>
+                                <p>Add 'U' to your number for user mode: ${basePhone}U</p>
+                                <p>You can log billing/sales/lead messages.</p>
+                                <p>Try: "Sales: Made 5 sales today"</p>
+                            </div>
+                        `;
+                    }
+                } else {
+                    welcomeHtml = `
+                        <div class="welcome-message">
+                            <h3>Welcome to Zulu Club! 👋</h3>
+                            <p>I'm your personal shopping assistant. I can help you with:</p>
+                            <p>• Product browsing and shopping</p>
+                            <p>• Seller information and partnerships</p>
+                            <p>• Company details and investor queries</p>
+                            <p>• Connecting with human agents</p>
+                            <p>Try asking: "Show me t-shirts" or "Tell me about Zulu Club"</p>
+                        </div>
+                    `;
+                }
+                
                 chatMessages.innerHTML = welcomeHtml;
             }
             
@@ -486,10 +559,10 @@
         // Event Listeners
         startChatBtn.addEventListener('click', () => {
             const phone = phoneInput.value.trim();
-            if (phone && phone.length >= 10) {
+            if (phone && phone.match(/^[0-9]{10}[A-Za-z]?$/)) {
                 initChat(phone);
             } else {
-                alert('Please enter a valid phone number (10-12 digits)');
+                alert('Please enter a valid phone number (10 digits, optional A/U suffix)');
             }
         });
         
