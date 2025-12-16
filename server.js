@@ -7,13 +7,12 @@ const preIntentFilter = require('./preintentfilter');
 const { google } = require('googleapis'); 
 const app = express();
 
-// Remove WhatsApp-specific dependencies
-// const VOICE_AI_FORM_LINK = 'https://forms.gle/CiPAk6RqWxkd8uSKA';
+// Employee numbers (without country code prefix for matching)
 const EMPLOYEE_NUMBERS = [
-  "918368127760",
-  "919717350080",
-  "918860924190",
-  "917483654620"
+  "918368127760",  // 8368127760
+  "919717350080",  // 9717350080
+  "918860924190",  // 8860924190
+  "917483654620"   // 7483654620
 ];
 
 // Middleware
@@ -34,7 +33,7 @@ let galleriesData = [];
 let sellersData = []; // sellers CSV data
 
 // -------------------------
-// Google Sheets config (keep if needed for logging)
+// Google Sheets config
 // -------------------------
 const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID || 'History';
 const AGENT_TICKETS_SHEET = process.env.AGENT_TICKETS_SHEET || 'Tickets_History';
@@ -48,7 +47,6 @@ if (!SA_JSON_B64) {
   console.log('⚠️ GOOGLE_SERVICE_ACCOUNT_JSON_BASE64 not set — sheet logging disabled');
 }
 
-// (Keep all the Google Sheets functions as they are - getSheets, colLetter, writeCell, appendUnderColumn)
 async function getSheets() {
   if (!GOOGLE_SHEET_ID || !SA_JSON_B64) return null;
   try {
@@ -139,7 +137,7 @@ async function appendUnderColumn(headerName, text) {
 }
 
 // -------------------------
-// ZULU CLUB INFORMATION (keep as is)
+// ZULU CLUB INFORMATION
 // -------------------------
 const ZULU_CLUB_INFO = `
 We're building a new way to shop and discover lifestyle products online.
@@ -390,7 +388,6 @@ async function createAgentTicket(mobileNumber, conversationHistory = []) {
       requestBody: { values: [row] }
     });
     
-    // Internal alert (without sending message)
     console.log(`📌 New Agent Ticket Created: ${ticketId} for ${mobileNumber}`);
     
     return ticketId;
@@ -400,9 +397,10 @@ async function createAgentTicket(mobileNumber, conversationHistory = []) {
   }
 }
 
-// -------------------------
-// Matching helpers (keep all as is)
-// -------------------------
+// [Keep all the matching helper functions exactly as they are...]
+// [findKeywordMatchesInCat1, matchSellersByStoreName, matchSellersByCategoryIds, etc.]
+// [These functions should remain exactly the same as in your original code]
+
 function normalizeToken(t) {
   if (!t) return '';
   return String(t)
@@ -1231,7 +1229,8 @@ function createOrTouchSession(sessionId) {
       history: [],
       lastActive: nowMs(),
       lastDetectedIntent: null,
-      lastDetectedIntentTs: 0
+      lastDetectedIntentTs: 0,
+      lastMedia: null
     };
   } else {
     conversations[sessionId].lastActive = nowMs();
@@ -1295,15 +1294,49 @@ async function getChatGPTResponse(sessionId, userMessage, companyInfo = ZULU_CLU
   }
   
   try {
+    // ensure session exists
     createOrTouchSession(sessionId);
     const session = conversations[sessionId];
     
-    // Check employee mode (simplified for chat interface)
-    const isEmployee = EMPLOYEE_NUMBERS.includes(sessionId);
+    // Check employee mode with suffix logic
+    const basePhone = sessionId.replace(/[A-Za-z]$/, '');
+    const isEmployee = EMPLOYEE_NUMBERS.includes(basePhone);
+    const suffix = /[A-Za-z]$/.test(sessionId) ? sessionId.slice(-1).toUpperCase() : '';
+    
+    console.log(`🔍 Employee check: ${sessionId} -> base: ${basePhone}, isEmployee: ${isEmployee}, suffix: ${suffix}`);
+    
     if (isEmployee) {
-      console.log("⚡ Employee mode active", sessionId);
-      // Simplified employee handling for chat
-      return "⚠️ Employee features not available in chat interface.";
+      console.log("⚡ Employee detected, checking mode...");
+      
+      // If suffix is 'U', treat as user (bypass employee flow)
+      if (suffix === 'U') {
+        console.log("👤 User mode (suffix U) - bypassing employee flow");
+      } 
+      // If suffix is 'A' or no suffix, treat as admin/employee
+      else if (suffix === 'A' || suffix === '') {
+        console.log("👔 Admin/Employee mode activated, calling preIntentFilter");
+        
+        // Process through preIntentFilter for employee messages
+        const employeeHandled = await preIntentFilter(
+          openai,
+          session,
+          sessionId,
+          userMessage,
+          getSheets,
+          createAgentTicket,
+          appendUnderColumn
+        );
+        
+        console.log(`📊 preIntentFilter returned: ${employeeHandled ? 'handled' : 'not handled'}`);
+        
+        // If preIntentFilter returned a response (not null), use it
+        if (employeeHandled !== null && employeeHandled !== undefined && employeeHandled.trim().length > 0) {
+          return employeeHandled;
+        }
+        
+        // If preIntentFilter returned null/empty, continue with normal flow
+        console.log("🔄 Employee mode but preIntentFilter returned null, continuing with normal flow");
+      }
     }
     
     // 1) classify only the single incoming message
@@ -1477,7 +1510,7 @@ async function handleMessage(sessionId, userMessage) {
 }
 
 // -------------------------
-// Chat API Endpoints (NEW)
+// Chat API Endpoints
 // -------------------------
 
 // Serve chat interface
@@ -1562,7 +1595,9 @@ app.get('/', (req, res) => {
   res.json({ 
     status: 'Zulu Club Chat Server is running', 
     service: 'Zulu Club Chat AI Assistant',
-    version: '7.0 - Chat Interface Version',
+    version: '7.1 - Employee/User Mode with Suffix Support',
+    employee_numbers: EMPLOYEE_NUMBERS,
+    usage_note: 'Add "A" suffix for admin mode (default), "U" suffix for user mode',
     endpoints: {
       chat_interface: '/chat',
       send_message: 'POST /chat/message',
