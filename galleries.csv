@@ -1,0 +1,160 @@
+id,type1,type2,,cat_id,seller_id,cat1
+26,Product,Women Suta,,Women,5203,Sarees
+27,Product,Women Drunch,,Women,3544,Sandals
+28,Product,Women Plode,,Women,3536,Handbags
+29,Product,Men Sassafras,,Men,3972,"Casual Shirts, Co-ord Sets, Bottomwear, Casual Trousers, Shorts"
+30,Product,Men 7-10,,Men,,Footwear
+31,Product,Men Aticx,,Men,385,Active T Shirts
+32,Product,Kids Includ ,,Kids,3545,"T Shirts, Shirts, Shorts, Clothing Sets, Dresses, Skirts & Shorts"
+33,Product,Kids Bownbee,,Kids,3543,Ethnicwear
+34,Product,Kids Little Marvel,,Kids,3546,Bags & Backpacks
+35,Product,Women Accessories,,Women,,"Jewellery & Accessories, Accessories, Handbags, Sandals"
+36,Product,Women Innerwear,,Women,,"Briefs & Trunks, Boxers, Bra, Swimwear"
+37,Product,Women Loungewear,,Women,,"Dresses, Sleepwear & Loungewear"
+38,Product,Men Accessories,,Men,,Accessories
+39,Product,Men Innerwear,,Men,,"Briefs & Trunks, Boxers, Socks"
+40,Product,Men Flip Flops,,Men,,Footwear
+41,Product,Kids Stationary,,Kids,,Bags & Backpacks
+42,Product,Kids Slippers & Sandals,,Kids,,"Footwear, Flipflops, Sandals"
+43,Product,"Kids Bags, Lunch Boxes & Bottles",,Kids,,Bags & Backpacks
+44,Product,Women Quince,,Women,273,"Casual Shirts, Dresses, Co-ords, Handbags"
+45,Product,Women Sassafras,,Women,3972,"Casual Shirts, Dresses, Trousers, Shorts & Skirts, Co-ords"
+46,Product,Women Burger bae,,Women,3531,"T Shirts, Bottomwear, Accessories, Dresses, Tops, Trousers, Co-ords"
+47,Product,Men Wellbi,,Men,5207,T Shirts
+48,Product,Men Subtract,,Men,1752,"Casual Shirts, Bottomwear"
+49,Product,Men Wakatic,,Men,5201,"Casual Shirts, Boxers"
+102,Product,live deals,,Men,,"Briefs & Trunks, Boxers, Footwear, Socks, Active T Shirts, Accessories"
+103,Product,live deals,,Men,,"T Shirts, Casual Shirts, Co-ord Sets, Bottomwear, Casual Trousers, Shorts, Briefs & Trunks, Boxers, Kurta & Kurta Sets, Footwear, Socks, Active T Shirts, Accessories"
+104,Product,live deals,,Men,,"T Shirts, Casual Shirts, Co-ord Sets, Bottomwear, Casual Trousers, Shorts, Briefs & Trunks, Boxers, Accessories"
+105,Product,live deals,,Men,,"Casual Shirts, Co-ord Sets, Bottomwear, Casual Trousers, Shorts, Accessories"
+106,Product,live deals,,Women,,"Casual Shirts, Jewellery & Accessories, Dresses, Tops, Trousers, Shorts & Skirts, Co-ords, Kurtas & Suits, Sarees"
+107,Product,live deals,,Women,,"Casual Shirts, Jewellery & Accessories, Dresses, Tops, Trousers, Shorts & Skirts, Co-ords, Kurtas & Suits, Sarees, Handbags, Sandals"
+109,Product,live deals,,Women,,"Casual Shirts, Jewellery & Accessories, Dresses, Tops, Trousers, Shorts & Skirts, Co-ords, Kurtas & Suits, Sarees, Sleepwear & Loungewear, Handbags, Sandals"
+110,Product,live deals,,Women,,"Casual Shirts, Jewellery & Accessories, Dresses, Tops, Trousers, Co-ords, Kurtas & Suits, Sarees, Sleepwear & Loungewear, Handbags, Sandals"
+111,Product,live deals,,Kids,,"Jewellery & Accessories, T Shirts, Shorts, Clothing Sets, Dresses, Skirts & Shorts, Flipflops, Sandals, Bags & Backpacks"
+112,Product,live deals,,Kids,,"T Shirts, Shirts, Shorts, Clothing Sets, Ethnicwear, Dresses, Skirts & Shorts, Flipflops, Sandals, Bags & Backpacks"
+113,Product,live deals,,Kids,,"T Shirts, Shorts, Clothing Sets, Ethnicwear, Dresses, Flipflops, Bags & Backpacks"
+114,Product,live deals,,Kids,,"T Shirts, Shorts, Clothing Sets, Ethnicwear, Dresses, Skirts & Shorts, Flipflops, Bags & Backpacks"
+126,Product,Suta,,Women,5203,Sarees
+127,Product,Includ,,Kids,3545,"T Shirts, Shirts, Shorts, Clothing Sets, Dresses, Skirts & Shorts"
+128,Product,Sassafras Men,,Men,3972,"Casual Shirts, Co-ord Sets, Bottomwear, Casual Trousers, Shorts"
+129,Product,07-Oct,,Men,,Footwear
+131,Product,Plode,,Women,3536,Handbags
+132,Product,Bownbee,,Kids,3543,Ethnicwear
+133,Product,Aticx,,Men,3539,Active T Shirts
+134,Product,Drunch,,Women,3544,Sandals
+135,Product,Wellbi,,Men,5207,T Shirts
+136,Product,Bummer,,Men,5200,"Briefs & Trunks, Boxers, Socks, Bra, Swimwear"
+137,Product,Sassafras Women,,Women,3972,"Casual Shirts, Dresses, Trousers, Shorts & Skirts, Co-ords"
+138,Product,Wakatic,,Men,5201,"Casual Shirts, Boxers"
+139,Product,The Little Marvels,,Kids,3546,Bags & Backpacks
+140,Product,Hrimaan,,Women,3862,"Jewellery & Accessories, Accessories"
+141,Product,Better Basics,,Men,3537,"T Shirts, Casual Shirts"
+142,Product,Burgerbae,,Women,3531,"T Shirts, Bottomwear, Accessories, Dresses, Tops, Trousers, Co-ords"
+143,Product,A Clutch Story,,Women,3534,Handbags
+144,Product,Bluejam,,Men,3535,"Bottomwear, Accessories"
+171,Outlet,Banjara Outlet,,Home,5118,Mirrors
+172,Outlet,Kindlife Outlet,,Wellness,5144,Skincare
+174,Outlet,The Little Marvel,,Kids,3546,Back to school
+176,Outlet,Quince Outlet,,Kids,273,Dresses
+212,Product,,,Home,5118,"Laundry Bags, Home, Bath rugs, Furniture, Crockery, Lights, Handloom, Table Lamps, Clocks, Mirrors, Wall Decor, Pooja Essentials, Fountains, Showpieces & Vases"
+213,Product,,,Home,5118,"Decor, Crockery, Table Lamps, Clocks, Mirrors, Wall Decor, Fountains, Showpieces & Vases"
+214,Product,,,Home,5118,"Home, Bath rugs, Furniture, Handloom, Laundry Bags"
+215,Product,,,Home,5118,Lights
+216,Product,,,Home,5118,Pooja Essentials
+217,Product,,,Home,5118,Crockery
+218,Product,,,Home,5118,Plants & Planters
+219,Product,,,Home,5118,"Decor, Crockery, Table Lamps, Clocks, Mirrors, Wall Decor, Fountains, Showpieces & Vases"
+235,Product,BRING MY FLOWERS- All Products,,Women,4810,"Flowers, Aromas & Candles, Showpieces & Vases, Organisers"
+243,Product,BMF-Flowers,,Women,4810,Flowers
+256,Product,MK- Offer 1 Below 499,,Kids,5442,"Ethnicwear, Lehenga Choli, T shirts & tops, Dresses, Bottomwear"
+257,Product,MK- Offer 2 Below 999,,,5442,"Ethnicwear, Lehenga Choli, Sports Shoes, Sandals"
+258,Product,MK- Offer 3 Below 1499,,Kids,5442,"Ethnicwear, T shirts & tops, Sports Shoes, Sandals, T shirts & tops"
+259,Product,MK- Offer 4 Below 1999,,Kids,5442,"Ethnicwear, Lehenga Choli, T shirts & tops, Dresses, Bottomwear"
+260,Product,The Little Marvel- All Product,,Kids,3546,Back to school
+262,Product,The Little Marvel- Bags Accessories,,Kids,3546,Back to school
+263,Product,The Little Marvel- Lunch Bottles,,Kids,3546,Back to school
+268,Product,The Little Marvel- Random Products,,,3546,Back to school
+270,Product,The Little Marvel- Offer 1,,Ethnicwear,3546,Back to school
+271,Product,The Little Marvel- Offer 2,,Kids,3546,Back to school
+272,Product,The Little Marvel- Offer 3,,Kids,3546,Back to school
+273,Product,The Little Marvel- Offer 4,,Kids,3546,Back to school
+274,Product,Seevan- All Products,,,274,"Casual Shirts, Dresses, Co-ords, Kurtas & Suits, Kurtis, Tunics & Tops, Sarees, Lehenga Cholis"
+275,Product,EVERYDAY ETHNIC,,Women,274,"Dresses, Kurtas & Suits, Kurtis, Tunics & Tops"
+276,Product,FESTIVE & GLAM,,Women,274,"Sarees, Lehenga Cholis"
+277,Product,MODERN FUSION,,Women,274,"Casual Shirts, Co-ords, Dresses"
+281,Product,Seevan- Random Products,,Women,274,"Casual Shirts, Dresses, Co-ords, Kurtas & Suits, Kurtis, Tunics & Tops, Sarees, Lehenga Cholis"
+283,Product,Seevan- Offer 1,,Women,274,"Casual Shirts, Dresses, Co-ords, Kurtis, Tunics & Tops"
+284,Product,Seevan- Offer 2,,Women,274,"Casual Shirts, Dresses, Co-ords, Kurtas & Suits"
+286,Product,Seevan- Offer 4,,Women,274,"Casual Shirts, Dresses, Co-ords, Kurtas & Suits, Kurtis, Tunics & Tops"
+287,Product,Rreflection- All Products,,Women,3673,"Dresses, Tops, Co-ords, Kurtas & Suits, Kurtis, Tunics & Tops, Skirts & Palazzos"
+288,Product,Rreflection- Dresses,,Women,3673,"Kurtas & Suits, Kurtis, Tunics & Tops"
+289,Product,"Rreflection- Kurtis, Tunics & Tops",,Women,3673,"Dresses, Tops"
+290,Product,Rreflection- Kurtas & Suits,,Women,3673,Co-ords
+293,Product,Rreflection- Random Products,,Women,3673,"Kurtas & Suits, Kurtis, Tunics & Tops, Dresses, Tops, Co-ords"
+295,Product,Rreflection- Offer 1,,Women,3673,"Kurtas & Suits, Kurtis, Tunics & Tops, Dresses, Tops, Co-ords"
+296,Product,Rreflection- Offer 2,,Women,3673,"Kurtas & Suits, Kurtis, Tunics & Tops, Dresses, Tops, Co-ords"
+297,Product,Rreflection- Offer 3,,Women,3673,"Kurtas & Suits, Kurtis, Tunics & Tops, Dresses, Tops, Co-ords"
+298,Product,Rreflection- Offer 4,,Women,3673,"Kurtas & Suits, Kurtis, Tunics & Tops, Dresses, Tops, Co-ords"
+299,Product,SIMKRAFTZ- ALL PRODUCTS,,Women,3548,"Sarees, Pooja Essentials, Jewellery & Hair Accessories"
+300,Product,SIMLRAFTZ- INDIAN WEAR,,Women,3548,Sarees
+301,Product,SIMKRAFTZ- HOMEDECOR,,Women,3548,Pooja Essentials
+302,Product,SIMKRAFTZ- BAGS & BACKPACKS,,Women,3548,Jewellery & Hair Accessories
+303,Product,SIMKRAFTZ- RANDOM PRODUCT,,Women,3548,"Sarees, Pooja Essentials, Jewellery & Hair Accessories"
+304,Product,SIMKRAFTZ- OFFER 1 ,,Women,3548,"Sarees, Pooja Essentials, Jewellery & Hair Accessories"
+305,Product,SIMKARFTZ OFFER 2,,Women,3548,"Sarees, Pooja Essentials, Jewellery & Hair Accessories"
+306,Product,SIMKRAFTZ OFFER 3,,Women,3548,"Sarees, Pooja Essentials, Jewellery & Hair Accessories"
+307,Product,SIMKRAFTZ- OFFER 4,,Women,3548,"Sarees, Pooja Essentials, Jewellery & Hair Accessories"
+311,Product,BANJARA- ALL PRODUCTS,,Home,5118,"Home, Bath rugs, Decor, Furniture, Crockery, Lights, Handloom, Table Lamps, Plants & Planters, Mirrors, Wall Decor, Pooja Essentials, Fountains, Showpieces & Vases, Laundry Bags"
+312,Product,ART & ASTHETICS ,,Home,5118,"Decor, Lights, Table Lamps, Clocks, Mirrors, Wall Decor, Showpieces & Vases"
+313,Product,LIIVNG & LIFESTYLE,,Home,5118,"Home, Bath rugs, Furniture, Handloom, Plants & Planters"
+314,Product,HERITAGE & DECOR,,Home,5118,"Decor, Crockery, Table Lamps, Wall Decor, Pooja Essentials, Fountains, Showpieces & Vases"
+315,Product,BRING MY FLOWERS- ALL PRODUCTS ,,Women,4810,"Aromas & Candles, Showpieces & Vases, Organisers, Flowers"
+316,Product,BLOOMS & BOTANICALS ,,Women,4810,"Flowers, Showpieces & Vases"
+317,Product,GLOW &  AURA ,,Women,4810,Aromas & Candles
+318,Product,ORDER & ELEGANCE,,Women,4810,Organisers
+319,Product,MERRIGO KIDZ ALL PRODUCTS,,Kids,5442,"Ethnicwear, Lehenga Choli, T shirts & tops, Dresses, Bottomwear, Sports Shoes, Sandals"
+320,Product,EVERYDAY CHIC,,Kids,5442,"T shirts & tops, Dresses, Bottomwear"
+321,Product,ETHNIC ELEGANCE,,Kids,5442,"Ethnicwear, Lehenga Choli"
+322,Product,STEP IN STYLE,,Kids,5442,"Sports Shoes, Sandals"
+323,Product,QUINCE- ALL PRODUCTS,,Women,273,"Co-ord Sets, Accessory Gift Set, Caps & Hats, Dresses, Handbags, Bags & Wallets, Jewellery & Hair Accessories, Blankets, Quilts & Dohars"
+324,Product,CHIC WESTERN ,,Women,273,"Co-ord Sets, Dresses"
+325,Product,BAGS AND BEYOND,,Women,273,"Handbags, Bags & Wallets"
+326,Product,ACCESSORIES AND MORE,,Women,274,"Accessory Gift Set, Caps & Hats, Jewellery & Hair Accessories, Blankets, Quilts & Dohars"
+327,Product,ACCESSORIES AND MORE,,Women,274,"Accessory Gift Set, Caps & Hats, Jewellery & Hair Accessories, Blankets, Quilts & Dohars"
+328,Product,QUINCE- RANDOM PRODUCTS,,Women,273,"Co-ord Sets, Accessory Gift Set, Caps & Hats, Dresses, Handbags, Bags & Wallets, Jewellery & Hair Accessories, Jewellery & Hair Accessories"
+330,Product,QUINCE- OFFER 1,,Women,273,"Co-ord Sets, Caps & Hats, Dresses, Jewellery & Hair Accessories"
+331,Product,QUINCE- OFFER 2,,Women,273,"Co-ord Sets, 2952, Bags & Wallets, Handbags"
+332,Product,QUINCE- OFFER 3,,Women,273,"Co-ord Sets, Bags & Wallets, Dresses, Caps & Hats"
+333,Product,QUINCE- OFFER 4,,Women,273,"Co-ord Sets, Accessory Gift Set, Caps & Hats, Handbags, Bags & Wallets"
+334,Product,ROOHANI- ALL  PRODUCTS,,Women,5173,"Co-ords, Kurtas & Suits, Kurtis, Tunics & Tops, Sarees, Handbags"
+335,Product,ETHNIC ELEGANCE,,Women,5173,"Kurtas & Suits, Sarees"
+336,Product,MODERN FUSION,,Women,5173,"Co-ords, Handbags"
+337,Product,TIMELESS CLASSICS,,Women,5173,"Kurtis, Tunics & Tops"
+338,Product,ROOHANI- RANDOM PRODUCTS,,Women,5173,"Co-ords, Sarees, Handbags"
+340,Product,ROOHANI OFFER 1,,Women,5173,"Co-ords, Kurtas & Suits, Kurtis, Tunics & Tops, Sarees, Handbags"
+341,Product,ROOHANI- OFFER 2,,Women,5173,"Co-ords, Kurtas & Suits, Kurtis, Tunics & Tops, Sarees, Handbags"
+342,Product,ROOHANI - OFFER 3,,Women,5173,"Co-ords, Kurtas & Suits, Kurtis, Tunics & Tops, Sarees, Handbags"
+343,Product,,,Women,5173,"Co-ords, Kurtas & Suits, Kurtis, Tunics & Tops, Sarees, Handbags"
+344,Product,HRIMAAN-  ALL PRODUCTS,,Women,3862,Jewellery & Accessories
+345,Product,EVERYDAY SPARKLE,,Women,3862,Jewellery & Accessories
+346,Product,WRIST WONDERS,,Women,3862,Jewellery & Accessories
+347,Product,KEEP IT TOGTHER,,Women,3862,Jewellery & Accessories
+348,Product,HRIMAAN- RANDOM PRODUCTS,,Women,3862,Jewellery & Accessories
+350,Product,HRIMAAN- OFFER 1,,Women,3862,Jewellery & Accessories
+351,Product,HRIMAAN- OFFER 2,,Women,3862,Jewellery & Accessories
+352,Product,HRIMAAN- OFFER 3,,Women,3862,Jewellery & Accessories
+353,Product,HRIMAAN- OFFER 4,,Women,3862,Jewellery & Accessories
+365,Product, Fountains,,Home,5118,Fountains
+367,Product,Decor items,,Home,5118,Homedecor
+368,Product,Showpiece,,Home,5118,Showpieces & Vases
+369,Product,Trays ,,Home,5118,Homedecor
+370,Product,Furniture,,Home,5118,Furniture
+371,Product,Wall Paintings,,Home,5118,Wall Decor
+372,Product,Clocks,,Home,5118,Clocks
+373,Product,Ottoman,,Home,5118,Fountains
+374,Product,Vases and Planters ,,Home,5118,Showpieces & Vases
+375,Product,Lamps,,Home,5118,Table Lamps
+376,Product,Chandelier,,Home,5118,Homedecor
+377,Product,Mirrors ,,Home,5118,Mirrors
+378,Product,Textiles- Mats,,Home,5118,Table Covers & Furnishings

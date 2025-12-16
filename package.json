@@ -1,0 +1,19 @@
+{
+  "name": "zulu-club-whatsapp-bot",
+  "version": "1.0.0",
+  "description": "Zulu Club WhatsApp AI Assistant with Gallabox integration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.0",
+    "openai": "^4.20.1", 
+    "csv-parser": "^3.0.0",
+    "googleapis": "^131.0.0"
+  },
+  "engines": {
+    "node": "22.x"
+  }
+}
