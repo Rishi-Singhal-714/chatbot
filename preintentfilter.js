@@ -183,10 +183,10 @@ module.exports = async function preIntentFilter(openai, session, sessionId, user
   // Check if this is a known employee number (without suffix)
   const basePhone = sessionId.replace(/[A-Za-z]$/, '');
   const isEmployee = [
-    "918368127760",
-    "919717350080",
-    "918860924190",
-    "917483654620"
+    "8368127760",
+    "9717350080",
+    "8860924190",
+    "7483654620"
   ].includes(basePhone);
 
   console.log(`🔑 Employee check: ${sessionId} -> base: ${basePhone}, isEmployee: ${isEmployee}`);
