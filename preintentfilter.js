@@ -173,36 +173,159 @@ async function getNextEmptyRowInColumn(sheets, spreadsheetId, sheetName, colLett
 /* ============================================================
    MAIN: EMPLOYEE MESSAGE FILTER
 ============================================================ */
-module.exports = async function preIntentFilter(openai, session, sessionId, userMessage, getSheets) {
+module.exports = async function preIntentFilter(openai, session, sessionId, userMessage, getSheets, createAgentTicket, appendUnderColumn) {
+  console.log(`🔍 preIntentFilter called for session: ${sessionId}, message: ${userMessage}`);
+  
   const ts = new Date().toISOString();
   const phn = sessionId;
   const sheets = await getSheets();
 
-  /* ----------------------------------
-     📸 PROCESS IMAGE FROM WHATSAPP
-  ----------------------------------- */
-  if (session.lastMedia && session.lastMedia.type === "imageUrl") {
-    const imageUrl = session.lastMedia.data || "";
-    const caption = (session.lastMedia.caption || "").trim();
-    session.lastMedia = null;
+  // Check if this is a known employee number (without suffix)
+  const basePhone = sessionId.replace(/[A-Za-z]$/, '');
+  const isEmployee = [
+    "918368127760",
+    "919717350080",
+    "918860924190",
+    "917483654620"
+  ].includes(basePhone);
 
-    // Detect category from caption text
-    const detect = detectIntent(caption.toLowerCase());
+  console.log(`🔑 Employee check: ${sessionId} -> base: ${basePhone}, isEmployee: ${isEmployee}`);
+
+  // If not employee, return null to continue with normal flow
+  if (!isEmployee) {
+    console.log('🚫 Not an employee, continuing with normal flow');
+    return null;
+  }
+
+  // Check if there's a suffix (U for user mode)
+  const hasSuffix = /[A-Za-z]$/.test(sessionId);
+  const suffix = hasSuffix ? sessionId.slice(-1).toUpperCase() : '';
+  
+  // If suffix is 'U', treat as user (bypass employee flow)
+  if (suffix === 'U') {
+    console.log('👤 User mode (suffix U) - bypassing employee flow');
+    return null;
+  }
+
+  // If suffix is 'A', treat as admin/employee (default behavior)
+  if (suffix === 'A' || !hasSuffix) {
+    console.log('👔 Admin/Employee mode activated');
+    
+    /* ----------------------------------
+       📸 PROCESS IMAGE FROM SESSION
+    ----------------------------------- */
+    if (session.lastMedia && session.lastMedia.type === "imageUrl") {
+      console.log('📷 Image processing in employee mode');
+      const imageUrl = session.lastMedia.data || "";
+      const caption = (session.lastMedia.caption || "").trim();
+      session.lastMedia = null;
+
+      // Detect category from caption text
+      const detect = detectIntent(caption.toLowerCase());
+      let category = detect.prob >= 0.55 ? detect.key : "Unknown";
+
+      // valid groups
+      const billingCats = ["operation", "logistics", "inventory", "market", "fixed"];
+      const salesCats = ["SALES"];
+      const leadCats = ["Lead"];
+      if (!billingCats.includes(category) && !salesCats.includes(category) && !leadCats.includes(category)) {
+        category = "Unknown";
+      }
+
+      // Generate correct Image Billing ID
+      const id = await getNextBillingId(category, sheets);
+      const messageValue = caption ? `${caption} | ${imageUrl}` : imageUrl;
+
+      // Always log image in common LOGS sheet
+      const logsSheet = "Billing_Logs";
+      await ensureSheet(sheets, logsSheet, ["id", "phn_no", "message", "time"]);
+
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: process.env.GOOGLE_SHEET_ID,
+        range: `${logsSheet}!A:Z`,
+        valueInputOption: "RAW",
+        requestBody: { values: [[id, phn, messageValue, ts]] }
+      });
+
+      // Also log category-specific in common sheets
+      if (billingCats.includes(category)) {
+        const dataSheet = "Billing_Data";
+        await ensureSheet(sheets, dataSheet, billingCats);
+
+        const colIndex = billingCats.indexOf(category) + 1;
+        const colLetter = String.fromCharCode(64 + colIndex);
+
+        // find next empty row in this category column
+        const rowNumber = await getNextEmptyRowInColumn(
+          sheets,
+          process.env.GOOGLE_SHEET_ID,
+          dataSheet,
+          colLetter
+        );
+
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: process.env.GOOGLE_SHEET_ID,
+          range: `${dataSheet}!${colLetter}${rowNumber}`,
+          valueInputOption: "RAW",
+          requestBody: { values: [[`${id},${messageValue}`]] }
+        });
+      }
+
+      if (salesCats.includes(category)) {
+        const sheet = "Sales_Data";
+        await ensureSheet(sheets, sheet, ["id", "phn_no", "message", "time"]);
+        await sheets.spreadsheets.values.append({
+          spreadsheetId: process.env.GOOGLE_SHEET_ID,
+          range: `${sheet}!A:Z`,
+          valueInputOption: "RAW",
+          requestBody: { values: [[id, phn, messageValue, ts]] }
+        });
+      }
+
+      if (leadCats.includes(category)) {
+        const sheet = "Lead_Data";
+        await ensureSheet(sheets, sheet, ["id", "phn_no", "message", "time"]);
+        await sheets.spreadsheets.values.append({
+          spreadsheetId: process.env.GOOGLE_SHEET_ID,
+          range: `${sheet}!A:Z`,
+          valueInputOption: "RAW",
+          requestBody: { values: [[id, phn, messageValue, ts]] }
+        });
+      }
+
+      return `🖼️ Image logged successfully!
+📌 Category: ${category.toUpperCase()}
+📄 ID: ${id}`;
+    }
+
+    // 🔹 GREETING CHECK
+    if (isEmpGreeting(userMessage)) {
+      return `Hello boss! What would you like to do?`;
+    }
+
+    const detect = detectIntent(userMessage.toLowerCase());
     let category = detect.prob >= 0.55 ? detect.key : "Unknown";
 
-    // valid groups
     const billingCats = ["operation", "logistics", "inventory", "market", "fixed"];
     const salesCats = ["SALES"];
     const leadCats = ["Lead"];
+
     if (!billingCats.includes(category) && !salesCats.includes(category) && !leadCats.includes(category)) {
       category = "Unknown";
     }
 
-    // Generate correct Image Billing ID
     const id = await getNextBillingId(category, sheets);
-    const messageValue = caption ? `${caption} | ${imageUrl}` : imageUrl;
 
-    // Always log image in common LOGS sheet
+    /* CLEAN MESSAGE */
+    let cleanMsg = userMessage.trim();
+    const allKeywords = Object.values(BILLING_MAIN).flat();
+    for (const kw of allKeywords) {
+      const regex = new RegExp(`^${kw}\\b[\\s:,-]*`, "i");
+      cleanMsg = cleanMsg.replace(regex, "").trim();
+    }
+    if (!cleanMsg) cleanMsg = userMessage.trim();
+
+    /* ALWAYS LOG MESSAGE TO COMMON LOGS SHEET */
     const logsSheet = "Billing_Logs";
     await ensureSheet(sheets, logsSheet, ["id", "phn_no", "message", "time"]);
 
@@ -210,17 +333,17 @@ module.exports = async function preIntentFilter(openai, session, sessionId, user
       spreadsheetId: process.env.GOOGLE_SHEET_ID,
       range: `${logsSheet}!A:Z`,
       valueInputOption: "RAW",
-      requestBody: { values: [[id, phn, messageValue, ts]] }
+      requestBody: { values: [[id, phn, cleanMsg, ts]] }
     });
 
-    // Also log category-specific in common sheets
+    /* SAME BEHAVIOR FOR CATEGORY BUSINESS LOGIC BUT WITH COMMON SHEETS */
     if (billingCats.includes(category)) {
       const dataSheet = "Billing_Data";
       await ensureSheet(sheets, dataSheet, billingCats);
 
       const colIndex = billingCats.indexOf(category) + 1;
       const colLetter = String.fromCharCode(64 + colIndex);
-
+      
       // find next empty row in this category column
       const rowNumber = await getNextEmptyRowInColumn(
         sheets,
@@ -233,19 +356,23 @@ module.exports = async function preIntentFilter(openai, session, sessionId, user
         spreadsheetId: process.env.GOOGLE_SHEET_ID,
         range: `${dataSheet}!${colLetter}${rowNumber}`,
         valueInputOption: "RAW",
-        requestBody: { values: [[`${id},${messageValue}`]] }
+        requestBody: { values: [[`${id},${cleanMsg}`]] }
       });
+
+      return `📌 Logged under **${category.toUpperCase()}** (ID: ${id}).`;
     }
 
     if (salesCats.includes(category)) {
       const sheet = "Sales_Data";
-      await ensureSheet(sheets, sheet, ["id", "phn_no", "message", "time"]);
+      await ensureSheet(sheets, sheet, [ "id", "phn_no", "message", "time"]);
       await sheets.spreadsheets.values.append({
         spreadsheetId: process.env.GOOGLE_SHEET_ID,
         range: `${sheet}!A:Z`,
         valueInputOption: "RAW",
-        requestBody: { values: [[id, phn, messageValue, ts]] }
+        requestBody: { values: [[id, phn, cleanMsg, ts]] }
       });
+
+      return `📌 Saved under **SALES** (ID: ${id}).`;
     }
 
     if (leadCats.includes(category)) {
@@ -255,106 +382,13 @@ module.exports = async function preIntentFilter(openai, session, sessionId, user
         spreadsheetId: process.env.GOOGLE_SHEET_ID,
         range: `${sheet}!A:Z`,
         valueInputOption: "RAW",
-        requestBody: { values: [[id, phn, messageValue, ts]] }
+        requestBody: { values: [[id, phn, cleanMsg, ts]] }
       });
+
+      return `🎯 Lead captured (ID: ${id}).`;
     }
 
-    return `🖼️ Image logged successfully!
-📌 Category: ${category.toUpperCase()}
-📄 ID: ${id}`;
-  }
-
-  // 🔹 GREETING CHECK
-  if (isEmpGreeting(userMessage)) {
-    return `Hello boss! What would you like to do?`;
-  }
-
-  const detect = detectIntent(userMessage.toLowerCase());
-  let category = detect.prob >= 0.55 ? detect.key : "Unknown";
-
-  const billingCats = ["operation", "logistics", "inventory", "market", "fixed"];
-  const salesCats = ["SALES"];
-  const leadCats = ["Lead"];
-
-  if (!billingCats.includes(category) && !salesCats.includes(category) && !leadCats.includes(category)) {
-    category = "Unknown";
-  }
-
-  const id = await getNextBillingId(category, sheets);
-
-  /* CLEAN MESSAGE */
-  let cleanMsg = userMessage.trim();
-  const allKeywords = Object.values(BILLING_MAIN).flat();
-  for (const kw of allKeywords) {
-    const regex = new RegExp(`^${kw}\\b[\\s:,-]*`, "i");
-    cleanMsg = cleanMsg.replace(regex, "").trim();
-  }
-  if (!cleanMsg) cleanMsg = userMessage.trim();
-
-  /* ALWAYS LOG MESSAGE TO COMMON LOGS SHEET */
-  const logsSheet = "Billing_Logs";
-  await ensureSheet(sheets, logsSheet, ["id", "phn_no", "message", "time"]);
-
-  await sheets.spreadsheets.values.append({
-    spreadsheetId: process.env.GOOGLE_SHEET_ID,
-    range: `${logsSheet}!A:Z`,
-    valueInputOption: "RAW",
-    requestBody: { values: [[id, phn, cleanMsg, ts]] }
-  });
-
-  /* SAME BEHAVIOR FOR CATEGORY BUSINESS LOGIC BUT WITH COMMON SHEETS */
-  if (billingCats.includes(category)) {
-    const dataSheet = "Billing_Data";
-    await ensureSheet(sheets, dataSheet, billingCats);
-
-    const colIndex = billingCats.indexOf(category) + 1;
-    const colLetter = String.fromCharCode(64 + colIndex);
-    
-    // find next empty row in this category column
-    const rowNumber = await getNextEmptyRowInColumn(
-      sheets,
-      process.env.GOOGLE_SHEET_ID,
-      dataSheet,
-      colLetter
-    );
-
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: process.env.GOOGLE_SHEET_ID,
-      range: `${dataSheet}!${colLetter}${rowNumber}`,
-      valueInputOption: "RAW",
-      requestBody: { values: [[`${id},${cleanMsg}`]] }
-    });
-
-    return `📌 Logged under **${category.toUpperCase()}** (ID: ${id}).`;
-  }
-
-  if (salesCats.includes(category)) {
-    const sheet = "Sales_Data";
-    await ensureSheet(sheets, sheet, [ "id", "phn_no", "message", "time"]);
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: process.env.GOOGLE_SHEET_ID,
-      range: `${sheet}!A:Z`,
-      valueInputOption: "RAW",
-      requestBody: { values: [[id, phn, cleanMsg, ts]] }
-    });
-
-    return `📌 Saved under **SALES** (ID: ${id}).`;
-  }
-
-  if (leadCats.includes(category)) {
-    const sheet = "Lead_Data";
-    await ensureSheet(sheets, sheet, ["id", "phn_no", "message", "time"]);
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: process.env.GOOGLE_SHEET_ID,
-      range: `${sheet}!A:Z`,
-      valueInputOption: "RAW",
-      requestBody: { values: [[id, phn, cleanMsg, ts]] }
-    });
-
-    return `🎯 Lead captured (ID: ${id}).`;
-  }
-
-  return `⚠️ Category not recognized boss!
+    return `⚠️ Category not recognized boss!
 📝 Logged as Unknown (ID: ${id})
 
 Please send like any of these formats 👇:
@@ -366,4 +400,21 @@ Market – message
 Fixed – message  
 Sales – message  
 Lead – message`;
+  }
+
+  // If we reach here and it's an employee but suffix isn't A/U, default to employee mode
+  console.log('👔 Default employee mode (no valid suffix)');
+  
+  // For image handling in default mode
+  if (session.lastMedia && session.lastMedia.type === "imageUrl") {
+    return "🖼️ Working on that logic for images...";
+  }
+  
+  return `Hello boss! You're in employee mode. 
+Send messages in these formats:
+- Operation: your message
+- Sales: your message
+- Lead: your message
+
+Or add 'U' suffix to your number for user mode (e.g., ${sessionId}U)`;
 };
