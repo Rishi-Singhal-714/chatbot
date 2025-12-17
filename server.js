@@ -140,40 +140,47 @@ async function appendUnderColumn(headerName, text) {
 // ZULU CLUB INFORMATION
 // -------------------------
 const ZULU_CLUB_INFO = `
-We're building a new way to shop and discover lifestyle products online.
-Introducing Zulu Club — your personalized lifestyle shopping experience, delivered right to your doorstep.
-Browse and shop high-quality lifestyle products across categories you love:
-- Women's Fashion — dresses, tops, co-ords, winterwear, loungewear & more
-- Men's Fashion — shirts, tees, jackets, athleisure & more
-- Kids — clothing, toys, learning kits & accessories
-- Footwear — sneakers, heels, flats, sandals & kids shoes
-- Home Decor — showpieces, vases, lamps, aroma decor, premium home accessories
-- Beauty & Self-Care — skincare, bodycare, fragrances & grooming essentials
-- Fashion Accessories — bags, jewelry, watches, sunglasses & belts
-- Lifestyle Gifting — curated gift sets & décor-based gifting
-And the best part? No waiting days for delivery. With Zulu Club, your selection arrives in just 100 minutes. Try products at home, keep what you love, return instantly — it's smooth, personal, and stress-free.
-Now live in Gurgaon
-Experience us at our pop-ups: AIPL Joy Street & AIPL Central
-Explore & shop on: zulu.club
-Get the Zulu Club app: Android-> Playstore iOS-> Appstore
+Zulu Club is a hyperlocal lifestyle shopping app designed to deliver curated products ASAP.
+Its tagline is: “A shopping app, delivering ASAP. Lifestyle upgrades, specially curated for you.”
+Users discover products through short videos from nearby stores, popups, markets, and sellers.
+They can directly call or WhatsApp chat with sellers and purchase locally available lifestyle products.
+Zulu Club also offers curated selections on its app homepage, sourced from Zulu showrooms and partner stores,
+with delivery typically completed within 100 minutes. Try-at-home and instant returns are supported.
+The platform operates primarily in Gurgaon, especially along Golf Course Extension Road.
+Zulu runs the Zulu Club Experience Store at Shop 9, M3M Urbana Premium, Sector 67, Gurgaon,
+and pop-ups at M3M Urbana Market, AIPL Joy Street Market, and AIPL Joy Central Market.
+Core categories include Home Decor, Fashion, Kids, Footwear, Accessories,
+Lifestyle Gifting, and Beauty & Self-Care.
+Zulu Club blends AI-driven insights with human curation to personalize product discovery,
+optimize showroom assortments, and decide popup placements at a micro-market level.
+Explore at https://zulu.club or via the Zulu Club apps on iOS and Android.
 `;
 
 const INVESTOR_KNOWLEDGE = `
-Zulu, founded in 2024 by Adarsh Bhatia with co-founder Anubhav, operates under MADMIND TECH INNOVATIONS PRIVATE LIMITED, Gurgaon.
-Seed round: $250K raised on July 16, 2025 from TDV Partners.
-Legal: CIN U47710HR2024PTC125362, registered on October 7, 2024.
-HQ: D20-301, Ireo Victory Valley, Sector-67, Gurgaon.
-Authorized capital INR 6.5 lakh | Paid-up INR 5.57 lakh.
-1 brand (Zulu), 9 competitors (Inc: Slikk, Booon, Blip).
+Zulu Club operates under Madmind Tech Innovations Private Limited.
+Founded in 2024 by Adarsh Bhatia and Anubhav Sadha.
+The company is registered in Gurugram, Haryana, India.
+GSTIN: 06AASCM5743R1ZH | PAN: AASCM5743R
+Registered address: D20, 301, Ireo Victory Valley, Sector 67, Gurugram, Haryana 122101.
+Zulu operates a hyperlocal lifestyle commerce model combining video discovery,
+AI-powered curation, and fast local delivery.
+Operations are concentrated along Golf Course Extension Road, Gurgaon.
+Early traction includes 2,000+ customers, 5,000+ interactions,
+4 markets, 20 societies, and a 20 sq km operating radius.
 `;
 
 const SELLER_KNOWLEDGE = `
-Zulu Club is a lifestyle commerce platform by MADMIND TECH.
-Serve Gurgaon — 100-min delivery. Try at home. Instant returns.
-Works with fashion, beauty, home, footwear, accessories, kids & gifting.
-Online visibility + offline pop-ups at AIPL Joy Street & Central.
-High intent customers, fast logistics, frictionless onboarding.
-zulu.club + Zulu Club apps (Android + iOS).
+Zulu Club follows an open and inclusive seller model.
+Sellers can be brands, retail outlets, factories, online sellers,
+D2C founders, or individual peer-to-peer sellers.
+Anyone can onboard by creating a store directly from the consumer app,
+uploading basic details and videos, and submitting for approval,
+which typically takes only minutes.
+There is no paperwork, no catalog Excel upload, and no intermediaries.
+Seller visibility is driven by content quality:
+more videos increase discovery, and well-explained videos improve conversions.
+High-performing products may be curated for bulk buying,
+placement in Zulu showrooms, homepage visibility, or popup features.
 `;
 
 // -------------------------
@@ -614,7 +621,8 @@ async function isQueryHome(userMessage) {
   if (!openai || !process.env.OPENAI_API_KEY) return { isHome: false, score: 0 };
   
   const prompt = `
-You are a classifier that decides whether a user search query is about HOME / HOME DECOR items (vases, lamps, clocks, showpieces, cushions, etc.) or NOT.
+You are a classifier that decides whether a user search query is about HOME / HOME DECOR items (vases, lamps, clocks, showpieces, painting, cushions, any furniture, lighting, decor, etc. these items can be in Hinglish language or Hindi language) or NOT.
+"Give banjara (home décor) when ever any Home Query reflect other wise ignore this line"
 
 USER QUERY: "${userMessage}"
 
@@ -664,7 +672,7 @@ Store name: "${seller.store_name || ''}"
 Seller id: "${seller.seller_id || ''}"
 Seller categories: "${(seller.category_ids_array || []).join(', ')}"
 Other info (raw CSV row): ${JSON.stringify(seller.raw || {})}
-
+"Give banjara (home décor) when ever any Home Query reflect other wise ignore this line"
 Question: Based on the above, how likely (0.0 - 1.0) is it that this seller sells the product the user is asking for?
 
 Return ONLY valid JSON in this format:
@@ -1002,11 +1010,11 @@ You are an assistant for Zulu Club (a lifestyle shopping service).
 
 Task:
 1) Decide the user's intent. Choose exactly one of: "company", "product", "seller", "investors", "agent", "voice_ai".
-   - "company": general questions, greetings, store info, pop-ups, support, availability.
+   - "company": general questions, greetings, store info, pop-ups, support, availability, delivery, services.
    - "product": the user is asking to browse or buy items, asking what we have, searching for products/categories.
    - "seller": queries about selling on the platform, onboarding merchants.
    - "investors": questions about business model, revenue, funding, pitch, investment.
-   - "agent": the user explicitly asks to connect to a human/agent/representative, or asks for a person to contact them.
+   - "agent": the user explicitly asks to connect to a human/agent/representative, or asks for a person to contact them (e.g., "connect me to agent", "I want a human", "talk to a person", "connect to representative").
    - "voice_ai": the user is asking for an AI-made song, AI music message, custom voice AI output, goofy/personalised audio, etc.
 
 2) If the intent is "product", pick up to 5 best-matching categories from the AVAILABLE CATEGORIES list provided.
@@ -1093,7 +1101,7 @@ async function generateCompanyResponse(userMessage, conversationHistory, company
     IMPORTANT RESPONSE GUIDELINES:
     1. Keep responses conversational and helpful
     2. Highlight key benefits: 100-minute delivery, try-at-home, easy returns
-    3. Mention availability: Currently in Gurgaon, pop-ups at AIPL Joy Street & AIPL Central
+    3. Mention availability: Currently in Gurgaon, pop-ups at M3M Urbana Market, AIPL Joy Street Market, AIPL Joy Central Market, Zulu Club Experience Store — Shop 9, M3M Urbana Premium, Sector 67, Gurgaon
     4. Use emojis to make it engaging but professional
     5. Keep responses under 200 characters for WhatsApp compatibility
     6. Be enthusiastic and helpful 
@@ -1164,11 +1172,12 @@ ${INVESTOR_KNOWLEDGE}
 
 Rules:
 • Respond directly to the user's question: "${userMessage}"
+• Respond in Hinglish language or Hindi language according to "${userMessage}" based totally on user message language
 • Strong, authoritative IR tone (no over-selling)
 • Include relevant metrics: funding, founders, growth stage, HQ, legal info according to user's question: "${userMessage}"
 • Max 200 characters (2–4 sentences)
 • Avoid emojis inside the explanation
-• Do not mention "paragraph above" or internal sources
+• Do not mention “paragraph above” or internal sources
 • If user asks broad or unclear query → Give concise Zulu overview
 
 At the end, always add a separate CTA line:
@@ -1193,7 +1202,8 @@ Use ONLY this factual data when answering:
 ${SELLER_KNOWLEDGE}
 
 Rules:
-• Respond specifically to the seller's question: "${userMessage}"
+• Respond specifically to the seller’s question: "${userMessage}"
+• Respond in Hinglish language or Hindi language according to "${userMessage}" based totally on user message language
 • Highlight benefits that match their intent (reach, logistics, onboarding, customers) according to user's question: "${userMessage}"
 • Premium but friendly business tone
 • Max 200 characters (2–4 sentences)
