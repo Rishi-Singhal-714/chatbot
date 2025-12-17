@@ -1088,7 +1088,7 @@ function isGreeting(text) {
   return false;
 }
 
-async function generateCompanyResponse(userMessage, conversationHistory, companyInfo) {
+async function generateCompanyResponse(userMessage, conversationHistory, companyInfo = ZULU_CLUB_INFO) {
   const messages = [];
 
   const systemMessage = {
@@ -1471,7 +1471,7 @@ For more details, please contact our support team.`;
     }
     
     // Default: company response
-    return await generateCompanyResponse(userMessage, getFullSessionHistory(sessionId), companyInfo);
+    return await generateCompanyResponse(userMessage, getFullSessionHistory(sessionId), companyInfo = ZULU_CLUB_INFO);
     
   } catch (error) {
     console.error('❌ getChatGPTResponse error:', error);
