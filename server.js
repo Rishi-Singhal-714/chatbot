@@ -5,7 +5,6 @@ const csv = require('csv-parser');
 const { Readable } = require('stream');
 const preIntentFilter = require('./preintentfilter'); 
 const { google } = require('googleapis'); 
-const crypto = require('crypto');
 const app = express();
 
 // Employee numbers (without country code prefix for matching)
@@ -19,7 +18,7 @@ const EMPLOYEE_NUMBERS = [
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
+app.use(express.static('public')); // Serve static files
 
 // OpenAI configuration
 const openai = new OpenAI({
@@ -29,10 +28,9 @@ const openai = new OpenAI({
 // -------------------------
 // PERSISTED DATA: conversations, csvs
 // -------------------------
-let conversations = {}; // sessionId -> { history: [{role, content, ts, messageId}], lastActive, lastMessageId }
+let conversations = {}; // sessionId -> { history: [{role, content, ts}], lastActive }
 let galleriesData = [];
-let sellersData = [];
-let messageCache = new Map(); // Cache for messages to prevent duplicates
+let sellersData = []; // sellers CSV data
 
 // -------------------------
 // Google Sheets config
@@ -77,30 +75,27 @@ function colLetter(n) {
   return s;
 }
 
-// Parse India time string to Date object
-function parseIndiaTime(timestampStr) {
+async function writeCell(colNum, rowNum, value) {
+  const sheets = await getSheets();
+  if (!sheets) return;
+  const range = `${colLetter(colNum)}${rowNum}`;
   try {
-    const parts = timestampStr.split(' ');
-    if (parts.length !== 2) return new Date();
-    
-    const datePart = parts[0];
-    const timePart = parts[1];
-    
-    const [day, month, year] = datePart.split('-').map(Number);
-    const [hours, minutes, seconds] = timePart.split(':').map(Number);
-    
-    return new Date(year, month - 1, day, hours, minutes, seconds);
-  } catch (error) {
-    console.error('Error parsing India time:', timestampStr, error);
-    return new Date();
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: GOOGLE_SHEET_ID,
+      range,
+      valueInputOption: 'RAW',
+      requestBody: { values: [[value]] }
+    });
+  } catch (e) {
+    console.error('❌ writeCell error', e);
   }
 }
-
 function getIndiaTime() {
   const now = new Date();
-  const offset = 5.5 * 60 * 60 * 1000;
+  const offset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
   const indiaTime = new Date(now.getTime() + offset);
   
+  // Format as: DD-MM-YYYY HH:MM:SS (24-hour format)
   const day = String(indiaTime.getUTCDate()).padStart(2, '0');
   const month = String(indiaTime.getUTCMonth() + 1).padStart(2, '0');
   const year = indiaTime.getUTCFullYear();
@@ -110,16 +105,6 @@ function getIndiaTime() {
   
   return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
 }
-
-// Generate unique message ID
-function generateMessageId(phoneNumber, timestamp, content) {
-  const hash = crypto.createHash('md5')
-    .update(`${phoneNumber}|${timestamp}|${content}`)
-    .digest('hex')
-    .substring(0, 12);
-  return `${phoneNumber}_${hash}`;
-}
-
 // -------------------------
 // Modified appendUnderColumn to prepend new messages
 // -------------------------
@@ -128,7 +113,7 @@ async function appendUnderColumn(headerName, text) {
   if (!sheets) return;
   
   try {
-    const ts = getIndiaTime();
+    const ts = getIndiaTime(); // Use India time
     const finalText = `${ts} | ${text}`;
     
     // Get header row to find column
@@ -169,8 +154,16 @@ async function appendUnderColumn(headerName, text) {
     }
     
     // PREPEND the new message at the beginning (row 2)
+    // Step 1: Insert a new row at position 2
     const startRow = 2;
+    
+    // We need to shift existing values down by 1 row
+    // To do this efficiently, we'll write all values at once
+    
+    // Create new array with new message first, then existing messages
     const newValues = [finalText, ...existingValues];
+    
+    // Write all values starting from row 2
     const writeRange = `${colLetter(colNum)}${startRow}:${colLetter(colNum)}${startRow + newValues.length - 1}`;
     
     await sheets.spreadsheets.values.update({
@@ -186,17 +179,28 @@ async function appendUnderColumn(headerName, text) {
     console.error('❌ appendUnderColumn error', e);
   }
 }
-
 // -------------------------
 // Helper function to parse India time for display
 // -------------------------
 function parseIndiaTimeForDisplay(timestampStr) {
-  try {
-    const date = parseIndiaTime(timestampStr);
-    return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-  } catch (error) {
-    return timestampStr;
-  }
+  // timestampStr format: "DD-MM-YYYY HH:MM:SS"
+  const parts = timestampStr.split(' ');
+  if (parts.length < 2) return timestampStr;
+  
+  const datePart = parts[0]; // DD-MM-YYYY
+  const timePart = parts[1]; // HH:MM:SS
+  
+  const [day, month, year] = datePart.split('-').map(Number);
+  const [hours, minutes, seconds] = timePart.split(':').map(Number);
+  
+  // Create a date object (Note: JavaScript months are 0-indexed)
+  const date = new Date(year, month - 1, day, hours, minutes, seconds);
+  
+  // Format for display: "HH:MM AM/PM"
+  let displayHours = hours % 12 || 12;
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  
+  return `${displayHours}:${String(minutes).padStart(2, '0')} ${ampm}`;
 }
 
 // -------------------------
@@ -204,7 +208,7 @@ function parseIndiaTimeForDisplay(timestampStr) {
 // -------------------------
 const ZULU_CLUB_INFO = `
 Zulu Club is a hyperlocal lifestyle shopping app designed to deliver curated products ASAP.
-Its tagline is: "A shopping app, delivering ASAP. Lifestyle upgrades, specially curated for you."
+Its tagline is: “A shopping app, delivering ASAP. Lifestyle upgrades, specially curated for you.”
 Users discover products through short videos from nearby stores, popups, markets, and sellers.
 They can directly call or WhatsApp chat with sellers and purchase locally available lifestyle products.
 Zulu Club also offers curated selections on its app homepage, sourced from Zulu showrooms and partner stores,
@@ -247,7 +251,7 @@ placement in Zulu showrooms, homepage visibility, or popup features.
 `;
 
 // -------------------------
-// CSV loaders
+// CSV loaders: galleries + sellers (keep as is)
 // -------------------------
 async function loadGalleriesData() {
   try {
@@ -341,7 +345,7 @@ async function loadSellersData() {
   }
 }
 
-// Initialize both CSVs
+// initialize both CSVs
 (async () => {
   try {
     galleriesData = await loadGalleriesData();
@@ -359,7 +363,7 @@ async function loadSellersData() {
 })();
 
 // -------------------------
-// Agent ticket helpers
+// Agent ticket helpers (keep as is)
 // -------------------------
 async function generateTicketId() {
   const sheets = await getSheets();
@@ -437,7 +441,7 @@ async function createAgentTicket(mobileNumber, conversationHistory = []) {
     const pad = Array(Math.max(0, 5 - lastFive.length)).fill('');
     const arranged = [...pad, ...lastFive];
     const ticketId = await generateTicketId();
-    const ts = getIndiaTime();
+    const ts = getIndiaTime(); // Changed from new Date().toISOString()
     
     const row = [
       mobileNumber || '',
@@ -467,7 +471,10 @@ async function createAgentTicket(mobileNumber, conversationHistory = []) {
   }
 }
 
-// Helper functions for product matching
+// [Keep all the matching helper functions exactly as they are...]
+// [findKeywordMatchesInCat1, matchSellersByStoreName, matchSellersByCategoryIds, etc.]
+// [These functions should remain exactly the same as in your original code]
+
 function normalizeToken(t) {
   if (!t) return '';
   return String(t)
@@ -1017,6 +1024,7 @@ RESPONSE FORMAT (JSON ONLY):
     `;
     
     messagesForGPT.push({ role: 'user', content: userPrompt });
+    console.log(`🧾 findGptMatchedCategories -> sending ${messagesForGPT.length} messages to OpenAI (session history included).`);
     
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -1236,7 +1244,7 @@ Rules:
 • Include relevant metrics: funding, founders, growth stage, HQ, legal info according to user's question: "${userMessage}"
 • Max 200 characters (2–4 sentences)
 • Avoid emojis inside the explanation
-• Do not mention "paragraph above" or internal sources
+• Do not mention “paragraph above” or internal sources
 • If user asks broad or unclear query → Give concise Zulu overview
 
 At the end, always add a separate CTA line:
@@ -1261,7 +1269,7 @@ Use ONLY this factual data when answering:
 ${SELLER_KNOWLEDGE}
 
 Rules:
-• Respond specifically to the seller's question: "${userMessage}"
+• Respond specifically to the seller’s question: "${userMessage}"
 • Respond in Hinglish language or Hindi language according to "${userMessage}" based totally on user message language
 • Highlight benefits that match their intent (reach, logistics, onboarding, customers) according to user's question: "${userMessage}"
 • Premium but friendly business tone
@@ -1284,135 +1292,6 @@ Join as partner 👉 https://forms.gle/tvkaKncQMs29dPrPA
 }
 
 // -------------------------
-// NEW: Real-time message checking from Google Sheets
-// -------------------------
-async function checkForNewMessagesInSheet(phoneNumber, lastTimestamp) {
-  const sheets = await getSheets();
-  if (!sheets) {
-    return { success: false, newMessages: [], error: 'Google Sheets not configured' };
-  }
-  
-  try {
-    // Read column headers
-    const headersResp = await sheets.spreadsheets.values.get({ 
-      spreadsheetId: GOOGLE_SHEET_ID, 
-      range: 'History!1:1' 
-    });
-    
-    const headers = (headersResp.data.values && headersResp.data.values[0]) || [];
-    
-    // Find column for this phone number
-    let colIndex = -1;
-    for (let i = 0; i < headers.length; i++) {
-      if (String(headers[i]).trim() === phoneNumber) {
-        colIndex = i;
-        break;
-      }
-    }
-    
-    if (colIndex === -1) {
-      return { success: true, newMessages: [] };
-    }
-    
-    // Get column values
-    const colLetter = String.fromCharCode(65 + colIndex);
-    const range = `History!${colLetter}2:${colLetter}`;
-    
-    const colResp = await sheets.spreadsheets.values.get({
-      spreadsheetId: GOOGLE_SHEET_ID,
-      range: range,
-      majorDimension: 'COLUMNS'
-    });
-    
-    const columnValues = (colResp.data.values && colResp.data.values[0]) || [];
-    
-    // Parse messages
-    const allMessages = [];
-    const seenIds = new Set();
-    
-    columnValues.forEach((cellValue, rowIndex) => {
-      if (!cellValue || typeof cellValue !== 'string' || !cellValue.trim()) return;
-      
-      const parts = cellValue.split(' | ');
-      if (parts.length < 2) return;
-      
-      const timestamp = parts[0];
-      const content = parts.slice(1).join(' | ').trim();
-      
-      if (!content) return;
-      
-      const messageDate = parseIndiaTime(timestamp);
-      const messageTime = messageDate.getTime();
-      
-      // Determine sender
-      let sender = 'bot';
-      let messageText = content;
-      
-      if (content.startsWith('USER:')) {
-        sender = 'user';
-        messageText = content.substring(5).trim();
-      } else if (content.startsWith('ASSISTANT:')) {
-        sender = 'bot';
-        messageText = content.substring(10).trim();
-      }
-      
-      // Generate unique ID
-      const messageId = generateMessageId(phoneNumber, timestamp, messageText);
-      
-      // Check cache to prevent duplicates
-      if (seenIds.has(messageId) || messageCache.has(messageId)) {
-        return; // Skip duplicate
-      }
-      seenIds.add(messageId);
-      messageCache.set(messageId, true);
-      
-      // Keep cache size manageable
-      if (messageCache.size > 1000) {
-        const keys = Array.from(messageCache.keys());
-        for (let i = 0; i < 100; i++) {
-          messageCache.delete(keys[i]);
-        }
-      }
-      
-      allMessages.push({
-        id: messageId,
-        text: messageText,
-        sender: sender,
-        timestamp: messageDate.toISOString(),
-        isoTime: messageDate.toISOString(),
-        displayTime: messageDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-        originalTimestamp: timestamp
-      });
-    });
-    
-    // Filter messages newer than lastTimestamp
-    const lastTime = lastTimestamp ? new Date(lastTimestamp).getTime() : 0;
-    const newMessages = allMessages.filter(msg => {
-      const msgTime = new Date(msg.timestamp).getTime();
-      return msgTime > lastTime;
-    });
-    
-    // Sort by timestamp (oldest first)
-    newMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-    
-    return {
-      success: true,
-      newMessages: newMessages,
-      count: newMessages.length,
-      lastChecked: new Date().toISOString()
-    };
-    
-  } catch (error) {
-    console.error('❌ Error checking new messages from sheet:', error);
-    return {
-      success: false,
-      newMessages: [],
-      error: error.message
-    };
-  }
-}
-
-// -------------------------
 // Session/history helpers
 // -------------------------
 const SESSION_TTL_MS = 1000 * 60 * 60;
@@ -1428,8 +1307,7 @@ function createOrTouchSession(sessionId) {
       lastActive: nowMs(),
       lastDetectedIntent: null,
       lastDetectedIntentTs: 0,
-      lastMedia: null,
-      lastMessageId: null
+      lastMedia: null
     };
   } else {
     conversations[sessionId].lastActive = nowMs();
@@ -1438,25 +1316,10 @@ function createOrTouchSession(sessionId) {
   return conversations[sessionId];
 }
 
-function appendToSessionHistory(sessionId, role, content, messageId = null) {
+function appendToSessionHistory(sessionId, role, content) {
   createOrTouchSession(sessionId);
-  
-  const msgId = messageId || generateMessageId(sessionId, nowMs().toString(), content);
-  
-  // Check if we already have this message
-  if (conversations[sessionId].lastMessageId === msgId) {
-    return; // Skip duplicate
-  }
-  
-  const entry = { 
-    role, 
-    content, 
-    ts: nowMs(),
-    messageId: msgId
-  };
-  
+  const entry = { role, content, ts: nowMs() };
   conversations[sessionId].history.push(entry);
-  conversations[sessionId].lastMessageId = entry.messageId;
   
   if (conversations[sessionId].history.length > MAX_HISTORY_MESSAGES) {
     conversations[sessionId].history = conversations[sessionId].history.slice(-MAX_HISTORY_MESSAGES);
@@ -1502,7 +1365,7 @@ function recentHistoryContainsProductSignal(conversationHistory = []) {
   return false;
 }
 
-async function getChatGPTResponse(sessionId, userMessage) {
+async function getChatGPTResponse(sessionId, userMessage, companyInfo = ZULU_CLUB_INFO) {
   if (!process.env.OPENAI_API_KEY) {
     return "Hello! I'm here to help you with Zulu Club. Currently, I'm experiencing technical difficulties. Please visit zulu.club for assistance.";
   }
@@ -1675,7 +1538,7 @@ For more details, please contact our support team.`;
     }
     
     // Default: company response
-    return await generateCompanyResponse(userMessage, getFullSessionHistory(sessionId), ZULU_CLUB_INFO);
+    return await generateCompanyResponse(userMessage, getFullSessionHistory(sessionId), companyInfo = ZULU_CLUB_INFO);
     
   } catch (error) {
     console.error('❌ getChatGPTResponse error:', error);
@@ -1685,11 +1548,8 @@ For more details, please contact our support team.`;
 
 async function handleMessage(sessionId, userMessage) {
   try {
-    // Generate message ID for user message
-    const userMessageId = generateMessageId(sessionId, nowMs().toString(), userMessage);
-    
     // 1) Save incoming user message to session
-    appendToSessionHistory(sessionId, 'user', userMessage, userMessageId);
+    appendToSessionHistory(sessionId, 'user', userMessage);
     
     // 2) Log user message to Google Sheet
     try {
@@ -1705,11 +1565,8 @@ async function handleMessage(sessionId, userMessage) {
     // 4) Get response
     const aiResponse = await getChatGPTResponse(sessionId, userMessage);
     
-    // Generate message ID for AI response
-    const aiMessageId = generateMessageId(sessionId, nowMs().toString(), aiResponse);
-    
     // 5) Save AI response back into session history
-    appendToSessionHistory(sessionId, 'assistant', aiResponse, aiMessageId);
+    appendToSessionHistory(sessionId, 'assistant', aiResponse);
     
     // 6) Log assistant response
     try {
@@ -1730,7 +1587,7 @@ async function handleMessage(sessionId, userMessage) {
 }
 
 // -------------------------
-// API Endpoints
+// Chat API Endpoints
 // -------------------------
 
 // Serve chat interface
@@ -1771,435 +1628,574 @@ app.post('/chat/message', async (req, res) => {
   }
 });
 
-// Get chat history from Google Sheets with pagination
-app.post('/chat/history', async (req, res) => {
+// Get chat history for a phone number
+app.get('/chat/history/:phoneNumber', async (req, res) => {
   try {
-    const { phoneNumber, page = 0, pageSize = 10 } = req.body;
+    const { phoneNumber } = req.params;
+    const history = getFullSessionHistory(phoneNumber);
     
-    if (!phoneNumber) {
-      return res.status(400).json({
-        success: false,
-        error: 'Phone number is required'
-      });
-    }
-    
-    console.log(`📜 Fetching history for ${phoneNumber}, page ${page}, pageSize ${pageSize}`);
-    
-    const sheets = await getSheets();
-    if (!sheets) {
-      console.log('⚠️ Google Sheets not configured, returning empty history');
-      return res.json({
-        success: true,
-        messages: [],
-        hasMore: false,
-        totalMessages: 0
-      });
-    }
-    
-    try {
-      const headersResp = await sheets.spreadsheets.values.get({ 
-        spreadsheetId: GOOGLE_SHEET_ID, 
-        range: 'History!1:1' 
-      });
-      
-      const headers = (headersResp.data.values && headersResp.data.values[0]) || [];
-      let colIndex = -1;
-      
-      for (let i = 0; i]) || [];
-      let colIndex = -1;
-      
-      for (let i = 0; i < headers.length; i++) {
-        < headers.length; i++) {
-        if (String(headers[i if (String(headers[i]).trim() === phoneNumber) {
-          colIndex = i;
-]).trim() === phoneNumber) {
-          colIndex = i;
-          break;
-        }
-      }
-          break;
-        }
-           
- }
-      
-      if (colIndex      if (colIndex === -1 === -1)) {
-        return res {
-        return res.json({
-          success: true,
-.json({
-          success: true,
-          messages: [],
-          hasMore: false          messages: [],
-          hasMore: false,
-          total,
-          totalMessages: 0
-       Messages: 0
-        });
-      }
-      
-      });
-      }
-      
-      const const colLetter = String.fromCharCode( colLetter = String.fromCharCode(6565 + colIndex);
-      const range = `History!${colLetter}2:${colLetter}`;
-      
-      const col + colIndex);
-      const range = `History!${colLetter}2:${colLetter}`;
-      
-      const colResp = awaitResp = await sheets.spreadsheets sheets.spreadsheets.values.get.values.get({
-({
-        spreadsheetId: GO        spreadsheetId: GOOGLEOGLE_SHEET_ID,
-_SHEET_ID,
-        range:        range: range,
-        range,
-        majorDimension: 'COL majorDimension: 'COLUMNSUMNS'
-     '
-      });
-      
-      const columnValues });
-      
-      const columnValues = ( = (colResp.data.values &&colResp.data.values && colResp.data colResp.data.values[0.values[0]) || [];
-     ]) || [];
-      const allMessages const allMessages = [];
-      const seenIds = [];
-      const seenIds = new Set();
-      
- = new Set();
-      
-           columnValues columnValues.forEach((cellValue,.forEach((cellValue, rowIndex) => {
-        rowIndex) => {
-        if (! if (!cellValue || typeof cellValue !== 'cellValue || typeof cellValue !== 'stringstring' || !' || !cellValue.trim()) return;
-        
-cellValue.trim()) return;
-        
-        const parts = cellValue.split(' | ');
-        const parts = cellValue.split(' | ');
-        if        if (parts.length <  (parts.length < 22) return) return;
-        
-        const timestamp;
-        
-        const timestamp = parts =[0];
-        const content = parts parts[0];
-        const.slice( content = parts.slice(11).join(' | ').trim();
-        
-        if (!content)).join(' | ').trim();
-        
-        if (!content) return;
- return;
-        
-        
-        const messageDate = parseIndia        const messageDate = parseIndiaTimeTime(timestamp);
-        
-       (timestamp);
-        
-        let sender = ' let sender = 'bot';
-bot';
-        let messageText = content;
-        
-        let messageText = content;
-        
-        if (content.startsWith('USER        if (content.startsWith:'))('USER:')) {
-          {
-          sender = 'user';
-          sender = 'user';
-          messageText = content messageText = content.substring(5).trim();
-.substring(5).trim();
-        } else if (        } else ifcontent.startsWith (content.startsWith('ASSIST('ASSISTANT:')) {
-          sender = 'ANT:')) {
-          sender = 'bot';
-         bot';
-          messageText = content.substring messageText = content.substring((10).trim();
-        }
-        
-       10).trim();
-        }
- // Generate        
-        // Generate ID and ID and check for duplicates
- check for duplicates
-        const message        const messageIdId = generateMessageId(phone = generateMessageId(phoneNumber,Number, timestamp, messageText timestamp, messageText);
-        if ();
-        if (seenIds.has(messageId) || messageCache.has(messageseenIds.has(messageId) || messageCache.has(messageIdId)) return;
-        seenIds.add(messageId);
-)) return;
-        seenIds.add(messageId);
-        messageCache        messageCache.set(messageId, true);
-.set(messageId, true);
-        
-        allMessages.push({
-          id        
-        allMessages.push({
-          id: message: messageId,
-          text: messageText,
-Id,
-          text: messageText,
-                   sender: sender: sender,
-          timestamp: messageDate.to sender,
-          timestamp: messageDate.toISOString(),
-          isoISOString(),
-          isoTimeTime: messageDate.toISOString: messageDate.toISOString(),
-(),
-          display          displayTime: messageDate.toTime: messageDate.toLocaleTimeStringLocaleTimeString([], {([], {hour: '2hour: '2-digit', minute-digit', minute:'2-digit'}),
-:'2-digit'}),
-          originalTimestamp: timestamp
-          originalTimestamp: timestamp
-        });
-      });
-      
-      // Sort        });
-      });
-      
-      // Sort by timestamp (old by timestamp (oldest firstest first for for pagination)
-      allMessages.sort pagination)
-      allMessages.sort((a((a, b) => new Date, b) => new Date(a.timestamp)(a.timestamp) - new Date(b.timestamp));
-      
-      - new Date(b.timestamp));
-      
-      const totalMessages const totalMessages = allMessages.length;
-      const startIndex = page * pageSize;
-      const end = allMessages.length;
-      const startIndex = page * pageSize;
-      const endIndex = startIndex = startIndex + pageIndex + pageSize;
-      constSize;
-      const hasMore = totalMessages > hasMore = totalMessages > endIndex;
-      const pageMessages = endIndex;
-      const allMessages pageMessages = allMessages.slice(startIndex.slice(startIndex, endIndex);
-      
-      console, endIndex);
-      
-      console.log(`📜 Found ${total.log(`📜 Found ${Messages}totalMessages} total messages, total messages, returning ${pageMessages returning ${pageMessages.length} for page.length} for page ${page}`);
-      
-      return ${page}`);
-      
-      return res.json res.json({
-        success: true,
-       ({
-        success: true,
-        messages: page messages: pageMessages,
-        hasMore: hasMore,
-        totalMessages: totalMessages,
-Messages,
-        hasMore: hasMore,
-        totalMessages: totalMessages,
-               currentPage currentPage: page,
-: page,
-        pageSize: pageSize        pageSize: pageSize
-     
-      });
-      
-    } catch ( });
-      
-    } catch (errorerror)) {
-      console.error(' {
-      console.error('❌ Error reading❌ Error reading from Google Sheets from Google Sheets:', error:', error);
-      return res);
-      return res.status(500).json({
-.status(500).json({
-        success        success: false,
-        error: false,
-        error: 'Failed to read: 'Failed to read history from history from Google Sheets'
-      Google Sheets'
-      });
+    return res.json({
+      success: true,
+      history: history,
+      sessionActive: !!conversations[phoneNumber]
     });
-    }
-    
-  } catch ( }
     
   } catch (error) {
-    console.errorerror) {
-    console.error('💥 Chat history endpoint error('💥 Chat history endpoint error:',:', error.message);
-    return res error.message);
-    return res.status(.status(500).json({
-500).json({
-      success: false      success: false,
-     ,
-      error: error.message error: error.message
-
+    console.error('💥 Chat history error:', error.message);
+    return res.status(500).json({
+      success: false,
+      error: error.message
     });
   }
 });
 
-// Check for new messages endpoint
-app    });
-  }
-});
-
-// Check for new messages.post('/chat/check-new endpoint
-app.post('/chat/check-new', async (req,', async (req, res) => {
-  try {
-    const { phone res) => {
-  try {
-    const { phoneNumber, lastTimestamp } =Number, lastTimestamp } = req.body;
-    
-    if req.body;
-    
-    if (!phone (!phoneNumber) {
-     Number) {
-      return res.status(400). return res.status(400).json({
-        successjson({
-        success: false,
-: false,
-        error:        error: 'Phone number is 'Phone number is required'
-      });
- required'
-      });
-    }
-    
-    console.log(`🔍 Checking new messages for ${phoneNumber} since ${last    }
-    
-    console.log(`🔍 Checking new messages for ${phoneNumber} since ${lastTimestampTimestamp || 'beginning'}`);
-    
- || 'beginning'}`);
-    
-    // Use    // Use the function that queries Google Sheets
-    const result = await checkForNewMessagesInSheet(phoneNumber, last the function that queries Google Sheets
-    const result = await checkForNewMessagesInSheet(phoneNumber, lastTimestamp);
-    
-    return res.json(result);
-    
-Timestamp);
-    
-    return res.json(result);
-    
-  }  } catch ( catch (error) {
-    console.errorerror) {
-    console.error('💥 /('💥 /chat/check-new error:',chat/check-new error:', error.message error.message);
-   );
-    return res.status( return res.status(500).json({
-500).json({
-      success      success: false,
-      error: error: false,
-      error: error.message,
-      newMessages: []
-   .message,
-      newMessages: []
- });
-     });
-  }
-});
-
-// }
-});
-
-// Get active sessions (admin only Get active sessions (admin only)
+// Get active sessions (admin only)
 app.get('/chat/sessions', (req, res) => {
-  const activeSessions = Object)
-app.get('/chat.keys(/sessions', (req, res) => {
-  const activeSessions = Object.keys(conversations).map(idconversations).map(id => ({
-    phone => ({
-    phoneNumber: idNumber: id,
-    lastActive:,
-    lastActive: new Date new Date(conversations[id].(conversations[id].lastActive).lastActive).toISOStringtoISOString(),
-   (),
-    historyLength: conversations[id historyLength: conversations[id].history.length,
-    lastIntent].history.length,
-    lastIntent: conversations: conversations[id].lastDet[id].lastDetectedIntent,
-   ectedIntent,
-    last lastMessageId: conversations[id].MessageId: conversations[id].lastMessageId
+  const activeSessions = Object.keys(conversations).map(id => ({
+    phoneNumber: id,
+    lastActive: new Date(conversations[id].lastActive).toISOString(),
+    historyLength: conversations[id].history.length,
+    lastIntent: conversations[id].lastDetectedIntent
   }));
   
-  returnlastMessageId
-  }));
-  
- res  return res.json({
-    success.json({
+  return res.json({
     success: true,
-   : true,
-    activeS activeSessions,
-    totalSessions: activeSessions.length,
-    messageCacheSize: messageessions,
-    totalSessions: activeSessions.length,
-    messageCacheSize: messageCache.sizeCache.size
+    activeSessions,
+    totalSessions: activeSessions.length
   });
 });
 
 // -------------------------
-  });
-});
-
-// -----------------
-// Root--------
-// Root and other and other endpoints
+// Root and other endpoints
 // -------------------------
- endpoints
-// -------------------------
-appapp.get.get('/', (req, res)('/', (req, res) => {
-  res => {
-  res.json({.json({ 
-    status: 'Z 
-    status: 'Zulu Club Chat Server is runningulu Club Chat Server is running',', 
-    service: 
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'Zulu Club Chat Server is running', 
     service: 'Zulu Club Chat AI Assistant',
- 'Zulu Club Chat AI Assistant',
-    version:    version: ' '7.2 - Real-time sync with duplicate7.2 - Real-time sync with duplicate prevention',
- prevention',
+    version: '7.1 - Employee/User Mode with Suffix Support',
     employee_numbers: EMPLOYEE_NUMBERS,
-    employee_numbers: EMPLOYEE_NUMBERS,
+    usage_note: 'Add "A" suffix for admin mode (default), "U" suffix for user mode',
     endpoints: {
-      chat_interface:    endpoints: {
       chat_interface: '/chat',
- '/chat',
       send_message: 'POST /chat/message',
-      get      send_message: 'POST /chat/message',
-      get_history: 'POST_history: 'POST /chat/h /chat/historyistory',
-      check_new',
-      check_new: 'POST /chat/check-new: 'POST /chat/',
-     check-new',
-      get_sessions get_sessions: 'GET /chat: 'GET /chat/s/sessions',
-      refresh_csv: 'essions',
-      refresh_csv: 'GET /refresh-cGET /refresh-csv'
-sv'
+      get_history: 'GET /chat/history/:phoneNumber',
+      get_sessions: 'GET /chat/sessions',
+      refresh_csv: 'GET /refresh-csv'
     },
-    stats:    },
     stats: {
- {
-      product      product_categories_loaded_categories_loaded: galleriesData.length: galleriesData.length,
-      sellers,
-      sellers__loaded: sellersData.length,
-loaded: sellersData.length,
-      active      active_conversations:_conversations: Object.keys(con Object.keys(conversationsversations).length).length,
-      message_cache,
-      message_cache_size: messageCache.size
-    },
-    timestamp: new Date().toISO_size: messageCache.size
+      product_categories_loaded: galleriesData.length,
+      sellers_loaded: sellersData.length,
+      active_conversations: Object.keys(conversations).length
     },
     timestamp: new Date().toISOString()
   });
 });
 
-app.get('/String()
-  });
-});
-
-app.getrefresh-csv('/refresh-csv', async (', async (req, res)req, res) => {
- => {
+app.get('/refresh-csv', async (req, res) => {
   try {
     galleriesData = await loadGalleriesData();
-    sellers  try {
-    galleriesData = await loadGalleriesData();
-    sellersData = await loadData = await loadSellersDataSellersData();
+    sellersData = await loadSellersData();
     res.json({ 
-     ();
-    res.json({ 
-      status status: 'success', 
-     : 'success', 
-      message: 'CS message: 'CSV data refreshed successfully', 
-      categories_loaded: galleriesData.length, 
-      sellers_loaded: sellersData.length 
-   V data refreshed successfully', 
+      status: 'success', 
+      message: 'CSV data refreshed successfully', 
       categories_loaded: galleriesData.length, 
       sellers_loaded: sellersData.length 
     });
-  });
-  } catch } catch (error (error) {
-    res.status(500) {
-    res.status(500).json({ status: 'error', message: error.message).json({ status: 'error', message: error.message });
- });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: error.message });
   }
 });
+// Add this endpoint to your server.js (somewhere after your other endpoints)
 
-// Export for Vercel
-module.exports = app  }
+// Get chat history from Google Sheets with pagination
+app.post('/chat/history', async (req, res) => {
+    try {
+        const { phoneNumber, page = 0, pageSize = 10 } = req.body;
+        
+        if (!phoneNumber) {
+            return res.status(400).json({
+                success: false,
+                error: 'Phone number is required'
+            });
+        }
+        
+        console.log(`📜 Fetching history for ${phoneNumber}, page ${page}, pageSize ${pageSize}`);
+        
+        // Get the Google Sheets client
+        const sheets = await getSheets();
+        if (!sheets) {
+            console.log('⚠️ Google Sheets not configured, returning empty history');
+            return res.json({
+                success: true,
+                history: '',
+                messages: [],
+                hasMore: false,
+                totalMessages: 0
+            });
+        }
+        
+        try {
+            // Read column headers to find the correct column for this phone number
+            const headersResp = await sheets.spreadsheets.values.get({ 
+                spreadsheetId: GOOGLE_SHEET_ID, 
+                range: 'History!1:1' 
+            });
+            
+            const headers = (headersResp.data.values && headersResp.data.values[0]) || [];
+            
+            // Find the column index for this phone number
+            // Phone numbers are stored as column headers in format: "8368127760A"
+            let colIndex = -1;
+            for (let i = 0; i < headers.length; i++) {
+                const header = String(headers[i]).trim();
+                if (header === phoneNumber) {
+                    colIndex = i;
+                    break;
+                }
+            }
+            
+            if (colIndex === -1) {
+                console.log(`📜 No history found for ${phoneNumber}`);
+                return res.json({
+                    success: true,
+                    history: '',
+                    messages: [],
+                    hasMore: false,
+                    totalMessages: 0
+                });
+            }
+            
+            // Get all values from this column (excluding header)
+            const colLetter = String.fromCharCode(65 + colIndex); // A=0, B=1, etc.
+            const range = `History!${colLetter}2:${colLetter}`;
+            
+            const colResp = await sheets.spreadsheets.values.get({
+                spreadsheetId: GOOGLE_SHEET_ID,
+                range: range,
+                majorDimension: 'COLUMNS'
+            });
+            
+            const columnValues = (colResp.data.values && colResp.data.values[0]) || [];
+            
+            // Parse and filter messages
+            const allMessages = [];
+            
+            columnValues.forEach(cellValue => {
+                if (cellValue && typeof cellValue === 'string' && cellValue.trim()) {
+                    const parts = cellValue.split(' | ');
+                    if (parts.length >= 2) {
+                        const timestamp = parts[0];
+                        const content = parts.slice(1).join(' | ').trim();
+                        
+                        if (content) {
+                            let sender = 'bot';
+                            let messageText = content;
+                            
+                            if (content.startsWith('USER:')) {
+                                sender = 'user';
+                                messageText = content.substring(5).trim();
+                            } else if (content.startsWith('ASSISTANT:')) {
+                                sender = 'bot';
+                                messageText = content.substring(10).trim();
+                            }
+                            
+                            allMessages.push({
+                                text: messageText,
+                                sender: sender,
+                                timestamp: timestamp,
+                                isoTime: timestamp,
+                                displayTime: new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                            });
+                        }
+                    }
+                }
+            });
+            
+            // Sort by timestamp (oldest first for pagination)
+            allMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            
+            // Calculate pagination
+            const totalMessages = allMessages.length;
+            const startIndex = page * pageSize;
+            const endIndex = startIndex + pageSize;
+            const hasMore = totalMessages > endIndex;
+            
+            // Get messages for this page (we'll return newest first for display)
+            const pageMessages = allMessages.slice(startIndex, endIndex);
+            
+            console.log(`📜 Found ${totalMessages} total messages, returning ${pageMessages.length} for page ${page}`);
+            
+            // Format as string for backward compatibility
+            const historyString = allMessages
+                .map(msg => `${msg.timestamp} | ${msg.sender === 'user' ? 'USER:' : 'ASSISTANT:'} ${msg.text}`)
+                .join('\n');
+            
+            return res.json({
+                success: true,
+                history: historyString, // Full history as string (for existing code)
+                messages: pageMessages, // Paginated messages as array
+                hasMore: hasMore,
+                totalMessages: totalMessages,
+                currentPage: page,
+                pageSize: pageSize
+            });
+            
+        } catch (error) {
+            console.error('❌ Error reading from Google Sheets:', error);
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to read history from Google Sheets',
+                details: error.message
+            });
+        }
+        
+    } catch (error) {
+        console.error('💥 Chat history endpoint error:', error.message);
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
 });
 
+// Also add a GET endpoint for convenience
+app.get('/chat/history/:phoneNumber', async (req, res) => {
+    try {
+        const { phoneNumber } = req.params;
+        const page = parseInt(req.query.page) || 0;
+        const pageSize = parseInt(req.query.pageSize) || 10;
+        
+        console.log(`📜 GET history for ${phoneNumber}, page ${page}`);
+        
+        // Get the Google Sheets client
+        const sheets = await getSheets();
+        if (!sheets) {
+            return res.json({
+                success: true,
+                history: '',
+                messages: [],
+                hasMore: false,
+                totalMessages: 0
+            });
+        }
+        
+        try {
+            // Read column headers
+            const headersResp = await sheets.spreadsheets.values.get({ 
+                spreadsheetId: GOOGLE_SHEET_ID, 
+                range: 'History!1:1' 
+            });
+            
+            const headers = (headersResp.data.values && headersResp.data.values[0]) || [];
+            let colIndex = -1;
+            
+            for (let i = 0; i < headers.length; i++) {
+                const header = String(headers[i]).trim();
+                if (header === phoneNumber) {
+                    colIndex = i;
+                    break;
+                }
+            }
+            
+            if (colIndex === -1) {
+                return res.json({
+                    success: true,
+                    history: '',
+                    messages: [],
+                    hasMore: false,
+                    totalMessages: 0
+                });
+            }
+            
+            // Get column values
+            const colLetter = String.fromCharCode(65 + colIndex);
+            const range = `History!${colLetter}2:${colLetter}`;
+            
+            const colResp = await sheets.spreadsheets.values.get({
+                spreadsheetId: GOOGLE_SHEET_ID,
+                range: range,
+                majorDimension: 'COLUMNS'
+            });
+            
+            const columnValues = (colResp.data.values && colResp.data.values[0]) || [];
+            
+            // Parse messages
+            const allMessages = [];
+            
+            columnValues.forEach(cellValue => {
+                if (cellValue && typeof cellValue === 'string' && cellValue.trim()) {
+                    const parts = cellValue.split(' | ');
+                    if (parts.length >= 2) {
+                        const timestamp = parts[0];
+                        const content = parts.slice(1).join(' | ').trim();
+                        
+                        if (content) {
+                            let sender = 'bot';
+                            let messageText = content;
+                            
+                            if (content.startsWith('USER:')) {
+                                sender = 'user';
+                                messageText = content.substring(5).trim();
+                            } else if (content.startsWith('ASSISTANT:')) {
+                                sender = 'bot';
+                                messageText = content.substring(10).trim();
+                            }
+                            
+                            allMessages.push({
+                                text: messageText,
+                                sender: sender,
+                                timestamp: timestamp,
+                                isoTime: timestamp,
+                                displayTime: new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                            });
+                        }
+                    }
+                }
+            });
+            
+            // Sort by timestamp
+            allMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            
+            // Pagination
+            const totalMessages = allMessages.length;
+            const startIndex = page * pageSize;
+            const endIndex = startIndex + pageSize;
+            const hasMore = totalMessages > endIndex;
+            const pageMessages = allMessages.slice(startIndex, endIndex);
+            
+            return res.json({
+                success: true,
+                history: allMessages
+                    .map(msg => `${msg.timestamp} | ${msg.sender === 'user' ? 'USER:' : 'ASSISTANT:'} ${msg.text}`)
+                    .join('\n'),
+                messages: pageMessages,
+                hasMore: hasMore,
+                totalMessages: totalMessages,
+                currentPage: page,
+                pageSize: pageSize
+            });
+            
+        } catch (error) {
+            console.error('❌ Error reading Google Sheets:', error);
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to read history',
+                details: error.message
+            });
+        }
+        
+    } catch (error) {
+        console.error('💥 GET history error:', error.message);
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Optional: Add an endpoint to get column headers (for debugging)
+app.get('/chat/history-headers', async (req, res) => {
+    try {
+        const sheets = await getSheets();
+        if (!sheets) {
+            return res.json({
+                success: false,
+                error: 'Google Sheets not configured'
+            });
+        }
+        
+        const headersResp = await sheets.spreadsheets.values.get({ 
+            spreadsheetId: GOOGLE_SHEET_ID, 
+            range: 'History!1:1' 
+        });
+        
+        const headers = (headersResp.data.values && headersResp.data.values[0]) || [];
+        
+        // Filter for phone number columns (assuming they follow 10-digit pattern)
+        const phoneColumns = headers
+            .map((header, index) => ({ header, index }))
+            .filter(item => /^\d{10}[AU]?$/.test(String(item.header).trim()));
+        
+        return res.json({
+            success: true,
+            headers: headers,
+            phoneColumns: phoneColumns,
+            totalColumns: headers.length
+        });
+        
+    } catch (error) {
+        console.error('Error getting headers:', error);
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+// Check for new messages endpoint (query Google Sheets)
+app.post('/chat/check-new', async (req, res) => {
+    try {
+        const { phoneNumber, lastTimestamp } = req.body;
+        
+        if (!phoneNumber) {
+            return res.status(400).json({
+                success: false,
+                error: 'Phone number is required'
+            });
+        }
+        
+        console.log(`🔍 Checking new messages for ${phoneNumber} since ${lastTimestamp || 'beginning'}`);
+        
+        // Get the Google Sheets client
+        const sheets = await getSheets();
+        if (!sheets) {
+            console.log('⚠️ Google Sheets not configured, returning empty');
+            return res.json({
+                success: true,
+                newMessages: []
+            });
+        }
+        
+        try {
+            // Read column headers to find the correct column for this phone number
+            const headersResp = await sheets.spreadsheets.values.get({ 
+                spreadsheetId: GOOGLE_SHEET_ID, 
+                range: 'History!1:1' 
+            });
+            
+            const headers = (headersResp.data.values && headersResp.data.values[0]) || [];
+            
+            // Find the column index for this phone number
+            let colIndex = -1;
+            for (let i = 0; i < headers.length; i++) {
+                const header = String(headers[i]).trim();
+                if (header === phoneNumber) {
+                    colIndex = i;
+                    break;
+                }
+            }
+            
+            if (colIndex === -1) {
+                console.log(`📭 No column found for ${phoneNumber}`);
+                return res.json({
+                    success: true,
+                    newMessages: []
+                });
+            }
+            
+            // Get all values from this column (excluding header)
+            const colLetter = String.fromCharCode(65 + colIndex);
+            const range = `History!${colLetter}2:${colLetter}`;
+            
+            const colResp = await sheets.spreadsheets.values.get({
+                spreadsheetId: GOOGLE_SHEET_ID,
+                range: range,
+                majorDimension: 'COLUMNS'
+            });
+            
+            const columnValues = (colResp.data.values && colResp.data.values[0]) || [];
+            
+            // Parse and filter messages
+            const allMessages = [];
+            
+            columnValues.forEach((cellValue, rowIndex) => {
+                if (cellValue && typeof cellValue === 'string' && cellValue.trim()) {
+                    const parts = cellValue.split(' | ');
+                    if (parts.length >= 2) {
+                        const timestamp = parts[0];
+                        const content = parts.slice(1).join(' | ').trim();
+                        
+                        if (content) {
+                            // Parse timestamp
+                            let messageDate;
+                            try {
+                                // Try to parse the timestamp (format: DD-MM-YYYY HH:MM:SS)
+                                const [datePart, timePart] = timestamp.split(' ');
+                                const [day, month, year] = datePart.split('-').map(Number);
+                                const [hours, minutes, seconds] = timePart.split(':').map(Number);
+                                messageDate = new Date(year, month - 1, day, hours, minutes, seconds);
+                            } catch (e) {
+                                console.error('Error parsing timestamp:', timestamp, e);
+                                return; // Skip this message if timestamp is invalid
+                            }
+                            
+                            let sender = 'bot';
+                            let messageText = content;
+                            
+                            if (content.startsWith('USER:')) {
+                                sender = 'user';
+                                messageText = content.substring(5).trim();
+                            } else if (content.startsWith('ASSISTANT:')) {
+                                sender = 'bot';
+                                messageText = content.substring(10).trim();
+                            }
+                            
+                            // Generate a unique ID for the message
+                            const messageId = `${phoneNumber}_${rowIndex}_${timestamp.replace(/\s|:/g, '_')}`;
+                            
+                            allMessages.push({
+                                id: messageId,
+                                text: messageText,
+                                sender: sender,
+                                timestamp: messageDate.toISOString(),
+                                isoTime: messageDate.toISOString(),
+                                displayTime: formatTime(messageDate),
+                                originalTimestamp: timestamp
+                            });
+                        }
+                    }
+                }
+            });
+            
+            // Filter messages newer than lastTimestamp
+            const lastTime = lastTimestamp ? new Date(lastTimestamp).getTime() : 0;
+            const newMessages = allMessages.filter(msg => {
+                const msgTime = new Date(msg.timestamp).getTime();
+                return msgTime > lastTime;
+            });
+            
+            // Sort by timestamp (oldest first)
+            newMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            
+            console.log(`📨 Found ${newMessages.length} new messages for ${phoneNumber}`);
+            
+            return res.json({
+                success: true,
+                newMessages: newMessages,
+                count: newMessages.length,
+                lastChecked: new Date().toISOString()
+            });
+            
+        } catch (error) {
+            console.error('❌ Error reading from Google Sheets:', error);
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to read messages from Google Sheets',
+                details: error.message
+            });
+        }
+        
+    } catch (error) {
+        console.error('💥 /chat/check-new error:', error.message);
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Helper functions (add these near your other helper functions)
+function formatTime(date) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatOriginalTimestamp(date) {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+}
 // Export for Vercel
-module.exports =;
+module.exports = app;
