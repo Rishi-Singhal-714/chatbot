@@ -1054,955 +1054,1109 @@
     </div>
 
 <script>
-    let currentPhone = '';
-    let isConnected = false;
-    let historyPage = 0;
-    let hasMoreHistory = true;
-    let isLoadingHistory = false;
-    
-    // DOM Elements
-    const chatMessages = document.getElementById('chatMessages');
-    const messageInput = document.getElementById('messageInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const setupSection = document.getElementById('setupSection');
-    const chatSection = document.getElementById('chatSection');
-    const phoneInput = document.getElementById('phoneInput');
-    const startChatBtn = document.getElementById('startChatBtn');
-    const currentPhoneSpan = document.getElementById('currentPhone');
-    const backBtn = document.getElementById('backBtn');
-    const profileAvatar = document.getElementById('profileAvatar');
-    const chatTitle = document.getElementById('chatTitle');
-    const statusBar = document.getElementById('statusBar');
-    const chatStatus = document.getElementById('chatStatus');
-    const suffixBadge = document.getElementById('suffixBadge');
-    const errorMessage = document.getElementById('errorMessage');
-    const emojiBtn = document.getElementById('emojiBtn');
-    const attachBtn = document.getElementById('attachBtn');
-    
-    // Employee numbers for reference
-    const EMPLOYEE_NUMBERS = [
-        "8368127760",
-        "9717350080", 
-        "8860924190",
-        "7483654620"
-    ];
-    
-    // Format phone number input
-    function formatPhoneInput(value) {
-        // Remove all non-digits and letters A/U
-        let cleaned = value.replace(/[^0-9auAU]/g, '');
-        
-        // Get first 10 digits
-        let digits = cleaned.replace(/[^0-9]/g, '').substring(0, 10);
-        
-        // Get suffix if present (A or U)
-        let suffix = '';
-        if (cleaned.length > 10) {
-            let lastChar = cleaned.charAt(cleaned.length - 1).toUpperCase();
-            if (lastChar === 'A' || lastChar === 'U') {
-                suffix = lastChar;
-                digits = digits.substring(0, 10); // Ensure only 10 digits
-            }
+// Complete updated JavaScript code with real-time message polling
+let currentPhone = '';
+let isConnected = false;
+let historyPage = 0;
+let hasMoreHistory = true;
+let isLoadingHistory = false;
+let lastMessageTime = null;
+let messagePollingInterval = null;
+let pollingActive = false;
+const POLL_INTERVAL = 3000; // Check every 3 seconds
+const POLL_BACKOFF = 30000; // Back off to 30 seconds if no activity
+let currentPollInterval = POLL_INTERVAL;
+let messageIds = new Set(); // Track message IDs to prevent duplicates
+
+// DOM Elements
+const chatMessages = document.getElementById('chatMessages');
+const messageInput = document.getElementById('messageInput');
+const sendBtn = document.getElementById('sendBtn');
+const setupSection = document.getElementById('setupSection');
+const chatSection = document.getElementById('chatSection');
+const phoneInput = document.getElementById('phoneInput');
+const startChatBtn = document.getElementById('startChatBtn');
+const currentPhoneSpan = document.getElementById('currentPhone');
+const backBtn = document.getElementById('backBtn');
+const profileAvatar = document.getElementById('profileAvatar');
+const chatTitle = document.getElementById('chatTitle');
+const statusBar = document.getElementById('statusBar');
+const chatStatus = document.getElementById('chatStatus');
+const suffixBadge = document.getElementById('suffixBadge');
+const errorMessage = document.getElementById('errorMessage');
+const emojiBtn = document.getElementById('emojiBtn');
+const attachBtn = document.getElementById('attachBtn');
+
+// Employee numbers for reference
+const EMPLOYEE_NUMBERS = [
+    "8368127760",
+    "9717350080", 
+    "8860924190",
+    "7483654620"
+];
+
+// Add CSS for notification
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translate(-50%, 10px);
         }
-        
-        return digits + suffix;
-    }
-    
-    // Validate phone number
-    function validatePhoneNumber(phone) {
-        // Check if it's exactly 10 digits or 10 digits + A/U
-        const regex = /^[0-9]{10}[AU]?$/i;
-        if (!regex.test(phone)) {
-            return false;
-        }
-        
-        const digits = phone.replace(/[^0-9]/g, '');
-        const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
-        
-        // If suffix is present, it must be A or U
-        if (suffix && !['A', 'U'].includes(suffix)) {
-            return false;
-        }
-        
-        return true;
-    }
-    
-    // Update suffix badge display
-    function updateSuffixBadge(phone) {
-        const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
-        if (suffix) {
-            suffixBadge.textContent = suffix;
-            suffixBadge.style.display = 'block';
-        } else {
-            suffixBadge.style.display = 'none';
+        to {
+            opacity: 1;
+            transform: translate(-50%, 0);
         }
     }
     
-    // Handle phone input
-    phoneInput.addEventListener('input', function(e) {
-        let formatted = formatPhoneInput(this.value);
-        this.value = formatted;
-        
-        // Update suffix badge
-        updateSuffixBadge(formatted);
-        
-        // Validate and update UI
-        if (validatePhoneNumber(formatted)) {
-            this.classList.remove('invalid');
-            this.classList.add('valid');
-            errorMessage.style.display = 'none';
-            startChatBtn.disabled = false;
-        } else {
-            this.classList.remove('valid');
-            this.classList.add('invalid');
-            errorMessage.style.display = formatted.length > 0 ? 'block' : 'none';
-            startChatBtn.disabled = true;
-        }
-    });
+    .new-message-notification {
+        animation: fadeInUp 0.3s ease;
+        position: absolute;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #00a884;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-size: 14px;
+        cursor: pointer;
+        z-index: 1000;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
     
-    // Handle phone input focus
-    phoneInput.addEventListener('focus', function() {
-        if (this.value) {
-            updateSuffixBadge(this.value);
-        }
-    });
+    .new-message-notification:hover {
+        background: #06cf9c;
+    }
     
-    // Handle phone input blur
-    phoneInput.addEventListener('blur', function() {
+    .notification-close {
+        margin-left: 8px;
+        opacity: 0.8;
+        font-size: 12px;
+    }
+    
+    .notification-close:hover {
+        opacity: 1;
+    }
+    
+    .unread-indicator {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: #ff4757;
+        color: white;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+`;
+document.head.appendChild(style);
+
+// Format phone number input
+function formatPhoneInput(value) {
+    let cleaned = value.replace(/[^0-9auAU]/g, '');
+    let digits = cleaned.replace(/[^0-9]/g, '').substring(0, 10);
+    let suffix = '';
+    
+    if (cleaned.length > 10) {
+        let lastChar = cleaned.charAt(cleaned.length - 1).toUpperCase();
+        if (lastChar === 'A' || lastChar === 'U') {
+            suffix = lastChar;
+            digits = digits.substring(0, 10);
+        }
+    }
+    
+    return digits + suffix;
+}
+
+// Validate phone number
+function validatePhoneNumber(phone) {
+    const regex = /^[0-9]{10}[AU]?$/i;
+    if (!regex.test(phone)) return false;
+    
+    const digits = phone.replace(/[^0-9]/g, '');
+    const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
+    
+    if (suffix && !['A', 'U'].includes(suffix)) return false;
+    return true;
+}
+
+// Update suffix badge display
+function updateSuffixBadge(phone) {
+    const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
+    if (suffix) {
+        suffixBadge.textContent = suffix;
+        suffixBadge.style.display = 'block';
+    } else {
         suffixBadge.style.display = 'none';
+    }
+}
+
+// Handle phone input
+phoneInput.addEventListener('input', function(e) {
+    let formatted = formatPhoneInput(this.value);
+    this.value = formatted;
+    updateSuffixBadge(formatted);
+    
+    if (validatePhoneNumber(formatted)) {
+        this.classList.remove('invalid');
+        this.classList.add('valid');
+        errorMessage.style.display = 'none';
+        startChatBtn.disabled = false;
+    } else {
+        this.classList.remove('valid');
+        this.classList.add('invalid');
+        errorMessage.style.display = formatted.length > 0 ? 'block' : 'none';
+        startChatBtn.disabled = true;
+    }
+});
+
+// Handle phone input focus/blur
+phoneInput.addEventListener('focus', function() {
+    if (this.value) updateSuffixBadge(this.value);
+});
+
+phoneInput.addEventListener('blur', function() {
+    suffixBadge.style.display = 'none';
+});
+
+// Convert URLs to clickable links
+function convertLinksToClickable(text) {
+    const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(app\.zulu\.club\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|[A-Za-z0-9.-]+\.[A-Za-z]{2,}\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]))/ig;
+    
+    return text.replace(urlRegex, function(url) {
+        let finalUrl = url;
+        if (!url.match(/^(https?|ftp|file):\/\//i)) {
+            if (url.startsWith('www.') || url.includes('app.zulu.club') || url.includes('.club/')) {
+                finalUrl = 'https://' + url;
+            }
+        }
+        return `<a href="${finalUrl}" target="_blank" rel="noopener noreferrer" class="link">${url}</a>`;
+    });
+}
+
+// Parse custom timestamp
+function parseCustomTimestamp(timestampStr) {
+    try {
+        const parts = timestampStr.split(' ');
+        if (parts.length !== 2) return new Date();
+        
+        const datePart = parts[0];
+        const timePart = parts[1];
+        const dateParts = datePart.split('-');
+        const timeParts = timePart.split(':');
+        
+        if (dateParts.length !== 3 || timeParts.length !== 3) return new Date();
+        
+        const day = parseInt(dateParts[0], 10);
+        const month = parseInt(dateParts[1], 10) - 1;
+        const year = parseInt(dateParts[2], 10);
+        const hours = parseInt(timeParts[0], 10);
+        const minutes = parseInt(timeParts[1], 10);
+        const seconds = parseInt(timeParts[2], 10);
+        
+        return new Date(year, month, day, hours, minutes, seconds);
+    } catch (error) {
+        return new Date();
+    }
+}
+
+// Format timestamp for display
+function formatTimestampForDisplay(timestampStr) {
+    try {
+        const date = parseCustomTimestamp(timestampStr);
+        return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    } catch (error) {
+        return new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+}
+
+// Display a message in the chat
+function displayMessage(text, sender, displayTime = null, isoTime = null, originalTimestamp = null, messageId = null) {
+    const messageWrapper = document.createElement('div');
+    messageWrapper.className = `message ${sender}`;
+    
+    let messageIsoTime = isoTime;
+    let messageDisplayTime = displayTime;
+    
+    if (originalTimestamp && typeof originalTimestamp === 'string') {
+        try {
+            const date = parseCustomTimestamp(originalTimestamp);
+            messageIsoTime = date.toISOString();
+            messageDisplayTime = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        } catch (error) {
+            // Use provided values
+        }
+    }
+    
+    if (!messageIsoTime) {
+        const now = new Date();
+        messageIsoTime = now.toISOString();
+        messageDisplayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+    
+    messageWrapper.dataset.isoTime = messageIsoTime;
+    if (messageId) {
+        messageWrapper.dataset.messageId = messageId;
+    }
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message-wrapper';
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    
+    const processedText = convertLinksToClickable(text);
+    const formattedText = processedText.replace(/\n/g, '<br>');
+    contentDiv.innerHTML = formattedText;
+    
+    messageDiv.appendChild(contentDiv);
+    
+    const infoDiv = document.createElement('div');
+    infoDiv.className = 'message-info';
+    
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'message-time';
+    timeSpan.textContent = messageDisplayTime || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
+    if (sender === 'user') {
+        const tickIcon = document.createElement('span');
+        tickIcon.className = 'message-status';
+        tickIcon.innerHTML = '✓✓';
+        tickIcon.style.color = '#53bdeb';
+        infoDiv.appendChild(timeSpan);
+        infoDiv.appendChild(tickIcon);
+    } else {
+        infoDiv.appendChild(timeSpan);
+    }
+    
+    messageDiv.appendChild(infoDiv);
+    messageWrapper.appendChild(messageDiv);
+    
+    setTimeout(() => {
+        const links = contentDiv.querySelectorAll('a.link');
+        links.forEach(link => {
+            link.addEventListener('click', (e) => e.stopPropagation());
+            link.addEventListener('touchstart', (e) => e.stopPropagation());
+        });
+    }, 100);
+    
+    return messageWrapper;
+}
+
+// Insert message at correct position
+function insertMessageInOrder(messageElement) {
+    const messages = Array.from(chatMessages.querySelectorAll('.message[data-iso-time]'));
+    const newTime = new Date(messageElement.dataset.isoTime).getTime();
+    
+    let insertBeforeElement = null;
+    for (let i = 0; i < messages.length; i++) {
+        const msg = messages[i];
+        const msgTime = new Date(msg.dataset.isoTime).getTime();
+        
+        if (newTime < msgTime) {
+            insertBeforeElement = msg;
+            break;
+        }
+    }
+    
+    if (insertBeforeElement) {
+        chatMessages.insertBefore(messageElement, insertBeforeElement);
+    } else {
+        chatMessages.appendChild(messageElement);
+    }
+    
+    setTimeout(() => {
+        if (isAtBottom()) {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    }, 50);
+    
+    return messageElement;
+}
+
+// Get latest message timestamp
+function getLatestMessageTime() {
+    const messages = document.querySelectorAll('.message[data-iso-time]');
+    let latestTime = null;
+    
+    messages.forEach(msg => {
+        const isoTime = msg.dataset.isoTime;
+        if (isoTime) {
+            const time = new Date(isoTime).getTime();
+            if (!latestTime || time > latestTime) {
+                latestTime = time;
+            }
+        }
     });
     
-    // Function to detect and convert URLs to clickable links
-    function convertLinksToClickable(text) {
-        // Improved regular expression to match various URL formats
-        const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(app\.zulu\.club\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|[A-Za-z0-9.-]+\.[A-Za-z]{2,}\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]))/ig;
-        
-        // Replace URLs with anchor tags
-        return text.replace(urlRegex, function(url) {
-            // Add https:// if it's a www link or domain without protocol
-            let finalUrl = url;
-            if (!url.match(/^(https?|ftp|file):\/\//i)) {
-                if (url.startsWith('www.') || url.includes('app.zulu.club') || url.includes('.club/')) {
-                    finalUrl = 'https://' + url;
-                }
-            }
-            
-            return `<a href="${finalUrl}" target="_blank" rel="noopener noreferrer" class="link">${url}</a>`;
-        });
-    }
+    return latestTime;
+}
+
+// Check if user is at bottom of chat
+function isAtBottom() {
+    const messagesDiv = chatMessages;
+    const scrollBottom = messagesDiv.scrollTop + messagesDiv.clientHeight;
+    const scrollHeight = messagesDiv.scrollHeight;
+    return scrollHeight - scrollBottom < 100;
+}
+
+// Show new message notification
+function showNewMessageNotification(count) {
+    const existingNotif = document.getElementById('newMessageNotification');
+    if (existingNotif) existingNotif.remove();
     
-    // Parse custom timestamp format (DD-MM-YYYY HH:mm:ss)
-    function parseCustomTimestamp(timestampStr) {
-        // Format: "18-12-2025 17:53:25"
-        try {
-            const parts = timestampStr.split(' ');
-            if (parts.length !== 2) return new Date();
-            
-            const datePart = parts[0]; // "18-12-2025"
-            const timePart = parts[1]; // "17:53:25"
-            
-            const dateParts = datePart.split('-');
-            if (dateParts.length !== 3) return new Date();
-            
-            const day = parseInt(dateParts[0], 10);
-            const month = parseInt(dateParts[1], 10) - 1; // JavaScript months are 0-indexed
-            const year = parseInt(dateParts[2], 10);
-            
-            const timeParts = timePart.split(':');
-            if (timeParts.length !== 3) return new Date();
-            
-            const hours = parseInt(timeParts[0], 10);
-            const minutes = parseInt(timeParts[1], 10);
-            const seconds = parseInt(timeParts[2], 10);
-            
-            return new Date(year, month, day, hours, minutes, seconds);
-        } catch (error) {
-            console.error('Error parsing timestamp:', timestampStr, error);
-            return new Date();
-        }
-    }
+    const notification = document.createElement('div');
+    notification.id = 'newMessageNotification';
+    notification.className = 'new-message-notification';
     
-    // Format timestamp for display
-    function formatTimestampForDisplay(timestampStr) {
-        try {
-            const date = parseCustomTimestamp(timestampStr);
-            return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        } catch (error) {
-            console.error('Error formatting timestamp:', timestampStr, error);
-            return new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        }
-    }
+    notification.innerHTML = `
+        <i class="fas fa-comment-alt"></i>
+        ${count} new message${count > 1 ? 's' : ''}
+        <span class="notification-close"><i class="fas fa-times"></i></span>
+    `;
     
-    // Display a message in the chat
-    function displayMessage(text, sender, displayTime = null, isoTime = null, originalTimestamp = null) {
-        const messageWrapper = document.createElement('div');
-        messageWrapper.className = `message ${sender}`;
-        
-        // Store ISO time for sorting
-        let messageIsoTime = isoTime;
-        let messageDisplayTime = displayTime;
-        
-        // If we have original timestamp (DD-MM-YYYY HH:mm:ss), parse it
-        if (originalTimestamp && typeof originalTimestamp === 'string') {
-            try {
-                const date = parseCustomTimestamp(originalTimestamp);
-                messageIsoTime = date.toISOString();
-                messageDisplayTime = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            } catch (error) {
-                console.error('Error processing original timestamp:', originalTimestamp, error);
-            }
-        }
-        
-        // If no ISO time, use current time
-        if (!messageIsoTime) {
-            const now = new Date();
-            messageIsoTime = now.toISOString();
-            messageDisplayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        }
-        
-        // Store ISO time in data attribute for sorting
-        messageWrapper.dataset.isoTime = messageIsoTime;
-        
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'message-wrapper';
-        
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content';
-        
-        // Convert URLs to clickable links
-        const processedText = convertLinksToClickable(text);
-        // Format text with line breaks and preserve links
-        const formattedText = processedText.replace(/\n/g, '<br>');
-        contentDiv.innerHTML = formattedText;
-        
-        messageDiv.appendChild(contentDiv);
-        
-        const infoDiv = document.createElement('div');
-        infoDiv.className = 'message-info';
-        
-        const timeSpan = document.createElement('span');
-        timeSpan.className = 'message-time';
-        timeSpan.textContent = messageDisplayTime || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        
-        if (sender === 'user') {
-            const tickIcon = document.createElement('span');
-            tickIcon.className = 'message-status';
-            tickIcon.innerHTML = '✓✓';
-            tickIcon.style.color = '#53bdeb';
-            infoDiv.appendChild(timeSpan);
-            infoDiv.appendChild(tickIcon);
-        } else {
-            infoDiv.appendChild(timeSpan);
-        }
-        
-        messageDiv.appendChild(infoDiv);
-        messageWrapper.appendChild(messageDiv);
-        
-        // Add click handler to links after they're added to DOM
-        setTimeout(() => {
-            const links = contentDiv.querySelectorAll('a.link');
-            links.forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    // Link will open in new tab by default due to target="_blank"
-                    console.log('Link clicked:', link.href);
-                });
-                
-                // Also handle touch events for mobile
-                link.addEventListener('touchstart', (e) => {
-                    e.stopPropagation();
-                });
-            });
-        }, 100);
-        
-        return messageWrapper;
-    }
-    
-    // Insert message at correct position based on timestamp
-    function insertMessageInOrder(messageElement) {
-        const messages = Array.from(chatMessages.querySelectorAll('.message[data-iso-time]'));
-        const newTime = new Date(messageElement.dataset.isoTime).getTime();
-        
-        // Find the right position to insert
-        let insertBeforeElement = null;
-        for (let i = 0; i < messages.length; i++) {
-            const msg = messages[i];
-            const msgTime = new Date(msg.dataset.isoTime).getTime();
-            
-            if (newTime < msgTime) {
-                insertBeforeElement = msg;
-                break;
-            }
-        }
-        
-        if (insertBeforeElement) {
-            chatMessages.insertBefore(messageElement, insertBeforeElement);
-        } else {
-            chatMessages.appendChild(messageElement);
-        }
-        
-        // Scroll to show the new message
-        setTimeout(() => {
+    notification.onclick = (e) => {
+        if (!e.target.closest('.notification-close')) {
             chatMessages.scrollTop = chatMessages.scrollHeight;
-        }, 50);
-    }
+            notification.remove();
+        }
+    };
     
-    // Create load more button
-    function createLoadMoreButton() {
-        const container = document.createElement('div');
-        container.className = 'load-more-container';
-        container.id = 'loadMoreContainer';
-        
-        const button = document.createElement('button');
-        button.className = 'load-more-btn';
-        button.innerHTML = '<i class="fas fa-history"></i> Load More Messages';
-        button.onclick = loadMoreHistory;
-        
-        container.appendChild(button);
-        return container;
-    }
+    notification.querySelector('.notification-close').onclick = (e) => {
+        e.stopPropagation();
+        notification.remove();
+    };
     
-    // Fetch chat history from server
-    async function fetchChatHistory(page = 0, pageSize = 10) {
-        try {
-            const response = await fetch('/chat/history', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    phoneNumber: currentPhone,
-                    page: page,
-                    pageSize: pageSize
-                })
+    chatMessages.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 10000);
+}
+
+// Check for new messages from server
+async function checkForNewMessages() {
+    if (!isConnected || !currentPhone || isLoadingHistory) return;
+    
+    try {
+        const latestTime = getLatestMessageTime() || new Date(0).getTime();
+        
+        const response = await fetch('/chat/check-new', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                phoneNumber: currentPhone,
+                lastTimestamp: latestTime
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.newMessages && data.newMessages.length > 0) {
+            console.log(`🔄 Found ${data.newMessages.length} new messages`);
+            
+            let newMessageCount = 0;
+            data.newMessages.forEach(msg => {
+                // Check if message already exists
+                const existingMsg = document.querySelector(`[data-message-id="${msg.id}"]`);
+                if (!existingMsg && !messageIds.has(msg.id)) {
+                    messageIds.add(msg.id);
+                    
+                    const messageElement = displayMessage(
+                        msg.text, 
+                        msg.sender, 
+                        msg.displayTime, 
+                        msg.isoTime, 
+                        msg.originalTimestamp,
+                        msg.id
+                    );
+                    
+                    insertMessageInOrder(messageElement);
+                    newMessageCount++;
+                    
+                    // Update last message time
+                    lastMessageTime = new Date(msg.isoTime || msg.timestamp).getTime();
+                }
             });
             
-            const data = await response.json();
+            // Show notification if new messages and not at bottom
+            if (newMessageCount > 0 && !isAtBottom()) {
+                showNewMessageNotification(newMessageCount);
+            }
             
-            if (data.success) {
-                console.log(`📜 Server returned ${data.messages?.length || 0} messages, hasMore: ${data.hasMore}, total: ${data.totalMessages}`);
+            // Reset to normal polling interval when we get new messages
+            currentPollInterval = POLL_INTERVAL;
+        } else {
+            // No new messages, gradually increase poll interval
+            currentPollInterval = Math.min(currentPollInterval * 1.2, POLL_BACKOFF);
+        }
+        
+        restartPolling();
+        
+    } catch (error) {
+        console.error('Error checking for new messages:', error);
+        currentPollInterval = Math.min(currentPollInterval * 1.5, POLL_BACKOFF);
+        restartPolling();
+    }
+}
+
+// Start polling for new messages
+function startPolling() {
+    if (pollingActive) return;
+    
+    pollingActive = true;
+    currentPollInterval = POLL_INTERVAL;
+    
+    messagePollingInterval = setInterval(() => {
+        if (isConnected && document.visibilityState === 'visible') {
+            checkForNewMessages();
+        }
+    }, currentPollInterval);
+    
+    console.log('🔄 Started message polling');
+}
+
+// Stop polling
+function stopPolling() {
+    pollingActive = false;
+    if (messagePollingInterval) {
+        clearInterval(messagePollingInterval);
+        messagePollingInterval = null;
+    }
+    messageIds.clear();
+    console.log('🛑 Stopped message polling');
+}
+
+// Restart polling
+function restartPolling() {
+    stopPolling();
+    startPolling();
+}
+
+// Create load more button
+function createLoadMoreButton() {
+    const container = document.createElement('div');
+    container.className = 'load-more-container';
+    container.id = 'loadMoreContainer';
+    
+    const button = document.createElement('button');
+    button.className = 'load-more-btn';
+    button.innerHTML = '<i class="fas fa-history"></i> Load More Messages';
+    button.onclick = loadMoreHistory;
+    
+    container.appendChild(button);
+    return container;
+}
+
+// Fetch chat history
+async function fetchChatHistory(page = 0, pageSize = 10) {
+    try {
+        const response = await fetch('/chat/history', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                phoneNumber: currentPhone,
+                page: page,
+                pageSize: pageSize
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const processedMessages = (data.messages || []).map(msg => {
+                let isoTime = msg.timestamp;
+                let displayTime = msg.displayTime;
+                let originalTimestamp = msg.originalTimestamp || msg.timestamp;
                 
-                // Process messages to ensure proper timestamps
-                const processedMessages = (data.messages || []).map(msg => {
-                    // If server returns ISO timestamp, use it
-                    // Otherwise parse the original timestamp
-                    let isoTime = msg.timestamp;
-                    let displayTime = msg.displayTime;
-                    let originalTimestamp = msg.originalTimestamp || msg.timestamp;
-                    
-                    // If we don't have a valid ISO timestamp, parse from original
-                    if (!isoTime || isoTime === 'Invalid Date' || new Date(isoTime).toString() === 'Invalid Date') {
-                        try {
-                            const date = parseCustomTimestamp(originalTimestamp);
-                            isoTime = date.toISOString();
-                            displayTime = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        } catch (error) {
-                            // If parsing fails, use current time
-                            const now = new Date();
-                            isoTime = now.toISOString();
-                            displayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        }
+                if (!isoTime || isoTime === 'Invalid Date' || new Date(isoTime).toString() === 'Invalid Date') {
+                    try {
+                        const date = parseCustomTimestamp(originalTimestamp);
+                        isoTime = date.toISOString();
+                        displayTime = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    } catch (error) {
+                        const now = new Date();
+                        isoTime = now.toISOString();
+                        displayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     }
-                    
-                    return {
-                        ...msg,
-                        isoTime: isoTime,
-                        displayTime: displayTime,
-                        originalTimestamp: originalTimestamp
-                    };
-                });
-                
-                // Sort by ISO timestamp (oldest first)
-                processedMessages.sort((a, b) => {
-                    const timeA = new Date(a.isoTime).getTime();
-                    const timeB = new Date(b.isoTime).getTime();
-                    return timeA - timeB;
-                });
+                }
                 
                 return {
-                    messages: processedMessages,
-                    hasMore: data.hasMore || false
+                    ...msg,
+                    isoTime: isoTime,
+                    displayTime: displayTime,
+                    originalTimestamp: originalTimestamp
                 };
-            }
+            });
             
-            return { messages: [], hasMore: false };
-        } catch (error) {
-            console.error('Error fetching history:', error);
-            return { messages: [], hasMore: false };
+            processedMessages.sort((a, b) => {
+                return new Date(a.isoTime).getTime() - new Date(b.isoTime).getTime();
+            });
+            
+            return {
+                messages: processedMessages,
+                hasMore: data.hasMore || false
+            };
         }
+        
+        return { messages: [], hasMore: false };
+    } catch (error) {
+        console.error('Error fetching history:', error);
+        return { messages: [], hasMore: false };
+    }
+}
+
+// Load more history
+async function loadMoreHistory() {
+    if (isLoadingHistory || !hasMoreHistory) return;
+    
+    const loadMoreBtn = document.querySelector('.load-more-btn');
+    if (loadMoreBtn) {
+        loadMoreBtn.classList.add('loading');
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.innerHTML = '<i class="fas fa-spinner"></i> Loading...';
     }
     
-    // Load more history
-    async function loadMoreHistory() {
-        if (isLoadingHistory || !hasMoreHistory) return;
-        
-        const loadMoreBtn = document.querySelector('.load-more-btn');
-        if (loadMoreBtn) {
-            loadMoreBtn.classList.add('loading');
-            loadMoreBtn.disabled = true;
-            loadMoreBtn.innerHTML = '<i class="fas fa-spinner"></i> Loading...';
-        }
-        
-        isLoadingHistory = true;
-        
-        try {
-            const result = await fetchChatHistory(historyPage, 10);
-            console.log(`📜 Loading page ${historyPage}, got ${result.messages.length} messages`);
-            
-            if (result.messages.length > 0) {
-                // Store scroll position BEFORE adding new messages
-                const oldScrollHeight = chatMessages.scrollHeight;
-                const oldScrollTop = chatMessages.scrollTop;
-                
-                // Remove load more button temporarily
-                const loadMoreContainer = document.getElementById('loadMoreContainer');
-                if (loadMoreContainer) {
-                    loadMoreContainer.remove();
-                }
-                
-                // Create fragment for new messages (older messages)
-                const fragment = document.createDocumentFragment();
-                
-                // Add messages in chronological order (oldest first)
-                result.messages.forEach(msg => {
-                    const messageElement = displayMessage(
-                        msg.text, 
-                        msg.sender, 
-                        msg.displayTime, 
-                        msg.isoTime, 
-                        msg.originalTimestamp
-                    );
-                    fragment.appendChild(messageElement);
-                });
-                
-                // Insert all new messages at the top (after welcome message)
-                const welcomeMessage = document.querySelector('.welcome-message');
-                if (welcomeMessage) {
-                    chatMessages.insertBefore(fragment, welcomeMessage.nextSibling);
-                } else {
-                    chatMessages.insertBefore(fragment, chatMessages.firstChild);
-                }
-                
-                // Add load more button again if needed
-                if (result.hasMore) {
-                    const newLoadMoreBtn = createLoadMoreButton();
-                    const welcomeMessage = document.querySelector('.welcome-message');
-                    if (welcomeMessage) {
-                        chatMessages.insertBefore(newLoadMoreBtn, welcomeMessage.nextSibling);
-                    } else {
-                        chatMessages.insertBefore(newLoadMoreBtn, chatMessages.firstChild);
-                    }
-                } else {
-                    // No more messages to load
-                    hasMoreHistory = false;
-                }
-                
-                // Restore scroll position to maintain user's view
-                const newScrollHeight = chatMessages.scrollHeight;
-                const scrollDiff = newScrollHeight - oldScrollHeight;
-                chatMessages.scrollTop = oldScrollTop + scrollDiff;
-                
-                // Update state
-                historyPage++;
-                hasMoreHistory = result.hasMore;
-                
-            } else {
-                // No more messages
-                hasMoreHistory = false;
-            }
-        } catch (error) {
-            console.error('Error loading more history:', error);
-        } finally {
-            isLoadingHistory = false;
-            
-            // Reset load more button if it exists
-            const loadMoreBtn = document.querySelector('.load-more-btn');
-            if (loadMoreBtn) {
-                loadMoreBtn.classList.remove('loading');
-                loadMoreBtn.disabled = false;
-                loadMoreBtn.innerHTML = '<i class="fas fa-history"></i> Load More Messages';
-            }
-        }
-    }
+    isLoadingHistory = true;
     
-    // Load chat history with pagination
-    async function loadChatHistory(phone) {
-        // Show loading indicator
-        const loadingDiv = document.createElement('div');
-        loadingDiv.className = 'history-loading';
-        loadingDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading history...';
-        chatMessages.appendChild(loadingDiv);
+    try {
+        const result = await fetchChatHistory(historyPage, 10);
         
-        try {
-            const result = await fetchChatHistory(0, 10);
-            console.log(`📜 Initial load: ${result.messages.length} messages`);
+        if (result.messages.length > 0) {
+            const oldScrollHeight = chatMessages.scrollHeight;
+            const oldScrollTop = chatMessages.scrollTop;
             
-            // Remove loading indicator
-            loadingDiv.remove();
+            const loadMoreContainer = document.getElementById('loadMoreContainer');
+            if (loadMoreContainer) loadMoreContainer.remove();
             
-            if (result.messages.length > 0) {
-                // Display messages in chronological order
-                result.messages.forEach(msg => {
-                    const messageElement = displayMessage(
-                        msg.text, 
-                        msg.sender, 
-                        msg.displayTime, 
-                        msg.isoTime, 
-                        msg.originalTimestamp
-                    );
-                    insertMessageInOrder(messageElement);
-                });
-                
-                // Add load more button at top if there are more messages
-                if (result.hasMore) {
-                    const loadMoreBtn = createLoadMoreButton();
-                    const welcomeMessage = document.querySelector('.welcome-message');
-                    if (welcomeMessage) {
-                        chatMessages.insertBefore(loadMoreBtn, welcomeMessage.nextSibling);
-                    } else {
-                        chatMessages.insertBefore(loadMoreBtn, chatMessages.firstChild);
-                    }
-                    
-                    historyPage = 1;
-                    hasMoreHistory = true;
-                }
-            } else {
-                // No history found
-                const noHistoryDiv = document.createElement('div');
-                noHistoryDiv.className = 'history-loading';
-                noHistoryDiv.textContent = 'No previous messages found';
-                
-                const welcomeMessage = document.querySelector('.welcome-message');
-                if (welcomeMessage) {
-                    chatMessages.insertBefore(noHistoryDiv, welcomeMessage.nextSibling);
-                }
-            }
+            const fragment = document.createDocumentFragment();
             
-            // Scroll to bottom to see latest messages
-            setTimeout(() => {
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }, 100);
-            
-        } catch (error) {
-            console.error('Error loading chat history:', error);
-            loadingDiv.remove();
-            
-            // Show error message
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'history-loading';
-            errorDiv.textContent = 'Error loading history from server';
+            result.messages.forEach(msg => {
+                const messageElement = displayMessage(
+                    msg.text, 
+                    msg.sender, 
+                    msg.displayTime, 
+                    msg.isoTime, 
+                    msg.originalTimestamp,
+                    msg.id
+                );
+                fragment.appendChild(messageElement);
+            });
             
             const welcomeMessage = document.querySelector('.welcome-message');
             if (welcomeMessage) {
-                chatMessages.insertBefore(errorDiv, welcomeMessage.nextSibling);
+                chatMessages.insertBefore(fragment, welcomeMessage.nextSibling);
+            } else {
+                chatMessages.insertBefore(fragment, chatMessages.firstChild);
             }
+            
+            if (result.hasMore) {
+                const newLoadMoreBtn = createLoadMoreButton();
+                const welcomeMessage = document.querySelector('.welcome-message');
+                if (welcomeMessage) {
+                    chatMessages.insertBefore(newLoadMoreBtn, welcomeMessage.nextSibling);
+                } else {
+                    chatMessages.insertBefore(newLoadMoreBtn, chatMessages.firstChild);
+                }
+            } else {
+                hasMoreHistory = false;
+            }
+            
+            const newScrollHeight = chatMessages.scrollHeight;
+            const scrollDiff = newScrollHeight - oldScrollHeight;
+            chatMessages.scrollTop = oldScrollTop + scrollDiff;
+            
+            historyPage++;
+            hasMoreHistory = result.hasMore;
+            
+        } else {
+            hasMoreHistory = false;
+        }
+    } catch (error) {
+        console.error('Error loading more history:', error);
+    } finally {
+        isLoadingHistory = false;
+        
+        const loadMoreBtn = document.querySelector('.load-more-btn');
+        if (loadMoreBtn) {
+            loadMoreBtn.classList.remove('loading');
+            loadMoreBtn.disabled = false;
+            loadMoreBtn.innerHTML = '<i class="fas fa-history"></i> Load More Messages';
         }
     }
+}
+
+// Load initial chat history
+async function loadChatHistory(phone) {
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'history-loading';
+    loadingDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading history...';
+    chatMessages.appendChild(loadingDiv);
     
-    // Auto-resize textarea
-    function autoResizeTextarea(textarea) {
-        textarea.style.height = 'auto';
-        const newHeight = Math.min(textarea.scrollHeight, 100);
-        textarea.style.height = newHeight + 'px';
+    try {
+        const result = await fetchChatHistory(0, 10);
         
-        // Adjust wrapper height
-        const wrapper = textarea.closest('.message-input-wrapper');
-        if (wrapper) {
-            wrapper.style.minHeight = Math.max(44, newHeight + 16) + 'px';
-        }
-    }
-    
-    // Show typing indicator
-    function showTyping() {
-        const typingDiv = document.createElement('div');
-        typingDiv.className = 'message bot';
-        typingDiv.id = 'typingIndicator';
+        loadingDiv.remove();
         
-        const wrapperDiv = document.createElement('div');
-        wrapperDiv.className = 'message-wrapper';
-        
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content typing-indicator';
-        contentDiv.innerHTML = `
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-        `;
-        
-        wrapperDiv.appendChild(contentDiv);
-        typingDiv.appendChild(wrapperDiv);
-        
-        // Insert typing indicator at bottom
-        chatMessages.appendChild(typingDiv);
-        
-        // Scroll to show typing indicator
-        setTimeout(() => {
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }, 50);
-    }
-    
-    // Hide typing indicator
-    function hideTyping() {
-        const typing = document.getElementById('typingIndicator');
-        if (typing) {
-            typing.remove();
-        }
-    }
-    
-    // Send message to server
-    async function sendMessage() {
-        const message = messageInput.value.trim();
-        if (!message || !isConnected) return;
-        
-        // Clear and reset input
-        messageInput.value = '';
-        autoResizeTextarea(messageInput);
-        sendBtn.disabled = true;
-        
-        // Display user message immediately with current timestamp
-        const now = new Date();
-        const isoTime = now.toISOString();
-        const displayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        const messageElement = displayMessage(message, 'user', displayTime, isoTime);
-        
-        // Insert at correct position based on timestamp
-        insertMessageInOrder(messageElement);
-        
-        // Show typing indicator
-        showTyping();
-        
-        try {
-            const response = await fetch('/chat/message', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    phoneNumber: currentPhone,
-                    message: message
-                })
+        if (result.messages.length > 0) {
+            result.messages.forEach(msg => {
+                if (msg.id) messageIds.add(msg.id);
+                const messageElement = displayMessage(
+                    msg.text, 
+                    msg.sender, 
+                    msg.displayTime, 
+                    msg.isoTime, 
+                    msg.originalTimestamp,
+                    msg.id
+                );
+                insertMessageInOrder(messageElement);
             });
             
-            const data = await response.json();
-            hideTyping();
-            
-            if (data.success) {
-                // Bot response with current timestamp
-                const botNow = new Date();
-                const botIsoTime = botNow.toISOString();
-                const botDisplayTime = botNow.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                const botMessageElement = displayMessage(data.response, 'bot', botDisplayTime, botIsoTime);
+            if (result.hasMore) {
+                const loadMoreBtn = createLoadMoreButton();
+                const welcomeMessage = document.querySelector('.welcome-message');
+                if (welcomeMessage) {
+                    chatMessages.insertBefore(loadMoreBtn, welcomeMessage.nextSibling);
+                } else {
+                    chatMessages.insertBefore(loadMoreBtn, chatMessages.firstChild);
+                }
                 
-                // Insert at correct position based on timestamp
-                insertMessageInOrder(botMessageElement);
-            } else {
-                const errorNow = new Date();
-                const errorIsoTime = errorNow.toISOString();
-                const errorDisplayTime = errorNow.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                const errorMessageElement = displayMessage('Sorry, there was an error processing your message.', 'bot', errorDisplayTime, errorIsoTime);
-                
-                // Insert at correct position based on timestamp
-                insertMessageInOrder(errorMessageElement);
+                historyPage = 1;
+                hasMoreHistory = true;
             }
+        } else {
+            const noHistoryDiv = document.createElement('div');
+            noHistoryDiv.className = 'history-loading';
+            noHistoryDiv.textContent = 'No previous messages found';
             
-        } catch (error) {
-            hideTyping();
+            const welcomeMessage = document.querySelector('.welcome-message');
+            if (welcomeMessage) {
+                chatMessages.insertBefore(noHistoryDiv, welcomeMessage.nextSibling);
+            }
+        }
+        
+        setTimeout(() => {
+            if (isAtBottom()) {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        }, 100);
+        
+    } catch (error) {
+        console.error('Error loading chat history:', error);
+        loadingDiv.remove();
+        
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'history-loading';
+        errorDiv.textContent = 'Error loading history from server';
+        
+        const welcomeMessage = document.querySelector('.welcome-message');
+        if (welcomeMessage) {
+            chatMessages.insertBefore(errorDiv, welcomeMessage.nextSibling);
+        }
+    }
+}
+
+// Auto-resize textarea
+function autoResizeTextarea(textarea) {
+    textarea.style.height = 'auto';
+    const newHeight = Math.min(textarea.scrollHeight, 100);
+    textarea.style.height = newHeight + 'px';
+    
+    const wrapper = textarea.closest('.message-input-wrapper');
+    if (wrapper) {
+        wrapper.style.minHeight = Math.max(44, newHeight + 16) + 'px';
+    }
+}
+
+// Show typing indicator
+function showTyping() {
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'message bot';
+    typingDiv.id = 'typingIndicator';
+    
+    const wrapperDiv = document.createElement('div');
+    wrapperDiv.className = 'message-wrapper';
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content typing-indicator';
+    contentDiv.innerHTML = `
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+    `;
+    
+    wrapperDiv.appendChild(contentDiv);
+    typingDiv.appendChild(wrapperDiv);
+    
+    chatMessages.appendChild(typingDiv);
+    
+    setTimeout(() => {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }, 50);
+}
+
+// Hide typing indicator
+function hideTyping() {
+    const typing = document.getElementById('typingIndicator');
+    if (typing) typing.remove();
+}
+
+// Send message to server
+async function sendMessage() {
+    const message = messageInput.value.trim();
+    if (!message || !isConnected) return;
+    
+    messageInput.value = '';
+    autoResizeTextarea(messageInput);
+    sendBtn.disabled = true;
+    
+    const now = new Date();
+    const isoTime = now.toISOString();
+    const displayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    const messageElement = displayMessage(message, 'user', displayTime, isoTime);
+    
+    insertMessageInOrder(messageElement);
+    showTyping();
+    
+    try {
+        const response = await fetch('/chat/message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                phoneNumber: currentPhone,
+                message: message
+            })
+        });
+        
+        const data = await response.json();
+        hideTyping();
+        
+        if (data.success) {
+            const botNow = new Date();
+            const botIsoTime = botNow.toISOString();
+            const botDisplayTime = botNow.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const botMessageElement = displayMessage(data.response, 'bot', botDisplayTime, botIsoTime);
+            
+            insertMessageInOrder(botMessageElement);
+            
+            // Check for any other new messages
+            setTimeout(() => checkForNewMessages(), 500);
+        } else {
             const errorNow = new Date();
             const errorIsoTime = errorNow.toISOString();
             const errorDisplayTime = errorNow.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            const errorMessageElement = displayMessage('Network error. Please check your connection.', 'bot', errorDisplayTime, errorIsoTime);
+            const errorMessageElement = displayMessage('Sorry, there was an error processing your message.', 'bot', errorDisplayTime, errorIsoTime);
             
-            // Insert at correct position based on timestamp
             insertMessageInOrder(errorMessageElement);
-            
-            console.error('Error:', error);
         }
         
-        sendBtn.disabled = false;
-        messageInput.focus();
+    } catch (error) {
+        hideTyping();
+        const errorNow = new Date();
+        const errorIsoTime = errorNow.toISOString();
+        const errorDisplayTime = errorNow.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const errorMessageElement = displayMessage('Network error. Please check your connection.', 'bot', errorDisplayTime, errorIsoTime);
+        
+        insertMessageInOrder(errorMessageElement);
+        console.error('Error:', error);
     }
     
-    // Initialize chat
-    function initChat(phone) {
-        currentPhone = phone;
-        currentPhoneSpan.textContent = phone;
-        
-        // Update profile based on phone number
-        const digits = phone.replace(/[^0-9]/g, '');
-        const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
-        const isEmployee = EMPLOYEE_NUMBERS.includes(digits);
-        
-        // Set profile avatar
-        profileAvatar.textContent = digits.substring(0, 2) || 'ZC';
-        
-        // Set chat title
-        if (isEmployee) {
-            if (suffix === 'A') {
-                chatTitle.textContent = 'Employee (Admin)';
-                chatStatus.textContent = 'Online • Admin Mode';
-                profileAvatar.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)';
-            } else if (suffix === 'U') {
-                chatTitle.textContent = 'Employee (User)';
-                chatStatus.textContent = 'Online • User Mode';
-                profileAvatar.style.background = 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)';
-            } else {
-                chatTitle.textContent = 'Employee Mode';
-                chatStatus.textContent = 'Online • Employee';
-                profileAvatar.style.background = 'linear-gradient(135deg, #00b09b 0%, #96c93d 100%)';
-            }
-        } else {
-            chatTitle.textContent = 'Zulu Club Assistant';
-            chatStatus.textContent = 'Online';
+    sendBtn.disabled = false;
+    messageInput.focus();
+}
+
+// Initialize chat
+function initChat(phone) {
+    currentPhone = phone;
+    currentPhoneSpan.textContent = phone;
+    
+    const digits = phone.replace(/[^0-9]/g, '');
+    const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
+    const isEmployee = EMPLOYEE_NUMBERS.includes(digits);
+    
+    profileAvatar.textContent = digits.substring(0, 2) || 'ZC';
+    
+    if (isEmployee) {
+        if (suffix === 'A') {
+            chatTitle.textContent = 'Employee (Admin)';
+            chatStatus.textContent = 'Online • Admin Mode';
+            profileAvatar.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)';
+        } else if (suffix === 'U') {
+            chatTitle.textContent = 'Employee (User)';
+            chatStatus.textContent = 'Online • User Mode';
             profileAvatar.style.background = 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)';
-        }
-        
-        // Reset pagination
-        historyPage = 0;
-        hasMoreHistory = true;
-        isLoadingHistory = false;
-        
-        // Hide setup, show chat
-        setupSection.classList.add('hidden');
-        chatSection.classList.remove('hidden');
-        
-        // Clear chat messages
-        chatMessages.innerHTML = '';
-        
-        // Enable input
-        messageInput.disabled = false;
-        messageInput.focus();
-        
-        // Show welcome message
-        let welcomeHtml = '';
-        
-        if (isEmployee) {
-            if (suffix === 'A') {
-                welcomeHtml = `
-                    <div class="welcome-message">
-                        <h3><i class="fas fa-user-tie"></i> Employee Admin Mode</h3>
-                        <p>You're in <strong>Admin Mode</strong> (suffix: A)</p>
-                        <p>You can log:</p>
-                        <p>• <strong>Operation:</strong> ops message</p>
-                        <p>• <strong>Logistics:</strong> logistics message</p>
-                        <p>• <strong>Inventory:</strong> inventory message</p>
-                        <p>• <strong>Market:</strong> market message</p>
-                        <p>• <strong>Fixed:</strong> fixed message</p>
-                        <p>• <strong>Sales:</strong> sales message</p>
-                        <p>• <strong>Lead:</strong> lead message</p>
-                        <p><br>Try: <em>"Operation: Need more staff tomorrow"</em></p>
-                    </div>
-                `;
-            } else if (suffix === 'U') {
-                welcomeHtml = `
-                    <div class="welcome-message">
-                        <h3><i class="fas fa-user"></i> Employee User Mode</h3>
-                        <p>You're in <strong>User Mode</strong> (suffix: U)</p>
-                        <p>You'll chat as a regular user.</p>
-                        <p><br>Try asking: <em>"Show me t-shirts"</em> or <em>"Tell me about Zulu Club"</em></p>
-                    </div>
-                `;
-            } else {
-                welcomeHtml = `
-                    <div class="welcome-message">
-                        <h3><i class="fas fa-user-tie"></i> Employee Mode</h3>
-                        <p>You're logged in as an employee (no suffix).</p>
-                        <p>Add 'U' to your number for user mode: <strong>${digits}U</strong></p>
-                        <p>You can log billing/sales/lead messages.</p>
-                        <p><br>Try: <em>"Sales: Made 5 sales today"</em></p>
-                    </div>
-                `;
-            }
         } else {
+            chatTitle.textContent = 'Employee Mode';
+            chatStatus.textContent = 'Online • Employee';
+            profileAvatar.style.background = 'linear-gradient(135deg, #00b09b 0%, #96c93d 100%)';
+        }
+    } else {
+        chatTitle.textContent = 'Zulu Club Assistant';
+        chatStatus.textContent = 'Online';
+        profileAvatar.style.background = 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)';
+    }
+    
+    historyPage = 0;
+    hasMoreHistory = true;
+    isLoadingHistory = false;
+    messageIds.clear();
+    
+    setupSection.classList.add('hidden');
+    chatSection.classList.remove('hidden');
+    chatMessages.innerHTML = '';
+    
+    messageInput.disabled = false;
+    messageInput.focus();
+    
+    let welcomeHtml = '';
+    
+    if (isEmployee) {
+        if (suffix === 'A') {
             welcomeHtml = `
                 <div class="welcome-message">
-                    <h3><i class="fas fa-shopping-bag"></i> Welcome to Zulu Club!</h3>
-                    <p>I'm your personal shopping assistant. I can help you with:</p>
-                    <p>• Product browsing and shopping</p>
-                    <p>• Seller information and partnerships</p>
-                    <p>• Company details and investor queries</p>
-                    <p>• Connecting with human agents</p>
+                    <h3><i class="fas fa-user-tie"></i> Employee Admin Mode</h3>
+                    <p>You're in <strong>Admin Mode</strong> (suffix: A)</p>
+                    <p>You can log:</p>
+                    <p>• <strong>Operation:</strong> ops message</p>
+                    <p>• <strong>Logistics:</strong> logistics message</p>
+                    <p>• <strong>Inventory:</strong> inventory message</p>
+                    <p>• <strong>Market:</strong> market message</p>
+                    <p>• <strong>Fixed:</strong> fixed message</p>
+                    <p>• <strong>Sales:</strong> sales message</p>
+                    <p>• <strong>Lead:</strong> lead message</p>
+                    <p><br>Try: <em>"Operation: Need more staff tomorrow"</em></p>
+                </div>
+            `;
+        } else if (suffix === 'U') {
+            welcomeHtml = `
+                <div class="welcome-message">
+                    <h3><i class="fas fa-user"></i> Employee User Mode</h3>
+                    <p>You're in <strong>User Mode</strong> (suffix: U)</p>
+                    <p>You'll chat as a regular user.</p>
                     <p><br>Try asking: <em>"Show me t-shirts"</em> or <em>"Tell me about Zulu Club"</em></p>
                 </div>
             `;
-        }
-        
-        chatMessages.innerHTML = welcomeHtml;
-        
-        // Load history from server only
-        loadChatHistory(phone);
-        
-        isConnected = true;
-        
-        // Update status bar
-        statusBar.innerHTML = `Connected as: <span style="color:#00a884">${phone}</span>`;
-    }
-    
-    // Go back to setup
-    function goBackToSetup() {
-        setupSection.classList.remove('hidden');
-        chatSection.classList.add('hidden');
-        chatMessages.innerHTML = '';
-        currentPhone = '';
-        isConnected = false;
-        historyPage = 0;
-        hasMoreHistory = true;
-        isLoadingHistory = false;
-        phoneInput.focus();
-        phoneInput.value = '';
-        phoneInput.classList.remove('valid', 'invalid');
-        errorMessage.style.display = 'none';
-        startChatBtn.disabled = false;
-    }
-    
-    // Event Listeners
-    startChatBtn.addEventListener('click', () => {
-        const phone = phoneInput.value.trim();
-        if (phone && validatePhoneNumber(phone)) {
-            initChat(phone);
         } else {
-            errorMessage.style.display = 'block';
-            phoneInput.classList.add('invalid');
-            phoneInput.focus();
+            welcomeHtml = `
+                <div class="welcome-message">
+                    <h3><i class="fas fa-user-tie"></i> Employee Mode</h3>
+                    <p>You're logged in as an employee (no suffix).</p>
+                    <p>Add 'U' to your number for user mode: <strong>${digits}U</strong></p>
+                    <p>You can log billing/sales/lead messages.</p>
+                    <p><br>Try: <em>"Sales: Made 5 sales today"</em></p>
+                </div>
+            `;
         }
-    });
+    } else {
+        welcomeHtml = `
+            <div class="welcome-message">
+                <h3><i class="fas fa-shopping-bag"></i> Welcome to Zulu Club!</h3>
+                <p>I'm your personal shopping assistant. I can help you with:</p>
+                <p>• Product browsing and shopping</p>
+                <p>• Seller information and partnerships</p>
+                <p>• Company details and investor queries</p>
+                <p>• Connecting with human agents</p>
+                <p><br>Try asking: <em>"Show me t-shirts"</em> or <em>"Tell me about Zulu Club"</em></p>
+            </div>
+        `;
+    }
     
-    backBtn.addEventListener('click', goBackToSetup);
+    chatMessages.innerHTML = welcomeHtml;
+    loadChatHistory(phone);
     
-    phoneInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            startChatBtn.click();
-        }
-    });
+    isConnected = true;
+    statusBar.innerHTML = `Connected as: <span style="color:#00a884">${phone}</span>`;
     
-    sendBtn.addEventListener('click', sendMessage);
-    
-    messageInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            if (messageInput.value.trim()) {
-                sendMessage();
-            }
-        }
-    });
-    
-    messageInput.addEventListener('input', function() {
-        autoResizeTextarea(this);
-        sendBtn.disabled = !this.value.trim();
-    });
-    
-    // Emoji button click
-    emojiBtn.addEventListener('click', () => {
-        messageInput.focus();
-        // Simple emoji picker
-        const emojis = ['😊', '👍', '❤️', '😎', '🔥', '💯', '✨', '🚀', '🛒', '💬', '📱', '💻'];
-        const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-        
-        const start = messageInput.selectionStart;
-        const end = messageInput.selectionEnd;
-        const text = messageInput.value;
-        
-        messageInput.value = text.substring(0, start) + randomEmoji + text.substring(end);
-        messageInput.selectionStart = messageInput.selectionEnd = start + randomEmoji.length;
-        
-        autoResizeTextarea(messageInput);
-        sendBtn.disabled = !messageInput.value.trim();
-        
-        // Trigger input event for proper resize
-        const event = new Event('input', { bubbles: true });
-        messageInput.dispatchEvent(event);
-    });
-    
-    // Attach button click
-    attachBtn.addEventListener('click', () => {
-        // Simple file picker simulation
-        messageInput.focus();
-        const now = new Date();
-        const isoTime = now.toISOString();
-        const displayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        const messageElement = displayMessage('[File attachment would open here]', 'bot', displayTime, isoTime);
-        
-        // Insert at correct position based on timestamp
-        insertMessageInOrder(messageElement);
-    });
-    
-    // Auto-focus phone input on load
-    window.addEventListener('load', () => {
+    // Start polling for new messages
+    startPolling();
+}
+
+// Go back to setup
+function goBackToSetup() {
+    stopPolling();
+    setupSection.classList.remove('hidden');
+    chatSection.classList.add('hidden');
+    chatMessages.innerHTML = '';
+    currentPhone = '';
+    isConnected = false;
+    historyPage = 0;
+    hasMoreHistory = true;
+    isLoadingHistory = false;
+    messageIds.clear();
+    phoneInput.focus();
+    phoneInput.value = '';
+    phoneInput.classList.remove('valid', 'invalid');
+    errorMessage.style.display = 'none';
+    startChatBtn.disabled = false;
+}
+
+// Event Listeners
+startChatBtn.addEventListener('click', () => {
+    const phone = phoneInput.value.trim();
+    if (phone && validatePhoneNumber(phone)) {
+        initChat(phone);
+    } else {
+        errorMessage.style.display = 'block';
+        phoneInput.classList.add('invalid');
         phoneInput.focus();
-        
-        // Handle mobile keyboard
-        if ('visualViewport' in window) {
-            const visualViewport = window.visualViewport;
-            
-            visualViewport.addEventListener('resize', () => {
-                if (isConnected) {
-                    setTimeout(() => {
-                        chatMessages.scrollTop = chatMessages.scrollHeight;
-                    }, 150);
-                }
-            });
-        }
-        
-        // Handle iOS input scroll
-        let focusedElement;
-        let initialViewportHeight = window.innerHeight;
-        
-        messageInput.addEventListener('focus', () => {
-            focusedElement = messageInput;
-            setTimeout(() => {
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }, 300);
-        });
-        
-        messageInput.addEventListener('blur', () => {
-            focusedElement = null;
-        });
-    });
-    
-    // Handle window resize
-    window.addEventListener('resize', () => {
-        if (isConnected) {
-            setTimeout(() => {
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }, 100);
-        }
-    });
-    
-    // Handle touch events for better mobile UX
-    document.addEventListener('touchstart', function(e) {
-        // Prevent double-tap zoom
-        if (e.touches.length > 1) {
-            e.preventDefault();
-        }
-    }, { passive: false });
-    
-    // Prevent zoom on mobile
-    document.addEventListener('gesturestart', function(e) {
+    }
+});
+
+backBtn.addEventListener('click', goBackToSetup);
+
+phoneInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        startChatBtn.click();
+    }
+});
+
+sendBtn.addEventListener('click', sendMessage);
+
+messageInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-    });
+        if (messageInput.value.trim()) {
+            sendMessage();
+        }
+    }
+});
+
+messageInput.addEventListener('input', function() {
+    autoResizeTextarea(this);
+    sendBtn.disabled = !this.value.trim();
+});
+
+// Emoji button
+emojiBtn.addEventListener('click', () => {
+    messageInput.focus();
+    const emojis = ['😊', '👍', '❤️', '😎', '🔥', '💯', '✨', '🚀', '🛒', '💬', '📱', '💻'];
+    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
     
-    // Handle back button on mobile (for Cordova/PhoneGap)
-    document.addEventListener('backbutton', goBackToSetup, false);
+    const start = messageInput.selectionStart;
+    const end = messageInput.selectionEnd;
+    const text = messageInput.value;
     
-    // Improve mobile input handling
-    messageInput.addEventListener('focus', function() {
+    messageInput.value = text.substring(0, start) + randomEmoji + text.substring(end);
+    messageInput.selectionStart = messageInput.selectionEnd = start + randomEmoji.length;
+    
+    autoResizeTextarea(messageInput);
+    sendBtn.disabled = !messageInput.value.trim();
+    
+    const event = new Event('input', { bubbles: true });
+    messageInput.dispatchEvent(event);
+});
+
+// Attach button
+attachBtn.addEventListener('click', () => {
+    messageInput.focus();
+    const now = new Date();
+    const isoTime = now.toISOString();
+    const displayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    const messageElement = displayMessage('[File attachment would open here]', 'bot', displayTime, isoTime);
+    
+    insertMessageInOrder(messageElement);
+});
+
+// Visibility change listener
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        currentPollInterval = POLL_BACKOFF;
+        restartPolling();
+    } else {
+        currentPollInterval = POLL_INTERVAL;
+        restartPolling();
+        
+        if (isConnected) {
+            setTimeout(() => checkForNewMessages(), 1000);
+        }
+    }
+});
+
+// Initialize on load
+window.addEventListener('load', () => {
+    phoneInput.focus();
+    
+    if ('visualViewport' in window) {
+        const visualViewport = window.visualViewport;
+        visualViewport.addEventListener('resize', () => {
+            if (isConnected) {
+                setTimeout(() => {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 150);
+            }
+        });
+    }
+    
+    let focusedElement;
+    let initialViewportHeight = window.innerHeight;
+    
+    messageInput.addEventListener('focus', () => {
+        focusedElement = messageInput;
         setTimeout(() => {
-            this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }, 300);
     });
     
-    // Handle paste events to preserve formatting
-    messageInput.addEventListener('paste', function(e) {
+    messageInput.addEventListener('blur', () => {
+        focusedElement = null;
+    });
+});
+
+// Handle window resize
+window.addEventListener('resize', () => {
+    if (isConnected) {
+        setTimeout(() => {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 100);
+    }
+});
+
+// Handle touch events
+document.addEventListener('touchstart', function(e) {
+    if (e.touches.length > 1) {
         e.preventDefault();
-        const text = (e.clipboardData || window.clipboardData).getData('text');
-        document.execCommand('insertText', false, text);
-    });
-    
-    // Handle scroll for infinite loading
-    chatMessages.addEventListener('scroll', function() {
-        if (this.scrollTop === 0 && hasMoreHistory && !isLoadingHistory) {
-            loadMoreHistory();
-        }
-    });
+    }
+}, { passive: false });
+
+document.addEventListener('gesturestart', function(e) {
+    e.preventDefault();
+});
+
+// Handle back button
+document.addEventListener('backbutton', goBackToSetup, false);
+
+// Handle paste events
+messageInput.addEventListener('paste', function(e) {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    document.execCommand('insertText', false, text);
+});
+
+// Handle scroll for infinite loading
+chatMessages.addEventListener('scroll', function() {
+    if (this.scrollTop === 0 && hasMoreHistory && !isLoadingHistory) {
+        loadMoreHistory();
+    }
+});
 </script>
 </body>
 </html>
