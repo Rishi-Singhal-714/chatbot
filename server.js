@@ -1640,10 +1640,12 @@ app.get('/refresh-csv', async (req, res) => {
 });
 // Add this endpoint to your server.js (somewhere after your other endpoints)
 
-// Update this part in your server.js /chat/history endpoint
+// SIMPLIFIED /chat/history endpoint - Add this to your server.js
 app.post('/chat/history', async (req, res) => {
     try {
         const { phoneNumber, page = 0, pageSize = 20 } = req.body;
+        
+        console.log(`🔍 History request: phone=${phoneNumber}, page=${page}, pageSize=${pageSize}`);
         
         if (!phoneNumber) {
             return res.status(400).json({
@@ -1652,176 +1654,173 @@ app.post('/chat/history', async (req, res) => {
             });
         }
         
-        console.log(`📜 Fetching history for ${phoneNumber}, page ${page}, pageSize ${pageSize}`);
-        
         // Get the Google Sheets client
         const sheets = await getSheets();
         if (!sheets) {
-            console.log('⚠️ Google Sheets not configured, returning empty history');
+            console.log('⚠️ Google Sheets not configured');
             return res.json({
                 success: true,
                 history: '',
                 messages: [],
                 hasMore: false,
-                totalMessages: 0
+                totalMessages: 0,
+                debug: 'Google Sheets not configured'
             });
         }
         
         try {
-            // Read column headers to find the correct column for this phone number
-            const headersResp = await sheets.spreadsheets.values.get({ 
-                spreadsheetId: GOOGLE_SHEET_ID, 
-                range: 'History!1:1' 
+            // 1. Get ALL sheet data first (for debugging)
+            const sheetName = 'History';
+            const range = `${sheetName}!A:Z`; // Get entire sheet
+            
+            console.log(`📋 Reading sheet: ${sheetName}`);
+            
+            const sheetResp = await sheets.spreadsheets.values.get({
+                spreadsheetId: GOOGLE_SHEET_ID,
+                range: range
             });
             
-            const headers = (headersResp.data.values && headersResp.data.values[0]) || [];
+            const rows = sheetResp.data.values || [];
+            console.log(`📊 Sheet has ${rows.length} rows`);
             
-            // Find the column index for this phone number
-            let colIndex = -1;
-            for (let i = 0; i < headers.length; i++) {
-                const header = String(headers[i]).trim();
-                if (header === phoneNumber) {
-                    colIndex = i;
-                    break;
-                }
-            }
-            
-            if (colIndex === -1) {
-                console.log(`📜 No history found for ${phoneNumber}`);
+            if (rows.length === 0) {
                 return res.json({
                     success: true,
                     history: '',
                     messages: [],
                     hasMore: false,
-                    totalMessages: 0
+                    totalMessages: 0,
+                    debug: 'Empty sheet'
                 });
             }
             
-            // Get all values from this column (excluding header)
-            const colLetter = String.fromCharCode(65 + colIndex);
-            const range = `History!${colLetter}2:${colLetter}`;
+            // 2. Find the column for this phone number
+            const headers = rows[0] || [];
+            let columnIndex = -1;
             
-            const colResp = await sheets.spreadsheets.values.get({
-                spreadsheetId: GOOGLE_SHEET_ID,
-                range: range,
-                majorDimension: 'COLUMNS'
-            });
+            for (let i = 0; i < headers.length; i++) {
+                if (String(headers[i]).trim() === phoneNumber) {
+                    columnIndex = i;
+                    break;
+                }
+            }
             
-            const columnValues = (colResp.data.values && colResp.data.values[0]) || [];
+            console.log(`🔍 Found column index: ${columnIndex} for phone ${phoneNumber}`);
             
-            // Parse and filter messages
+            if (columnIndex === -1) {
+                return res.json({
+                    success: true,
+                    history: '',
+                    messages: [],
+                    hasMore: false,
+                    totalMessages: 0,
+                    debug: `No column found for ${phoneNumber}`
+                });
+            }
+            
+            // 3. Collect all messages from this column
             const allMessages = [];
             
-            columnValues.forEach(cellValue => {
+            for (let row = 1; row < rows.length; row++) {
+                const cellValue = rows[row][columnIndex];
                 if (cellValue && typeof cellValue === 'string' && cellValue.trim()) {
-                    const parts = cellValue.split(' | ');
-                    if (parts.length >= 2) {
-                        const timestamp = parts[0];
-                        const content = parts.slice(1).join(' | ').trim();
-                        
-                        if (content) {
-                            let sender = 'bot';
-                            let messageText = content;
+                    try {
+                        const parts = cellValue.split(' | ');
+                        if (parts.length >= 2) {
+                            const timestamp = parts[0].trim();
+                            const content = parts.slice(1).join(' | ').trim();
                             
-                            if (content.startsWith('USER:')) {
-                                sender = 'user';
-                                messageText = content.substring(5).trim();
-                            } else if (content.startsWith('ASSISTANT:')) {
-                                sender = 'bot';
-                                messageText = content.substring(10).trim();
+                            if (content) {
+                                let sender = 'bot';
+                                let messageText = content;
+                                
+                                if (content.startsWith('USER:')) {
+                                    sender = 'user';
+                                    messageText = content.substring(5).trim();
+                                } else if (content.startsWith('ASSISTANT:')) {
+                                    sender = 'bot';
+                                    messageText = content.substring(10).trim();
+                                }
+                                
+                                allMessages.push({
+                                    text: messageText,
+                                    sender: sender,
+                                    timestamp: timestamp,
+                                    isoTime: timestamp,
+                                    displayTime: new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                                });
                             }
-                            
-                            allMessages.push({
-                                text: messageText,
-                                sender: sender,
-                                timestamp: timestamp,
-                                isoTime: timestamp,
-                                displayTime: new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-                            });
                         }
+                    } catch (error) {
+                        console.error(`Error parsing row ${row}:`, error);
                     }
+                }
+            }
+            
+            console.log(`📜 Found ${allMessages.length} total messages`);
+            
+            // 4. Sort messages by timestamp (oldest first)
+            allMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            
+            // 5. For page 0, get the MOST RECENT messages (up to pageSize)
+            let pageMessages = [];
+            let hasMore = false;
+            
+            if (page === 0) {
+                // Get the most recent messages
+                const startIndex = Math.max(0, allMessages.length - pageSize);
+                pageMessages = allMessages.slice(startIndex);
+                hasMore = startIndex > 0;
+                
+                console.log(`📄 Page 0: returning ${pageMessages.length} most recent messages, hasMore=${hasMore}`);
+            } else {
+                // For subsequent pages, get older messages
+                const alreadyLoaded = page * pageSize;
+                const remaining = allMessages.length - alreadyLoaded;
+                
+                if (remaining > 0) {
+                    const startIndex = Math.max(0, allMessages.length - alreadyLoaded - pageSize);
+                    const endIndex = allMessages.length - alreadyLoaded;
+                    pageMessages = allMessages.slice(startIndex, endIndex);
+                    hasMore = startIndex > 0;
+                    
+                    console.log(`📄 Page ${page}: returning ${pageMessages.length} older messages, hasMore=${hasMore}`);
+                }
+            }
+            
+            // 6. Format history as string for backward compatibility
+            const historyString = allMessages
+                .map(msg => `${msg.timestamp} | ${msg.sender === 'user' ? 'USER:' : 'ASSISTANT:'} ${msg.text}`)
+                .join('\n');
+            
+            return res.json({
+                success: true,
+                history: historyString,
+                messages: pageMessages,
+                hasMore: hasMore,
+                totalMessages: allMessages.length,
+                currentPage: page,
+                pageSize: pageSize,
+                debug: {
+                    columnIndex: columnIndex,
+                    allMessagesCount: allMessages.length,
+                    pageMessagesCount: pageMessages.length,
+                    headers: headers.slice(0, 10) // First 10 headers for debugging
                 }
             });
             
-            // Sort by timestamp (oldest first for pagination)
-            allMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-            
-            // Calculate pagination - FIXED LOGIC
-            const totalMessages = allMessages.length;
-            
-            // If we want the MOST RECENT messages first (for chat display),
-            // we need to reverse the logic
-            if (page === 0) {
-                // For page 0, we want the MOST RECENT messages
-                // Take last `pageSize` messages from the end
-                const startIndex = Math.max(0, totalMessages - pageSize);
-                const pageMessages = allMessages.slice(startIndex, totalMessages);
-                
-                // hasMore = true if we skipped some older messages
-                const hasMore = startIndex > 0;
-                
-                console.log(`📜 Found ${totalMessages} total messages, returning ${pageMessages.length} most recent for page ${page}`);
-                
-                // Format as string for backward compatibility
-                const historyString = allMessages
-                    .map(msg => `${msg.timestamp} | ${msg.sender === 'user' ? 'USER:' : 'ASSISTANT:'} ${msg.text}`)
-                    .join('\n');
-                
-                return res.json({
-                    success: true,
-                    history: historyString,
-                    messages: pageMessages, // Most recent messages
-                    hasMore: hasMore,
-                    totalMessages: totalMessages,
-                    currentPage: page,
-                    pageSize: pageSize,
-                    startIndex: startIndex
-                });
-            } else {
-                // For subsequent pages (Load More), get OLDER messages
-                // We need to calculate based on how many messages we've already shown
-                const messagesAlreadyShown = page * pageSize;
-                const remainingMessages = totalMessages - messagesAlreadyShown;
-                
-                if (remainingMessages <= 0) {
-                    return res.json({
-                        success: true,
-                        history: '',
-                        messages: [],
-                        hasMore: false,
-                        totalMessages: totalMessages
-                    });
-                }
-                
-                // Get the next batch of OLDER messages
-                const startIndex = Math.max(0, totalMessages - messagesAlreadyShown - pageSize);
-                const endIndex = totalMessages - messagesAlreadyShown;
-                const pageMessages = allMessages.slice(startIndex, endIndex);
-                
-                // hasMore = true if there are even older messages
-                const hasMore = startIndex > 0;
-                
-                return res.json({
-                    success: true,
-                    messages: pageMessages,
-                    hasMore: hasMore,
-                    totalMessages: totalMessages,
-                    currentPage: page,
-                    pageSize: pageSize
-                });
-            }
-            
         } catch (error) {
-            console.error('❌ Error reading from Google Sheets:', error);
+            console.error('❌ Error reading Google Sheets:', error);
             return res.status(500).json({
                 success: false,
                 error: 'Failed to read history from Google Sheets',
-                details: error.message
+                details: error.message,
+                stack: error.stack
             });
         }
         
     } catch (error) {
-        console.error('💥 Chat history endpoint error:', error.message);
+        console.error('💥 Chat history endpoint error:', error);
         return res.status(500).json({
             success: false,
             error: error.message
