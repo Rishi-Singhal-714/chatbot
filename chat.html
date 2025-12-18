@@ -1212,14 +1212,7 @@
             }
         });
         
-        // Prevent default behavior on mobile
-        document.addEventListener('touchstart', function(e) {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-                return;
-            }
-            e.preventDefault();
-        }, { passive: false });
-        
+
         // Prevent zoom on mobile
         document.addEventListener('gesturestart', function(e) {
             e.preventDefault();
