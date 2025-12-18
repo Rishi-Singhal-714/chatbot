@@ -1354,6 +1354,8 @@
         
 async function fetchChatHistory(page = 0, pageSize = 20) {
     try {
+        console.log(`🔄 Fetching history for ${currentPhone}, page ${page}`);
+        
         const response = await fetch('/chat/history', {
             method: 'POST',
             headers: {
@@ -1366,15 +1368,19 @@ async function fetchChatHistory(page = 0, pageSize = 20) {
             })
         });
         
+        console.log(`📡 Response status: ${response.status}`);
+        
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
+        console.log(`📊 Server response:`, data);
         
         if (data.success) {
             // Ensure messages array exists
             const messages = Array.isArray(data.messages) ? data.messages : [];
+            console.log(`📜 Received ${messages.length} messages`);
             
             return {
                 messages: messages,
@@ -1470,6 +1476,8 @@ async function loadMoreHistory() {
         
 // Load chat history with pagination - AUTO-LOAD on chat start
 async function loadChatHistory(phone) {
+    console.log(`🚀 Starting chat history load for: ${phone}`);
+    
     // Show loading indicator
     const loadingDiv = document.createElement('div');
     loadingDiv.className = 'history-loading';
@@ -1477,26 +1485,27 @@ async function loadChatHistory(phone) {
     chatMessages.appendChild(loadingDiv);
     
     try {
-        // First, try to load from server (most recent messages)
+        // First, try to load from server
+        console.log(`📡 Calling fetchChatHistory for ${phone}`);
         const result = await fetchChatHistory(0, 20);
+        
+        console.log(`📊 fetchChatHistory result:`, result);
         
         // Remove loading indicator
         loadingDiv.remove();
         
         if (result.messages && result.messages.length > 0) {
-            console.log(`📜 Loaded ${result.messages.length} messages from server`);
+            console.log(`✅ Loaded ${result.messages.length} messages from server`);
             
-            // Display messages from oldest to newest
-            const sortedMessages = [...result.messages].sort((a, b) => 
-                new Date(a.timestamp) - new Date(b.timestamp)
-            );
-            
-            sortedMessages.forEach(msg => {
+            // Display messages
+            result.messages.forEach(msg => {
+                console.log(`📝 Displaying message: ${msg.sender} - ${msg.text.substring(0, 50)}...`);
                 displayMessage(msg.text, msg.sender, msg.displayTime, msg.timestamp);
             });
             
-            // Add load more button at top if there are more messages
+            // Add load more button if needed
             if (result.hasMore) {
+                console.log(`📌 Has more messages, adding load more button`);
                 const loadMoreBtn = createLoadMoreButton();
                 const welcomeMessage = document.querySelector('.welcome-message');
                 if (welcomeMessage) {
@@ -1509,34 +1518,55 @@ async function loadChatHistory(phone) {
                 hasMoreHistory = true;
             }
             
-            // Scroll to bottom to show newest messages
+            // Scroll to bottom
             setTimeout(() => {
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }, 100);
             
         } else {
-            // No server history, fallback to local storage
-            console.log('📜 No server history found, loading from local storage');
+            console.log(`⚠️ No server history found, checking local storage`);
             loadingDiv.remove();
-            loadLocalHistory(phone);
             
-            // Add load more button anyway (in case server history exists but empty page)
-            if (result.hasMore) {
-                const loadMoreBtn = createLoadMoreButton();
-                const welcomeMessage = document.querySelector('.welcome-message');
-                if (welcomeMessage) {
-                    chatMessages.insertBefore(loadMoreBtn, welcomeMessage.nextSibling);
-                } else {
-                    chatMessages.insertBefore(loadMoreBtn, chatMessages.firstChild);
-                }
-                
-                historyPage = 1;
-                hasMoreHistory = true;
+            // Show a message about no history
+            const noHistoryMsg = document.createElement('div');
+            noHistoryMsg.className = 'message bot';
+            noHistoryMsg.innerHTML = `
+                <div class="message-wrapper">
+                    <div class="message-content">
+                        <i>No previous chat history found. Starting fresh chat.</i>
+                    </div>
+                </div>
+            `;
+            const welcomeMessage = document.querySelector('.welcome-message');
+            if (welcomeMessage) {
+                chatMessages.insertBefore(noHistoryMsg, welcomeMessage.nextSibling);
+            } else {
+                chatMessages.appendChild(noHistoryMsg);
             }
+            
+            // Load local history as fallback
+            loadLocalHistory(phone);
         }
     } catch (error) {
         console.error('❌ Error loading chat history:', error);
         loadingDiv.remove();
+        
+        // Show error message
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'message bot';
+        errorMsg.innerHTML = `
+            <div class="message-wrapper">
+                <div class="message-content">
+                    <i>Unable to load chat history. Starting new chat.</i>
+                </div>
+            </div>
+        `;
+        const welcomeMessage = document.querySelector('.welcome-message');
+        if (welcomeMessage) {
+            chatMessages.insertBefore(errorMsg, welcomeMessage.nextSibling);
+        } else {
+            chatMessages.appendChild(errorMsg);
+        }
         
         // Fallback to local storage
         loadLocalHistory(phone);
