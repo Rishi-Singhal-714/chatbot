@@ -1352,7 +1352,7 @@
             return messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
         }
         
-        async function fetchChatHistory(page = 0, pageSize = 10) {
+async function fetchChatHistory(page = 0, pageSize = 10) {
     try {
         const response = await fetch('/chat/history', {
             method: 'POST',
@@ -1366,16 +1366,24 @@
             })
         });
         
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
         
         if (data.success) {
+            // Ensure messages array exists
+            const messages = Array.isArray(data.messages) ? data.messages : [];
+            
             return {
-                messages: data.messages,
-                hasMore: data.hasMore
+                messages: messages,
+                hasMore: Boolean(data.hasMore)
             };
+        } else {
+            console.warn('Server returned success: false', data.error);
+            return { messages: [], hasMore: false };
         }
-        
-        return { messages: [], hasMore: false };
     } catch (error) {
         console.error('Error fetching history:', error);
         return { messages: [], hasMore: false };
@@ -1396,7 +1404,7 @@
             isLoadingHistory = true;
             
             try {
-                const result = await fetchChatHistory(historyPage, 10);
+                const result = await fetchChatHistory(historyPage, 20);
                 
                 if (result.messages.length > 0) {
                     // Get current scroll position and height
