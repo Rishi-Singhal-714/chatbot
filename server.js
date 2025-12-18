@@ -1640,7 +1640,7 @@ app.get('/refresh-csv', async (req, res) => {
 });
 // Add this endpoint to your server.js (somewhere after your other endpoints)
 
-// SIMPLIFIED /chat/history endpoint - Add this to your server.js
+// SIMPLIFIED and CORRECT /chat/history endpoint
 app.post('/chat/history', async (req, res) => {
     try {
         const { phoneNumber, page = 0, pageSize = 20 } = req.body;
@@ -1660,44 +1660,26 @@ app.post('/chat/history', async (req, res) => {
             console.log('⚠️ Google Sheets not configured');
             return res.json({
                 success: true,
-                history: '',
                 messages: [],
-                hasMore: false,
-                totalMessages: 0,
-                debug: 'Google Sheets not configured'
+                hasMore: false
             });
         }
         
         try {
-            // 1. Get ALL sheet data first (for debugging)
+            // 1. Get the History sheet
             const sheetName = 'History';
-            const range = `${sheetName}!A:Z`; // Get entire sheet
             
-            console.log(`📋 Reading sheet: ${sheetName}`);
-            
-            const sheetResp = await sheets.spreadsheets.values.get({
+            // 2. Get ALL headers to find our column
+            const headersResp = await sheets.spreadsheets.values.get({
                 spreadsheetId: GOOGLE_SHEET_ID,
-                range: range
+                range: `${sheetName}!1:1` // Just the first row (headers)
             });
             
-            const rows = sheetResp.data.values || [];
-            console.log(`📊 Sheet has ${rows.length} rows`);
+            const headers = headersResp.data.values ? headersResp.data.values[0] : [];
+            console.log(`📋 Headers found: ${headers.length}`);
             
-            if (rows.length === 0) {
-                return res.json({
-                    success: true,
-                    history: '',
-                    messages: [],
-                    hasMore: false,
-                    totalMessages: 0,
-                    debug: 'Empty sheet'
-                });
-            }
-            
-            // 2. Find the column for this phone number
-            const headers = rows[0] || [];
+            // 3. Find column index for this phone number
             let columnIndex = -1;
-            
             for (let i = 0; i < headers.length; i++) {
                 if (String(headers[i]).trim() === phoneNumber) {
                     columnIndex = i;
@@ -1705,117 +1687,99 @@ app.post('/chat/history', async (req, res) => {
                 }
             }
             
-            console.log(`🔍 Found column index: ${columnIndex} for phone ${phoneNumber}`);
+            console.log(`📍 Column index for ${phoneNumber}: ${columnIndex}`);
             
             if (columnIndex === -1) {
+                console.log(`❌ No column found for ${phoneNumber}`);
                 return res.json({
                     success: true,
-                    history: '',
                     messages: [],
-                    hasMore: false,
-                    totalMessages: 0,
-                    debug: `No column found for ${phoneNumber}`
+                    hasMore: false
                 });
             }
             
-            // 3. Collect all messages from this column
+            // 4. Get ALL messages from this column
+            const columnLetter = String.fromCharCode(65 + columnIndex); // A=0, B=1, etc.
+            const range = `${sheetName}!${columnLetter}2:${columnLetter}`; // From row 2 to end
+            
+            const colResp = await sheets.spreadsheets.values.get({
+                spreadsheetId: GOOGLE_SHEET_ID,
+                range: range,
+                majorDimension: 'COLUMNS' // Get as column
+            });
+            
+            const columnValues = colResp.data.values ? colResp.data.values[0] : [];
+            console.log(`📜 Found ${columnValues.length} messages in column`);
+            
+            // 5. Parse ALL messages
             const allMessages = [];
             
-            for (let row = 1; row < rows.length; row++) {
-                const cellValue = rows[row][columnIndex];
+            for (const cellValue of columnValues) {
                 if (cellValue && typeof cellValue === 'string' && cellValue.trim()) {
-                    try {
-                        const parts = cellValue.split(' | ');
-                        if (parts.length >= 2) {
-                            const timestamp = parts[0].trim();
-                            const content = parts.slice(1).join(' | ').trim();
+                    const parts = cellValue.split(' | ');
+                    if (parts.length >= 2) {
+                        const timestamp = parts[0].trim();
+                        const content = parts.slice(1).join(' | ').trim();
+                        
+                        if (content) {
+                            let sender = 'bot';
+                            let messageText = content;
                             
-                            if (content) {
-                                let sender = 'bot';
-                                let messageText = content;
-                                
-                                if (content.startsWith('USER:')) {
-                                    sender = 'user';
-                                    messageText = content.substring(5).trim();
-                                } else if (content.startsWith('ASSISTANT:')) {
-                                    sender = 'bot';
-                                    messageText = content.substring(10).trim();
-                                }
-                                
-                                allMessages.push({
-                                    text: messageText,
-                                    sender: sender,
-                                    timestamp: timestamp,
-                                    isoTime: timestamp,
-                                    displayTime: new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-                                });
+                            if (content.startsWith('USER:')) {
+                                sender = 'user';
+                                messageText = content.substring(5).trim();
+                            } else if (content.startsWith('ASSISTANT:')) {
+                                sender = 'bot';
+                                messageText = content.substring(10).trim();
                             }
+                            
+                            allMessages.push({
+                                text: messageText,
+                                sender: sender,
+                                timestamp: timestamp,
+                                isoTime: timestamp,
+                                displayTime: new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                            });
                         }
-                    } catch (error) {
-                        console.error(`Error parsing row ${row}:`, error);
                     }
                 }
             }
             
-            console.log(`📜 Found ${allMessages.length} total messages`);
+            console.log(`✅ Parsed ${allMessages.length} messages`);
             
-            // 4. Sort messages by timestamp (oldest first)
-            allMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            // 6. Sort by timestamp (newest FIRST for chat display)
+            allMessages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             
-            // 5. For page 0, get the MOST RECENT messages (up to pageSize)
-            let pageMessages = [];
-            let hasMore = false;
+            // 7. SIMPLE PAGINATION: Just return ALL messages for now
+            // No complex pagination logic - just return everything
+            const totalMessages = allMessages.length;
             
+            // For page 0, return ALL messages (not just pageSize)
             if (page === 0) {
-                // Get the most recent messages
-                const startIndex = Math.max(0, allMessages.length - pageSize);
-                pageMessages = allMessages.slice(startIndex);
-                hasMore = startIndex > 0;
+                console.log(`📄 Returning ALL ${totalMessages} messages for page 0`);
                 
-                console.log(`📄 Page 0: returning ${pageMessages.length} most recent messages, hasMore=${hasMore}`);
+                return res.json({
+                    success: true,
+                    messages: allMessages, // ALL messages
+                    hasMore: false, // No pagination for now
+                    totalMessages: totalMessages
+                });
             } else {
-                // For subsequent pages, get older messages
-                const alreadyLoaded = page * pageSize;
-                const remaining = allMessages.length - alreadyLoaded;
-                
-                if (remaining > 0) {
-                    const startIndex = Math.max(0, allMessages.length - alreadyLoaded - pageSize);
-                    const endIndex = allMessages.length - alreadyLoaded;
-                    pageMessages = allMessages.slice(startIndex, endIndex);
-                    hasMore = startIndex > 0;
-                    
-                    console.log(`📄 Page ${page}: returning ${pageMessages.length} older messages, hasMore=${hasMore}`);
-                }
+                // For now, just return empty for pages > 0
+                return res.json({
+                    success: true,
+                    messages: [],
+                    hasMore: false,
+                    totalMessages: totalMessages
+                });
             }
-            
-            // 6. Format history as string for backward compatibility
-            const historyString = allMessages
-                .map(msg => `${msg.timestamp} | ${msg.sender === 'user' ? 'USER:' : 'ASSISTANT:'} ${msg.text}`)
-                .join('\n');
-            
-            return res.json({
-                success: true,
-                history: historyString,
-                messages: pageMessages,
-                hasMore: hasMore,
-                totalMessages: allMessages.length,
-                currentPage: page,
-                pageSize: pageSize,
-                debug: {
-                    columnIndex: columnIndex,
-                    allMessagesCount: allMessages.length,
-                    pageMessagesCount: pageMessages.length,
-                    headers: headers.slice(0, 10) // First 10 headers for debugging
-                }
-            });
             
         } catch (error) {
             console.error('❌ Error reading Google Sheets:', error);
             return res.status(500).json({
                 success: false,
                 error: 'Failed to read history from Google Sheets',
-                details: error.message,
-                stack: error.stack
+                details: error.message
             });
         }
         
