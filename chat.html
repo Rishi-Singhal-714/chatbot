@@ -1191,13 +1191,77 @@
         });
     }
     
+    // Parse custom timestamp format (DD-MM-YYYY HH:mm:ss)
+    function parseCustomTimestamp(timestampStr) {
+        // Format: "18-12-2025 17:53:25"
+        try {
+            const parts = timestampStr.split(' ');
+            if (parts.length !== 2) return new Date();
+            
+            const datePart = parts[0]; // "18-12-2025"
+            const timePart = parts[1]; // "17:53:25"
+            
+            const dateParts = datePart.split('-');
+            if (dateParts.length !== 3) return new Date();
+            
+            const day = parseInt(dateParts[0], 10);
+            const month = parseInt(dateParts[1], 10) - 1; // JavaScript months are 0-indexed
+            const year = parseInt(dateParts[2], 10);
+            
+            const timeParts = timePart.split(':');
+            if (timeParts.length !== 3) return new Date();
+            
+            const hours = parseInt(timeParts[0], 10);
+            const minutes = parseInt(timeParts[1], 10);
+            const seconds = parseInt(timeParts[2], 10);
+            
+            return new Date(year, month, day, hours, minutes, seconds);
+        } catch (error) {
+            console.error('Error parsing timestamp:', timestampStr, error);
+            return new Date();
+        }
+    }
+    
+    // Format timestamp for display
+    function formatTimestampForDisplay(timestampStr) {
+        try {
+            const date = parseCustomTimestamp(timestampStr);
+            return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        } catch (error) {
+            console.error('Error formatting timestamp:', timestampStr, error);
+            return new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+    }
+    
     // Display a message in the chat
-    function displayMessage(text, sender, timestamp = null, isoTime = null) {
+    function displayMessage(text, sender, displayTime = null, isoTime = null, originalTimestamp = null) {
         const messageWrapper = document.createElement('div');
         messageWrapper.className = `message ${sender}`;
-        if (isoTime) {
-            messageWrapper.dataset.time = isoTime;
+        
+        // Store ISO time for sorting
+        let messageIsoTime = isoTime;
+        let messageDisplayTime = displayTime;
+        
+        // If we have original timestamp (DD-MM-YYYY HH:mm:ss), parse it
+        if (originalTimestamp && typeof originalTimestamp === 'string') {
+            try {
+                const date = parseCustomTimestamp(originalTimestamp);
+                messageIsoTime = date.toISOString();
+                messageDisplayTime = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            } catch (error) {
+                console.error('Error processing original timestamp:', originalTimestamp, error);
+            }
         }
+        
+        // If no ISO time, use current time
+        if (!messageIsoTime) {
+            const now = new Date();
+            messageIsoTime = now.toISOString();
+            messageDisplayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+        
+        // Store ISO time in data attribute for sorting
+        messageWrapper.dataset.isoTime = messageIsoTime;
         
         const messageDiv = document.createElement('div');
         messageDiv.className = 'message-wrapper';
@@ -1218,7 +1282,7 @@
         
         const timeSpan = document.createElement('span');
         timeSpan.className = 'message-time';
-        timeSpan.textContent = timestamp || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        timeSpan.textContent = messageDisplayTime || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         
         if (sender === 'user') {
             const tickIcon = document.createElement('span');
@@ -1252,6 +1316,35 @@
         }, 100);
         
         return messageWrapper;
+    }
+    
+    // Insert message at correct position based on timestamp
+    function insertMessageInOrder(messageElement) {
+        const messages = Array.from(chatMessages.querySelectorAll('.message[data-iso-time]'));
+        const newTime = new Date(messageElement.dataset.isoTime).getTime();
+        
+        // Find the right position to insert
+        let insertBeforeElement = null;
+        for (let i = 0; i < messages.length; i++) {
+            const msg = messages[i];
+            const msgTime = new Date(msg.dataset.isoTime).getTime();
+            
+            if (newTime < msgTime) {
+                insertBeforeElement = msg;
+                break;
+            }
+        }
+        
+        if (insertBeforeElement) {
+            chatMessages.insertBefore(messageElement, insertBeforeElement);
+        } else {
+            chatMessages.appendChild(messageElement);
+        }
+        
+        // Scroll to show the new message
+        setTimeout(() => {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 50);
     }
     
     // Create load more button
@@ -1288,8 +1381,46 @@
             
             if (data.success) {
                 console.log(`📜 Server returned ${data.messages?.length || 0} messages, hasMore: ${data.hasMore}, total: ${data.totalMessages}`);
+                
+                // Process messages to ensure proper timestamps
+                const processedMessages = (data.messages || []).map(msg => {
+                    // If server returns ISO timestamp, use it
+                    // Otherwise parse the original timestamp
+                    let isoTime = msg.timestamp;
+                    let displayTime = msg.displayTime;
+                    let originalTimestamp = msg.originalTimestamp || msg.timestamp;
+                    
+                    // If we don't have a valid ISO timestamp, parse from original
+                    if (!isoTime || isoTime === 'Invalid Date' || new Date(isoTime).toString() === 'Invalid Date') {
+                        try {
+                            const date = parseCustomTimestamp(originalTimestamp);
+                            isoTime = date.toISOString();
+                            displayTime = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        } catch (error) {
+                            // If parsing fails, use current time
+                            const now = new Date();
+                            isoTime = now.toISOString();
+                            displayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        }
+                    }
+                    
+                    return {
+                        ...msg,
+                        isoTime: isoTime,
+                        displayTime: displayTime,
+                        originalTimestamp: originalTimestamp
+                    };
+                });
+                
+                // Sort by ISO timestamp (oldest first)
+                processedMessages.sort((a, b) => {
+                    const timeA = new Date(a.isoTime).getTime();
+                    const timeB = new Date(b.isoTime).getTime();
+                    return timeA - timeB;
+                });
+                
                 return {
-                    messages: data.messages || [],
+                    messages: processedMessages,
                     hasMore: data.hasMore || false
                 };
             }
@@ -1329,27 +1460,26 @@
                     loadMoreContainer.remove();
                 }
                 
-                // Create fragment for new messages
+                // Create fragment for new messages (older messages)
                 const fragment = document.createDocumentFragment();
                 
-                // Add messages in reverse order (oldest first for historical messages)
-                // We need to add them at the top, in correct chronological order
-                for (let i = result.messages.length - 1; i >= 0; i--) {
-                    const msg = result.messages[i];
-                    const messageElement = displayMessage(msg.text, msg.sender, msg.displayTime, msg.timestamp);
+                // Add messages in chronological order (oldest first)
+                result.messages.forEach(msg => {
+                    const messageElement = displayMessage(
+                        msg.text, 
+                        msg.sender, 
+                        msg.displayTime, 
+                        msg.isoTime, 
+                        msg.originalTimestamp
+                    );
                     fragment.appendChild(messageElement);
-                }
+                });
                 
                 // Insert all new messages at the top (after welcome message)
                 const welcomeMessage = document.querySelector('.welcome-message');
-                if (welcomeMessage && welcomeMessage.nextSibling) {
-                    // Insert after welcome message
+                if (welcomeMessage) {
                     chatMessages.insertBefore(fragment, welcomeMessage.nextSibling);
-                } else if (welcomeMessage) {
-                    // Welcome message has no next sibling, insert before first message
-                    chatMessages.insertBefore(fragment, chatMessages.firstChild.nextSibling);
                 } else {
-                    // No welcome message, just insert at top
                     chatMessages.insertBefore(fragment, chatMessages.firstChild);
                 }
                 
@@ -1364,16 +1494,7 @@
                     }
                 } else {
                     // No more messages to load
-                    const noMoreDiv = document.createElement('div');
-                    noMoreDiv.className = 'history-loading';
-                    noMoreDiv.textContent = 'Beginning of conversation';
-                    
-                    const welcomeMessage = document.querySelector('.welcome-message');
-                    if (welcomeMessage) {
-                        chatMessages.insertBefore(noMoreDiv, welcomeMessage.nextSibling);
-                    } else {
-                        chatMessages.insertBefore(noMoreDiv, chatMessages.firstChild);
-                    }
+                    hasMoreHistory = false;
                 }
                 
                 // Restore scroll position to maintain user's view
@@ -1385,21 +1506,12 @@
                 historyPage++;
                 hasMoreHistory = result.hasMore;
                 
-                console.log(`📜 Updated: page=${historyPage}, hasMore=${hasMoreHistory}, scrollDiff=${scrollDiff}`);
             } else {
                 // No more messages
                 hasMoreHistory = false;
-                const loadMoreContainer = document.getElementById('loadMoreContainer');
-                if (loadMoreContainer) {
-                    loadMoreContainer.innerHTML = '<div class="history-loading">Beginning of conversation</div>';
-                }
             }
         } catch (error) {
             console.error('Error loading more history:', error);
-            const loadMoreContainer = document.getElementById('loadMoreContainer');
-            if (loadMoreContainer) {
-                loadMoreContainer.innerHTML = '<div class="history-loading">Error loading messages</div>';
-            }
         } finally {
             isLoadingHistory = false;
             
@@ -1423,19 +1535,22 @@
         
         try {
             const result = await fetchChatHistory(0, 10);
-            console.log(`📜 Initial load: ${result.messages.length} messages, hasMore: ${result.hasMore}`);
+            console.log(`📜 Initial load: ${result.messages.length} messages`);
             
             // Remove loading indicator
             loadingDiv.remove();
             
             if (result.messages.length > 0) {
-                // Display most recent messages at bottom (newest first)
-                // Since server returns oldest first, we need to reverse for initial display
-                const messagesToShow = [...result.messages].reverse();
-                
-                messagesToShow.forEach(msg => {
-                    const messageElement = displayMessage(msg.text, msg.sender, msg.displayTime, msg.timestamp);
-                    chatMessages.appendChild(messageElement);
+                // Display messages in chronological order
+                result.messages.forEach(msg => {
+                    const messageElement = displayMessage(
+                        msg.text, 
+                        msg.sender, 
+                        msg.displayTime, 
+                        msg.isoTime, 
+                        msg.originalTimestamp
+                    );
+                    insertMessageInOrder(messageElement);
                 });
                 
                 // Add load more button at top if there are more messages
@@ -1450,16 +1565,6 @@
                     
                     historyPage = 1;
                     hasMoreHistory = true;
-                } else {
-                    // Add "beginning of conversation" message
-                    const beginningDiv = document.createElement('div');
-                    beginningDiv.className = 'history-loading';
-                    beginningDiv.textContent = 'Beginning of conversation';
-                    
-                    const welcomeMessage = document.querySelector('.welcome-message');
-                    if (welcomeMessage) {
-                        chatMessages.insertBefore(beginningDiv, welcomeMessage.nextSibling);
-                    }
                 }
             } else {
                 // No history found
@@ -1526,8 +1631,14 @@
         
         wrapperDiv.appendChild(contentDiv);
         typingDiv.appendChild(wrapperDiv);
+        
+        // Insert typing indicator at bottom
         chatMessages.appendChild(typingDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Scroll to show typing indicator
+        setTimeout(() => {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 50);
     }
     
     // Hide typing indicator
@@ -1548,10 +1659,14 @@
         autoResizeTextarea(messageInput);
         sendBtn.disabled = true;
         
-        // Display user message immediately
-        const timestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        const messageElement = displayMessage(message, 'user', timestamp);
-        chatMessages.appendChild(messageElement);
+        // Display user message immediately with current timestamp
+        const now = new Date();
+        const isoTime = now.toISOString();
+        const displayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const messageElement = displayMessage(message, 'user', displayTime, isoTime);
+        
+        // Insert at correct position based on timestamp
+        insertMessageInOrder(messageElement);
         
         // Show typing indicator
         showTyping();
@@ -1572,31 +1687,35 @@
             hideTyping();
             
             if (data.success) {
-                const botTimestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                const botMessageElement = displayMessage(data.response, 'bot', botTimestamp);
-                chatMessages.appendChild(botMessageElement);
+                // Bot response with current timestamp
+                const botNow = new Date();
+                const botIsoTime = botNow.toISOString();
+                const botDisplayTime = botNow.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const botMessageElement = displayMessage(data.response, 'bot', botDisplayTime, botIsoTime);
+                
+                // Insert at correct position based on timestamp
+                insertMessageInOrder(botMessageElement);
             } else {
-                const errorTimestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                const errorMessageElement = displayMessage('Sorry, there was an error processing your message.', 'bot', errorTimestamp);
-                chatMessages.appendChild(errorMessageElement);
+                const errorNow = new Date();
+                const errorIsoTime = errorNow.toISOString();
+                const errorDisplayTime = errorNow.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const errorMessageElement = displayMessage('Sorry, there was an error processing your message.', 'bot', errorDisplayTime, errorIsoTime);
+                
+                // Insert at correct position based on timestamp
+                insertMessageInOrder(errorMessageElement);
             }
-            
-            // Scroll to bottom
-            setTimeout(() => {
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }, 50);
             
         } catch (error) {
             hideTyping();
-            const errorTimestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            const errorMessageElement = displayMessage('Network error. Please check your connection.', 'bot', errorTimestamp);
-            chatMessages.appendChild(errorMessageElement);
-            console.error('Error:', error);
+            const errorNow = new Date();
+            const errorIsoTime = errorNow.toISOString();
+            const errorDisplayTime = errorNow.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const errorMessageElement = displayMessage('Network error. Please check your connection.', 'bot', errorDisplayTime, errorIsoTime);
             
-            // Scroll to bottom
-            setTimeout(() => {
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }, 50);
+            // Insert at correct position based on timestamp
+            insertMessageInOrder(errorMessageElement);
+            
+            console.error('Error:', error);
         }
         
         sendBtn.disabled = false;
@@ -1797,9 +1916,13 @@
     attachBtn.addEventListener('click', () => {
         // Simple file picker simulation
         messageInput.focus();
-        const timestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        const messageElement = displayMessage('[File attachment would open here]', 'bot', timestamp);
-        chatMessages.appendChild(messageElement);
+        const now = new Date();
+        const isoTime = now.toISOString();
+        const displayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const messageElement = displayMessage('[File attachment would open here]', 'bot', displayTime, isoTime);
+        
+        // Insert at correct position based on timestamp
+        insertMessageInOrder(messageElement);
     });
     
     // Auto-focus phone input on load
