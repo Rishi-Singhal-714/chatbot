@@ -1638,6 +1638,331 @@ app.get('/refresh-csv', async (req, res) => {
     res.status(500).json({ status: 'error', message: error.message });
   }
 });
+// Add this endpoint to your server.js (somewhere after your other endpoints)
 
+// Get chat history from Google Sheets with pagination
+app.post('/chat/history', async (req, res) => {
+    try {
+        const { phoneNumber, page = 0, pageSize = 10 } = req.body;
+        
+        if (!phoneNumber) {
+            return res.status(400).json({
+                success: false,
+                error: 'Phone number is required'
+            });
+        }
+        
+        console.log(`📜 Fetching history for ${phoneNumber}, page ${page}, pageSize ${pageSize}`);
+        
+        // Get the Google Sheets client
+        const sheets = await getSheets();
+        if (!sheets) {
+            console.log('⚠️ Google Sheets not configured, returning empty history');
+            return res.json({
+                success: true,
+                history: '',
+                messages: [],
+                hasMore: false,
+                totalMessages: 0
+            });
+        }
+        
+        try {
+            // Read column headers to find the correct column for this phone number
+            const headersResp = await sheets.spreadsheets.values.get({ 
+                spreadsheetId: GOOGLE_SHEET_ID, 
+                range: 'History!1:1' 
+            });
+            
+            const headers = (headersResp.data.values && headersResp.data.values[0]) || [];
+            
+            // Find the column index for this phone number
+            // Phone numbers are stored as column headers in format: "8368127760A"
+            let colIndex = -1;
+            for (let i = 0; i < headers.length; i++) {
+                const header = String(headers[i]).trim();
+                if (header === phoneNumber) {
+                    colIndex = i;
+                    break;
+                }
+            }
+            
+            if (colIndex === -1) {
+                console.log(`📜 No history found for ${phoneNumber}`);
+                return res.json({
+                    success: true,
+                    history: '',
+                    messages: [],
+                    hasMore: false,
+                    totalMessages: 0
+                });
+            }
+            
+            // Get all values from this column (excluding header)
+            const colLetter = String.fromCharCode(65 + colIndex); // A=0, B=1, etc.
+            const range = `History!${colLetter}2:${colLetter}`;
+            
+            const colResp = await sheets.spreadsheets.values.get({
+                spreadsheetId: GOOGLE_SHEET_ID,
+                range: range,
+                majorDimension: 'COLUMNS'
+            });
+            
+            const columnValues = (colResp.data.values && colResp.data.values[0]) || [];
+            
+            // Parse and filter messages
+            const allMessages = [];
+            
+            columnValues.forEach(cellValue => {
+                if (cellValue && typeof cellValue === 'string' && cellValue.trim()) {
+                    const parts = cellValue.split(' | ');
+                    if (parts.length >= 2) {
+                        const timestamp = parts[0];
+                        const content = parts.slice(1).join(' | ').trim();
+                        
+                        if (content) {
+                            let sender = 'bot';
+                            let messageText = content;
+                            
+                            if (content.startsWith('USER:')) {
+                                sender = 'user';
+                                messageText = content.substring(5).trim();
+                            } else if (content.startsWith('ASSISTANT:')) {
+                                sender = 'bot';
+                                messageText = content.substring(10).trim();
+                            }
+                            
+                            allMessages.push({
+                                text: messageText,
+                                sender: sender,
+                                timestamp: timestamp,
+                                isoTime: timestamp,
+                                displayTime: new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                            });
+                        }
+                    }
+                }
+            });
+            
+            // Sort by timestamp (oldest first for pagination)
+            allMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            
+            // Calculate pagination
+            const totalMessages = allMessages.length;
+            const startIndex = page * pageSize;
+            const endIndex = startIndex + pageSize;
+            const hasMore = totalMessages > endIndex;
+            
+            // Get messages for this page (we'll return newest first for display)
+            const pageMessages = allMessages.slice(startIndex, endIndex);
+            
+            console.log(`📜 Found ${totalMessages} total messages, returning ${pageMessages.length} for page ${page}`);
+            
+            // Format as string for backward compatibility
+            const historyString = allMessages
+                .map(msg => `${msg.timestamp} | ${msg.sender === 'user' ? 'USER:' : 'ASSISTANT:'} ${msg.text}`)
+                .join('\n');
+            
+            return res.json({
+                success: true,
+                history: historyString, // Full history as string (for existing code)
+                messages: pageMessages, // Paginated messages as array
+                hasMore: hasMore,
+                totalMessages: totalMessages,
+                currentPage: page,
+                pageSize: pageSize
+            });
+            
+        } catch (error) {
+            console.error('❌ Error reading from Google Sheets:', error);
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to read history from Google Sheets',
+                details: error.message
+            });
+        }
+        
+    } catch (error) {
+        console.error('💥 Chat history endpoint error:', error.message);
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Also add a GET endpoint for convenience
+app.get('/chat/history/:phoneNumber', async (req, res) => {
+    try {
+        const { phoneNumber } = req.params;
+        const page = parseInt(req.query.page) || 0;
+        const pageSize = parseInt(req.query.pageSize) || 10;
+        
+        console.log(`📜 GET history for ${phoneNumber}, page ${page}`);
+        
+        // Get the Google Sheets client
+        const sheets = await getSheets();
+        if (!sheets) {
+            return res.json({
+                success: true,
+                history: '',
+                messages: [],
+                hasMore: false,
+                totalMessages: 0
+            });
+        }
+        
+        try {
+            // Read column headers
+            const headersResp = await sheets.spreadsheets.values.get({ 
+                spreadsheetId: GOOGLE_SHEET_ID, 
+                range: 'History!1:1' 
+            });
+            
+            const headers = (headersResp.data.values && headersResp.data.values[0]) || [];
+            let colIndex = -1;
+            
+            for (let i = 0; i < headers.length; i++) {
+                const header = String(headers[i]).trim();
+                if (header === phoneNumber) {
+                    colIndex = i;
+                    break;
+                }
+            }
+            
+            if (colIndex === -1) {
+                return res.json({
+                    success: true,
+                    history: '',
+                    messages: [],
+                    hasMore: false,
+                    totalMessages: 0
+                });
+            }
+            
+            // Get column values
+            const colLetter = String.fromCharCode(65 + colIndex);
+            const range = `History!${colLetter}2:${colLetter}`;
+            
+            const colResp = await sheets.spreadsheets.values.get({
+                spreadsheetId: GOOGLE_SHEET_ID,
+                range: range,
+                majorDimension: 'COLUMNS'
+            });
+            
+            const columnValues = (colResp.data.values && colResp.data.values[0]) || [];
+            
+            // Parse messages
+            const allMessages = [];
+            
+            columnValues.forEach(cellValue => {
+                if (cellValue && typeof cellValue === 'string' && cellValue.trim()) {
+                    const parts = cellValue.split(' | ');
+                    if (parts.length >= 2) {
+                        const timestamp = parts[0];
+                        const content = parts.slice(1).join(' | ').trim();
+                        
+                        if (content) {
+                            let sender = 'bot';
+                            let messageText = content;
+                            
+                            if (content.startsWith('USER:')) {
+                                sender = 'user';
+                                messageText = content.substring(5).trim();
+                            } else if (content.startsWith('ASSISTANT:')) {
+                                sender = 'bot';
+                                messageText = content.substring(10).trim();
+                            }
+                            
+                            allMessages.push({
+                                text: messageText,
+                                sender: sender,
+                                timestamp: timestamp,
+                                isoTime: timestamp,
+                                displayTime: new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                            });
+                        }
+                    }
+                }
+            });
+            
+            // Sort by timestamp
+            allMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            
+            // Pagination
+            const totalMessages = allMessages.length;
+            const startIndex = page * pageSize;
+            const endIndex = startIndex + pageSize;
+            const hasMore = totalMessages > endIndex;
+            const pageMessages = allMessages.slice(startIndex, endIndex);
+            
+            return res.json({
+                success: true,
+                history: allMessages
+                    .map(msg => `${msg.timestamp} | ${msg.sender === 'user' ? 'USER:' : 'ASSISTANT:'} ${msg.text}`)
+                    .join('\n'),
+                messages: pageMessages,
+                hasMore: hasMore,
+                totalMessages: totalMessages,
+                currentPage: page,
+                pageSize: pageSize
+            });
+            
+        } catch (error) {
+            console.error('❌ Error reading Google Sheets:', error);
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to read history',
+                details: error.message
+            });
+        }
+        
+    } catch (error) {
+        console.error('💥 GET history error:', error.message);
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Optional: Add an endpoint to get column headers (for debugging)
+app.get('/chat/history-headers', async (req, res) => {
+    try {
+        const sheets = await getSheets();
+        if (!sheets) {
+            return res.json({
+                success: false,
+                error: 'Google Sheets not configured'
+            });
+        }
+        
+        const headersResp = await sheets.spreadsheets.values.get({ 
+            spreadsheetId: GOOGLE_SHEET_ID, 
+            range: 'History!1:1' 
+        });
+        
+        const headers = (headersResp.data.values && headersResp.data.values[0]) || [];
+        
+        // Filter for phone number columns (assuming they follow 10-digit pattern)
+        const phoneColumns = headers
+            .map((header, index) => ({ header, index }))
+            .filter(item => /^\d{10}[AU]?$/.test(String(item.header).trim()));
+        
+        return res.json({
+            success: true,
+            headers: headers,
+            phoneColumns: phoneColumns,
+            totalColumns: headers.length
+        });
+        
+    } catch (error) {
+        console.error('Error getting headers:', error);
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
 // Export for Vercel
 module.exports = app;
