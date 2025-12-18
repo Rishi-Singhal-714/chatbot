@@ -90,18 +90,41 @@ async function writeCell(colNum, rowNum, value) {
     console.error('❌ writeCell error', e);
   }
 }
-
+function getIndiaTime() {
+  const now = new Date();
+  const offset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+  const indiaTime = new Date(now.getTime() + offset);
+  
+  // Format as: DD-MM-YYYY HH:MM:SS (24-hour format)
+  const day = String(indiaTime.getUTCDate()).padStart(2, '0');
+  const month = String(indiaTime.getUTCMonth() + 1).padStart(2, '0');
+  const year = indiaTime.getUTCFullYear();
+  const hours = String(indiaTime.getUTCHours()).padStart(2, '0');
+  const minutes = String(indiaTime.getUTCMinutes()).padStart(2, '0');
+  const seconds = String(indiaTime.getUTCSeconds()).padStart(2, '0');
+  
+  return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+}
+// -------------------------
+// Modified appendUnderColumn to prepend new messages
+// -------------------------
 async function appendUnderColumn(headerName, text) {
   const sheets = await getSheets();
   if (!sheets) return;
+  
   try {
+    const ts = getIndiaTime(); // Use India time
+    const finalText = `${ts} | ${text}`;
+    
+    // Get header row to find column
     const headersResp = await sheets.spreadsheets.values.get({ 
       spreadsheetId: GOOGLE_SHEET_ID, 
       range: '1:1' 
     });
     const headers = (headersResp.data.values && headersResp.data.values[0]) || [];
-    let colIndex = headers.findIndex(h => String(h).trim() === headerName);
     
+    // Find or create column
+    let colIndex = headers.findIndex(h => String(h).trim() === headerName);
     if (colIndex === -1) {
       colIndex = headers.length;
       const headerCol = colLetter(colIndex + 1) + '1';
@@ -114,26 +137,70 @@ async function appendUnderColumn(headerName, text) {
     }
     
     const colNum = colIndex + 1;
+    
+    // Get existing values in this column (excluding header)
     const colRange = `${colLetter(colNum)}2:${colLetter(colNum)}`;
-    let colValues = [];
+    let existingValues = [];
+    
     try {
       const colResp = await sheets.spreadsheets.values.get({
         spreadsheetId: GOOGLE_SHEET_ID,
         range: colRange,
         majorDimension: 'COLUMNS'
       });
-      colValues = (colResp.data.values && colResp.data.values[0]) || [];
+      existingValues = (colResp.data.values && colResp.data.values[0]) || [];
     } catch (e) {
-      colValues = [];
+      existingValues = [];
     }
     
-    const nextRow = 2 + colValues.length;
-    const ts = new Date().toISOString();
-    const finalText = `${ts} | ${text}`;
-    await writeCell(colNum, nextRow, finalText);
+    // PREPEND the new message at the beginning (row 2)
+    // Step 1: Insert a new row at position 2
+    const startRow = 2;
+    
+    // We need to shift existing values down by 1 row
+    // To do this efficiently, we'll write all values at once
+    
+    // Create new array with new message first, then existing messages
+    const newValues = [finalText, ...existingValues];
+    
+    // Write all values starting from row 2
+    const writeRange = `${colLetter(colNum)}${startRow}:${colLetter(colNum)}${startRow + newValues.length - 1}`;
+    
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: GOOGLE_SHEET_ID,
+      range: writeRange,
+      valueInputOption: 'RAW',
+      requestBody: { values: newValues.map(v => [v]) }
+    });
+    
+    console.log(`📝 Prepended message to column "${headerName}" (${ts})`);
+    
   } catch (e) {
     console.error('❌ appendUnderColumn error', e);
   }
+}
+// -------------------------
+// Helper function to parse India time for display
+// -------------------------
+function parseIndiaTimeForDisplay(timestampStr) {
+  // timestampStr format: "DD-MM-YYYY HH:MM:SS"
+  const parts = timestampStr.split(' ');
+  if (parts.length < 2) return timestampStr;
+  
+  const datePart = parts[0]; // DD-MM-YYYY
+  const timePart = parts[1]; // HH:MM:SS
+  
+  const [day, month, year] = datePart.split('-').map(Number);
+  const [hours, minutes, seconds] = timePart.split(':').map(Number);
+  
+  // Create a date object (Note: JavaScript months are 0-indexed)
+  const date = new Date(year, month - 1, day, hours, minutes, seconds);
+  
+  // Format for display: "HH:MM AM/PM"
+  let displayHours = hours % 12 || 12;
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  
+  return `${displayHours}:${String(minutes).padStart(2, '0')} ${ampm}`;
 }
 
 // -------------------------
@@ -374,7 +441,7 @@ async function createAgentTicket(mobileNumber, conversationHistory = []) {
     const pad = Array(Math.max(0, 5 - lastFive.length)).fill('');
     const arranged = [...pad, ...lastFive];
     const ticketId = await generateTicketId();
-    const ts = new Date().toISOString();
+    const ts = getIndiaTime(); // Changed from new Date().toISOString()
     
     const row = [
       mobileNumber || '',
