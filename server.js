@@ -2031,5 +2031,52 @@ app.get('/chat/history-headers', async (req, res) => {
         });
     }
 });
+// Add this to your backend server
+app.post('/chat/check-new', async (req, res) => {
+    try {
+        const { phoneNumber, lastTimestamp } = req.body;
+        const sinceDate = new Date(lastTimestamp || 0);
+        
+        // Query your database for messages newer than lastTimestamp
+        // Example using MongoDB:
+        const newMessages = await Message.find({
+            phoneNumber: phoneNumber,
+            timestamp: { $gt: sinceDate }
+        }).sort({ timestamp: 1 });
+        
+        res.json({
+            success: true,
+            newMessages: newMessages.map(msg => ({
+                id: msg._id.toString(),
+                text: msg.text,
+                sender: msg.sender,
+                timestamp: msg.timestamp,
+                isoTime: msg.timestamp.toISOString(),
+                displayTime: formatTime(msg.timestamp),
+                originalTimestamp: formatOriginalTimestamp(msg.timestamp)
+            }))
+        });
+    } catch (error) {
+        console.error('Error checking new messages:', error);
+        res.json({
+            success: false,
+            newMessages: []
+        });
+    }
+});
+
+function formatTime(date) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatOriginalTimestamp(date) {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+}
 // Export for Vercel
 module.exports = app;
