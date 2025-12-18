@@ -2031,40 +2031,159 @@ app.get('/chat/history-headers', async (req, res) => {
         });
     }
 });
-// Add this to your backend server
+// Check for new messages endpoint (query Google Sheets)
 app.post('/chat/check-new', async (req, res) => {
     try {
         const { phoneNumber, lastTimestamp } = req.body;
-        const sinceDate = new Date(lastTimestamp || 0);
         
-        // Query your database for messages newer than lastTimestamp
-        // Example using MongoDB:
-        const newMessages = await Message.find({
-            phoneNumber: phoneNumber,
-            timestamp: { $gt: sinceDate }
-        }).sort({ timestamp: 1 });
+        if (!phoneNumber) {
+            return res.status(400).json({
+                success: false,
+                error: 'Phone number is required'
+            });
+        }
         
-        res.json({
-            success: true,
-            newMessages: newMessages.map(msg => ({
-                id: msg._id.toString(),
-                text: msg.text,
-                sender: msg.sender,
-                timestamp: msg.timestamp,
-                isoTime: msg.timestamp.toISOString(),
-                displayTime: formatTime(msg.timestamp),
-                originalTimestamp: formatOriginalTimestamp(msg.timestamp)
-            }))
-        });
+        console.log(`🔍 Checking new messages for ${phoneNumber} since ${lastTimestamp || 'beginning'}`);
+        
+        // Get the Google Sheets client
+        const sheets = await getSheets();
+        if (!sheets) {
+            console.log('⚠️ Google Sheets not configured, returning empty');
+            return res.json({
+                success: true,
+                newMessages: []
+            });
+        }
+        
+        try {
+            // Read column headers to find the correct column for this phone number
+            const headersResp = await sheets.spreadsheets.values.get({ 
+                spreadsheetId: GOOGLE_SHEET_ID, 
+                range: 'History!1:1' 
+            });
+            
+            const headers = (headersResp.data.values && headersResp.data.values[0]) || [];
+            
+            // Find the column index for this phone number
+            let colIndex = -1;
+            for (let i = 0; i < headers.length; i++) {
+                const header = String(headers[i]).trim();
+                if (header === phoneNumber) {
+                    colIndex = i;
+                    break;
+                }
+            }
+            
+            if (colIndex === -1) {
+                console.log(`📭 No column found for ${phoneNumber}`);
+                return res.json({
+                    success: true,
+                    newMessages: []
+                });
+            }
+            
+            // Get all values from this column (excluding header)
+            const colLetter = String.fromCharCode(65 + colIndex);
+            const range = `History!${colLetter}2:${colLetter}`;
+            
+            const colResp = await sheets.spreadsheets.values.get({
+                spreadsheetId: GOOGLE_SHEET_ID,
+                range: range,
+                majorDimension: 'COLUMNS'
+            });
+            
+            const columnValues = (colResp.data.values && colResp.data.values[0]) || [];
+            
+            // Parse and filter messages
+            const allMessages = [];
+            
+            columnValues.forEach((cellValue, rowIndex) => {
+                if (cellValue && typeof cellValue === 'string' && cellValue.trim()) {
+                    const parts = cellValue.split(' | ');
+                    if (parts.length >= 2) {
+                        const timestamp = parts[0];
+                        const content = parts.slice(1).join(' | ').trim();
+                        
+                        if (content) {
+                            // Parse timestamp
+                            let messageDate;
+                            try {
+                                // Try to parse the timestamp (format: DD-MM-YYYY HH:MM:SS)
+                                const [datePart, timePart] = timestamp.split(' ');
+                                const [day, month, year] = datePart.split('-').map(Number);
+                                const [hours, minutes, seconds] = timePart.split(':').map(Number);
+                                messageDate = new Date(year, month - 1, day, hours, minutes, seconds);
+                            } catch (e) {
+                                console.error('Error parsing timestamp:', timestamp, e);
+                                return; // Skip this message if timestamp is invalid
+                            }
+                            
+                            let sender = 'bot';
+                            let messageText = content;
+                            
+                            if (content.startsWith('USER:')) {
+                                sender = 'user';
+                                messageText = content.substring(5).trim();
+                            } else if (content.startsWith('ASSISTANT:')) {
+                                sender = 'bot';
+                                messageText = content.substring(10).trim();
+                            }
+                            
+                            // Generate a unique ID for the message
+                            const messageId = `${phoneNumber}_${rowIndex}_${timestamp.replace(/\s|:/g, '_')}`;
+                            
+                            allMessages.push({
+                                id: messageId,
+                                text: messageText,
+                                sender: sender,
+                                timestamp: messageDate.toISOString(),
+                                isoTime: messageDate.toISOString(),
+                                displayTime: formatTime(messageDate),
+                                originalTimestamp: timestamp
+                            });
+                        }
+                    }
+                }
+            });
+            
+            // Filter messages newer than lastTimestamp
+            const lastTime = lastTimestamp ? new Date(lastTimestamp).getTime() : 0;
+            const newMessages = allMessages.filter(msg => {
+                const msgTime = new Date(msg.timestamp).getTime();
+                return msgTime > lastTime;
+            });
+            
+            // Sort by timestamp (oldest first)
+            newMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            
+            console.log(`📨 Found ${newMessages.length} new messages for ${phoneNumber}`);
+            
+            return res.json({
+                success: true,
+                newMessages: newMessages,
+                count: newMessages.length,
+                lastChecked: new Date().toISOString()
+            });
+            
+        } catch (error) {
+            console.error('❌ Error reading from Google Sheets:', error);
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to read messages from Google Sheets',
+                details: error.message
+            });
+        }
+        
     } catch (error) {
-        console.error('Error checking new messages:', error);
-        res.json({
+        console.error('💥 /chat/check-new error:', error.message);
+        return res.status(500).json({
             success: false,
-            newMessages: []
+            error: error.message
         });
     }
 });
 
+// Helper functions (add these near your other helper functions)
 function formatTime(date) {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
