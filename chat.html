@@ -1368,31 +1368,102 @@ async function fetchChatHistory(page = 0, pageSize = 20) {
             })
         });
         
-        console.log(`📡 Response status: ${response.status}`);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
         const data = await response.json();
-        console.log(`📊 Server response:`, data);
+        console.log(`📊 Server response: success=${data.success}, messages=${data.messages?.length || 0}`);
         
-        if (data.success) {
-            // Ensure messages array exists
-            const messages = Array.isArray(data.messages) ? data.messages : [];
-            console.log(`📜 Received ${messages.length} messages`);
-            
+        if (data.success && Array.isArray(data.messages)) {
+            // Server now returns ALL messages at once
             return {
-                messages: messages,
-                hasMore: Boolean(data.hasMore)
+                messages: data.messages,
+                hasMore: false // No pagination for now
             };
         } else {
-            console.warn('Server returned success: false', data.error);
+            console.warn('Server error:', data.error);
             return { messages: [], hasMore: false };
         }
     } catch (error) {
         console.error('Error fetching history:', error);
         return { messages: [], hasMore: false };
+    }
+}
+
+async function loadChatHistory(phone) {
+    console.log(`🚀 Loading history for: ${phone}`);
+    
+    // Show loading indicator
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'history-loading';
+    loadingDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading chat history...';
+    chatMessages.appendChild(loadingDiv);
+    
+    try {
+        // Get ALL messages from server
+        const result = await fetchChatHistory(0, 20);
+        
+        // Remove loading indicator
+        loadingDiv.remove();
+        
+        if (result.messages && result.messages.length > 0) {
+            console.log(`✅ Loaded ${result.messages.length} messages`);
+            
+            // Display messages in REVERSE order (oldest first for display)
+            // Since server returns newest first, we need to reverse for display
+            const messagesToDisplay = [...result.messages].reverse();
+            
+            messagesToDisplay.forEach(msg => {
+                displayMessage(msg.text, msg.sender, msg.displayTime, msg.timestamp);
+            });
+            
+            console.log(`📝 Displayed ${messagesToDisplay.length} messages`);
+            
+            // Scroll to bottom to show newest messages
+            setTimeout(() => {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 100);
+            
+        } else {
+            console.log(`⚠️ No messages found in history`);
+            loadingDiv.remove();
+            
+            // Show "no history" message
+            const noHistoryMsg = document.createElement('div');
+            noHistoryMsg.className = 'message bot';
+            noHistoryMsg.innerHTML = `
+                <div class="message-wrapper">
+                    <div class="message-content">
+                        <i>No previous chat history. Starting fresh conversation.</i>
+                    </div>
+                </div>
+            `;
+            
+            const welcomeMessage = document.querySelector('.welcome-message');
+            if (welcomeMessage) {
+                chatMessages.insertBefore(noHistoryMsg, welcomeMessage.nextSibling);
+            } else {
+                chatMessages.appendChild(noHistoryMsg);
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error loading chat history:', error);
+        loadingDiv.remove();
+        
+        // Show error message
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'message bot';
+        errorMsg.innerHTML = `
+            <div class="message-wrapper">
+                <div class="message-content">
+                    <i>Unable to load chat history. Error: ${error.message}</i>
+                </div>
+            </div>
+        `;
+        
+        const welcomeMessage = document.querySelector('.welcome-message');
+        if (welcomeMessage) {
+            chatMessages.insertBefore(errorMsg, welcomeMessage.nextSibling);
+        } else {
+            chatMessages.appendChild(errorMsg);
+        }
     }
 }
         
