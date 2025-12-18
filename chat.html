@@ -1354,42 +1354,34 @@
         
         // Fetch chat history from server (simulating sheet data)
         async function fetchChatHistory(page = 0, pageSize = 10) {
-            try {
-                const response = await fetch('/chat/history', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        phoneNumber: currentPhone,
-                        page: page,
-                        pageSize: pageSize
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success && data.history) {
-                    // Parse the sheet data
-                    const parsedMessages = parseSheetData(data.history, currentPhone);
-                    
-                    // Return the messages for the requested page
-                    const start = page * pageSize;
-                    const end = start + pageSize;
-                    const pageMessages = parsedMessages.slice(start, end);
-                    
-                    return {
-                        messages: pageMessages,
-                        hasMore: parsedMessages.length > end
-                    };
-                }
-                
-                return { messages: [], hasMore: false };
-            } catch (error) {
-                console.error('Error fetching history:', error);
-                return { messages: [], hasMore: false };
-            }
+    try {
+        const response = await fetch('/chat/history', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                phoneNumber: currentPhone,
+                page: page,
+                pageSize: pageSize
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            return {
+                messages: data.messages,
+                hasMore: data.hasMore
+            };
         }
+        
+        return { messages: [], hasMore: false };
+    } catch (error) {
+        console.error('Error fetching history:', error);
+        return { messages: [], hasMore: false };
+    }
+}
         
         // Load more history
         async function loadMoreHistory() {
