@@ -1390,83 +1390,83 @@ async function fetchChatHistory(page = 0, pageSize = 20) {
     }
 }
         
-        // Load more history
-        async function loadMoreHistory() {
-            if (isLoadingHistory || !hasMoreHistory) return;
+async function loadMoreHistory() {
+    if (isLoadingHistory || !hasMoreHistory) return;
+    
+    const loadMoreBtn = document.querySelector('.load-more-btn');
+    if (loadMoreBtn) {
+        loadMoreBtn.classList.add('loading');
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.innerHTML = '<i class="fas fa-spinner"></i> Loading...';
+    }
+    
+    isLoadingHistory = true;
+    
+    try {
+        const result = await fetchChatHistory(historyPage, 20);
+        
+        if (result.messages.length > 0) {
+            // Get current scroll position and height
+            const oldScrollHeight = chatMessages.scrollHeight;
+            const oldScrollTop = chatMessages.scrollTop;
             
-            const loadMoreBtn = document.querySelector('.load-more-btn');
-            if (loadMoreBtn) {
-                loadMoreBtn.classList.add('loading');
-                loadMoreBtn.disabled = true;
-                loadMoreBtn.innerHTML = '<i class="fas fa-spinner"></i> Loading...';
+            // Remove load more button temporarily
+            const loadMoreContainer = document.getElementById('loadMoreContainer');
+            if (loadMoreContainer) {
+                loadMoreContainer.remove();
             }
             
-            isLoadingHistory = true;
+            // Add OLDER messages to top (since we're loading older messages)
+            const fragment = document.createDocumentFragment();
+            // Messages are already in chronological order from server
+            result.messages.forEach(msg => {
+                const messageElement = displayMessage(msg.text, msg.sender, msg.displayTime, msg.timestamp);
+                fragment.insertBefore(messageElement, fragment.firstChild);
+            });
             
-            try {
-                const result = await fetchChatHistory(historyPage, 20);
-                
-                if (result.messages.length > 0) {
-                    // Get current scroll position and height
-                    const oldScrollHeight = chatMessages.scrollHeight;
-                    const oldScrollTop = chatMessages.scrollTop;
-                    
-                    // Remove load more button temporarily
-                    const loadMoreContainer = document.getElementById('loadMoreContainer');
-                    if (loadMoreContainer) {
-                        loadMoreContainer.remove();
-                    }
-                    
-                    // Add messages to top (oldest first for this page)
-                    const fragment = document.createDocumentFragment();
-                    result.messages.forEach(msg => {
-                        const messageElement = displayMessage(msg.text, msg.sender, msg.displayTime, msg.timestamp);
-                        fragment.insertBefore(messageElement, fragment.firstChild);
-                    });
-                    
-                    // Insert at top (after welcome message if exists)
-                    const welcomeMessage = document.querySelector('.welcome-message');
-                    if (welcomeMessage) {
-                        chatMessages.insertBefore(fragment, welcomeMessage.nextSibling);
-                    } else {
-                        chatMessages.insertBefore(fragment, chatMessages.firstChild);
-                    }
-                    
-                    // Add load more button again if needed
-                    if (result.hasMore) {
-                        const newLoadMoreBtn = createLoadMoreButton();
-                        const welcomeMessage = document.querySelector('.welcome-message');
-                        if (welcomeMessage) {
-                            chatMessages.insertBefore(newLoadMoreBtn, welcomeMessage.nextSibling);
-                        } else {
-                            chatMessages.insertBefore(newLoadMoreBtn, chatMessages.firstChild);
-                        }
-                    }
-                    
-                    // Restore scroll position
-                    const newScrollHeight = chatMessages.scrollHeight;
-                    chatMessages.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
-                    
-                    // Update state
-                    historyPage++;
-                    hasMoreHistory = result.hasMore;
+            // Insert at top (after welcome message if exists)
+            const welcomeMessage = document.querySelector('.welcome-message');
+            if (welcomeMessage) {
+                chatMessages.insertBefore(fragment, welcomeMessage.nextSibling);
+            } else {
+                chatMessages.insertBefore(fragment, chatMessages.firstChild);
+            }
+            
+            // Add load more button again if needed
+            if (result.hasMore) {
+                const newLoadMoreBtn = createLoadMoreButton();
+                const welcomeMessage = document.querySelector('.welcome-message');
+                if (welcomeMessage) {
+                    chatMessages.insertBefore(newLoadMoreBtn, welcomeMessage.nextSibling);
                 } else {
-                    hasMoreHistory = false;
-                    const loadMoreContainer = document.getElementById('loadMoreContainer');
-                    if (loadMoreContainer) {
-                        loadMoreContainer.innerHTML = '<div class="history-loading">No more messages</div>';
-                    }
+                    chatMessages.insertBefore(newLoadMoreBtn, chatMessages.firstChild);
                 }
-            } catch (error) {
-                console.error('Error loading more history:', error);
-                const loadMoreContainer = document.getElementById('loadMoreContainer');
-                if (loadMoreContainer) {
-                    loadMoreContainer.innerHTML = '<div class="history-loading">Error loading messages</div>';
-                }
-            } finally {
-                isLoadingHistory = false;
+            }
+            
+            // Restore scroll position
+            const newScrollHeight = chatMessages.scrollHeight;
+            chatMessages.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
+            
+            // Update state
+            historyPage++;
+            hasMoreHistory = result.hasMore;
+        } else {
+            hasMoreHistory = false;
+            const loadMoreContainer = document.getElementById('loadMoreContainer');
+            if (loadMoreContainer) {
+                loadMoreContainer.innerHTML = '<div class="history-loading">No more messages</div>';
             }
         }
+    } catch (error) {
+        console.error('Error loading more history:', error);
+        const loadMoreContainer = document.getElementById('loadMoreContainer');
+        if (loadMoreContainer) {
+            loadMoreContainer.innerHTML = '<div class="history-loading">Error loading messages</div>';
+        }
+    } finally {
+        isLoadingHistory = false;
+    }
+}
         
 // Load chat history with pagination - AUTO-LOAD on chat start
 async function loadChatHistory(phone) {
