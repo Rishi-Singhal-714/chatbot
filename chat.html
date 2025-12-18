@@ -1460,35 +1460,80 @@
             }
         }
         
-        // Load chat history with pagination
-        async function loadChatHistory(phone) {
-            // First, try to load from server
-            const result = await fetchChatHistory(0, 10);
+// Load chat history with pagination - AUTO-LOAD on chat start
+async function loadChatHistory(phone) {
+    // Show loading indicator
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'history-loading';
+    loadingDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading chat history...';
+    chatMessages.appendChild(loadingDiv);
+    
+    try {
+        // First, try to load from server (most recent messages)
+        const result = await fetchChatHistory(0, 20);
+        
+        // Remove loading indicator
+        loadingDiv.remove();
+        
+        if (result.messages && result.messages.length > 0) {
+            console.log(`📜 Loaded ${result.messages.length} messages from server`);
             
-            if (result.messages.length > 0) {
-                // Display most recent messages at bottom
-                result.messages.forEach(msg => {
-                    displayMessage(msg.text, msg.sender, msg.displayTime, msg.timestamp);
-                });
-                
-                // Add load more button at top if there are more messages
-                if (result.hasMore) {
-                    const loadMoreBtn = createLoadMoreButton();
-                    const welcomeMessage = document.querySelector('.welcome-message');
-                    if (welcomeMessage) {
-                        chatMessages.insertBefore(loadMoreBtn, welcomeMessage.nextSibling);
-                    } else {
-                        chatMessages.insertBefore(loadMoreBtn, chatMessages.firstChild);
-                    }
-                    
-                    historyPage = 1;
-                    hasMoreHistory = true;
+            // Display messages from oldest to newest
+            const sortedMessages = [...result.messages].sort((a, b) => 
+                new Date(a.timestamp) - new Date(b.timestamp)
+            );
+            
+            sortedMessages.forEach(msg => {
+                displayMessage(msg.text, msg.sender, msg.displayTime, msg.timestamp);
+            });
+            
+            // Add load more button at top if there are more messages
+            if (result.hasMore) {
+                const loadMoreBtn = createLoadMoreButton();
+                const welcomeMessage = document.querySelector('.welcome-message');
+                if (welcomeMessage) {
+                    chatMessages.insertBefore(loadMoreBtn, welcomeMessage.nextSibling);
+                } else {
+                    chatMessages.insertBefore(loadMoreBtn, chatMessages.firstChild);
                 }
-            } else {
-                // Fallback to local storage
-                loadLocalHistory(phone);
+                
+                historyPage = 1;
+                hasMoreHistory = true;
+            }
+            
+            // Scroll to bottom to show newest messages
+            setTimeout(() => {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 100);
+            
+        } else {
+            // No server history, fallback to local storage
+            console.log('📜 No server history found, loading from local storage');
+            loadingDiv.remove();
+            loadLocalHistory(phone);
+            
+            // Add load more button anyway (in case server history exists but empty page)
+            if (result.hasMore) {
+                const loadMoreBtn = createLoadMoreButton();
+                const welcomeMessage = document.querySelector('.welcome-message');
+                if (welcomeMessage) {
+                    chatMessages.insertBefore(loadMoreBtn, welcomeMessage.nextSibling);
+                } else {
+                    chatMessages.insertBefore(loadMoreBtn, chatMessages.firstChild);
+                }
+                
+                historyPage = 1;
+                hasMoreHistory = true;
             }
         }
+    } catch (error) {
+        console.error('❌ Error loading chat history:', error);
+        loadingDiv.remove();
+        
+        // Fallback to local storage
+        loadLocalHistory(phone);
+    }
+}
         
         // Load local history as fallback
         function loadLocalHistory(phone) {
@@ -1592,125 +1637,120 @@
             messageInput.focus();
         }
         
-        // Initialize chat
-        function initChat(phone) {
-            currentPhone = phone;
-            currentPhoneSpan.textContent = phone;
-            
-            // Update profile based on phone number
-            const digits = phone.replace(/[^0-9]/g, '');
-            const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
-            const isEmployee = EMPLOYEE_NUMBERS.includes(digits);
-            
-            // Set profile avatar
-            profileAvatar.textContent = digits.substring(0, 2) || 'ZC';
-            
-            // Set chat title
-            if (isEmployee) {
-                if (suffix === 'A') {
-                    chatTitle.textContent = 'Employee (Admin)';
-                    chatStatus.textContent = 'Online • Admin Mode';
-                    profileAvatar.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)';
-                } else if (suffix === 'U') {
-                    chatTitle.textContent = 'Employee (User)';
-                    chatStatus.textContent = 'Online • User Mode';
-                    profileAvatar.style.background = 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)';
-                } else {
-                    chatTitle.textContent = 'Employee Mode';
-                    chatStatus.textContent = 'Online • Employee';
-                    profileAvatar.style.background = 'linear-gradient(135deg, #00b09b 0%, #96c93d 100%)';
-                }
-            } else {
-                chatTitle.textContent = 'Zulu Club Assistant';
-                chatStatus.textContent = 'Online';
-                profileAvatar.style.background = 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)';
-            }
-            
-            // Reset pagination
-            historyPage = 0;
-            hasMoreHistory = true;
-            isLoadingHistory = false;
-            
-            // Hide setup, show chat
-            setupSection.classList.add('hidden');
-            chatSection.classList.remove('hidden');
-            
-            // Clear chat messages
-            chatMessages.innerHTML = '';
-            
-            // Enable input
-            messageInput.disabled = false;
-            messageInput.focus();
-            
-            // Show welcome message
-            let welcomeHtml = '';
-            
-            if (isEmployee) {
-                if (suffix === 'A') {
-                    welcomeHtml = `
-                        <div class="welcome-message">
-                            <h3><i class="fas fa-user-tie"></i> Employee Admin Mode</h3>
-                            <p>You're in <strong>Admin Mode</strong> (suffix: A)</p>
-                            <p>You can log:</p>
-                            <p>• <strong>Operation:</strong> ops message</p>
-                            <p>• <strong>Logistics:</strong> logistics message</p>
-                            <p>• <strong>Inventory:</strong> inventory message</p>
-                            <p>• <strong>Market:</strong> market message</p>
-                            <p>• <strong>Fixed:</strong> fixed message</p>
-                            <p>• <strong>Sales:</strong> sales message</p>
-                            <p>• <strong>Lead:</strong> lead message</p>
-                            <p><br>Try: <em>"Operation: Need more staff tomorrow"</em></p>
-                        </div>
-                    `;
-                } else if (suffix === 'U') {
-                    welcomeHtml = `
-                        <div class="welcome-message">
-                            <h3><i class="fas fa-user"></i> Employee User Mode</h3>
-                            <p>You're in <strong>User Mode</strong> (suffix: U)</p>
-                            <p>You'll chat as a regular user.</p>
-                            <p><br>Try asking: <em>"Show me t-shirts"</em> or <em>"Tell me about Zulu Club"</em></p>
-                        </div>
-                    `;
-                } else {
-                    welcomeHtml = `
-                        <div class="welcome-message">
-                            <h3><i class="fas fa-user-tie"></i> Employee Mode</h3>
-                            <p>You're logged in as an employee (no suffix).</p>
-                            <p>Add 'U' to your number for user mode: <strong>${digits}U</strong></p>
-                            <p>You can log billing/sales/lead messages.</p>
-                            <p><br>Try: <em>"Sales: Made 5 sales today"</em></p>
-                        </div>
-                    `;
-                }
-            } else {
-                welcomeHtml = `
-                    <div class="welcome-message">
-                        <h3><i class="fas fa-shopping-bag"></i> Welcome to Zulu Club!</h3>
-                        <p>I'm your personal shopping assistant. I can help you with:</p>
-                        <p>• Product browsing and shopping</p>
-                        <p>• Seller information and partnerships</p>
-                        <p>• Company details and investor queries</p>
-                        <p>• Connecting with human agents</p>
-                        <p><br>Try asking: <em>"Show me t-shirts"</em> or <em>"Tell me about Zulu Club"</em></p>
-                    </div>
-                `;
-            }
-            
-            chatMessages.innerHTML = welcomeHtml;
-            
-            // Load history
-            loadChatHistory(phone);
-            
-            isConnected = true;
-            
-            // Update status bar
-            statusBar.innerHTML = `Connected as: <span style="color:#00a884">${phone}</span>`;
-            
-            // Scroll to bottom after loading history
-            setTimeout(() => {
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }, 100);
+        // Initialize chat - UPDATED VERSION
+function initChat(phone) {
+    currentPhone = phone;
+    currentPhoneSpan.textContent = phone;
+    
+    // Update profile based on phone number
+    const digits = phone.replace(/[^0-9]/g, '');
+    const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
+    const isEmployee = EMPLOYEE_NUMBERS.includes(digits);
+    
+    // Set profile avatar
+    profileAvatar.textContent = digits.substring(0, 2) || 'ZC';
+    
+    // Set chat title
+    if (isEmployee) {
+        if (suffix === 'A') {
+            chatTitle.textContent = 'Employee (Admin)';
+            chatStatus.textContent = 'Online • Admin Mode';
+            profileAvatar.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)';
+        } else if (suffix === 'U') {
+            chatTitle.textContent = 'Employee (User)';
+            chatStatus.textContent = 'Online • User Mode';
+            profileAvatar.style.background = 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)';
+        } else {
+            chatTitle.textContent = 'Employee Mode';
+            chatStatus.textContent = 'Online • Employee';
+            profileAvatar.style.background = 'linear-gradient(135deg, #00b09b 0%, #96c93d 100%)';
         }
+    } else {
+        chatTitle.textContent = 'Zulu Club Assistant';
+        chatStatus.textContent = 'Online';
+        profileAvatar.style.background = 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)';
+    }
+    
+    // Reset pagination
+    historyPage = 0;
+    hasMoreHistory = true;
+    isLoadingHistory = false;
+    
+    // Hide setup, show chat
+    setupSection.classList.add('hidden');
+    chatSection.classList.remove('hidden');
+    
+    // Clear chat messages
+    chatMessages.innerHTML = '';
+    
+    // Enable input
+    messageInput.disabled = false;
+    messageInput.focus();
+    
+    // Show welcome message FIRST
+    let welcomeHtml = '';
+    
+    if (isEmployee) {
+        if (suffix === 'A') {
+            welcomeHtml = `
+                <div class="welcome-message">
+                    <h3><i class="fas fa-user-tie"></i> Employee Admin Mode</h3>
+                    <p>You're in <strong>Admin Mode</strong> (suffix: A)</p>
+                    <p>You can log:</p>
+                    <p>• <strong>Operation:</strong> ops message</p>
+                    <p>• <strong>Logistics:</strong> logistics message</p>
+                    <p>• <strong>Inventory:</strong> inventory message</p>
+                    <p>• <strong>Market:</strong> market message</p>
+                    <p>• <strong>Fixed:</strong> fixed message</p>
+                    <p>• <strong>Sales:</strong> sales message</p>
+                    <p>• <strong>Lead:</strong> lead message</p>
+                    <p><br>Try: <em>"Operation: Need more staff tomorrow"</em></p>
+                </div>
+            `;
+        } else if (suffix === 'U') {
+            welcomeHtml = `
+                <div class="welcome-message">
+                    <h3><i class="fas fa-user"></i> Employee User Mode</h3>
+                    <p>You're in <strong>User Mode</strong> (suffix: U)</p>
+                    <p>You'll chat as a regular user.</p>
+                    <p><br>Try asking: <em>"Show me t-shirts"</em> or <em>"Tell me about Zulu Club"</em></p>
+                </div>
+            `;
+        } else {
+            welcomeHtml = `
+                <div class="welcome-message">
+                    <h3><i class="fas fa-user-tie"></i> Employee Mode</h3>
+                    <p>You're logged in as an employee (no suffix).</p>
+                    <p>Add 'U' to your number for user mode: <strong>${digits}U</strong></p>
+                    <p>You can log billing/sales/lead messages.</p>
+                    <p><br>Try: <em>"Sales: Made 5 sales today"</em></p>
+                </div>
+            `;
+        }
+    } else {
+        welcomeHtml = `
+            <div class="welcome-message">
+                <h3><i class="fas fa-shopping-bag"></i> Welcome to Zulu Club!</h3>
+                <p>I'm your personal shopping assistant. I can help you with:</p>
+                <p>• Product browsing and shopping</p>
+                <p>• Seller information and partnerships</p>
+                <p>• Company details and investor queries</p>
+                <p>• Connecting with human agents</p>
+                <p><br>Try asking: <em>"Show me t-shirts"</em> or <em>"Tell me about Zulu Club"</em></p>
+            </div>
+        `;
+    }
+    
+    chatMessages.innerHTML = welcomeHtml;
+    
+    // Load history IMMEDIATELY (auto-load)
+    loadChatHistory(phone);
+    
+    isConnected = true;
+    
+    // Update status bar
+    statusBar.innerHTML = `Connected as: <span style="color:#00a884">${phone}</span>`;
+}
         
         // Go back to setup
         function goBackToSetup() {
