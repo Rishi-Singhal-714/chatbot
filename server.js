@@ -1643,7 +1643,7 @@ app.get('/refresh-csv', async (req, res) => {
 // Get chat history from Google Sheets with pagination
 app.post('/chat/history', async (req, res) => {
     try {
-        const { phoneNumber, page = 0, pageSize = 10 } = req.body;
+        const { phoneNumber, page = 0, pageSize = 20 } = req.body;
         
         if (!phoneNumber) {
             return res.status(400).json({
@@ -1796,7 +1796,7 @@ app.get('/chat/history/:phoneNumber', async (req, res) => {
     try {
         const { phoneNumber } = req.params;
         const page = parseInt(req.query.page) || 0;
-        const pageSize = parseInt(req.query.pageSize) || 10;
+        const pageSize = parseInt(req.query.pageSize) || 20;
         
         console.log(`📜 GET history for ${phoneNumber}, page ${page}`);
         
