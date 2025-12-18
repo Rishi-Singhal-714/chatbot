@@ -1191,31 +1191,8 @@
         });
     }
     
-    // Save message to localStorage (for local persistence)
-    function saveMessageLocally(text, sender) {
-        const message = {
-            text,
-            sender,
-            timestamp: new Date().toISOString(),
-            displayTime: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-        };
-        
-        const historyKey = `chat_history_${currentPhone}`;
-        let history = JSON.parse(localStorage.getItem(historyKey) || '[]');
-        history.push(message);
-        
-        // Keep only last 50 messages locally
-        if (history.length > 50) {
-            history = history.slice(-50);
-        }
-        
-        localStorage.setItem(historyKey, JSON.stringify(history));
-        
-        return message.displayTime;
-    }
-    
-    // Display a message in the chat - UPDATED VERSION
-    function displayMessage(text, sender, timestamp = null, isoTime = null, isHistorical = false) {
+    // Display a message in the chat
+    function displayMessage(text, sender, timestamp = null, isoTime = null) {
         const messageWrapper = document.createElement('div');
         messageWrapper.className = `message ${sender}`;
         if (isoTime) {
@@ -1324,7 +1301,7 @@
         }
     }
     
-    // Load more history - UPDATED VERSION
+    // Load more history
     async function loadMoreHistory() {
         if (isLoadingHistory || !hasMoreHistory) return;
         
@@ -1359,7 +1336,7 @@
                 // We need to add them at the top, in correct chronological order
                 for (let i = result.messages.length - 1; i >= 0; i--) {
                     const msg = result.messages[i];
-                    const messageElement = displayMessage(msg.text, msg.sender, msg.displayTime, msg.timestamp, true);
+                    const messageElement = displayMessage(msg.text, msg.sender, msg.displayTime, msg.timestamp);
                     fragment.appendChild(messageElement);
                 }
                 
@@ -1436,7 +1413,7 @@
         }
     }
     
-    // Load chat history with pagination - UPDATED VERSION
+    // Load chat history with pagination
     async function loadChatHistory(phone) {
         // Show loading indicator
         const loadingDiv = document.createElement('div');
@@ -1457,7 +1434,7 @@
                 const messagesToShow = [...result.messages].reverse();
                 
                 messagesToShow.forEach(msg => {
-                    const messageElement = displayMessage(msg.text, msg.sender, msg.displayTime, msg.timestamp, true);
+                    const messageElement = displayMessage(msg.text, msg.sender, msg.displayTime, msg.timestamp);
                     chatMessages.appendChild(messageElement);
                 });
                 
@@ -1485,9 +1462,15 @@
                     }
                 }
             } else {
-                // No server history, fallback to local storage
-                console.log('📜 No server history, loading local history');
-                loadLocalHistory(phone);
+                // No history found
+                const noHistoryDiv = document.createElement('div');
+                noHistoryDiv.className = 'history-loading';
+                noHistoryDiv.textContent = 'No previous messages found';
+                
+                const welcomeMessage = document.querySelector('.welcome-message');
+                if (welcomeMessage) {
+                    chatMessages.insertBefore(noHistoryDiv, welcomeMessage.nextSibling);
+                }
             }
             
             // Scroll to bottom to see latest messages
@@ -1498,31 +1481,16 @@
         } catch (error) {
             console.error('Error loading chat history:', error);
             loadingDiv.remove();
-            loadLocalHistory(phone);
-        }
-    }
-    
-    // Load local history as fallback
-    function loadLocalHistory(phone) {
-        const historyKey = `chat_history_${phone}`;
-        const localHistory = JSON.parse(localStorage.getItem(historyKey) || '[]');
-        
-        // Show newest messages first
-        const reversedHistory = [...localHistory].reverse();
-        
-        reversedHistory.forEach(msg => {
-            const messageElement = displayMessage(msg.text, msg.sender, msg.displayTime, msg.timestamp, true);
-            chatMessages.appendChild(messageElement);
-        });
-        
-        // Add message about local history
-        const localInfoDiv = document.createElement('div');
-        localInfoDiv.className = 'history-loading';
-        localInfoDiv.textContent = 'Showing local history only';
-        
-        const welcomeMessage = document.querySelector('.welcome-message');
-        if (welcomeMessage) {
-            chatMessages.insertBefore(localInfoDiv, welcomeMessage.nextSibling);
+            
+            // Show error message
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'history-loading';
+            errorDiv.textContent = 'Error loading history from server';
+            
+            const welcomeMessage = document.querySelector('.welcome-message');
+            if (welcomeMessage) {
+                chatMessages.insertBefore(errorDiv, welcomeMessage.nextSibling);
+            }
         }
     }
     
@@ -1580,8 +1548,8 @@
         autoResizeTextarea(messageInput);
         sendBtn.disabled = true;
         
-        // Save locally and display user message
-        const timestamp = saveMessageLocally(message, 'user');
+        // Display user message immediately
+        const timestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         const messageElement = displayMessage(message, 'user', timestamp);
         chatMessages.appendChild(messageElement);
         
@@ -1604,11 +1572,12 @@
             hideTyping();
             
             if (data.success) {
-                const botTimestamp = saveMessageLocally(data.response, 'bot');
+                const botTimestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 const botMessageElement = displayMessage(data.response, 'bot', botTimestamp);
                 chatMessages.appendChild(botMessageElement);
             } else {
-                const errorMessageElement = displayMessage('Sorry, there was an error processing your message.', 'bot');
+                const errorTimestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const errorMessageElement = displayMessage('Sorry, there was an error processing your message.', 'bot', errorTimestamp);
                 chatMessages.appendChild(errorMessageElement);
             }
             
@@ -1619,7 +1588,8 @@
             
         } catch (error) {
             hideTyping();
-            const errorMessageElement = displayMessage('Network error. Please check your connection.', 'bot');
+            const errorTimestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const errorMessageElement = displayMessage('Network error. Please check your connection.', 'bot', errorTimestamp);
             chatMessages.appendChild(errorMessageElement);
             console.error('Error:', error);
             
@@ -1739,7 +1709,7 @@
         
         chatMessages.innerHTML = welcomeHtml;
         
-        // Load history
+        // Load history from server only
         loadChatHistory(phone);
         
         isConnected = true;
@@ -1827,7 +1797,9 @@
     attachBtn.addEventListener('click', () => {
         // Simple file picker simulation
         messageInput.focus();
-        displayMessage('[File attachment would open here]', 'bot');
+        const timestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const messageElement = displayMessage('[File attachment would open here]', 'bot', timestamp);
+        chatMessages.appendChild(messageElement);
     });
     
     // Auto-focus phone input on load
