@@ -1640,7 +1640,7 @@ app.get('/refresh-csv', async (req, res) => {
 });
 // Add this endpoint to your server.js (somewhere after your other endpoints)
 
-// Get chat history from Google Sheets with pagination
+// Update this part in your server.js /chat/history endpoint
 app.post('/chat/history', async (req, res) => {
     try {
         const { phoneNumber, page = 0, pageSize = 20 } = req.body;
@@ -1677,7 +1677,6 @@ app.post('/chat/history', async (req, res) => {
             const headers = (headersResp.data.values && headersResp.data.values[0]) || [];
             
             // Find the column index for this phone number
-            // Phone numbers are stored as column headers in format: "8368127760A"
             let colIndex = -1;
             for (let i = 0; i < headers.length; i++) {
                 const header = String(headers[i]).trim();
@@ -1699,7 +1698,7 @@ app.post('/chat/history', async (req, res) => {
             }
             
             // Get all values from this column (excluding header)
-            const colLetter = String.fromCharCode(65 + colIndex); // A=0, B=1, etc.
+            const colLetter = String.fromCharCode(65 + colIndex);
             const range = `History!${colLetter}2:${colLetter}`;
             
             const colResp = await sheets.spreadsheets.values.get({
@@ -1747,31 +1746,70 @@ app.post('/chat/history', async (req, res) => {
             // Sort by timestamp (oldest first for pagination)
             allMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
             
-            // Calculate pagination
+            // Calculate pagination - FIXED LOGIC
             const totalMessages = allMessages.length;
-            const startIndex = page * pageSize;
-            const endIndex = startIndex + pageSize;
-            const hasMore = totalMessages > endIndex;
             
-            // Get messages for this page (we'll return newest first for display)
-            const pageMessages = allMessages.slice(startIndex, endIndex);
-            
-            console.log(`📜 Found ${totalMessages} total messages, returning ${pageMessages.length} for page ${page}`);
-            
-            // Format as string for backward compatibility
-            const historyString = allMessages
-                .map(msg => `${msg.timestamp} | ${msg.sender === 'user' ? 'USER:' : 'ASSISTANT:'} ${msg.text}`)
-                .join('\n');
-            
-            return res.json({
-                success: true,
-                history: historyString, // Full history as string (for existing code)
-                messages: pageMessages, // Paginated messages as array
-                hasMore: hasMore,
-                totalMessages: totalMessages,
-                currentPage: page,
-                pageSize: pageSize
-            });
+            // If we want the MOST RECENT messages first (for chat display),
+            // we need to reverse the logic
+            if (page === 0) {
+                // For page 0, we want the MOST RECENT messages
+                // Take last `pageSize` messages from the end
+                const startIndex = Math.max(0, totalMessages - pageSize);
+                const pageMessages = allMessages.slice(startIndex, totalMessages);
+                
+                // hasMore = true if we skipped some older messages
+                const hasMore = startIndex > 0;
+                
+                console.log(`📜 Found ${totalMessages} total messages, returning ${pageMessages.length} most recent for page ${page}`);
+                
+                // Format as string for backward compatibility
+                const historyString = allMessages
+                    .map(msg => `${msg.timestamp} | ${msg.sender === 'user' ? 'USER:' : 'ASSISTANT:'} ${msg.text}`)
+                    .join('\n');
+                
+                return res.json({
+                    success: true,
+                    history: historyString,
+                    messages: pageMessages, // Most recent messages
+                    hasMore: hasMore,
+                    totalMessages: totalMessages,
+                    currentPage: page,
+                    pageSize: pageSize,
+                    startIndex: startIndex
+                });
+            } else {
+                // For subsequent pages (Load More), get OLDER messages
+                // We need to calculate based on how many messages we've already shown
+                const messagesAlreadyShown = page * pageSize;
+                const remainingMessages = totalMessages - messagesAlreadyShown;
+                
+                if (remainingMessages <= 0) {
+                    return res.json({
+                        success: true,
+                        history: '',
+                        messages: [],
+                        hasMore: false,
+                        totalMessages: totalMessages
+                    });
+                }
+                
+                // Get the next batch of OLDER messages
+                const startIndex = Math.max(0, totalMessages - messagesAlreadyShown - pageSize);
+                const endIndex = totalMessages - messagesAlreadyShown;
+                const pageMessages = allMessages.slice(startIndex, endIndex);
+                
+                // hasMore = true if there are even older messages
+                const hasMore = startIndex > 0;
+                
+                return res.json({
+                    success: true,
+                    messages: pageMessages,
+                    hasMore: hasMore,
+                    totalMessages: totalMessages,
+                    currentPage: page,
+                    pageSize: pageSize
+                });
+            }
             
         } catch (error) {
             console.error('❌ Error reading from Google Sheets:', error);
@@ -1791,12 +1829,11 @@ app.post('/chat/history', async (req, res) => {
     }
 });
 
-// Also add a GET endpoint for convenience
 app.get('/chat/history/:phoneNumber', async (req, res) => {
     try {
         const { phoneNumber } = req.params;
         const page = parseInt(req.query.page) || 0;
-        const pageSize = parseInt(req.query.pageSize) || 20;
+        const pageSize = parseInt(req.query.pageSize) || 20; // Changed to 20
         
         console.log(`📜 GET history for ${phoneNumber}, page ${page}`);
         
@@ -1889,24 +1926,55 @@ app.get('/chat/history/:phoneNumber', async (req, res) => {
             // Sort by timestamp
             allMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
             
-            // Pagination
+            // FIXED PAGINATION LOGIC
             const totalMessages = allMessages.length;
-            const startIndex = page * pageSize;
-            const endIndex = startIndex + pageSize;
-            const hasMore = totalMessages > endIndex;
-            const pageMessages = allMessages.slice(startIndex, endIndex);
             
-            return res.json({
-                success: true,
-                history: allMessages
-                    .map(msg => `${msg.timestamp} | ${msg.sender === 'user' ? 'USER:' : 'ASSISTANT:'} ${msg.text}`)
-                    .join('\n'),
-                messages: pageMessages,
-                hasMore: hasMore,
-                totalMessages: totalMessages,
-                currentPage: page,
-                pageSize: pageSize
-            });
+            if (page === 0) {
+                // Get most recent messages for page 0
+                const startIndex = Math.max(0, totalMessages - pageSize);
+                const pageMessages = allMessages.slice(startIndex, totalMessages);
+                const hasMore = startIndex > 0;
+                
+                return res.json({
+                    success: true,
+                    history: allMessages
+                        .map(msg => `${msg.timestamp} | ${msg.sender === 'user' ? 'USER:' : 'ASSISTANT:'} ${msg.text}`)
+                        .join('\n'),
+                    messages: pageMessages,
+                    hasMore: hasMore,
+                    totalMessages: totalMessages,
+                    currentPage: page,
+                    pageSize: pageSize
+                });
+            } else {
+                // Get older messages for subsequent pages
+                const messagesAlreadyShown = page * pageSize;
+                const remainingMessages = totalMessages - messagesAlreadyShown;
+                
+                if (remainingMessages <= 0) {
+                    return res.json({
+                        success: true,
+                        history: '',
+                        messages: [],
+                        hasMore: false,
+                        totalMessages: totalMessages
+                    });
+                }
+                
+                const startIndex = Math.max(0, totalMessages - messagesAlreadyShown - pageSize);
+                const endIndex = totalMessages - messagesAlreadyShown;
+                const pageMessages = allMessages.slice(startIndex, endIndex);
+                const hasMore = startIndex > 0;
+                
+                return res.json({
+                    success: true,
+                    messages: pageMessages,
+                    hasMore: hasMore,
+                    totalMessages: totalMessages,
+                    currentPage: page,
+                    pageSize: pageSize
+                });
+            }
             
         } catch (error) {
             console.error('❌ Error reading Google Sheets:', error);
