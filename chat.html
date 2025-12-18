@@ -1352,10 +1352,9 @@
             return messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
         }
         
-async function fetchChatHistory(page = 0, pageSize = 20) {
+        // Fetch chat history from server (simulating sheet data)
+async function fetchChatHistory(page = 0, pageSize = 10) {
     try {
-        console.log(`🔄 Fetching history for ${currentPhone}, page ${page}`);
-        
         const response = await fetch('/chat/history', {
             method: 'POST',
             headers: {
@@ -1369,280 +1368,128 @@ async function fetchChatHistory(page = 0, pageSize = 20) {
         });
         
         const data = await response.json();
-        console.log(`📊 Server response: success=${data.success}, messages=${data.messages?.length || 0}`);
         
-        if (data.success && Array.isArray(data.messages)) {
-            // Server now returns ALL messages at once
+        if (data.success) {
             return {
                 messages: data.messages,
-                hasMore: false // No pagination for now
+                hasMore: data.hasMore
             };
-        } else {
-            console.warn('Server error:', data.error);
-            return { messages: [], hasMore: false };
         }
+        
+        return { messages: [], hasMore: false };
     } catch (error) {
         console.error('Error fetching history:', error);
         return { messages: [], hasMore: false };
     }
 }
-
-async function loadChatHistory(phone) {
-    console.log(`🚀 Loading history for: ${phone}`);
-    
-    // Show loading indicator
-    const loadingDiv = document.createElement('div');
-    loadingDiv.className = 'history-loading';
-    loadingDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading chat history...';
-    chatMessages.appendChild(loadingDiv);
-    
-    try {
-        // Get ALL messages from server
-        const result = await fetchChatHistory(0, 20);
         
-        // Remove loading indicator
-        loadingDiv.remove();
-        
-        if (result.messages && result.messages.length > 0) {
-            console.log(`✅ Loaded ${result.messages.length} messages`);
+        // Load more history
+        async function loadMoreHistory() {
+            if (isLoadingHistory || !hasMoreHistory) return;
             
-            // Display messages in REVERSE order (oldest first for display)
-            // Since server returns newest first, we need to reverse for display
-            const messagesToDisplay = [...result.messages].reverse();
-            
-            messagesToDisplay.forEach(msg => {
-                displayMessage(msg.text, msg.sender, msg.displayTime, msg.timestamp);
-            });
-            
-            console.log(`📝 Displayed ${messagesToDisplay.length} messages`);
-            
-            // Scroll to bottom to show newest messages
-            setTimeout(() => {
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }, 100);
-            
-        } else {
-            console.log(`⚠️ No messages found in history`);
-            loadingDiv.remove();
-            
-            // Show "no history" message
-            const noHistoryMsg = document.createElement('div');
-            noHistoryMsg.className = 'message bot';
-            noHistoryMsg.innerHTML = `
-                <div class="message-wrapper">
-                    <div class="message-content">
-                        <i>No previous chat history. Starting fresh conversation.</i>
-                    </div>
-                </div>
-            `;
-            
-            const welcomeMessage = document.querySelector('.welcome-message');
-            if (welcomeMessage) {
-                chatMessages.insertBefore(noHistoryMsg, welcomeMessage.nextSibling);
-            } else {
-                chatMessages.appendChild(noHistoryMsg);
-            }
-        }
-    } catch (error) {
-        console.error('❌ Error loading chat history:', error);
-        loadingDiv.remove();
-        
-        // Show error message
-        const errorMsg = document.createElement('div');
-        errorMsg.className = 'message bot';
-        errorMsg.innerHTML = `
-            <div class="message-wrapper">
-                <div class="message-content">
-                    <i>Unable to load chat history. Error: ${error.message}</i>
-                </div>
-            </div>
-        `;
-        
-        const welcomeMessage = document.querySelector('.welcome-message');
-        if (welcomeMessage) {
-            chatMessages.insertBefore(errorMsg, welcomeMessage.nextSibling);
-        } else {
-            chatMessages.appendChild(errorMsg);
-        }
-    }
-}
-        
-async function loadMoreHistory() {
-    if (isLoadingHistory || !hasMoreHistory) return;
-    
-    const loadMoreBtn = document.querySelector('.load-more-btn');
-    if (loadMoreBtn) {
-        loadMoreBtn.classList.add('loading');
-        loadMoreBtn.disabled = true;
-        loadMoreBtn.innerHTML = '<i class="fas fa-spinner"></i> Loading...';
-    }
-    
-    isLoadingHistory = true;
-    
-    try {
-        const result = await fetchChatHistory(historyPage, 20);
-        
-        if (result.messages.length > 0) {
-            // Get current scroll position and height
-            const oldScrollHeight = chatMessages.scrollHeight;
-            const oldScrollTop = chatMessages.scrollTop;
-            
-            // Remove load more button temporarily
-            const loadMoreContainer = document.getElementById('loadMoreContainer');
-            if (loadMoreContainer) {
-                loadMoreContainer.remove();
+            const loadMoreBtn = document.querySelector('.load-more-btn');
+            if (loadMoreBtn) {
+                loadMoreBtn.classList.add('loading');
+                loadMoreBtn.disabled = true;
+                loadMoreBtn.innerHTML = '<i class="fas fa-spinner"></i> Loading...';
             }
             
-            // Add OLDER messages to top (since we're loading older messages)
-            const fragment = document.createDocumentFragment();
-            // Messages are already in chronological order from server
-            result.messages.forEach(msg => {
-                const messageElement = displayMessage(msg.text, msg.sender, msg.displayTime, msg.timestamp);
-                fragment.insertBefore(messageElement, fragment.firstChild);
-            });
+            isLoadingHistory = true;
             
-            // Insert at top (after welcome message if exists)
-            const welcomeMessage = document.querySelector('.welcome-message');
-            if (welcomeMessage) {
-                chatMessages.insertBefore(fragment, welcomeMessage.nextSibling);
-            } else {
-                chatMessages.insertBefore(fragment, chatMessages.firstChild);
-            }
-            
-            // Add load more button again if needed
-            if (result.hasMore) {
-                const newLoadMoreBtn = createLoadMoreButton();
-                const welcomeMessage = document.querySelector('.welcome-message');
-                if (welcomeMessage) {
-                    chatMessages.insertBefore(newLoadMoreBtn, welcomeMessage.nextSibling);
-                } else {
-                    chatMessages.insertBefore(newLoadMoreBtn, chatMessages.firstChild);
-                }
-            }
-            
-            // Restore scroll position
-            const newScrollHeight = chatMessages.scrollHeight;
-            chatMessages.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
-            
-            // Update state
-            historyPage++;
-            hasMoreHistory = result.hasMore;
-        } else {
-            hasMoreHistory = false;
-            const loadMoreContainer = document.getElementById('loadMoreContainer');
-            if (loadMoreContainer) {
-                loadMoreContainer.innerHTML = '<div class="history-loading">No more messages</div>';
-            }
-        }
-    } catch (error) {
-        console.error('Error loading more history:', error);
-        const loadMoreContainer = document.getElementById('loadMoreContainer');
-        if (loadMoreContainer) {
-            loadMoreContainer.innerHTML = '<div class="history-loading">Error loading messages</div>';
-        }
-    } finally {
-        isLoadingHistory = false;
-    }
-}
-        
-// Load chat history with pagination - AUTO-LOAD on chat start
-async function loadChatHistory(phone) {
-    console.log(`🚀 Starting chat history load for: ${phone}`);
-    
-    // Show loading indicator
-    const loadingDiv = document.createElement('div');
-    loadingDiv.className = 'history-loading';
-    loadingDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading chat history...';
-    chatMessages.appendChild(loadingDiv);
-    
-    try {
-        // First, try to load from server
-        console.log(`📡 Calling fetchChatHistory for ${phone}`);
-        const result = await fetchChatHistory(0, 20);
-        
-        console.log(`📊 fetchChatHistory result:`, result);
-        
-        // Remove loading indicator
-        loadingDiv.remove();
-        
-        if (result.messages && result.messages.length > 0) {
-            console.log(`✅ Loaded ${result.messages.length} messages from server`);
-            
-            // Display messages
-            result.messages.forEach(msg => {
-                console.log(`📝 Displaying message: ${msg.sender} - ${msg.text.substring(0, 50)}...`);
-                displayMessage(msg.text, msg.sender, msg.displayTime, msg.timestamp);
-            });
-            
-            // Add load more button if needed
-            if (result.hasMore) {
-                console.log(`📌 Has more messages, adding load more button`);
-                const loadMoreBtn = createLoadMoreButton();
-                const welcomeMessage = document.querySelector('.welcome-message');
-                if (welcomeMessage) {
-                    chatMessages.insertBefore(loadMoreBtn, welcomeMessage.nextSibling);
-                } else {
-                    chatMessages.insertBefore(loadMoreBtn, chatMessages.firstChild);
-                }
+            try {
+                const result = await fetchChatHistory(historyPage, 10);
                 
-                historyPage = 1;
-                hasMoreHistory = true;
+                if (result.messages.length > 0) {
+                    // Get current scroll position and height
+                    const oldScrollHeight = chatMessages.scrollHeight;
+                    const oldScrollTop = chatMessages.scrollTop;
+                    
+                    // Remove load more button temporarily
+                    const loadMoreContainer = document.getElementById('loadMoreContainer');
+                    if (loadMoreContainer) {
+                        loadMoreContainer.remove();
+                    }
+                    
+                    // Add messages to top (oldest first for this page)
+                    const fragment = document.createDocumentFragment();
+                    result.messages.forEach(msg => {
+                        const messageElement = displayMessage(msg.text, msg.sender, msg.displayTime, msg.timestamp);
+                        fragment.insertBefore(messageElement, fragment.firstChild);
+                    });
+                    
+                    // Insert at top (after welcome message if exists)
+                    const welcomeMessage = document.querySelector('.welcome-message');
+                    if (welcomeMessage) {
+                        chatMessages.insertBefore(fragment, welcomeMessage.nextSibling);
+                    } else {
+                        chatMessages.insertBefore(fragment, chatMessages.firstChild);
+                    }
+                    
+                    // Add load more button again if needed
+                    if (result.hasMore) {
+                        const newLoadMoreBtn = createLoadMoreButton();
+                        const welcomeMessage = document.querySelector('.welcome-message');
+                        if (welcomeMessage) {
+                            chatMessages.insertBefore(newLoadMoreBtn, welcomeMessage.nextSibling);
+                        } else {
+                            chatMessages.insertBefore(newLoadMoreBtn, chatMessages.firstChild);
+                        }
+                    }
+                    
+                    // Restore scroll position
+                    const newScrollHeight = chatMessages.scrollHeight;
+                    chatMessages.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
+                    
+                    // Update state
+                    historyPage++;
+                    hasMoreHistory = result.hasMore;
+                } else {
+                    hasMoreHistory = false;
+                    const loadMoreContainer = document.getElementById('loadMoreContainer');
+                    if (loadMoreContainer) {
+                        loadMoreContainer.innerHTML = '<div class="history-loading">No more messages</div>';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading more history:', error);
+                const loadMoreContainer = document.getElementById('loadMoreContainer');
+                if (loadMoreContainer) {
+                    loadMoreContainer.innerHTML = '<div class="history-loading">Error loading messages</div>';
+                }
+            } finally {
+                isLoadingHistory = false;
             }
+        }
+        
+        // Load chat history with pagination
+        async function loadChatHistory(phone) {
+            // First, try to load from server
+            const result = await fetchChatHistory(0, 10);
             
-            // Scroll to bottom
-            setTimeout(() => {
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }, 100);
-            
-        } else {
-            console.log(`⚠️ No server history found, checking local storage`);
-            loadingDiv.remove();
-            
-            // Show a message about no history
-            const noHistoryMsg = document.createElement('div');
-            noHistoryMsg.className = 'message bot';
-            noHistoryMsg.innerHTML = `
-                <div class="message-wrapper">
-                    <div class="message-content">
-                        <i>No previous chat history found. Starting fresh chat.</i>
-                    </div>
-                </div>
-            `;
-            const welcomeMessage = document.querySelector('.welcome-message');
-            if (welcomeMessage) {
-                chatMessages.insertBefore(noHistoryMsg, welcomeMessage.nextSibling);
+            if (result.messages.length > 0) {
+                // Display most recent messages at bottom
+                result.messages.forEach(msg => {
+                    displayMessage(msg.text, msg.sender, msg.displayTime, msg.timestamp);
+                });
+                
+                // Add load more button at top if there are more messages
+                if (result.hasMore) {
+                    const loadMoreBtn = createLoadMoreButton();
+                    const welcomeMessage = document.querySelector('.welcome-message');
+                    if (welcomeMessage) {
+                        chatMessages.insertBefore(loadMoreBtn, welcomeMessage.nextSibling);
+                    } else {
+                        chatMessages.insertBefore(loadMoreBtn, chatMessages.firstChild);
+                    }
+                    
+                    historyPage = 1;
+                    hasMoreHistory = true;
+                }
             } else {
-                chatMessages.appendChild(noHistoryMsg);
+                // Fallback to local storage
+                loadLocalHistory(phone);
             }
-            
-            // Load local history as fallback
-            loadLocalHistory(phone);
         }
-    } catch (error) {
-        console.error('❌ Error loading chat history:', error);
-        loadingDiv.remove();
-        
-        // Show error message
-        const errorMsg = document.createElement('div');
-        errorMsg.className = 'message bot';
-        errorMsg.innerHTML = `
-            <div class="message-wrapper">
-                <div class="message-content">
-                    <i>Unable to load chat history. Starting new chat.</i>
-                </div>
-            </div>
-        `;
-        const welcomeMessage = document.querySelector('.welcome-message');
-        if (welcomeMessage) {
-            chatMessages.insertBefore(errorMsg, welcomeMessage.nextSibling);
-        } else {
-            chatMessages.appendChild(errorMsg);
-        }
-        
-        // Fallback to local storage
-        loadLocalHistory(phone);
-    }
-}
         
         // Load local history as fallback
         function loadLocalHistory(phone) {
@@ -1746,120 +1593,125 @@ async function loadChatHistory(phone) {
             messageInput.focus();
         }
         
-        // Initialize chat - UPDATED VERSION
-function initChat(phone) {
-    currentPhone = phone;
-    currentPhoneSpan.textContent = phone;
-    
-    // Update profile based on phone number
-    const digits = phone.replace(/[^0-9]/g, '');
-    const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
-    const isEmployee = EMPLOYEE_NUMBERS.includes(digits);
-    
-    // Set profile avatar
-    profileAvatar.textContent = digits.substring(0, 2) || 'ZC';
-    
-    // Set chat title
-    if (isEmployee) {
-        if (suffix === 'A') {
-            chatTitle.textContent = 'Employee (Admin)';
-            chatStatus.textContent = 'Online • Admin Mode';
-            profileAvatar.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)';
-        } else if (suffix === 'U') {
-            chatTitle.textContent = 'Employee (User)';
-            chatStatus.textContent = 'Online • User Mode';
-            profileAvatar.style.background = 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)';
-        } else {
-            chatTitle.textContent = 'Employee Mode';
-            chatStatus.textContent = 'Online • Employee';
-            profileAvatar.style.background = 'linear-gradient(135deg, #00b09b 0%, #96c93d 100%)';
+        // Initialize chat
+        function initChat(phone) {
+            currentPhone = phone;
+            currentPhoneSpan.textContent = phone;
+            
+            // Update profile based on phone number
+            const digits = phone.replace(/[^0-9]/g, '');
+            const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
+            const isEmployee = EMPLOYEE_NUMBERS.includes(digits);
+            
+            // Set profile avatar
+            profileAvatar.textContent = digits.substring(0, 2) || 'ZC';
+            
+            // Set chat title
+            if (isEmployee) {
+                if (suffix === 'A') {
+                    chatTitle.textContent = 'Employee (Admin)';
+                    chatStatus.textContent = 'Online • Admin Mode';
+                    profileAvatar.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)';
+                } else if (suffix === 'U') {
+                    chatTitle.textContent = 'Employee (User)';
+                    chatStatus.textContent = 'Online • User Mode';
+                    profileAvatar.style.background = 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)';
+                } else {
+                    chatTitle.textContent = 'Employee Mode';
+                    chatStatus.textContent = 'Online • Employee';
+                    profileAvatar.style.background = 'linear-gradient(135deg, #00b09b 0%, #96c93d 100%)';
+                }
+            } else {
+                chatTitle.textContent = 'Zulu Club Assistant';
+                chatStatus.textContent = 'Online';
+                profileAvatar.style.background = 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)';
+            }
+            
+            // Reset pagination
+            historyPage = 0;
+            hasMoreHistory = true;
+            isLoadingHistory = false;
+            
+            // Hide setup, show chat
+            setupSection.classList.add('hidden');
+            chatSection.classList.remove('hidden');
+            
+            // Clear chat messages
+            chatMessages.innerHTML = '';
+            
+            // Enable input
+            messageInput.disabled = false;
+            messageInput.focus();
+            
+            // Show welcome message
+            let welcomeHtml = '';
+            
+            if (isEmployee) {
+                if (suffix === 'A') {
+                    welcomeHtml = `
+                        <div class="welcome-message">
+                            <h3><i class="fas fa-user-tie"></i> Employee Admin Mode</h3>
+                            <p>You're in <strong>Admin Mode</strong> (suffix: A)</p>
+                            <p>You can log:</p>
+                            <p>• <strong>Operation:</strong> ops message</p>
+                            <p>• <strong>Logistics:</strong> logistics message</p>
+                            <p>• <strong>Inventory:</strong> inventory message</p>
+                            <p>• <strong>Market:</strong> market message</p>
+                            <p>• <strong>Fixed:</strong> fixed message</p>
+                            <p>• <strong>Sales:</strong> sales message</p>
+                            <p>• <strong>Lead:</strong> lead message</p>
+                            <p><br>Try: <em>"Operation: Need more staff tomorrow"</em></p>
+                        </div>
+                    `;
+                } else if (suffix === 'U') {
+                    welcomeHtml = `
+                        <div class="welcome-message">
+                            <h3><i class="fas fa-user"></i> Employee User Mode</h3>
+                            <p>You're in <strong>User Mode</strong> (suffix: U)</p>
+                            <p>You'll chat as a regular user.</p>
+                            <p><br>Try asking: <em>"Show me t-shirts"</em> or <em>"Tell me about Zulu Club"</em></p>
+                        </div>
+                    `;
+                } else {
+                    welcomeHtml = `
+                        <div class="welcome-message">
+                            <h3><i class="fas fa-user-tie"></i> Employee Mode</h3>
+                            <p>You're logged in as an employee (no suffix).</p>
+                            <p>Add 'U' to your number for user mode: <strong>${digits}U</strong></p>
+                            <p>You can log billing/sales/lead messages.</p>
+                            <p><br>Try: <em>"Sales: Made 5 sales today"</em></p>
+                        </div>
+                    `;
+                }
+            } else {
+                welcomeHtml = `
+                    <div class="welcome-message">
+                        <h3><i class="fas fa-shopping-bag"></i> Welcome to Zulu Club!</h3>
+                        <p>I'm your personal shopping assistant. I can help you with:</p>
+                        <p>• Product browsing and shopping</p>
+                        <p>• Seller information and partnerships</p>
+                        <p>• Company details and investor queries</p>
+                        <p>• Connecting with human agents</p>
+                        <p><br>Try asking: <em>"Show me t-shirts"</em> or <em>"Tell me about Zulu Club"</em></p>
+                    </div>
+                `;
+            }
+            
+            chatMessages.innerHTML = welcomeHtml;
+            
+            // Load history
+            loadChatHistory(phone);
+            
+            isConnected = true;
+            
+            // Update status bar
+            statusBar.innerHTML = `Connected as: <span style="color:#00a884">${phone}</span>`;
+            
+            // Scroll to bottom after loading history
+            setTimeout(() => {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 100);
         }
-    } else {
-        chatTitle.textContent = 'Zulu Club Assistant';
-        chatStatus.textContent = 'Online';
-        profileAvatar.style.background = 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)';
-    }
-    
-    // Reset pagination
-    historyPage = 0;
-    hasMoreHistory = true;
-    isLoadingHistory = false;
-    
-    // Hide setup, show chat
-    setupSection.classList.add('hidden');
-    chatSection.classList.remove('hidden');
-    
-    // Clear chat messages
-    chatMessages.innerHTML = '';
-    
-    // Enable input
-    messageInput.disabled = false;
-    messageInput.focus();
-    
-    // Show welcome message FIRST
-    let welcomeHtml = '';
-    
-    if (isEmployee) {
-        if (suffix === 'A') {
-            welcomeHtml = `
-                <div class="welcome-message">
-                    <h3><i class="fas fa-user-tie"></i> Employee Admin Mode</h3>
-                    <p>You're in <strong>Admin Mode</strong> (suffix: A)</p>
-                    <p>You can log:</p>
-                    <p>• <strong>Operation:</strong> ops message</p>
-                    <p>• <strong>Logistics:</strong> logistics message</p>
-                    <p>• <strong>Inventory:</strong> inventory message</p>
-                    <p>• <strong>Market:</strong> market message</p>
-                    <p>• <strong>Fixed:</strong> fixed message</p>
-                    <p>• <strong>Sales:</strong> sales message</p>
-                    <p>• <strong>Lead:</strong> lead message</p>
-                    <p><br>Try: <em>"Operation: Need more staff tomorrow"</em></p>
-                </div>
-            `;
-        } else if (suffix === 'U') {
-            welcomeHtml = `
-                <div class="welcome-message">
-                    <h3><i class="fas fa-user"></i> Employee User Mode</h3>
-                    <p>You're in <strong>User Mode</strong> (suffix: U)</p>
-                    <p>You'll chat as a regular user.</p>
-                    <p><br>Try asking: <em>"Show me t-shirts"</em> or <em>"Tell me about Zulu Club"</em></p>
-                </div>
-            `;
-        } else {
-            welcomeHtml = `
-                <div class="welcome-message">
-                    <h3><i class="fas fa-user-tie"></i> Employee Mode</h3>
-                    <p>You're logged in as an employee (no suffix).</p>
-                    <p>Add 'U' to your number for user mode: <strong>${digits}U</strong></p>
-                    <p>You can log billing/sales/lead messages.</p>
-                    <p><br>Try: <em>"Sales: Made 5 sales today"</em></p>
-                </div>
-            `;
-        }
-    } else {
-        welcomeHtml = `
-            <div class="welcome-message">
-                <h3><i class="fas fa-shopping-bag"></i> Welcome to Zulu Club!</h3>
-                <p>I'm your personal shopping assistant. I can help you with:</p>
-                <p>• Product browsing and shopping</p>
-                <p>• Seller information and partnerships</p>
-                <p>• Company details and investor queries</p>
-                <p>• Connecting with human agents</p>
-                <p><br>Try asking: <em>"Show me t-shirts"</em> or <em>"Tell me about Zulu Club"</em></p>
-            </div>
-        `;
-    }
-    
-    chatMessages.innerHTML = welcomeHtml;
-    
-    // Load history IMMEDIATELY (auto-load)
-    loadChatHistory(phone);
-    
-    isConnected = true;
-    
-    // Update status bar
-    statusBar.innerHTML = `Connected as: <span style="color:#00a884">${phone}</span>`;
-}
         
         // Go back to setup
         function goBackToSetup() {
