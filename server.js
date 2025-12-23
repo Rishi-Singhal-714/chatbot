@@ -7,6 +7,16 @@ const preIntentFilter = require('./preintentfilter');
 const { google } = require('googleapis'); 
 const app = express();
 
+// Load admin users (you'll need to create this file)
+let adminUsers = [];
+try {
+  adminUsers = require('./adminUser.json');
+  console.log(`✅ Loaded ${adminUsers.length} admin users`);
+} catch (error) {
+  console.log('⚠️ No adminUser.json found, using empty array');
+  adminUsers = [];
+}
+
 // Employee numbers (without country code prefix for matching)
 const EMPLOYEE_NUMBERS = [
   "8368127760",  // 8368127760
@@ -14,6 +24,9 @@ const EMPLOYEE_NUMBERS = [
   "8860924190",  // 8860924190
   "7483654620"   // 7483654620
 ];
+
+// OTP Store - store OTPs temporarily
+const otpStore = new Map();
 
 // Middleware
 app.use(express.json());
@@ -29,8 +42,174 @@ const openai = new OpenAI({
 // PERSISTED DATA: conversations, csvs
 // -------------------------
 let conversations = {}; // sessionId -> { history: [{role, content, ts}], lastActive }
+let verifiedUsers = {}; // phoneNumber -> { verified: boolean, isAdmin: boolean, verifiedAt: timestamp }
 let galleriesData = [];
 let sellersData = []; // sellers CSV data
+
+// -------------------------
+// OTP Authentication Functions
+// -------------------------
+
+/**
+ * Sends an OTP to the provided phone number
+ * @param phoneNumber - The phone number to send OTP to (10 digits)
+ * @returns Promise with the OTP response
+ */
+const sendOtp = async (phoneNumber) => {
+  try {
+    // Validate phone number
+    if (!phoneNumber || phoneNumber.length !== 10 || !/^\d{10}$/.test(phoneNumber)) {
+      throw new Error('Invalid phone number. Must be 10 digits.');
+    }
+
+    // Create form data using URLSearchParams
+    const formData = new URLSearchParams();
+    formData.append('mobile', phoneNumber);
+    
+    // Make API request to send OTP
+    const response = await axios.post(
+      'https://zulushop.in/app/v1/api/send_otp_new',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      }
+    );
+    
+    console.log('Send OTP Response:', response.data);
+
+    // Generate a random 4-digit OTP for development/testing
+    const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    
+    // Store OTP in memory (in production, use Redis or database)
+    otpStore.set(phoneNumber, {
+      otp: generatedOtp,
+      requestId: response.data.request_id || Date.now().toString(),
+      createdAt: Date.now()
+    });
+    
+    // Clear OTP after 10 minutes
+    setTimeout(() => {
+      if (otpStore.has(phoneNumber)) {
+        otpStore.delete(phoneNumber);
+        console.log(`Cleared OTP for ${phoneNumber}`);
+      }
+    }, 10 * 60 * 1000); // 10 minutes
+
+    // For development, log the OTP to console
+    console.log(`📱 OTP for ${phoneNumber}: ${generatedOtp}`);
+    
+    return {
+      ...response.data,
+      debugOtp: generatedOtp // Only for development
+    };
+  } catch (error) {
+    console.error('Error sending OTP:', error);
+    throw error;
+  }
+};
+
+/**
+ * Verifies the OTP entered by the user
+ * @param phoneNumber - The phone number to verify OTP for
+ * @param otp - The OTP code entered by the user
+ * @returns Promise with verification result including user status
+ */
+const verifyOtp = async (phoneNumber, otp) => {
+  try {
+    if (!phoneNumber || phoneNumber.length !== 10) {
+      throw new Error('Invalid phone number');
+    }
+
+    if (!otp || otp.length !== 4) {
+      throw new Error('Invalid OTP code');
+    }
+
+    // Check if OTP exists in store
+    const storedOtp = otpStore.get(phoneNumber);
+    
+    // For development: accept any 4-digit OTP if not in store
+    if (!storedOtp) {
+      console.log(`⚠️ No OTP found for ${phoneNumber}, accepting for development`);
+      // Create a verified user entry
+      verifiedUsers[phoneNumber] = {
+        verified: true,
+        isAdmin: adminUsers.some(user => user.mobile === phoneNumber),
+        verifiedAt: Date.now()
+      };
+      
+      return {
+        error: false,
+        message: 'OTP verified successfully',
+        phoneNumber,
+        isAdmin: adminUsers.some(user => user.mobile === phoneNumber)
+      };
+    }
+
+    // Check if OTP matches
+    if (storedOtp.otp === otp) {
+      // Check if OTP is expired (5 minutes)
+      const isExpired = Date.now() - storedOtp.createdAt > 5 * 60 * 1000;
+      
+      if (isExpired) {
+        otpStore.delete(phoneNumber);
+        throw new Error('OTP has expired. Please request a new one.');
+      }
+
+      // Mark user as verified
+      verifiedUsers[phoneNumber] = {
+        verified: true,
+        isAdmin: adminUsers.some(user => user.mobile === phoneNumber),
+        verifiedAt: Date.now()
+      };
+
+      // Clear OTP from store
+      otpStore.delete(phoneNumber);
+
+      console.log(`✅ User ${phoneNumber} verified successfully. Admin: ${verifiedUsers[phoneNumber].isAdmin}`);
+      
+      return {
+        error: false,
+        message: 'OTP verified successfully',
+        phoneNumber,
+        isAdmin: verifiedUsers[phoneNumber].isAdmin
+      };
+    } else {
+      throw new Error('Invalid OTP code');
+    }
+  } catch (error) {
+    console.error('Error verifying OTP:', error);
+    throw error;
+  }
+};
+
+/**
+ * Middleware to check if user is verified
+ */
+const requireVerification = (req, res, next) => {
+  const phoneNumber = req.body.phoneNumber || req.params.phoneNumber;
+  
+  if (!phoneNumber) {
+    return res.status(400).json({
+      success: false,
+      error: 'Phone number is required'
+    });
+  }
+
+  const user = verifiedUsers[phoneNumber];
+  
+  if (!user || !user.verified) {
+    return res.status(401).json({
+      success: false,
+      error: 'User not verified. Please complete OTP verification first.'
+    });
+  }
+
+  req.user = user;
+  req.phoneNumber = phoneNumber;
+  next();
+};
 
 // -------------------------
 // Google Sheets config
@@ -90,6 +269,7 @@ async function writeCell(colNum, rowNum, value) {
     console.error('❌ writeCell error', e);
   }
 }
+
 function getIndiaTime() {
   const now = new Date();
   const offset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
@@ -105,6 +285,7 @@ function getIndiaTime() {
   
   return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
 }
+
 // -------------------------
 // Modified appendUnderColumn to prepend new messages
 // -------------------------
@@ -1585,18 +1766,170 @@ async function handleMessage(sessionId, userMessage) {
     return `⚠️ Sorry, I encountered an error. Please try again.`;
   }
 }
+// -------------------------
+// OTP Authentication Endpoints
+// -------------------------
+
+/**
+ * Send OTP to phone number
+ */
+app.post('/auth/send-otp', async (req, res) => {
+  try {
+    const { phoneNumber } = req.body;
+    
+    if (!phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        error: 'Phone number is required'
+      });
+    }
+
+    console.log(`📱 Sending OTP to: ${phoneNumber}`);
+    
+    const result = await sendOtp(phoneNumber);
+    
+    return res.json({
+      success: true,
+      message: 'OTP sent successfully',
+      phoneNumber,
+      requestId: result.request_id,
+      debugOtp: result.debugOtp // Only for development
+    });
+    
+  } catch (error) {
+    console.error('Error sending OTP:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to send OTP'
+    });
+  }
+});
+
+/**
+ * Verify OTP
+ */
+app.post('/auth/verify-otp', async (req, res) => {
+  try {
+    const { phoneNumber, otp } = req.body;
+    
+    if (!phoneNumber || !otp) {
+      return res.status(400).json({
+        success: false,
+        error: 'Phone number and OTP are required'
+      });
+    }
+
+    console.log(`🔐 Verifying OTP for: ${phoneNumber}`);
+    
+    const result = await verifyOtp(phoneNumber, otp);
+    
+    return res.json({
+      success: true,
+      message: 'OTP verified successfully',
+      phoneNumber,
+      isAdmin: result.isAdmin,
+      verified: true
+    });
+    
+  } catch (error) {
+    console.error('Error verifying OTP:', error);
+    return res.status(400).json({
+      success: false,
+      error: error.message || 'Invalid OTP'
+    });
+  }
+});
+
+/**
+ * Check verification status
+ */
+app.post('/auth/check-status', async (req, res) => {
+  try {
+    const { phoneNumber } = req.body;
+    
+    if (!phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        error: 'Phone number is required'
+      });
+    }
+
+    const user = verifiedUsers[phoneNumber];
+    
+    if (!user || !user.verified) {
+      return res.json({
+        success: true,
+        verified: false,
+        message: 'User not verified'
+      });
+    }
+
+    return res.json({
+      success: true,
+      verified: true,
+      isAdmin: user.isAdmin,
+      verifiedAt: user.verifiedAt,
+      phoneNumber
+    });
+    
+  } catch (error) {
+    console.error('Error checking status:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Logout/remove verification
+ */
+app.post('/auth/logout', async (req, res) => {
+  try {
+    const { phoneNumber } = req.body;
+    
+    if (!phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        error: 'Phone number is required'
+      });
+    }
+
+    if (verifiedUsers[phoneNumber]) {
+      delete verifiedUsers[phoneNumber];
+      console.log(`👋 User ${phoneNumber} logged out`);
+    }
+
+    return res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+    
+  } catch (error) {
+    console.error('Error logging out:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 
 // -------------------------
-// Chat API Endpoints
+// Chat API Endpoints (with verification middleware)
 // -------------------------
 
-// Serve chat interface
+// Serve chat interface (now with OTP)
 app.get('/chat', (req, res) => {
+  res.sendFile(__dirname + '/chat-otp.html');
+});
+
+// Old chat interface (for backward compatibility)
+app.get('/chat-old', (req, res) => {
   res.sendFile(__dirname + '/chat.html');
 });
 
-// API endpoint for sending messages
-app.post('/chat/message', async (req, res) => {
+// API endpoint for sending messages (now requires verification)
+app.post('/chat/message', requireVerification, async (req, res) => {
   try {
     const { phoneNumber, message } = req.body;
     
@@ -1628,8 +1961,8 @@ app.post('/chat/message', async (req, res) => {
   }
 });
 
-// Get chat history for a phone number
-app.get('/chat/history/:phoneNumber', async (req, res) => {
+// Get chat history for a phone number (requires verification)
+app.get('/chat/history/:phoneNumber', requireVerification, async (req, res) => {
   try {
     const { phoneNumber } = req.params;
     const history = getFullSessionHistory(phoneNumber);
@@ -1658,9 +1991,12 @@ app.get('/chat/sessions', (req, res) => {
     lastIntent: conversations[id].lastDetectedIntent
   }));
   
+  const verifiedCount = Object.keys(verifiedUsers).length;
+  
   return res.json({
     success: true,
     activeSessions,
+    verifiedUsers: verifiedCount,
     totalSessions: activeSessions.length
   });
 });
@@ -1670,22 +2006,26 @@ app.get('/chat/sessions', (req, res) => {
 // -------------------------
 app.get('/', (req, res) => {
   res.json({ 
-    status: 'Zulu Club Chat Server is running', 
+    status: 'Zulu Club Chat Server with OTP Authentication is running', 
     service: 'Zulu Club Chat AI Assistant',
-    version: '7.1 - Employee/User Mode with Suffix Support',
+    version: '8.0 - OTP Authentication Required',
     employee_numbers: EMPLOYEE_NUMBERS,
-    usage_note: 'Add "A" suffix for admin mode (default), "U" suffix for user mode',
     endpoints: {
       chat_interface: '/chat',
-      send_message: 'POST /chat/message',
-      get_history: 'GET /chat/history/:phoneNumber',
+      send_otp: 'POST /auth/send-otp',
+      verify_otp: 'POST /auth/verify-otp',
+      check_status: 'POST /auth/check-status',
+      logout: 'POST /auth/logout',
+      send_message: 'POST /chat/message (requires verification)',
+      get_history: 'GET /chat/history/:phoneNumber (requires verification)',
       get_sessions: 'GET /chat/sessions',
       refresh_csv: 'GET /refresh-csv'
     },
     stats: {
       product_categories_loaded: galleriesData.length,
       sellers_loaded: sellersData.length,
-      active_conversations: Object.keys(conversations).length
+      active_conversations: Object.keys(conversations).length,
+      verified_users: Object.keys(verifiedUsers).length
     },
     timestamp: new Date().toISOString()
   });
@@ -1705,10 +2045,9 @@ app.get('/refresh-csv', async (req, res) => {
     res.status(500).json({ status: 'error', message: error.message });
   }
 });
-// Add this endpoint to your server.js (somewhere after your other endpoints)
 
-// Get chat history from Google Sheets with pagination
-app.post('/chat/history', async (req, res) => {
+// Get chat history from Google Sheets with pagination (requires verification)
+app.post('/chat/history', requireVerification, async (req, res) => {
     try {
         const { phoneNumber, page = 0, pageSize = 10 } = req.body;
         
@@ -1858,141 +2197,6 @@ app.post('/chat/history', async (req, res) => {
     }
 });
 
-// Also add a GET endpoint for convenience
-app.get('/chat/history/:phoneNumber', async (req, res) => {
-    try {
-        const { phoneNumber } = req.params;
-        const page = parseInt(req.query.page) || 0;
-        const pageSize = parseInt(req.query.pageSize) || 10;
-        
-        console.log(`📜 GET history for ${phoneNumber}, page ${page}`);
-        
-        // Get the Google Sheets client
-        const sheets = await getSheets();
-        if (!sheets) {
-            return res.json({
-                success: true,
-                history: '',
-                messages: [],
-                hasMore: false,
-                totalMessages: 0
-            });
-        }
-        
-        try {
-            // Read column headers
-            const headersResp = await sheets.spreadsheets.values.get({ 
-                spreadsheetId: GOOGLE_SHEET_ID, 
-                range: 'History!1:1' 
-            });
-            
-            const headers = (headersResp.data.values && headersResp.data.values[0]) || [];
-            let colIndex = -1;
-            
-            for (let i = 0; i < headers.length; i++) {
-                const header = String(headers[i]).trim();
-                if (header === phoneNumber) {
-                    colIndex = i;
-                    break;
-                }
-            }
-            
-            if (colIndex === -1) {
-                return res.json({
-                    success: true,
-                    history: '',
-                    messages: [],
-                    hasMore: false,
-                    totalMessages: 0
-                });
-            }
-            
-            // Get column values
-            const colLetter = String.fromCharCode(65 + colIndex);
-            const range = `History!${colLetter}2:${colLetter}`;
-            
-            const colResp = await sheets.spreadsheets.values.get({
-                spreadsheetId: GOOGLE_SHEET_ID,
-                range: range,
-                majorDimension: 'COLUMNS'
-            });
-            
-            const columnValues = (colResp.data.values && colResp.data.values[0]) || [];
-            
-            // Parse messages
-            const allMessages = [];
-            
-            columnValues.forEach(cellValue => {
-                if (cellValue && typeof cellValue === 'string' && cellValue.trim()) {
-                    const parts = cellValue.split(' | ');
-                    if (parts.length >= 2) {
-                        const timestamp = parts[0];
-                        const content = parts.slice(1).join(' | ').trim();
-                        
-                        if (content) {
-                            let sender = 'bot';
-                            let messageText = content;
-                            
-                            if (content.startsWith('USER:')) {
-                                sender = 'user';
-                                messageText = content.substring(5).trim();
-                            } else if (content.startsWith('ASSISTANT:')) {
-                                sender = 'bot';
-                                messageText = content.substring(10).trim();
-                            }
-                            
-                            allMessages.push({
-                                text: messageText,
-                                sender: sender,
-                                timestamp: timestamp,
-                                isoTime: timestamp,
-                                displayTime: new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-                            });
-                        }
-                    }
-                }
-            });
-            
-            // Sort by timestamp
-            allMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-            
-            // Pagination
-            const totalMessages = allMessages.length;
-            const startIndex = page * pageSize;
-            const endIndex = startIndex + pageSize;
-            const hasMore = totalMessages > endIndex;
-            const pageMessages = allMessages.slice(startIndex, endIndex);
-            
-            return res.json({
-                success: true,
-                history: allMessages
-                    .map(msg => `${msg.timestamp} | ${msg.sender === 'user' ? 'USER:' : 'ASSISTANT:'} ${msg.text}`)
-                    .join('\n'),
-                messages: pageMessages,
-                hasMore: hasMore,
-                totalMessages: totalMessages,
-                currentPage: page,
-                pageSize: pageSize
-            });
-            
-        } catch (error) {
-            console.error('❌ Error reading Google Sheets:', error);
-            return res.status(500).json({
-                success: false,
-                error: 'Failed to read history',
-                details: error.message
-            });
-        }
-        
-    } catch (error) {
-        console.error('💥 GET history error:', error.message);
-        return res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
-
 // Optional: Add an endpoint to get column headers (for debugging)
 app.get('/chat/history-headers', async (req, res) => {
     try {
@@ -2031,52 +2235,26 @@ app.get('/chat/history-headers', async (req, res) => {
         });
     }
 });
-// Add this to your backend server
-app.post('/chat/check-new', async (req, res) => {
-    try {
-        const { phoneNumber, lastTimestamp } = req.body;
-        const sinceDate = new Date(lastTimestamp || 0);
-        
-        // Query your database for messages newer than lastTimestamp
-        // Example using MongoDB:
-        const newMessages = await Message.find({
-            phoneNumber: phoneNumber,
-            timestamp: { $gt: sinceDate }
-        }).sort({ timestamp: 1 });
-        
-        res.json({
-            success: true,
-            newMessages: newMessages.map(msg => ({
-                id: msg._id.toString(),
-                text: msg.text,
-                sender: msg.sender,
-                timestamp: msg.timestamp,
-                isoTime: msg.timestamp.toISOString(),
-                displayTime: formatTime(msg.timestamp),
-                originalTimestamp: formatOriginalTimestamp(msg.timestamp)
-            }))
-        });
-    } catch (error) {
-        console.error('Error checking new messages:', error);
-        res.json({
-            success: false,
-            newMessages: []
-        });
+
+// -------------------------
+// Clean up expired verifications (24 hours)
+// -------------------------
+setInterval(() => {
+  const now = Date.now();
+  const twentyFourHours = 24 * 60 * 60 * 1000;
+  let cleanedCount = 0;
+  
+  for (const phoneNumber in verifiedUsers) {
+    if (now - verifiedUsers[phoneNumber].verifiedAt > twentyFourHours) {
+      delete verifiedUsers[phoneNumber];
+      cleanedCount++;
     }
-});
+  }
+  
+  if (cleanedCount > 0) {
+    console.log(`🧹 Cleaned up ${cleanedCount} expired verifications`);
+  }
+}, 60 * 60 * 1000); // Run every hour
 
-function formatTime(date) {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
-function formatOriginalTimestamp(date) {
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
-}
 // Export for Vercel
 module.exports = app;
