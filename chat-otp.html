@@ -709,6 +709,35 @@
                 margin-top: 15px;
             }
         }
+        /* Link styling in message content */
+.message-content a {
+    color: #53bdeb;
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.message-content a:hover {
+    text-decoration: underline;
+}
+
+.message-bubble.user .message-content a {
+    color: #a3d9e8;
+}
+
+/* Message bubble links */
+.message-content .link {
+    color: #53bdeb;
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.message-content .link:hover {
+    text-decoration: underline;
+}
+
+.message-bubble.user .message-content .link {
+    color: #a3d9e8;
+}
     </style>
     <!-- WhatsApp Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -1228,23 +1257,23 @@ async function verifyOtp() {
         messageInput.focus();
     }
     
-    // Load welcome message
-    function loadWelcomeMessage() {
-        const welcomeHtml = `
-            <div class="welcome-message">
-                <h3><i class="fas fa-shopping-bag"></i> Welcome to Zulu Club!</h3>
-                <p>You're now connected as: <strong>${currentPhone}</strong></p>
-                <p>I'm your personal shopping assistant. I can help you with:</p>
-                <p>• Product browsing and shopping</p>
-                <p>• Seller information and partnerships</p>
-                <p>• Company details and investor queries</p>
-                <p>• Connecting with human agents</p>
-                <p><br>Try asking: <em>"Show me t-shirts"</em> or <em>"Tell me about Zulu Club"</em></p>
-            </div>
-        `;
-        
-        chatMessages.innerHTML = welcomeHtml;
-    }
+// Load welcome message
+function loadWelcomeMessage() {
+    const welcomeText = `Welcome to Zulu Club!
+
+You're now connected as: ${currentPhone}
+
+I'm your personal shopping assistant. I can help you with:
+
+• Product browsing and shopping
+• Seller information and partnerships
+• Company details and investor queries
+• Connecting with human agents
+
+Try asking: "Show me t-shirts" or "Tell me about Zulu Club"`;
+
+    displayMessage(welcomeText, 'bot');
+}
     
     // Send message
     async function sendMessage() {
@@ -1294,22 +1323,106 @@ async function verifyOtp() {
         messageInput.focus();
     }
     
-    // Display message in chat
-    function displayMessage(text, sender) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message-bubble ${sender}`;
+// Function to detect and convert URLs to clickable links
+function convertLinksToClickable(text) {
+    // Improved regular expression to match various URL formats
+    const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(app\.zulu\.club\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|[A-Za-z0-9.-]+\.[A-Za-z]{2,}\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]))/ig;
+    
+    // Replace URLs with anchor tags
+    return text.replace(urlRegex, function(url) {
+        // Add https:// if it's a www link or domain without protocol
+        let finalUrl = url;
+        if (!url.match(/^(https?|ftp|file):\/\//i)) {
+            if (url.startsWith('www.') || url.includes('app.zulu.club') || url.includes('.club/')) {
+                finalUrl = 'https://' + url;
+            }
+        }
         
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content';
-        contentDiv.textContent = text;
-        
-        messageDiv.appendChild(contentDiv);
-        chatMessages.appendChild(messageDiv);
-        
-        // Scroll to bottom
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return `<a href="${finalUrl}" target="_blank" rel="noopener noreferrer" class="link">${url}</a>`;
+    });
+}
+
+// Display a message in the chat
+function displayMessage(text, sender, displayTime = null, isoTime = null) {
+    const messageWrapper = document.createElement('div');
+    messageWrapper.className = `message-bubble ${sender}`;
+    
+    // Store ISO time for sorting if provided
+    let messageIsoTime = isoTime;
+    let messageDisplayTime = displayTime;
+    
+    // If no time provided, use current time
+    if (!messageIsoTime) {
+        const now = new Date();
+        messageIsoTime = now.toISOString();
+        messageDisplayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     }
     
+    // Store ISO time in data attribute for sorting
+    messageWrapper.dataset.isoTime = messageIsoTime;
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message-wrapper';
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    
+    // Convert URLs to clickable links
+    const processedText = convertLinksToClickable(text);
+    // Format text with line breaks and preserve links
+    const formattedText = processedText.replace(/\n/g, '<br>');
+    contentDiv.innerHTML = formattedText;
+    
+    messageDiv.appendChild(contentDiv);
+    
+    // Add message info with timestamp
+    const infoDiv = document.createElement('div');
+    infoDiv.className = 'message-info';
+    infoDiv.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-top: 3px; font-size: 11px; color: #ffffff99; gap: 5px; padding: 0 2px;';
+    
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'message-time';
+    timeSpan.textContent = messageDisplayTime;
+    
+    if (sender === 'user') {
+        const tickIcon = document.createElement('span');
+        tickIcon.className = 'message-status';
+        tickIcon.innerHTML = '✓✓';
+        tickIcon.style.color = '#53bdeb';
+        infoDiv.appendChild(timeSpan);
+        infoDiv.appendChild(tickIcon);
+    } else {
+        infoDiv.appendChild(timeSpan);
+    }
+    
+    messageDiv.appendChild(infoDiv);
+    messageWrapper.appendChild(messageDiv);
+    
+    // Add click handler to links after they're added to DOM
+    setTimeout(() => {
+        const links = contentDiv.querySelectorAll('a.link, a');
+        links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Link will open in new tab by default due to target="_blank"
+                console.log('Link clicked:', link.href);
+            });
+            
+            // Also handle touch events for mobile
+            link.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+            });
+        });
+    }, 100);
+    
+    // Add to chat messages
+    chatMessages.appendChild(messageWrapper);
+    
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    return messageWrapper;
+}
     // Show typing indicator
     function showTyping() {
         const typingDiv = document.createElement('div');
