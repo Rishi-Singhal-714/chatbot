@@ -964,145 +964,139 @@
         }
     });
     
-    // Send OTP
-    async function sendOtp() {
-        const phone = phoneInput.value.trim();
+// Send OTP
+async function sendOtp() {
+    const phone = phoneInput.value.trim();
+    
+    if (!validatePhoneNumber(phone)) {
+        phoneError.classList.remove('hidden');
+        phoneError.textContent = 'Please enter a valid phone number';
+        return;
+    }
+    
+    sendOtpBtn.disabled = true;
+    sendOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+    phoneError.classList.add('hidden');
+    
+    try {
+        const response = await fetch('/auth/send-otp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                phoneNumber: phone
+            })
+        });
         
-        if (!validatePhoneNumber(phone)) {
-            phoneError.classList.remove('hidden');
-            phoneError.textContent = 'Please enter a valid phone number';
-            return;
-        }
+        const data = await response.json();
         
-        sendOtpBtn.disabled = true;
-        sendOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-        
-        try {
-            const response = await fetch('/auth/send-otp', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    phoneNumber: phone
-                })
-            });
+        if (data.success) {
+            // Store phone number for OTP verification
+            currentPhone = phone;
+            otpPhoneNumber.textContent = phone;
             
-            const data = await response.json();
+            // Show OTP step
+            stepPhone.classList.remove('active');
+            stepOtp.classList.add('active');
             
-            if (data.success) {
-                // Store phone number for OTP verification
-                currentPhone = phone;
-                otpPhoneNumber.textContent = phone;
-                
-                // Show OTP step
-                stepPhone.classList.remove('active');
-                stepOtp.classList.add('active');
-                
-                // Show debug info if available
-                if (data.debugOtp) {
-                    debugInfo.classList.remove('hidden');
-                    debugInfo.innerHTML = `<strong>Development Mode:</strong> OTP is: <strong>${data.debugOtp}</strong>`;
-                    console.log(`📱 OTP for ${phone}: ${data.debugOtp}`);
-                }
-                
-                // Start OTP timer
-                startOtpTimer();
-                
-                // Focus first OTP input
-                otp1.focus();
+            // Show appropriate message based on mode
+            if (data.debugOtp) {
+                debugInfo.classList.remove('hidden');
+                debugInfo.innerHTML = `
+                    <strong>Development Mode:</strong> OTP is sent to your console.<br>
+                    Check server terminal for OTP code.
+                `;
+                console.log(`📱 DEVELOPMENT OTP for ${phone}: ${data.debugOtp}`);
             } else {
-                phoneError.classList.remove('hidden');
-                phoneError.textContent = data.error || 'Failed to send OTP';
-                sendOtpBtn.disabled = false;
-                sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
+                debugInfo.classList.add('hidden');
+                console.log(`📱 OTP sent via ZuluShop API to ${phone}`);
             }
-        } catch (error) {
+            
+            // Start OTP timer
+            startOtpTimer();
+            
+            // Focus first OTP input
+            otp1.focus();
+        } else {
             phoneError.classList.remove('hidden');
-            phoneError.textContent = 'Network error. Please try again.';
+            phoneError.textContent = data.error || 'Failed to send OTP';
             sendOtpBtn.disabled = false;
             sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
-            console.error('Error sending OTP:', error);
         }
+    } catch (error) {
+        phoneError.classList.remove('hidden');
+        phoneError.textContent = 'Network error. Please try again.';
+        sendOtpBtn.disabled = false;
+        sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
+        console.error('Error sending OTP:', error);
+    }
+}
+
+// Verify OTP
+async function verifyOtp() {
+    const otp = otp1.value + otp2.value + otp3.value + otp4.value;
+    
+    if (otp.length !== 4 || !/^\d{4}$/.test(otp)) {
+        otpError.classList.remove('hidden');
+        otpError.textContent = 'Please enter a valid 4-digit OTP';
+        return;
     }
     
-    // Start OTP timer
-    function startOtpTimer() {
-        countdown = 60;
-        resendOtpBtn.disabled = true;
-        timer.classList.remove('hidden');
-        
-        otpTimer = setInterval(() => {
-            countdown--;
-            countdownSpan.textContent = countdown;
-            
-            if (countdown <= 0) {
-                clearInterval(otpTimer);
-                timer.classList.add('hidden');
-                resendOtpBtn.disabled = false;
-            }
-        }, 1000);
-    }
+    verifyOtpBtn.disabled = true;
+    verifyOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+    otpError.classList.add('hidden');
+    otpSuccess.classList.add('hidden');
     
-    // Verify OTP
-    async function verifyOtp() {
-        const otp = otp1.value + otp2.value + otp3.value + otp4.value;
+    try {
+        const response = await fetch('/auth/verify-otp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                phoneNumber: currentPhone,
+                otp: otp
+            })
+        });
         
-        if (otp.length !== 4 || !/^\d{4}$/.test(otp)) {
-            otpError.classList.remove('hidden');
-            otpError.textContent = 'Please enter a valid 4-digit OTP';
-            return;
-        }
+        const data = await response.json();
         
-        verifyOtpBtn.disabled = true;
-        verifyOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
-        
-        try {
-            const response = await fetch('/auth/verify-otp', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    phoneNumber: currentPhone,
-                    otp: otp
-                })
-            });
+        if (data.success) {
+            otpError.classList.add('hidden');
+            otpSuccess.classList.remove('hidden');
+            otpSuccess.textContent = 'OTP verified successfully!';
             
-            const data = await response.json();
+            // Store verification info
+            isVerified = true;
+            isAdmin = data.isAdmin || false;
             
-            if (data.success) {
-                otpError.classList.add('hidden');
-                otpSuccess.classList.remove('hidden');
-                otpSuccess.textContent = 'OTP verified successfully!';
-                
-                // Store verification info
-                isVerified = true;
-                isAdmin = data.isAdmin || false;
-                
-                // Show success message for 2 seconds then start chat
-                setTimeout(() => {
-                    startChat();
-                }, 2000);
-                
-            } else {
-                otpError.classList.remove('hidden');
-                otpError.textContent = data.error || 'Invalid OTP';
-                verifyOtpBtn.disabled = false;
-                verifyOtpBtn.innerHTML = '<i class="fas fa-check"></i> Verify OTP';
-                
-                // Clear OTP inputs on error
-                clearOtpInputs();
-                otp1.focus();
-            }
-        } catch (error) {
+            // Store phone in localStorage for auto-login
+            localStorage.setItem('zulu_verified_phone', currentPhone);
+            
+            // Show success message for 2 seconds then start chat
+            setTimeout(() => {
+                startChat();
+            }, 2000);
+            
+        } else {
             otpError.classList.remove('hidden');
-            otpError.textContent = 'Network error. Please try again.';
+            otpError.textContent = data.error || 'Invalid OTP. Please check and try again.';
             verifyOtpBtn.disabled = false;
             verifyOtpBtn.innerHTML = '<i class="fas fa-check"></i> Verify OTP';
-            console.error('Error verifying OTP:', error);
+            
+            // Clear OTP inputs on error
+            clearOtpInputs();
+            otp1.focus();
         }
+    } catch (error) {
+        otpError.classList.remove('hidden');
+        otpError.textContent = 'Network error. Please try again.';
+        verifyOtpBtn.disabled = false;
+        verifyOtpBtn.innerHTML = '<i class="fas fa-check"></i> Verify OTP';
+        console.error('Error verifying OTP:', error);
     }
+}
     
     // Resend OTP
     async function resendOtp() {
