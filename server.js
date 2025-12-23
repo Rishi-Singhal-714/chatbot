@@ -154,14 +154,7 @@ app.post('/api/send-otp', async (req, res) => {
     });
   }
 });
-// Helper to log OTP responses
-function logOTPResponse(phoneNumber, data) {
-  console.log('📱 OTP Response for', phoneNumber, ':');
-  console.log('  Error:', data.error);
-  console.log('  Message:', data.message);
-  console.log('  Has Token:', !!data.token);
-  console.log('  Has Data:', !!data.data);
-}
+
 /**
  * Verify OTP
  */
@@ -269,20 +262,7 @@ app.post('/api/verify-otp', async (req, res) => {
     });
   }
 });
-// Inside /api/verify-otp endpoint
-logOTPResponse(phoneNumber, data);
 
-// Check for successful verification
-// Accept multiple success conditions
-const isSuccess = !data.error && (
-  (data.message && (
-    data.message.toLowerCase().includes('success') ||
-    data.message.toLowerCase().includes('already exists') ||
-    data.message.toLowerCase().includes('verified') ||
-    data.message.toLowerCase().includes('valid')
-  )) ||
-  (data.token && data.token.length > 10) // Has a valid token
-);
 /**
  * Check if user is authenticated
  */
@@ -2514,4 +2494,4 @@ function formatOriginalTimestamp(date) {
     return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
 }
 // Export for Vercel
-module.exports = app;
+module.exports = app;s
