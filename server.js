@@ -65,356 +65,6 @@ async function getSheets() {
   }
 }
 
-// -------------------------
-// OTP Verification Endpoints
-// -------------------------
-
-// Store verified users and their tokens in memory
-// In production, use Redis or a database
-const verifiedUsers = new Map();
-
-// Admin users data (you can also load from JSON file)
-const adminUsers = [
-  { mobile: "8368127760", name: "Admin 1" },
-  { mobile: "9717350080", name: "Admin 2" },
-  { mobile: "8860924190", name: "Admin 3" },
-  { mobile: "7483654620", name: "Admin 4" }
-];
-
-/**
- * Send OTP to phone number
- */
-app.post('/api/send-otp', async (req, res) => {
-  try {
-    const { phoneNumber } = req.body;
-    
-    // Validate phone number
-    if (!phoneNumber || phoneNumber.length !== 10 || !/^\d{10}$/.test(phoneNumber)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid phone number. Must be 10 digits.'
-      });
-    }
-
-    // Create form data for Zulu API
-    const formData = new URLSearchParams();
-    formData.append('mobile', phoneNumber);
-    
-    // Make API request to send OTP
-    const response = await axios.post(
-      'https://zulushop.in/app/v1/api/send_otp_new',
-      formData,
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      }
-    );
-    
-    console.log('Send OTP Response for', phoneNumber, ':', response.data);
-    
-    // Return the response from Zulu API
-    return res.json({
-      success: true,
-      ...response.data
-    });
-    
-  } catch (error) {
-    console.error('Error sending OTP:', error.message);
-    
-    // Handle specific error cases
-    if (error.response) {
-      return res.status(error.response.status).json({
-        success: false,
-        message: error.response.data?.message || 'Error sending OTP',
-        error: error.response.data
-      });
-    }
-    
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to send OTP. Please try again.'
-    });
-  }
-});
-
-/**
- * Verify OTP
- */
-app.post('/api/verify-otp', async (req, res) => {
-  try {
-    const { phoneNumber, otp } = req.body;
-    
-    // Validate inputs
-    if (!phoneNumber || phoneNumber.length !== 10) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid phone number'
-      });
-    }
-
-    if (!otp || otp.length !== 4) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid OTP code'
-      });
-    }
-
-    // Create form data for Zulu API
-    const formData = new URLSearchParams();
-    formData.append('mobile', phoneNumber);
-    formData.append('otp', otp);
-    
-    // Make API request to verify OTP
-    const response = await axios.post(
-      'https://zulushop.in/app/v1/api/verify_otp_new',
-      formData,
-      {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      }
-    );
-
-    const data = response.data;
-    
-    console.log('Verify OTP Response for', phoneNumber, ':', data);
-    
-    // Check if this number is an admin
-    const isAdmin = adminUsers.some(user => user.mobile === phoneNumber);
-    
-    // If verification successful, generate a session token
-    if (!data.error && data.message && data.message.toLowerCase().includes('success')) {
-      const token = generateToken(phoneNumber);
-      const suffix = isAdmin ? 'A' : 'U'; // A for Admin, U for User
-      const sessionId = phoneNumber + suffix;
-      
-      // Store user info
-      verifiedUsers.set(sessionId, {
-        phoneNumber,
-        isAdmin,
-        token,
-        verifiedAt: new Date().toISOString(),
-        expiresAt: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
-      });
-      
-      // Create session for this user
-      createOrTouchSession(sessionId);
-      if (conversations[sessionId]) {
-        conversations[sessionId].isAdmin = isAdmin;
-      }
-      
-      return res.json({
-        success: true,
-        message: 'OTP verified successfully',
-        token,
-        sessionId,
-        isAdmin,
-        data: {
-          phoneNumber,
-          isAdmin,
-          sessionId
-        }
-      });
-    } else {
-      return res.json({
-        success: false,
-        message: data.message || 'Invalid OTP',
-        ...data
-      });
-    }
-    
-  } catch (error) {
-    console.error('Error verifying OTP:', error.message);
-    
-    if (error.response) {
-      return res.status(error.response.status).json({
-        success: false,
-        message: error.response.data?.message || 'Error verifying OTP',
-        error: error.response.data
-      });
-    }
-    
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to verify OTP. Please try again.'
-    });
-  }
-});
-
-/**
- * Check if user is authenticated
- */
-app.post('/api/check-auth', (req, res) => {
-  try {
-    const { sessionId, token } = req.body;
-    
-    if (!sessionId || !token) {
-      return res.json({
-        success: false,
-        authenticated: false,
-        message: 'Session ID and token required'
-      });
-    }
-    
-    const userData = verifiedUsers.get(sessionId);
-    
-    if (!userData) {
-      return res.json({
-        success: false,
-        authenticated: false,
-        message: 'Session not found'
-      });
-    }
-    
-    if (userData.token !== token) {
-      return res.json({
-        success: false,
-        authenticated: false,
-        message: 'Invalid token'
-      });
-    }
-    
-    if (userData.expiresAt < Date.now()) {
-      verifiedUsers.delete(sessionId);
-      return res.json({
-        success: false,
-        authenticated: false,
-        message: 'Session expired'
-      });
-    }
-    
-    return res.json({
-      success: true,
-      authenticated: true,
-      user: {
-        phoneNumber: userData.phoneNumber,
-        isAdmin: userData.isAdmin,
-        sessionId,
-        verifiedAt: userData.verifiedAt
-      }
-    });
-    
-  } catch (error) {
-    console.error('Error checking auth:', error);
-    return res.status(500).json({
-      success: false,
-      authenticated: false,
-      message: 'Error checking authentication'
-    });
-  }
-});
-
-/**
- * Logout user
- */
-app.post('/api/logout', (req, res) => {
-  try {
-    const { sessionId } = req.body;
-    
-    if (sessionId && verifiedUsers.has(sessionId)) {
-      verifiedUsers.delete(sessionId);
-      
-      // Also clear conversation session if it exists
-      if (conversations[sessionId]) {
-        delete conversations[sessionId];
-      }
-    }
-    
-    return res.json({
-      success: true,
-      message: 'Logged out successfully'
-    });
-    
-  } catch (error) {
-    console.error('Error logging out:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Error logging out'
-    });
-  }
-});
-
-// Helper function to generate a simple token
-function generateToken(phoneNumber) {
-  return Buffer.from(`${phoneNumber}:${Date.now()}:${Math.random()}`).toString('base64');
-}
-
-// Update the createOrTouchSession function to handle admin flag
-function createOrTouchSession(sessionId, isAdmin = false) {
-  if (!conversations[sessionId]) {
-    conversations[sessionId] = {
-      history: [],
-      lastActive: nowMs(),
-      lastDetectedIntent: null,
-      lastDetectedIntentTs: 0,
-      lastMedia: null,
-      isAdmin: isAdmin
-    };
-  } else {
-    conversations[sessionId].lastActive = nowMs();
-    // Update admin status if provided
-    if (isAdmin !== undefined) {
-      conversations[sessionId].isAdmin = isAdmin;
-    }
-  }
-  
-  return conversations[sessionId];
-}
-
-// Add authentication middleware for protected routes
-const authenticate = (req, res, next) => {
-  try {
-    // Get token from Authorization header or query parameter
-    const token = req.headers.authorization?.split(' ')[1] || req.query.token;
-    const sessionId = req.headers['x-session-id'] || req.query.sessionId;
-    
-    if (!token || !sessionId) {
-      return res.status(401).json({
-        success: false,
-        message: 'Authentication required. Please verify OTP first.'
-      });
-    }
-    
-    const userData = verifiedUsers.get(sessionId);
-    
-    if (!userData) {
-      return res.status(401).json({
-        success: false,
-        message: 'Session expired or not found. Please verify OTP again.'
-      });
-    }
-    
-    if (userData.token !== token) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid token'
-      });
-    }
-    
-    if (userData.expiresAt < Date.now()) {
-      verifiedUsers.delete(sessionId);
-      return res.status(401).json({
-        success: false,
-        message: 'Session expired. Please verify OTP again.'
-      });
-    }
-    
-    // Attach user info to request
-    req.user = {
-      phoneNumber: userData.phoneNumber,
-      isAdmin: userData.isAdmin,
-      sessionId
-    };
-    
-    next();
-  } catch (error) {
-    console.error('Authentication error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Authentication error'
-    });
-  }
-};
-
 function colLetter(n) {
   let s = '';
   while (n > 0) {
@@ -455,25 +105,6 @@ function getIndiaTime() {
   
   return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
 }
-// Clean up expired verified users
-function cleanupExpiredVerifiedUsers() {
-  const now = Date.now();
-  let expiredCount = 0;
-  
-  for (const [sessionId, userData] of verifiedUsers.entries()) {
-    if (userData.expiresAt < now) {
-      verifiedUsers.delete(sessionId);
-      expiredCount++;
-    }
-  }
-  
-  if (expiredCount > 0) {
-    console.log(`🧹 Cleaned up ${expiredCount} expired verified users`);
-  }
-}
-
-// Run cleanup every 30 minutes
-setInterval(cleanupExpiredVerifiedUsers, 30 * 60 * 1000);
 // -------------------------
 // Modified appendUnderColumn to prepend new messages
 // -------------------------
@@ -1744,36 +1375,46 @@ async function getChatGPTResponse(sessionId, userMessage, companyInfo = ZULU_CLU
     createOrTouchSession(sessionId);
     const session = conversations[sessionId];
     
-    // Check if user is admin (set during OTP verification)
-    const isAdmin = session.isAdmin || false;
+    // Check employee mode with suffix logic
+    const basePhone = sessionId.replace(/[A-Za-z]$/, '');
+    const isEmployee = EMPLOYEE_NUMBERS.includes(basePhone);
+    const suffix = /[A-Za-z]$/.test(sessionId) ? sessionId.slice(-1).toUpperCase() : '';
     
-    console.log(`🔍 User ${sessionId} isAdmin: ${isAdmin}`);
+    console.log(`🔍 Employee check: ${sessionId} -> base: ${basePhone}, isEmployee: ${isEmployee}, suffix: ${suffix}`);
     
-    if (isAdmin) {
-      console.log("👔 Admin/Employee mode activated, calling preIntentFilter");
+    if (isEmployee) {
+      console.log("⚡ Employee detected, checking mode...");
       
-      // Process through preIntentFilter for employee messages
-      const employeeHandled = await preIntentFilter(
-        openai,
-        session,
-        sessionId,
-        userMessage,
-        getSheets,
-        createAgentTicket,
-        appendUnderColumn
-      );
-      
-      console.log(`📊 preIntentFilter returned: ${employeeHandled ? 'handled' : 'not handled'}`);
-      
-      // If preIntentFilter returned a response (not null), use it
-      if (employeeHandled !== null && employeeHandled !== undefined && employeeHandled.trim().length > 0) {
-        return employeeHandled;
+      // If suffix is 'U', treat as user (bypass employee flow)
+      if (suffix === 'U') {
+        console.log("👤 User mode (suffix U) - bypassing employee flow");
+      } 
+      // If suffix is 'A' or no suffix, treat as admin/employee
+      else if (suffix === 'A' || suffix === '') {
+        console.log("👔 Admin/Employee mode activated, calling preIntentFilter");
+        
+        // Process through preIntentFilter for employee messages
+        const employeeHandled = await preIntentFilter(
+          openai,
+          session,
+          sessionId,
+          userMessage,
+          getSheets,
+          createAgentTicket,
+          appendUnderColumn
+        );
+        
+        console.log(`📊 preIntentFilter returned: ${employeeHandled ? 'handled' : 'not handled'}`);
+        
+        // If preIntentFilter returned a response (not null), use it
+        if (employeeHandled !== null && employeeHandled !== undefined && employeeHandled.trim().length > 0) {
+          return employeeHandled;
+        }
+        
+        // If preIntentFilter returned null/empty, continue with normal flow
+        console.log("🔄 Employee mode but preIntentFilter returned null, continuing with normal flow");
       }
-      
-      // If preIntentFilter returned null/empty, continue with normal flow
-      console.log("🔄 Admin mode but preIntentFilter returned null, continuing with normal flow");
     }
-  
     
     // 1) classify only the single incoming message
     const classification = await classifyAndMatchWithGPT(userMessage);
@@ -1955,33 +1596,27 @@ app.get('/chat', (req, res) => {
 });
 
 // API endpoint for sending messages
-// API endpoint for sending messages (protected)
-app.post('/chat/message', authenticate, async (req, res) => {
+app.post('/chat/message', async (req, res) => {
   try {
-    const { message } = req.body;
-    const sessionId = req.user.sessionId; // Get from authenticated user
+    const { phoneNumber, message } = req.body;
     
-    if (!message) {
+    if (!phoneNumber || !message) {
       return res.status(400).json({
         success: false,
-        error: 'Message is required'
+        error: 'Phone number and message are required'
       });
     }
     
-    console.log(`💬 Chat message from ${sessionId} (${req.user.phoneNumber}): ${message}`);
+    console.log(`💬 Chat message from ${phoneNumber}: ${message}`);
     
     // Process the message
-    const response = await handleMessage(sessionId, message);
+    const response = await handleMessage(phoneNumber, message);
     
     // Return the response
     return res.json({
       success: true,
       response: response,
-      timestamp: new Date().toISOString(),
-      user: {
-        phoneNumber: req.user.phoneNumber,
-        isAdmin: req.user.isAdmin
-      }
+      timestamp: new Date().toISOString()
     });
     
   } catch (error) {
@@ -1994,29 +1629,15 @@ app.post('/chat/message', authenticate, async (req, res) => {
 });
 
 // Get chat history for a phone number
-app.get('/chat/history/:phoneNumber', authenticate, async (req, res) => {
+app.get('/chat/history/:phoneNumber', async (req, res) => {
   try {
     const { phoneNumber } = req.params;
-    const sessionId = req.user.sessionId;
-    
-    // Ensure user can only access their own history
-    if (!phoneNumber.includes(req.user.phoneNumber) && !req.user.isAdmin) {
-      return res.status(403).json({
-        success: false,
-        error: 'Access denied'
-      });
-    }
-    
-    const history = getFullSessionHistory(sessionId);
+    const history = getFullSessionHistory(phoneNumber);
     
     return res.json({
       success: true,
       history: history,
-      sessionActive: !!conversations[sessionId],
-      user: {
-        phoneNumber: req.user.phoneNumber,
-        isAdmin: req.user.isAdmin
-      }
+      sessionActive: !!conversations[phoneNumber]
     });
     
   } catch (error) {
@@ -2029,28 +1650,18 @@ app.get('/chat/history/:phoneNumber', authenticate, async (req, res) => {
 });
 
 // Get active sessions (admin only)
-app.get('/chat/sessions', authenticate, (req, res) => {
-  // Only allow admins to view all sessions
-  if (!req.user.isAdmin) {
-    return res.status(403).json({
-      success: false,
-      error: 'Admin access required'
-    });
-  }
-  
+app.get('/chat/sessions', (req, res) => {
   const activeSessions = Object.keys(conversations).map(id => ({
     phoneNumber: id,
     lastActive: new Date(conversations[id].lastActive).toISOString(),
     historyLength: conversations[id].history.length,
-    lastIntent: conversations[id].lastDetectedIntent,
-    isAdmin: conversations[id].isAdmin || false
+    lastIntent: conversations[id].lastDetectedIntent
   }));
   
   return res.json({
     success: true,
     activeSessions,
-    totalSessions: activeSessions.length,
-    user: req.user
+    totalSessions: activeSessions.length
   });
 });
 
@@ -2061,23 +1672,20 @@ app.get('/', (req, res) => {
   res.json({ 
     status: 'Zulu Club Chat Server is running', 
     service: 'Zulu Club Chat AI Assistant',
-    version: '8.0 - OTP Authentication Integrated',
+    version: '7.1 - Employee/User Mode with Suffix Support',
+    employee_numbers: EMPLOYEE_NUMBERS,
+    usage_note: 'Add "A" suffix for admin mode (default), "U" suffix for user mode',
     endpoints: {
-      send_otp: 'POST /api/send-otp',
-      verify_otp: 'POST /api/verify-otp',
-      check_auth: 'POST /api/check-auth',
-      logout: 'POST /api/logout',
       chat_interface: '/chat',
-      send_message: 'POST /chat/message (requires auth)',
-      get_history: 'GET /chat/history/:phoneNumber (requires auth)',
-      get_sessions: 'GET /chat/sessions (admin only)',
+      send_message: 'POST /chat/message',
+      get_history: 'GET /chat/history/:phoneNumber',
+      get_sessions: 'GET /chat/sessions',
       refresh_csv: 'GET /refresh-csv'
     },
     stats: {
       product_categories_loaded: galleriesData.length,
       sellers_loaded: sellersData.length,
-      active_conversations: Object.keys(conversations).length,
-      verified_users: verifiedUsers.size
+      active_conversations: Object.keys(conversations).length
     },
     timestamp: new Date().toISOString()
   });
@@ -2471,4 +2079,4 @@ function formatOriginalTimestamp(date) {
     return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
 }
 // Export for Vercel
-module.exports = app;s
+module.exports = app;
