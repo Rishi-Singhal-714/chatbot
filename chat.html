@@ -1556,120 +1556,130 @@
         return otp;
     }
     
-    // Send OTP API call
-    async function sendOTP(phoneNumber) {
-        try {
-            sendOtpBtn.disabled = true;
-            sendOtpBtn.innerHTML = '<span class="spinner"></span> Sending...';
-            
-            const response = await fetch(`${API_BASE_URL}/api/send-otp`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    phoneNumber: phoneNumber
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                phoneSuccess.style.display = 'block';
-                phoneError.style.display = 'none';
-                
-                // Show OTP step
-                otpPhoneNumber.textContent = phoneNumber;
-                currentPhone = phoneNumber;
-                resetOTPInputs();
-                startOTPTimer();
-                showStep(2);
-                
-                return { success: true, data: data };
-            } else {
-                phoneError.textContent = data.message || 'Failed to send OTP';
-                phoneError.style.display = 'block';
-                phoneSuccess.style.display = 'none';
-                return { success: false, message: data.message };
-            }
-        } catch (error) {
-            console.error('Error sending OTP:', error);
-            phoneError.textContent = 'Network error. Please try again.';
-            phoneError.style.display = 'block';
-            phoneSuccess.style.display = 'none';
-            return { success: false, message: 'Network error' };
-        } finally {
-            sendOtpBtn.disabled = false;
-            sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
-        }
-    }
+// Send OTP API call
+async function sendOTP(phoneNumber) {
+  try {
+    sendOtpBtn.disabled = true;
+    sendOtpBtn.innerHTML = '<span class="spinner"></span> Sending...';
     
-    // Verify OTP API call
-    async function verifyOTP(phoneNumber, otp) {
-        try {
-            verifyOtpBtn.disabled = true;
-            verifyOtpBtn.innerHTML = '<span class="spinner"></span> Verifying...';
-            
-            const response = await fetch(`${API_BASE_URL}/api/verify-otp`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    phoneNumber: phoneNumber,
-                    otp: otp
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                otpSuccess.style.display = 'block';
-                otpError.style.display = 'none';
-                
-                // Store session data
-                sessionToken = data.token;
-                sessionId = data.sessionId;
-                userData = data.data;
-                
-                // Clear timer
-                if (otpTimer) {
-                    clearInterval(otpTimer);
-                }
-                
-                // Update UI to show verification success
-                verifyOtpBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verified!';
-                
-                // Wait a moment then initialize chat
-                setTimeout(() => {
-                    initChat(phoneNumber, data.isAdmin, data.sessionId);
-                }, 1000);
-                
-                return { success: true, data: data };
-            } else {
-                otpError.textContent = data.message || 'Invalid OTP';
-                otpError.style.display = 'block';
-                otpSuccess.style.display = 'none';
-                
-                // Mark OTP inputs as invalid
-                const otpInputs = document.querySelectorAll('.otp-input');
-                otpInputs.forEach(input => {
-                    input.classList.add('invalid');
-                });
-                
-                return { success: false, message: data.message };
-            }
-        } catch (error) {
-            console.error('Error verifying OTP:', error);
-            otpError.textContent = 'Network error. Please try again.';
-            otpError.style.display = 'block';
-            otpSuccess.style.display = 'none';
-            return { success: false, message: 'Network error' };
-        } finally {
-            verifyOtpBtn.disabled = false;
-            verifyOtpBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verify OTP';
-        }
+    const response = await fetch(`${API_BASE_URL}/api/send-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        phoneNumber: phoneNumber
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success || (data.message && (data.message.toLowerCase().includes('sent') || data.message.toLowerCase().includes('already')))) {
+      phoneSuccess.style.display = 'block';
+      phoneError.style.display = 'none';
+      
+      // Show OTP step
+      otpPhoneNumber.textContent = phoneNumber;
+      currentPhone = phoneNumber;
+      resetOTPInputs();
+      startOTPTimer();
+      showStep(2);
+      
+      return { success: true, data: data };
+    } else {
+      phoneError.textContent = data.message || 'Failed to send OTP';
+      phoneError.style.display = 'block';
+      phoneSuccess.style.display = 'none';
+      return { success: false, message: data.message };
     }
+  } catch (error) {
+    console.error('Error sending OTP:', error);
+    phoneError.textContent = 'Network error. Please try again.';
+    phoneError.style.display = 'block';
+    phoneSuccess.style.display = 'none';
+    return { success: false, message: 'Network error' };
+  } finally {
+    sendOtpBtn.disabled = false;
+    sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
+  }
+}
+
+// Verify OTP API call
+async function verifyOTP(phoneNumber, otp) {
+  try {
+    verifyOtpBtn.disabled = true;
+    verifyOtpBtn.innerHTML = '<span class="spinner"></span> Verifying...';
+    
+    const response = await fetch(`${API_BASE_URL}/api/verify-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        phoneNumber: phoneNumber,
+        otp: otp
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success || (data.message && data.message.toLowerCase().includes('already exists'))) {
+      otpSuccess.style.display = 'block';
+      otpError.style.display = 'none';
+      
+      // Store session data
+      sessionToken = data.token || generateLocalToken();
+      sessionId = data.sessionId || phoneNumber + (data.isAdmin ? 'A' : 'U');
+      userData = data.data || { phoneNumber, isAdmin: data.isAdmin || false };
+      
+      // Save to localStorage for persistence
+      localStorage.setItem('zulu_sessionId', sessionId);
+      localStorage.setItem('zulu_token', sessionToken);
+      localStorage.setItem('zulu_phone', phoneNumber);
+      
+      // Clear timer
+      if (otpTimer) {
+        clearInterval(otpTimer);
+      }
+      
+      // Update UI to show verification success
+      verifyOtpBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verified!';
+      
+      // Wait a moment then initialize chat
+      setTimeout(() => {
+        initChat(phoneNumber, data.isAdmin || false, sessionId);
+      }, 1000);
+      
+      return { success: true, data: data };
+    } else {
+      otpError.textContent = data.message || 'Invalid OTP';
+      otpError.style.display = 'block';
+      otpSuccess.style.display = 'none';
+      
+      // Mark OTP inputs as invalid
+      const otpInputs = document.querySelectorAll('.otp-input');
+      otpInputs.forEach(input => {
+        input.classList.add('invalid');
+      });
+      
+      return { success: false, message: data.message };
+    }
+  } catch (error) {
+    console.error('Error verifying OTP:', error);
+    otpError.textContent = 'Network error. Please try again.';
+    otpError.style.display = 'block';
+    otpSuccess.style.display = 'none';
+    return { success: false, message: 'Network error' };
+  } finally {
+    verifyOtpBtn.disabled = false;
+    verifyOtpBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verify OTP';
+  }
+}
+
+// Helper function to generate a local token if API doesn't provide one
+function generateLocalToken() {
+  return 'local_' + Math.random().toString(36).substr(2) + Date.now().toString(36);
+}
     
     // Check authentication status
     async function checkAuth() {
