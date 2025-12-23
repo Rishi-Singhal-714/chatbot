@@ -455,6 +455,25 @@ function getIndiaTime() {
   
   return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
 }
+// Clean up expired verified users
+function cleanupExpiredVerifiedUsers() {
+  const now = Date.now();
+  let expiredCount = 0;
+  
+  for (const [sessionId, userData] of verifiedUsers.entries()) {
+    if (userData.expiresAt < now) {
+      verifiedUsers.delete(sessionId);
+      expiredCount++;
+    }
+  }
+  
+  if (expiredCount > 0) {
+    console.log(`🧹 Cleaned up ${expiredCount} expired verified users`);
+  }
+}
+
+// Run cleanup every 30 minutes
+setInterval(cleanupExpiredVerifiedUsers, 30 * 60 * 1000);
 // -------------------------
 // Modified appendUnderColumn to prepend new messages
 // -------------------------
