@@ -113,28 +113,11 @@ app.post('/api/send-otp', async (req, res) => {
     
     console.log('Send OTP Response for', phoneNumber, ':', response.data);
     
-    // Check if the response indicates success
-    // Accept both 'sent' and 'already exists' as valid responses
-    const data = response.data;
-    const isSent = !data.error && (
-      (data.message && data.message.toLowerCase().includes('sent')) ||
-      (data.message && data.message.toLowerCase().includes('already')) ||
-      (data.message && data.message.toLowerCase().includes('success'))
-    );
-    
-    if (isSent) {
-      return res.json({
-        success: true,
-        message: 'OTP sent successfully',
-        ...data
-      });
-    } else {
-      return res.json({
-        success: false,
-        message: data.message || 'Failed to send OTP',
-        ...data
-      });
-    }
+    // Return the response from Zulu API
+    return res.json({
+      success: true,
+      ...response.data
+    });
     
   } catch (error) {
     console.error('Error sending OTP:', error.message);
@@ -154,6 +137,7 @@ app.post('/api/send-otp', async (req, res) => {
     });
   }
 });
+
 /**
  * Verify OTP
  */
@@ -197,14 +181,8 @@ app.post('/api/verify-otp', async (req, res) => {
     // Check if this number is an admin
     const isAdmin = adminUsers.some(user => user.mobile === phoneNumber);
     
-    // Check for successful verification
-    // Accept both 'success' and 'Mobile already exists' as valid responses
-    const isSuccess = !data.error && (
-      (data.message && data.message.toLowerCase().includes('success')) ||
-      (data.message && data.message.toLowerCase().includes('already exists'))
-    );
-    
-    if (isSuccess) {
+    // If verification successful, generate a session token
+    if (!data.error && data.message && data.message.toLowerCase().includes('success')) {
       const token = generateToken(phoneNumber);
       const suffix = isAdmin ? 'A' : 'U'; // A for Admin, U for User
       const sessionId = phoneNumber + suffix;
