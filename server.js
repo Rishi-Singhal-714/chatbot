@@ -113,11 +113,28 @@ app.post('/api/send-otp', async (req, res) => {
     
     console.log('Send OTP Response for', phoneNumber, ':', response.data);
     
-    // Return the response from Zulu API
-    return res.json({
-      success: true,
-      ...response.data
-    });
+    // Check if the response indicates success
+    // Accept both 'sent' and 'already exists' as valid responses
+    const data = response.data;
+    const isSent = !data.error && (
+      (data.message && data.message.toLowerCase().includes('sent')) ||
+      (data.message && data.message.toLowerCase().includes('already')) ||
+      (data.message && data.message.toLowerCase().includes('success'))
+    );
+    
+    if (isSent) {
+      return res.json({
+        success: true,
+        message: 'OTP sent successfully',
+        ...data
+      });
+    } else {
+      return res.json({
+        success: false,
+        message: data.message || 'Failed to send OTP',
+        ...data
+      });
+    }
     
   } catch (error) {
     console.error('Error sending OTP:', error.message);
@@ -137,7 +154,14 @@ app.post('/api/send-otp', async (req, res) => {
     });
   }
 });
-
+// Helper to log OTP responses
+function logOTPResponse(phoneNumber, data) {
+  console.log('📱 OTP Response for', phoneNumber, ':');
+  console.log('  Error:', data.error);
+  console.log('  Message:', data.message);
+  console.log('  Has Token:', !!data.token);
+  console.log('  Has Data:', !!data.data);
+}
 /**
  * Verify OTP
  */
@@ -181,8 +205,14 @@ app.post('/api/verify-otp', async (req, res) => {
     // Check if this number is an admin
     const isAdmin = adminUsers.some(user => user.mobile === phoneNumber);
     
-    // If verification successful, generate a session token
-    if (!data.error && data.message && data.message.toLowerCase().includes('success')) {
+    // Check for successful verification
+    // Accept both 'success' and 'Mobile already exists' as valid responses
+    const isSuccess = !data.error && (
+      (data.message && data.message.toLowerCase().includes('success')) ||
+      (data.message && data.message.toLowerCase().includes('already exists'))
+    );
+    
+    if (isSuccess) {
       const token = generateToken(phoneNumber);
       const suffix = isAdmin ? 'A' : 'U'; // A for Admin, U for User
       const sessionId = phoneNumber + suffix;
@@ -239,7 +269,20 @@ app.post('/api/verify-otp', async (req, res) => {
     });
   }
 });
+// Inside /api/verify-otp endpoint
+logOTPResponse(phoneNumber, data);
 
+// Check for successful verification
+// Accept multiple success conditions
+const isSuccess = !data.error && (
+  (data.message && (
+    data.message.toLowerCase().includes('success') ||
+    data.message.toLowerCase().includes('already exists') ||
+    data.message.toLowerCase().includes('verified') ||
+    data.message.toLowerCase().includes('valid')
+  )) ||
+  (data.token && data.token.length > 10) // Has a valid token
+);
 /**
  * Check if user is authenticated
  */
