@@ -7,6 +7,34 @@ const preIntentFilter = require('./preintentfilter');
 const { google } = require('googleapis'); 
 const app = express();
 
+// ====================
+// OTP CONFIGURATION
+// ====================
+const OTP_CONFIG = {
+  // OTP API endpoints
+  SEND_OTP_URL: 'https://zulushop.in/app/v1/api/send_otp_new',
+  VERIFY_OTP_URL: 'https://zulushop.in/app/v1/api/verify_otp_new',
+  
+  // OTP settings
+  OTP_EXPIRY_MINUTES: 10,
+  OTP_MAX_ATTEMPTS: 3,
+  
+  // Authentication settings
+  AUTH_ENABLED: true, // Set to false to disable OTP temporarily
+  ADMIN_BYPASS_OTP: true, // Allow employees to bypass OTP
+};
+
+// OTP storage (in production, consider using Redis)
+const otpStore = new Map(); // phoneNumber -> { otp, expiresAt, attempts, verified, isAdmin, isEmployee }
+
+// Admin users configuration
+const ADMIN_USERS = [
+  { mobile: "8368127760", username: "Admin1" },
+  { mobile: "9717350080", username: "Admin2" },
+  { mobile: "8860924190", username: "Admin3" },
+  { mobile: "7483654620", username: "Admin4" }
+];
+
 // Employee numbers (without country code prefix for matching)
 const EMPLOYEE_NUMBERS = [
   "8368127760",  // 8368127760
@@ -15,7 +43,9 @@ const EMPLOYEE_NUMBERS = [
   "7483654620"   // 7483654620
 ];
 
-// Middleware
+// ====================
+// MIDDLEWARE
+// ====================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public')); // Serve static files
@@ -25,19 +55,18 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || ''
 });
 
-// -------------------------
-// PERSISTED DATA: conversations, csvs
-// -------------------------
+// ====================
+// PERSISTED DATA
+// ====================
 let conversations = {}; // sessionId -> { history: [{role, content, ts}], lastActive }
 let galleriesData = [];
 let sellersData = []; // sellers CSV data
 
-// -------------------------
-// Google Sheets config
-// -------------------------
+// ====================
+// GOOGLE SHEETS CONFIG
+// ====================
 const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID || 'History';
 const AGENT_TICKETS_SHEET = process.env.AGENT_TICKETS_SHEET || 'Tickets_History';
-const BILLING_SHEET_NAME = process.env.BILLING_SHEET_NAME || "Sheet3";
 const SA_JSON_B64 = process.env.GOOGLE_SERVICE_ACCOUNT_JSON_BASE64 || '';
 
 if (!GOOGLE_SHEET_ID) {
@@ -74,7 +103,6 @@ function colLetter(n) {
   }
   return s;
 }
-
 async function writeCell(colNum, rowNum, value) {
   const sheets = await getSheets();
   if (!sheets) return;
@@ -95,7 +123,6 @@ function getIndiaTime() {
   const offset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
   const indiaTime = new Date(now.getTime() + offset);
   
-  // Format as: DD-MM-YYYY HH:MM:SS (24-hour format)
   const day = String(indiaTime.getUTCDate()).padStart(2, '0');
   const month = String(indiaTime.getUTCMonth() + 1).padStart(2, '0');
   const year = indiaTime.getUTCFullYear();
@@ -105,25 +132,21 @@ function getIndiaTime() {
   
   return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
 }
-// -------------------------
-// Modified appendUnderColumn to prepend new messages
-// -------------------------
+
 async function appendUnderColumn(headerName, text) {
   const sheets = await getSheets();
   if (!sheets) return;
   
   try {
-    const ts = getIndiaTime(); // Use India time
+    const ts = getIndiaTime();
     const finalText = `${ts} | ${text}`;
     
-    // Get header row to find column
     const headersResp = await sheets.spreadsheets.values.get({ 
       spreadsheetId: GOOGLE_SHEET_ID, 
       range: '1:1' 
     });
     const headers = (headersResp.data.values && headersResp.data.values[0]) || [];
     
-    // Find or create column
     let colIndex = headers.findIndex(h => String(h).trim() === headerName);
     if (colIndex === -1) {
       colIndex = headers.length;
@@ -137,8 +160,6 @@ async function appendUnderColumn(headerName, text) {
     }
     
     const colNum = colIndex + 1;
-    
-    // Get existing values in this column (excluding header)
     const colRange = `${colLetter(colNum)}2:${colLetter(colNum)}`;
     let existingValues = [];
     
@@ -153,18 +174,8 @@ async function appendUnderColumn(headerName, text) {
       existingValues = [];
     }
     
-    // PREPEND the new message at the beginning (row 2)
-    // Step 1: Insert a new row at position 2
-    const startRow = 2;
-    
-    // We need to shift existing values down by 1 row
-    // To do this efficiently, we'll write all values at once
-    
-    // Create new array with new message first, then existing messages
     const newValues = [finalText, ...existingValues];
-    
-    // Write all values starting from row 2
-    const writeRange = `${colLetter(colNum)}${startRow}:${colLetter(colNum)}${startRow + newValues.length - 1}`;
+    const writeRange = `${colLetter(colNum)}2:${colLetter(colNum)}${2 + newValues.length - 1}`;
     
     await sheets.spreadsheets.values.update({
       spreadsheetId: GOOGLE_SHEET_ID,
@@ -179,6 +190,411 @@ async function appendUnderColumn(headerName, text) {
     console.error('❌ appendUnderColumn error', e);
   }
 }
+
+// ====================
+// OTP AUTHENTICATION FUNCTIONS
+// ====================
+
+/**
+ * Send OTP to phone number via API
+ */
+async function sendOTP(phoneNumber) {
+  try {
+    if (!phoneNumber || phoneNumber.length !== 10 || !/^\d{10}$/.test(phoneNumber)) {
+      throw new Error('Invalid phone number. Must be 10 digits.');
+    }
+
+    const formData = new URLSearchParams();
+    formData.append('mobile', phoneNumber);
+    
+    const response = await axios.post(
+      OTP_CONFIG.SEND_OTP_URL,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      }
+    );
+    
+    console.log(`📱 OTP API response for ${phoneNumber}:`, response.data);
+    return response.data;
+    
+  } catch (error) {
+    console.error('❌ Error sending OTP:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Verify OTP entered by user
+ */
+async function verifyOTP(phoneNumber, otpCode) {
+  try {
+    if (!phoneNumber || phoneNumber.length !== 10) {
+      throw new Error('Invalid phone number');
+    }
+    if (!otpCode || otpCode.length !== 4) {
+      throw new Error('Invalid OTP code (must be 4 digits)');
+    }
+
+    // Clean phone number (remove suffix if present)
+    const cleanPhone = phoneNumber.replace(/[A-Za-z]$/, '');
+    
+    // Check if this is an employee/admin
+    const basePhone = cleanPhone.replace(/[A-Za-z]$/, '');
+    const isEmployee = EMPLOYEE_NUMBERS.includes(basePhone);
+    const isAdminUser = ADMIN_USERS.some(user => user.mobile === basePhone);
+    
+    // For employees/admins with bypass enabled, use simplified verification
+    if (OTP_CONFIG.ADMIN_BYPASS_OTP && (isEmployee || isAdminUser)) {
+      console.log(`👔 Admin/Employee ${cleanPhone} using simplified OTP verification`);
+      
+      // Get stored OTP data
+      const otpData = otpStore.get(cleanPhone);
+      if (!otpData) {
+        throw new Error('No OTP request found. Please request a new OTP.');
+      }
+      
+      if (Date.now() > otpData.expiresAt) {
+        otpStore.delete(cleanPhone);
+        throw new Error('OTP has expired. Please request a new one.');
+      }
+      
+      // In development or for admins, accept any 4-digit code
+      // In production, you might want stricter validation
+      const isDevelopment = process.env.NODE_ENV === 'development';
+      
+      if (isDevelopment || otpData.otp === otpCode) {
+        otpData.verified = true;
+        otpData.isAdmin = isAdminUser;
+        otpData.isEmployee = isEmployee;
+        otpStore.set(cleanPhone, otpData);
+        
+        return {
+          error: false,
+          message: 'OTP verified successfully',
+          isAdmin: isAdminUser,
+          isEmployee: isEmployee
+        };
+      } else {
+        throw new Error('Invalid OTP code');
+      }
+    }
+    
+    // For regular users, verify via API
+    const formData = new URLSearchParams();
+    formData.append('mobile', cleanPhone);
+    formData.append('otp', otpCode);
+    
+    const response = await axios.post(
+      OTP_CONFIG.VERIFY_OTP_URL,
+      formData,
+      {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      }
+    );
+    
+    const result = response.data;
+    
+    if (!result.error) {
+      // Store verification status
+      const otpData = otpStore.get(cleanPhone) || {};
+      otpData.verified = true;
+      otpData.isAdmin = isAdminUser;
+      otpData.isEmployee = isEmployee;
+      otpStore.set(cleanPhone, otpData);
+      
+      console.log(`✅ OTP verified for ${cleanPhone}, isAdmin: ${isAdminUser}`);
+      
+      return {
+        ...result,
+        isAdmin: isAdminUser,
+        isEmployee: isEmployee
+      };
+    } else {
+      throw new Error(result.message || 'OTP verification failed');
+    }
+    
+  } catch (error) {
+    console.error('❌ Error verifying OTP:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Middleware to check authentication
+ */
+function requireAuth(req, res, next) {
+  if (!OTP_CONFIG.AUTH_ENABLED) {
+    return next();
+  }
+  
+  const phoneNumber = req.body.phoneNumber || req.params.phoneNumber;
+  
+  if (!phoneNumber) {
+    return res.status(400).json({
+      success: false,
+      error: 'Phone number is required',
+      requiresAuth: true
+    });
+  }
+  
+  const cleanPhone = phoneNumber.replace(/[A-Za-z]$/, '');
+  const otpData = otpStore.get(cleanPhone);
+  
+  // Check if user is authenticated
+  if (!otpData || !otpData.verified) {
+    return res.status(401).json({
+      success: false,
+      error: 'Authentication required',
+      requiresAuth: true,
+      message: 'Please verify OTP first'
+    });
+  }
+  
+  // Check if OTP session is still valid
+  if (Date.now() > otpData.expiresAt) {
+    otpStore.delete(cleanPhone);
+    return res.status(401).json({
+      success: false,
+      error: 'Session expired',
+      requiresAuth: true,
+      message: 'Your session has expired. Please verify OTP again.'
+    });
+  }
+  
+  // Add user info to request
+  req.user = {
+    phoneNumber: cleanPhone,
+    isAdmin: otpData.isAdmin || false,
+    isEmployee: otpData.isEmployee || false
+  };
+  
+  next();
+}
+
+// ====================
+// OTP AUTHENTICATION ENDPOINTS
+// ====================
+
+/**
+ * @route POST /auth/send-otp
+ * @desc Send OTP to phone number
+ */
+app.post('/auth/send-otp', async (req, res) => {
+  try {
+    const { phoneNumber } = req.body;
+    
+    if (!phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        error: 'Phone number is required'
+      });
+    }
+    
+    // Clean phone number
+    const cleanPhone = phoneNumber.replace(/[A-Za-z]$/, '');
+    
+    // Check if valid 10-digit number
+    if (!/^\d{10}$/.test(cleanPhone)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid phone number format. Must be 10 digits.'
+      });
+    }
+    
+    // Check if this is an employee/admin
+    const basePhone = cleanPhone.replace(/[A-Za-z]$/, '');
+    const isEmployee = EMPLOYEE_NUMBERS.includes(basePhone);
+    const isAdminUser = ADMIN_USERS.some(user => user.mobile === basePhone);
+    
+    // Generate expiration time
+    const expiresAt = Date.now() + (OTP_CONFIG.OTP_EXPIRY_MINUTES * 60 * 1000);
+    
+    // Store OTP data (we don't store the actual OTP for security)
+    otpStore.set(cleanPhone, {
+      expiresAt: expiresAt,
+      attempts: 0,
+      verified: false,
+      isAdmin: isAdminUser,
+      isEmployee: isEmployee,
+      createdAt: Date.now()
+    });
+    
+    console.log(`📱 Preparing to send OTP to ${cleanPhone} (Admin: ${isAdminUser}, Employee: ${isEmployee})`);
+    
+    // Send OTP via API
+    const otpResponse = await sendOTP(cleanPhone);
+    
+    if (otpResponse.error) {
+      return res.status(500).json({
+        success: false,
+        error: otpResponse.message || 'Failed to send OTP'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'OTP sent successfully',
+      requestId: otpResponse.request_id,
+      expiresIn: OTP_CONFIG.OTP_EXPIRY_MINUTES,
+      phoneNumber: cleanPhone
+    });
+    
+  } catch (error) {
+    console.error('❌ Send OTP error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to send OTP'
+    });
+  }
+});
+
+/**
+ * @route POST /auth/verify-otp
+ * @desc Verify OTP code
+ */
+app.post('/auth/verify-otp', async (req, res) => {
+  try {
+    const { phoneNumber, otp } = req.body;
+    
+    if (!phoneNumber || !otp) {
+      return res.status(400).json({
+        success: false,
+        error: 'Phone number and OTP are required'
+      });
+    }
+    
+    // Clean phone number
+    const cleanPhone = phoneNumber.replace(/[A-Za-z]$/, '');
+    
+    // Verify OTP
+    const verificationResult = await verifyOTP(cleanPhone, otp);
+    
+    if (verificationResult.error) {
+      // Increment attempt counter
+      const otpData = otpStore.get(cleanPhone);
+      if (otpData) {
+        otpData.attempts += 1;
+        otpStore.set(cleanPhone, otpData);
+        
+        // Check if max attempts reached
+        if (otpData.attempts >= OTP_CONFIG.OTP_MAX_ATTEMPTS) {
+          otpStore.delete(cleanPhone);
+          return res.status(400).json({
+            success: false,
+            error: 'Maximum attempts reached. Please request a new OTP.'
+          });
+        }
+      }
+      
+      return res.status(400).json({
+        success: false,
+        error: verificationResult.message || 'Invalid OTP',
+        attemptsRemaining: otpData ? OTP_CONFIG.OTP_MAX_ATTEMPTS - otpData.attempts : OTP_CONFIG.OTP_MAX_ATTEMPTS
+      });
+    }
+    
+    // Get the updated OTP data
+    const otpData = otpStore.get(cleanPhone);
+    
+    res.json({
+      success: true,
+      message: 'OTP verified successfully',
+      isAdmin: otpData?.isAdmin || false,
+      isEmployee: otpData?.isEmployee || false,
+      expiresAt: otpData?.expiresAt,
+      sessionDuration: OTP_CONFIG.OTP_EXPIRY_MINUTES,
+      phoneNumber: cleanPhone
+    });
+    
+  } catch (error) {
+    console.error('❌ Verify OTP error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to verify OTP'
+    });
+  }
+});
+
+/**
+ * @route GET /auth/status/:phoneNumber
+ * @desc Check authentication status
+ */
+app.get('/auth/status/:phoneNumber', (req, res) => {
+  try {
+    const { phoneNumber } = req.params;
+    const cleanPhone = phoneNumber.replace(/[A-Za-z]$/, '');
+    
+    const otpData = otpStore.get(cleanPhone);
+    
+    if (!otpData) {
+      return res.json({
+        authenticated: false,
+        message: 'No active session'
+      });
+    }
+    
+    const isExpired = Date.now() > otpData.expiresAt;
+    const expiresIn = Math.max(0, Math.floor((otpData.expiresAt - Date.now()) / (60 * 1000)));
+    
+    res.json({
+      authenticated: !isExpired && otpData.verified,
+      isExpired: isExpired,
+      isAdmin: otpData.isAdmin || false,
+      isEmployee: otpData.isEmployee || false,
+      expiresAt: otpData.expiresAt,
+      expiresIn: expiresIn,
+      attempts: otpData.attempts,
+      phoneNumber: cleanPhone
+    });
+    
+  } catch (error) {
+    console.error('❌ Auth status error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @route POST /auth/logout
+ * @desc Logout user (clear OTP session)
+ */
+app.post('/auth/logout', (req, res) => {
+  try {
+    const { phoneNumber } = req.body;
+    
+    if (!phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        error: 'Phone number is required'
+      });
+    }
+    
+    const cleanPhone = phoneNumber.replace(/[A-Za-z]$/, '');
+    
+    if (otpStore.has(cleanPhone)) {
+      otpStore.delete(cleanPhone);
+      console.log(`👋 User ${cleanPhone} logged out`);
+    }
+    
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+    
+  } catch (error) {
+    console.error('❌ Logout error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // -------------------------
 // Helper function to parse India time for display
 // -------------------------
@@ -203,12 +619,12 @@ function parseIndiaTimeForDisplay(timestampStr) {
   return `${displayHours}:${String(minutes).padStart(2, '0')} ${ampm}`;
 }
 
-// -------------------------
+// ====================
 // ZULU CLUB INFORMATION
-// -------------------------
+// ====================
 const ZULU_CLUB_INFO = `
 Zulu Club is a hyperlocal lifestyle shopping app designed to deliver curated products ASAP.
-Its tagline is: “A shopping app, delivering ASAP. Lifestyle upgrades, specially curated for you.”
+Its tagline is: "A shopping app, delivering ASAP. Lifestyle upgrades, specially curated for you."
 Users discover products through short videos from nearby stores, popups, markets, and sellers.
 They can directly call or WhatsApp chat with sellers and purchase locally available lifestyle products.
 Zulu Club also offers curated selections on its app homepage, sourced from Zulu showrooms and partner stores,
@@ -250,9 +666,9 @@ High-performing products may be curated for bulk buying,
 placement in Zulu showrooms, homepage visibility, or popup features.
 `;
 
-// -------------------------
-// CSV loaders: galleries + sellers (keep as is)
-// -------------------------
+// ====================
+// CSV LOADERS
+// ====================
 async function loadGalleriesData() {
   try {
     console.log('📥 Loading galleries CSV data...');
@@ -345,7 +761,7 @@ async function loadSellersData() {
   }
 }
 
-// initialize both CSVs
+// Initialize both CSVs
 (async () => {
   try {
     galleriesData = await loadGalleriesData();
@@ -362,9 +778,9 @@ async function loadSellersData() {
   }
 })();
 
-// -------------------------
-// Agent ticket helpers (keep as is)
-// -------------------------
+// ====================
+// AGENT TICKET HELPERS
+// ====================
 async function generateTicketId() {
   const sheets = await getSheets();
   if (!sheets) {
@@ -397,33 +813,6 @@ async function generateTicketId() {
   }
 }
 
-async function ensureAgentTicketsHeader(sheets) {
-  try {
-    const sheetName = AGENT_TICKETS_SHEET;
-    const resp = await sheets.spreadsheets.values.get({
-      spreadsheetId: GOOGLE_SHEET_ID,
-      range: `${sheetName}!1:1`
-    }).catch(() => null);
-    
-    const existing = (resp && resp.data && resp.data.values && resp.data.values[0]) || [];
-    const required = ['mobile_number', 'last_5th_message', '4th_message', '3rd_message', '2nd_message', '1st_message', 'ticket_id', 'ts'];
-    
-    if (existing.length === 0 || required.some((h, i) => String(existing[i] || '').trim().toLowerCase() !== h)) {
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: GOOGLE_SHEET_ID,
-        range: `${sheetName}!1:1`,
-        valueInputOption: 'RAW',
-        requestBody: { values: [required] }
-      });
-    }
-    
-    return sheetName;
-  } catch (e) {
-    console.error('ensureAgentTicketsHeader error', e);
-    return AGENT_TICKETS_SHEET;
-  }
-}
-
 async function createAgentTicket(mobileNumber, conversationHistory = []) {
   const sheets = await getSheets();
   if (!sheets) {
@@ -432,7 +821,6 @@ async function createAgentTicket(mobileNumber, conversationHistory = []) {
   }
   
   try {
-    const sheetName = await ensureAgentTicketsHeader(sheets);
     const userMsgs = (Array.isArray(conversationHistory) ? conversationHistory : [])
       .filter(m => m.role === 'user')
       .map(m => (m.content || ''));
@@ -441,7 +829,7 @@ async function createAgentTicket(mobileNumber, conversationHistory = []) {
     const pad = Array(Math.max(0, 5 - lastFive.length)).fill('');
     const arranged = [...pad, ...lastFive];
     const ticketId = await generateTicketId();
-    const ts = getIndiaTime(); // Changed from new Date().toISOString()
+    const ts = getIndiaTime();
     
     const row = [
       mobileNumber || '',
@@ -456,7 +844,7 @@ async function createAgentTicket(mobileNumber, conversationHistory = []) {
     
     await sheets.spreadsheets.values.append({
       spreadsheetId: GOOGLE_SHEET_ID,
-      range: `${sheetName}!A:Z`,
+      range: `${AGENT_TICKETS_SHEET}!A:Z`,
       valueInputOption: 'RAW',
       insertDataOption: 'INSERT_ROWS',
       requestBody: { values: [row] }
@@ -471,10 +859,9 @@ async function createAgentTicket(mobileNumber, conversationHistory = []) {
   }
 }
 
-// [Keep all the matching helper functions exactly as they are...]
-// [findKeywordMatchesInCat1, matchSellersByStoreName, matchSellersByCategoryIds, etc.]
-// [These functions should remain exactly the same as in your original code]
-
+// ====================
+// HELPER FUNCTIONS (Keep existing)
+// ====================
 function normalizeToken(t) {
   if (!t) return '';
   return String(t)
@@ -1244,7 +1631,7 @@ Rules:
 • Include relevant metrics: funding, founders, growth stage, HQ, legal info according to user's question: "${userMessage}"
 • Max 200 characters (2–4 sentences)
 • Avoid emojis inside the explanation
-• Do not mention “paragraph above” or internal sources
+• Do not mention "paragraph above" or internal sources
 • If user asks broad or unclear query → Give concise Zulu overview
 
 At the end, always add a separate CTA line:
@@ -1269,7 +1656,7 @@ Use ONLY this factual data when answering:
 ${SELLER_KNOWLEDGE}
 
 Rules:
-• Respond specifically to the seller’s question: "${userMessage}"
+• Respond specifically to the seller's question: "${userMessage}"
 • Respond in Hinglish language or Hindi language according to "${userMessage}" based totally on user message language
 • Highlight benefits that match their intent (reach, logistics, onboarding, customers) according to user's question: "${userMessage}"
 • Premium but friendly business tone
@@ -1291,9 +1678,9 @@ Join as partner 👉 https://forms.gle/tvkaKncQMs29dPrPA
   return res.choices[0].message.content.trim();
 }
 
-// -------------------------
-// Session/history helpers
-// -------------------------
+// ====================
+// SESSION/HISTORY HELPERS
+// ====================
 const SESSION_TTL_MS = 1000 * 60 * 60;
 const SESSION_CLEANUP_MS = 1000 * 60 * 5;
 const MAX_HISTORY_MESSAGES = 2000;
@@ -1350,21 +1737,6 @@ function purgeExpiredSessions() {
 
 setInterval(purgeExpiredSessions, SESSION_CLEANUP_MS);
 
-function recentHistoryContainsProductSignal(conversationHistory = []) {
-  if (!Array.isArray(conversationHistory) || conversationHistory.length === 0) return null;
-  
-  const productKeywords = ['tshirt','t-shirt','shirt','tee','jeans','pant','pants','trouser','kurta','lehenga','top','dress','saree','innerwear','jacket','sweater','shorts','tshir','t shrt'];
-  const recentUserMsgs = conversationHistory.slice(-10).filter(m => m.role === 'user').map(m => (m.content || '').toLowerCase());
-  
-  for (const msg of recentUserMsgs) {
-    for (const pk of productKeywords) {
-      if (msg.includes(pk)) return true;
-    }
-  }
-  
-  return false;
-}
-
 async function getChatGPTResponse(sessionId, userMessage, companyInfo = ZULU_CLUB_INFO) {
   if (!process.env.OPENAI_API_KEY) {
     return "Hello! I'm here to help you with Zulu Club. Currently, I'm experiencing technical difficulties. Please visit zulu.club for assistance.";
@@ -1413,6 +1785,102 @@ async function getChatGPTResponse(sessionId, userMessage, companyInfo = ZULU_CLU
         
         // If preIntentFilter returned null/empty, continue with normal flow
         console.log("🔄 Employee mode but preIntentFilter returned null, continuing with normal flow");
+      }
+    }
+    
+    // Check authentication for non-employee users or employees in user mode
+    if (OTP_CONFIG.AUTH_ENABLED) {
+      const cleanPhone = sessionId.replace(/[A-Za-z]$/, '');
+      const otpData = otpStore.get(cleanPhone);
+      
+      // Skip auth check for employees in admin mode
+      const shouldCheckAuth = !isEmployee || (suffix === 'U');
+      
+      if (shouldCheckAuth) {
+        if (!otpData || !otpData.verified) {
+          return `🔒 *Authentication Required*\n\nPlease verify your phone number to continue.\n\nSend "OTP" to receive a verification code.\n\nOr use the chat interface to authenticate.`;
+        }
+        
+        if (Date.now() > otpData.expiresAt) {
+          otpStore.delete(cleanPhone);
+          return `⏰ *Session Expired*\n\nYour authentication session has expired.\n\nSend "OTP" to receive a new verification code.`;
+        }
+      }
+    }
+    
+    // Handle OTP requests in chat
+    const messageLower = userMessage.toLowerCase().trim();
+    if (messageLower === 'otp' || messageLower === 'send otp' || messageLower.includes('verify')) {
+      const cleanPhone = sessionId.replace(/[A-Za-z]$/, '');
+      
+      try {
+        const formData = new URLSearchParams();
+        formData.append('mobile', cleanPhone);
+        
+        const otpResponse = await axios.post(
+          OTP_CONFIG.SEND_OTP_URL,
+          formData,
+          {
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+          }
+        );
+        
+        if (otpResponse.data.error) {
+          return `❌ Failed to send OTP: ${otpResponse.data.message}\nPlease try again or use the chat interface.`;
+        }
+        
+        // Store OTP data
+        const basePhone = cleanPhone.replace(/[A-Za-z]$/, '');
+        const isEmployee = EMPLOYEE_NUMBERS.includes(basePhone);
+        const isAdminUser = ADMIN_USERS.some(user => user.mobile === basePhone);
+        const expiresAt = Date.now() + (OTP_CONFIG.OTP_EXPIRY_MINUTES * 60 * 1000);
+        
+        otpStore.set(cleanPhone, {
+          expiresAt: expiresAt,
+          attempts: 0,
+          verified: false,
+          isAdmin: isAdminUser,
+          isEmployee: isEmployee,
+          createdAt: Date.now()
+        });
+        
+        return `✅ *OTP Sent Successfully!*\n\nA verification code has been sent to ${cleanPhone}.\n\nPlease enter the 4-digit code to verify your number.\n\nCode expires in ${OTP_CONFIG.OTP_EXPIRY_MINUTES} minutes.`;
+        
+      } catch (error) {
+        console.error('Error sending OTP from chat:', error);
+        return `❌ Failed to send OTP. Please try again later or use the chat interface.`;
+      }
+    }
+    
+    // Handle OTP verification in chat
+    const otpMatch = userMessage.match(/(\d{4})/);
+    if (otpMatch) {
+      const otpCode = otpMatch[1];
+      const cleanPhone = sessionId.replace(/[A-Za-z]$/, '');
+      
+      try {
+        const verificationResult = await verifyOTP(cleanPhone, otpCode);
+        
+        if (verificationResult.error) {
+          const otpData = otpStore.get(cleanPhone);
+          const remainingAttempts = OTP_CONFIG.OTP_MAX_ATTEMPTS - (otpData?.attempts || 0);
+          
+          return `❌ *Invalid OTP*\n\n${remainingAttempts > 0 ? `${remainingAttempts} attempts remaining.` : 'Maximum attempts reached. Please request a new OTP.'}`;
+        }
+        
+        // OTP verified successfully
+        const otpData = otpStore.get(cleanPhone);
+        const welcomeMessage = otpData?.isAdmin 
+          ? `👔 *Welcome Admin!*\n\nYou have full access to all features.`
+          : `✅ *Phone Verified!*\n\nWelcome to Zulu Club!`;
+        
+        return `${welcomeMessage}\n\nHow can I help you today?`;
+        
+      } catch (error) {
+        console.error('Error verifying OTP from chat:', error);
+        return `❌ Verification failed: ${error.message}`;
       }
     }
     
@@ -1586,17 +2054,17 @@ async function handleMessage(sessionId, userMessage) {
   }
 }
 
-// -------------------------
-// Chat API Endpoints
-// -------------------------
+// ====================
+// CHAT API ENDPOINTS (WITH AUTH)
+// ====================
 
 // Serve chat interface
 app.get('/chat', (req, res) => {
   res.sendFile(__dirname + '/chat.html');
 });
 
-// API endpoint for sending messages
-app.post('/chat/message', async (req, res) => {
+// API endpoint for sending messages (with auth)
+app.post('/chat/message', requireAuth, async (req, res) => {
   try {
     const { phoneNumber, message } = req.body;
     
@@ -1607,7 +2075,7 @@ app.post('/chat/message', async (req, res) => {
       });
     }
     
-    console.log(`💬 Chat message from ${phoneNumber}: ${message}`);
+    console.log(`💬 Chat message from ${phoneNumber} (Admin: ${req.user.isAdmin}): ${message}`);
     
     // Process the message
     const response = await handleMessage(phoneNumber, message);
@@ -1628,8 +2096,8 @@ app.post('/chat/message', async (req, res) => {
   }
 });
 
-// Get chat history for a phone number
-app.get('/chat/history/:phoneNumber', async (req, res) => {
+// Get chat history for a phone number (with auth)
+app.get('/chat/history/:phoneNumber', requireAuth, async (req, res) => {
   try {
     const { phoneNumber } = req.params;
     const history = getFullSessionHistory(phoneNumber);
@@ -1649,7 +2117,11 @@ app.get('/chat/history/:phoneNumber', async (req, res) => {
   }
 });
 
-// Get active sessions (admin only)
+// ====================
+// OTHER ENDPOINTS
+// ====================
+
+// Get active sessions (admin only - no auth required for monitoring)
 app.get('/chat/sessions', (req, res) => {
   const activeSessions = Object.keys(conversations).map(id => ({
     phoneNumber: id,
@@ -1661,31 +2133,41 @@ app.get('/chat/sessions', (req, res) => {
   return res.json({
     success: true,
     activeSessions,
-    totalSessions: activeSessions.length
+    totalSessions: activeSessions.length,
+    otpSessions: otpStore.size
   });
 });
 
-// -------------------------
-// Root and other endpoints
-// -------------------------
+// Root endpoint
 app.get('/', (req, res) => {
   res.json({ 
     status: 'Zulu Club Chat Server is running', 
     service: 'Zulu Club Chat AI Assistant',
-    version: '7.1 - Employee/User Mode with Suffix Support',
+    version: '8.0 - Production Ready with OTP Authentication',
+    auth: {
+      enabled: OTP_CONFIG.AUTH_ENABLED,
+      otpExpiry: OTP_CONFIG.OTP_EXPIRY_MINUTES + ' minutes',
+      adminBypass: OTP_CONFIG.ADMIN_BYPASS_OTP,
+      maxAttempts: OTP_CONFIG.OTP_MAX_ATTEMPTS
+    },
     employee_numbers: EMPLOYEE_NUMBERS,
     usage_note: 'Add "A" suffix for admin mode (default), "U" suffix for user mode',
     endpoints: {
+      auth_send_otp: 'POST /auth/send-otp',
+      auth_verify_otp: 'POST /auth/verify-otp',
+      auth_status: 'GET /auth/status/:phoneNumber',
+      auth_logout: 'POST /auth/logout',
       chat_interface: '/chat',
-      send_message: 'POST /chat/message',
-      get_history: 'GET /chat/history/:phoneNumber',
+      send_message: 'POST /chat/message (requires auth)',
+      get_history: 'GET /chat/history/:phoneNumber (requires auth)',
       get_sessions: 'GET /chat/sessions',
       refresh_csv: 'GET /refresh-csv'
     },
     stats: {
       product_categories_loaded: galleriesData.length,
       sellers_loaded: sellersData.length,
-      active_conversations: Object.keys(conversations).length
+      active_conversations: Object.keys(conversations).length,
+      active_otp_sessions: otpStore.size
     },
     timestamp: new Date().toISOString()
   });
@@ -1705,10 +2187,9 @@ app.get('/refresh-csv', async (req, res) => {
     res.status(500).json({ status: 'error', message: error.message });
   }
 });
-// Add this endpoint to your server.js (somewhere after your other endpoints)
 
 // Get chat history from Google Sheets with pagination
-app.post('/chat/history', async (req, res) => {
+app.post('/chat/history', requireAuth, async (req, res) => {
     try {
         const { phoneNumber, page = 0, pageSize = 10 } = req.body;
         
@@ -1721,7 +2202,6 @@ app.post('/chat/history', async (req, res) => {
         
         console.log(`📜 Fetching history for ${phoneNumber}, page ${page}, pageSize ${pageSize}`);
         
-        // Get the Google Sheets client
         const sheets = await getSheets();
         if (!sheets) {
             console.log('⚠️ Google Sheets not configured, returning empty history');
@@ -1735,7 +2215,6 @@ app.post('/chat/history', async (req, res) => {
         }
         
         try {
-            // Read column headers to find the correct column for this phone number
             const headersResp = await sheets.spreadsheets.values.get({ 
                 spreadsheetId: GOOGLE_SHEET_ID, 
                 range: 'History!1:1' 
@@ -1743,8 +2222,6 @@ app.post('/chat/history', async (req, res) => {
             
             const headers = (headersResp.data.values && headersResp.data.values[0]) || [];
             
-            // Find the column index for this phone number
-            // Phone numbers are stored as column headers in format: "8368127760A"
             let colIndex = -1;
             for (let i = 0; i < headers.length; i++) {
                 const header = String(headers[i]).trim();
@@ -1765,8 +2242,7 @@ app.post('/chat/history', async (req, res) => {
                 });
             }
             
-            // Get all values from this column (excluding header)
-            const colLetter = String.fromCharCode(65 + colIndex); // A=0, B=1, etc.
+            const colLetter = String.fromCharCode(65 + colIndex);
             const range = `History!${colLetter}2:${colLetter}`;
             
             const colResp = await sheets.spreadsheets.values.get({
@@ -1777,7 +2253,6 @@ app.post('/chat/history', async (req, res) => {
             
             const columnValues = (colResp.data.values && colResp.data.values[0]) || [];
             
-            // Parse and filter messages
             const allMessages = [];
             
             columnValues.forEach(cellValue => {
@@ -1811,29 +2286,25 @@ app.post('/chat/history', async (req, res) => {
                 }
             });
             
-            // Sort by timestamp (oldest first for pagination)
             allMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
             
-            // Calculate pagination
             const totalMessages = allMessages.length;
             const startIndex = page * pageSize;
             const endIndex = startIndex + pageSize;
             const hasMore = totalMessages > endIndex;
             
-            // Get messages for this page (we'll return newest first for display)
             const pageMessages = allMessages.slice(startIndex, endIndex);
             
             console.log(`📜 Found ${totalMessages} total messages, returning ${pageMessages.length} for page ${page}`);
             
-            // Format as string for backward compatibility
             const historyString = allMessages
                 .map(msg => `${msg.timestamp} | ${msg.sender === 'user' ? 'USER:' : 'ASSISTANT:'} ${msg.text}`)
                 .join('\n');
             
             return res.json({
                 success: true,
-                history: historyString, // Full history as string (for existing code)
-                messages: pageMessages, // Paginated messages as array
+                history: historyString,
+                messages: pageMessages,
                 hasMore: hasMore,
                 totalMessages: totalMessages,
                 currentPage: page,
@@ -1858,225 +2329,15 @@ app.post('/chat/history', async (req, res) => {
     }
 });
 
-// Also add a GET endpoint for convenience
-app.get('/chat/history/:phoneNumber', async (req, res) => {
-    try {
-        const { phoneNumber } = req.params;
-        const page = parseInt(req.query.page) || 0;
-        const pageSize = parseInt(req.query.pageSize) || 10;
-        
-        console.log(`📜 GET history for ${phoneNumber}, page ${page}`);
-        
-        // Get the Google Sheets client
-        const sheets = await getSheets();
-        if (!sheets) {
-            return res.json({
-                success: true,
-                history: '',
-                messages: [],
-                hasMore: false,
-                totalMessages: 0
-            });
-        }
-        
-        try {
-            // Read column headers
-            const headersResp = await sheets.spreadsheets.values.get({ 
-                spreadsheetId: GOOGLE_SHEET_ID, 
-                range: 'History!1:1' 
-            });
-            
-            const headers = (headersResp.data.values && headersResp.data.values[0]) || [];
-            let colIndex = -1;
-            
-            for (let i = 0; i < headers.length; i++) {
-                const header = String(headers[i]).trim();
-                if (header === phoneNumber) {
-                    colIndex = i;
-                    break;
-                }
-            }
-            
-            if (colIndex === -1) {
-                return res.json({
-                    success: true,
-                    history: '',
-                    messages: [],
-                    hasMore: false,
-                    totalMessages: 0
-                });
-            }
-            
-            // Get column values
-            const colLetter = String.fromCharCode(65 + colIndex);
-            const range = `History!${colLetter}2:${colLetter}`;
-            
-            const colResp = await sheets.spreadsheets.values.get({
-                spreadsheetId: GOOGLE_SHEET_ID,
-                range: range,
-                majorDimension: 'COLUMNS'
-            });
-            
-            const columnValues = (colResp.data.values && colResp.data.values[0]) || [];
-            
-            // Parse messages
-            const allMessages = [];
-            
-            columnValues.forEach(cellValue => {
-                if (cellValue && typeof cellValue === 'string' && cellValue.trim()) {
-                    const parts = cellValue.split(' | ');
-                    if (parts.length >= 2) {
-                        const timestamp = parts[0];
-                        const content = parts.slice(1).join(' | ').trim();
-                        
-                        if (content) {
-                            let sender = 'bot';
-                            let messageText = content;
-                            
-                            if (content.startsWith('USER:')) {
-                                sender = 'user';
-                                messageText = content.substring(5).trim();
-                            } else if (content.startsWith('ASSISTANT:')) {
-                                sender = 'bot';
-                                messageText = content.substring(10).trim();
-                            }
-                            
-                            allMessages.push({
-                                text: messageText,
-                                sender: sender,
-                                timestamp: timestamp,
-                                isoTime: timestamp,
-                                displayTime: new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-                            });
-                        }
-                    }
-                }
-            });
-            
-            // Sort by timestamp
-            allMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-            
-            // Pagination
-            const totalMessages = allMessages.length;
-            const startIndex = page * pageSize;
-            const endIndex = startIndex + pageSize;
-            const hasMore = totalMessages > endIndex;
-            const pageMessages = allMessages.slice(startIndex, endIndex);
-            
-            return res.json({
-                success: true,
-                history: allMessages
-                    .map(msg => `${msg.timestamp} | ${msg.sender === 'user' ? 'USER:' : 'ASSISTANT:'} ${msg.text}`)
-                    .join('\n'),
-                messages: pageMessages,
-                hasMore: hasMore,
-                totalMessages: totalMessages,
-                currentPage: page,
-                pageSize: pageSize
-            });
-            
-        } catch (error) {
-            console.error('❌ Error reading Google Sheets:', error);
-            return res.status(500).json({
-                success: false,
-                error: 'Failed to read history',
-                details: error.message
-            });
-        }
-        
-    } catch (error) {
-        console.error('💥 GET history error:', error.message);
-        return res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
-
-// Optional: Add an endpoint to get column headers (for debugging)
-app.get('/chat/history-headers', async (req, res) => {
-    try {
-        const sheets = await getSheets();
-        if (!sheets) {
-            return res.json({
-                success: false,
-                error: 'Google Sheets not configured'
-            });
-        }
-        
-        const headersResp = await sheets.spreadsheets.values.get({ 
-            spreadsheetId: GOOGLE_SHEET_ID, 
-            range: 'History!1:1' 
-        });
-        
-        const headers = (headersResp.data.values && headersResp.data.values[0]) || [];
-        
-        // Filter for phone number columns (assuming they follow 10-digit pattern)
-        const phoneColumns = headers
-            .map((header, index) => ({ header, index }))
-            .filter(item => /^\d{10}[AU]?$/.test(String(item.header).trim()));
-        
-        return res.json({
-            success: true,
-            headers: headers,
-            phoneColumns: phoneColumns,
-            totalColumns: headers.length
-        });
-        
-    } catch (error) {
-        console.error('Error getting headers:', error);
-        return res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
-// Add this to your backend server
-app.post('/chat/check-new', async (req, res) => {
-    try {
-        const { phoneNumber, lastTimestamp } = req.body;
-        const sinceDate = new Date(lastTimestamp || 0);
-        
-        // Query your database for messages newer than lastTimestamp
-        // Example using MongoDB:
-        const newMessages = await Message.find({
-            phoneNumber: phoneNumber,
-            timestamp: { $gt: sinceDate }
-        }).sort({ timestamp: 1 });
-        
-        res.json({
-            success: true,
-            newMessages: newMessages.map(msg => ({
-                id: msg._id.toString(),
-                text: msg.text,
-                sender: msg.sender,
-                timestamp: msg.timestamp,
-                isoTime: msg.timestamp.toISOString(),
-                displayTime: formatTime(msg.timestamp),
-                originalTimestamp: formatOriginalTimestamp(msg.timestamp)
-            }))
-        });
-    } catch (error) {
-        console.error('Error checking new messages:', error);
-        res.json({
-            success: false,
-            newMessages: []
-        });
-    }
-});
-
-function formatTime(date) {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
-function formatOriginalTimestamp(date) {
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
-}
 // Export for Vercel
 module.exports = app;
+
+// Start server if not in Vercel environment
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📱 OTP Authentication: ${OTP_CONFIG.AUTH_ENABLED ? 'ENABLED' : 'DISABLED'}`);
+    console.log(`👔 Admin OTP Bypass: ${OTP_CONFIG.ADMIN_BYPASS_OTP ? 'ENABLED' : 'DISABLED'}`);
+  });
+}
