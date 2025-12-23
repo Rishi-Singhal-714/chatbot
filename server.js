@@ -66,6 +66,8 @@ const sendOtp = async (phoneNumber) => {
     const formData = new URLSearchParams();
     formData.append('mobile', phoneNumber);
     
+    console.log(`📱 Sending OTP to ${phoneNumber} via ZuluShop API...`);
+    
     // Make API request to send OTP
     const response = await axios.post(
       'https://zulushop.in/app/v1/api/send_otp_new',
@@ -74,41 +76,70 @@ const sendOtp = async (phoneNumber) => {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
+        timeout: 10000 // 10 second timeout
       }
     );
     
     console.log('Send OTP Response:', response.data);
 
-    // Generate a random 4-digit OTP for development/testing
-    const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    // Store request ID for verification
+    if (response.data && response.data.request_id) {
+      otpStore.set(phoneNumber, {
+        requestId: response.data.request_id,
+        createdAt: Date.now()
+      });
+      
+      // Clear stored OTP after 10 minutes
+      setTimeout(() => {
+        if (otpStore.has(phoneNumber)) {
+          otpStore.delete(phoneNumber);
+          console.log(`Cleared OTP request for ${phoneNumber}`);
+        }
+      }, 10 * 60 * 1000); // 10 minutes
+    }
     
-    // Store OTP in memory (in production, use Redis or database)
-    otpStore.set(phoneNumber, {
-      otp: generatedOtp,
-      requestId: response.data.request_id || Date.now().toString(),
-      createdAt: Date.now()
-    });
-    
-    // Clear OTP after 10 minutes
-    setTimeout(() => {
-      if (otpStore.has(phoneNumber)) {
-        otpStore.delete(phoneNumber);
-        console.log(`Cleared OTP for ${phoneNumber}`);
-      }
-    }, 10 * 60 * 1000); // 10 minutes
-
-    // For development, log the OTP to console
-    console.log(`📱 OTP for ${phoneNumber}: ${generatedOtp}`);
-    
-    return {
-      ...response.data,
-      debugOtp: generatedOtp // Only for development
-    };
+    return response.data;
   } catch (error) {
     console.error('Error sending OTP:', error);
+    
+    // For development/testing if API fails
+    if (error.code === 'ECONNREFUSED' || error.response?.status >= 500) {
+      console.log('⚠️ API unavailable, using development mode');
+      
+      // Generate a random 4-digit OTP for development
+      const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+      
+      // Store in memory for development
+      otpStore.set(phoneNumber, {
+        otp: generatedOtp,
+        requestId: `DEV-${Date.now()}`,
+        createdAt: Date.now(),
+        isDevMode: true
+      });
+      
+      // Clear OTP after 10 minutes
+      setTimeout(() => {
+        if (otpStore.has(phoneNumber)) {
+          otpStore.delete(phoneNumber);
+          console.log(`Cleared development OTP for ${phoneNumber}`);
+        }
+      }, 10 * 60 * 1000);
+      
+      console.log(`📱 DEVELOPMENT: OTP for ${phoneNumber}: ${generatedOtp}`);
+      
+      return {
+        error: false,
+        provider: 'development',
+        request_id: `DEV-${Date.now()}`,
+        message: 'OTP sent successfully (development mode)',
+        debugOtp: generatedOtp
+      };
+    }
+    
     throw error;
   }
 };
+
 
 /**
  * Verifies the OTP entered by the user
@@ -122,68 +153,134 @@ const verifyOtp = async (phoneNumber, otp) => {
       throw new Error('Invalid phone number');
     }
 
-    if (!otp || otp.length !== 4) {
-      throw new Error('Invalid OTP code');
+    if (!otp || otp.length !== 4 || !/^\d{4}$/.test(otp)) {
+      throw new Error('Invalid OTP code. Must be 4 digits.');
     }
 
-    // Check if OTP exists in store
-    const storedOtp = otpStore.get(phoneNumber);
+    // Check if we have a stored request for this phone
+    const stored = otpStore.get(phoneNumber);
     
-    // For development: accept any 4-digit OTP if not in store
-    if (!storedOtp) {
-      console.log(`⚠️ No OTP found for ${phoneNumber}, accepting for development`);
-      // Create a verified user entry
-      verifiedUsers[phoneNumber] = {
-        verified: true,
-        isAdmin: adminUsers.some(user => user.mobile === phoneNumber),
-        verifiedAt: Date.now()
-      };
-      
-      return {
-        error: false,
-        message: 'OTP verified successfully',
-        phoneNumber,
-        isAdmin: adminUsers.some(user => user.mobile === phoneNumber)
-      };
+    if (!stored) {
+      throw new Error('No OTP request found for this number. Please request a new OTP.');
     }
 
-    // Check if OTP matches
-    if (storedOtp.otp === otp) {
-      // Check if OTP is expired (5 minutes)
-      const isExpired = Date.now() - storedOtp.createdAt > 5 * 60 * 1000;
-      
-      if (isExpired) {
-        otpStore.delete(phoneNumber);
-        throw new Error('OTP has expired. Please request a new one.');
-      }
-
-      // Mark user as verified
-      verifiedUsers[phoneNumber] = {
-        verified: true,
-        isAdmin: adminUsers.some(user => user.mobile === phoneNumber),
-        verifiedAt: Date.now()
-      };
-
-      // Clear OTP from store
+    // Check if OTP is expired
+    const isExpired = Date.now() - stored.createdAt > 5 * 60 * 1000; // 5 minutes
+    
+    if (isExpired) {
       otpStore.delete(phoneNumber);
-
-      console.log(`✅ User ${phoneNumber} verified successfully. Admin: ${verifiedUsers[phoneNumber].isAdmin}`);
-      
-      return {
-        error: false,
-        message: 'OTP verified successfully',
-        phoneNumber,
-        isAdmin: verifiedUsers[phoneNumber].isAdmin
-      };
-    } else {
-      throw new Error('Invalid OTP code');
+      throw new Error('OTP has expired. Please request a new one.');
     }
+
+    // If in development mode, check against stored OTP
+    if (stored.isDevMode) {
+      if (stored.otp === otp) {
+        // Mark user as verified
+        verifiedUsers[phoneNumber] = {
+          verified: true,
+          isAdmin: adminUsers.some(user => user.mobile === phoneNumber),
+          verifiedAt: Date.now()
+        };
+
+        // Clear OTP from store
+        otpStore.delete(phoneNumber);
+
+        console.log(`✅ User ${phoneNumber} verified successfully (dev mode). Admin: ${verifiedUsers[phoneNumber].isAdmin}`);
+        
+        return {
+          error: false,
+          message: 'OTP verified successfully (development mode)',
+          phoneNumber,
+          isAdmin: verifiedUsers[phoneNumber].isAdmin
+        };
+      } else {
+        throw new Error('Invalid OTP code');
+      }
+    }
+
+    // Real API verification with ZuluShop
+    const formData = new URLSearchParams();
+    formData.append('mobile', phoneNumber);
+    formData.append('otp', otp);
+    
+    console.log(`🔐 Verifying OTP for ${phoneNumber} via ZuluShop API...`);
+    
+    const response = await axios.post(
+      'https://zulushop.in/app/v1/api/verify_otp_new',
+      formData,
+      {
+        headers: { 
+          'Content-Type': 'application/x-www-form-urlencoded' 
+        },
+        timeout: 10000 // 10 second timeout
+      }
+    );
+
+    const data = response.data;
+    console.log('Verify OTP Response:', data);
+
+    if (data.error) {
+      throw new Error(data.message || 'OTP verification failed');
+    }
+
+    // Check if this number is in admin JSON
+    const isAdmin = adminUsers.some(user => user.mobile === phoneNumber);
+
+    // Mark user as verified
+    verifiedUsers[phoneNumber] = {
+      verified: true,
+      isAdmin: isAdmin,
+      verifiedAt: Date.now(),
+      token: data.token // Store token if available
+    };
+
+    // Clear OTP from store
+    otpStore.delete(phoneNumber);
+
+    console.log(`✅ User ${phoneNumber} verified successfully via API. Admin: ${isAdmin}`);
+    
+    return {
+      error: false,
+      message: 'OTP verified successfully',
+      phoneNumber,
+      isAdmin: isAdmin,
+      token: data.token
+    };
+    
   } catch (error) {
     console.error('Error verifying OTP:', error);
+    
+    // For development/testing if API fails
+    if (error.code === 'ECONNREFUSED' || error.response?.status >= 500) {
+      console.log('⚠️ API unavailable, checking against development OTP');
+      
+      const stored = otpStore.get(phoneNumber);
+      
+      if (stored && stored.isDevMode && stored.otp === otp) {
+        // Mark user as verified
+        verifiedUsers[phoneNumber] = {
+          verified: true,
+          isAdmin: adminUsers.some(user => user.mobile === phoneNumber),
+          verifiedAt: Date.now()
+        };
+
+        // Clear OTP from store
+        otpStore.delete(phoneNumber);
+
+        console.log(`✅ User ${phoneNumber} verified successfully (dev fallback). Admin: ${verifiedUsers[phoneNumber].isAdmin}`);
+        
+        return {
+          error: false,
+          message: 'OTP verified successfully (development fallback)',
+          phoneNumber,
+          isAdmin: verifiedUsers[phoneNumber].isAdmin
+        };
+      }
+    }
+    
     throw error;
   }
 };
-
 /**
  * Middleware to check if user is verified
  */
