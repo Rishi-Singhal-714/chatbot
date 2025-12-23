@@ -747,12 +747,11 @@
                 <h3><i class="fas fa-info-circle"></i> How it works:</h3>
                 <ul>
                     <li>Enter your 10-digit phone number</li>
+                    <li><strong>Optional:</strong> Add A for Admin mode or U for User mode</li>
                     <li>We'll send a 4-digit OTP to verify</li>
                     <li>Enter the OTP to start chatting</li>
-                    <li><strong>Employee Mode:</strong> Add A/U suffix for admin/user mode</li>
                     <div class="employee-list">
-                        <div>Example: 8368127760<span style="color:#00a884">A</span> (Admin mode)</div>
-                        <div>Example: 8368127760<span style="color:#00a884">U</span> (User mode)</div>
+                        <div><br><strong>Note:</strong> Only A and U suffixes are allowed</div>
                     </div>
                 </ul>
             </div>
@@ -941,28 +940,44 @@
         }
     }
     
-    // Handle phone input
-    phoneInput.addEventListener('input', function(e) {
-        let formatted = formatPhoneInput(this.value);
-        this.value = formatted;
+// In phone input event listener
+phoneInput.addEventListener('input', function(e) {
+    let formatted = formatPhoneInput(this.value);
+    this.value = formatted;
+    
+    // Update suffix badge
+    updateSuffixBadge(formatted);
+    
+    // Validate and update UI
+    if (validatePhoneNumber(formatted)) {
+        this.classList.remove('invalid');
+        this.classList.add('valid');
+        phoneError.classList.add('hidden');
+        sendOtpBtn.disabled = false;
+    } else {
+        this.classList.remove('valid');
+        this.classList.add('invalid');
+        phoneError.classList.remove('hidden');
         
-        // Update suffix badge
-        updateSuffixBadge(formatted);
-        
-        // Validate and update UI
-        if (validatePhoneNumber(formatted)) {
-            this.classList.remove('invalid');
-            this.classList.add('valid');
-            phoneError.classList.add('hidden');
-            sendOtpBtn.disabled = false;
+        // Provide specific error message
+        if (formatted.length === 11) {
+            const suffix = formatted.slice(-1).toUpperCase();
+            if (!['A', 'U'].includes(suffix)) {
+                phoneError.textContent = 'Invalid suffix. Only A (Admin) or U (User) allowed.';
+            } else if (formatted.slice(0, 10).length !== 10 || !/^\d{10}$/.test(formatted.slice(0, 10))) {
+                phoneError.textContent = 'First 10 characters must be digits.';
+            }
+        } else if (formatted.length > 0 && formatted.length < 10) {
+            phoneError.textContent = 'Phone number must be 10 digits.';
+        } else if (formatted.length > 11) {
+            phoneError.textContent = 'Maximum 11 characters (10 digits + A/U).';
         } else {
-            this.classList.remove('valid');
-            this.classList.add('invalid');
-            phoneError.classList.remove('hidden');
             phoneError.textContent = 'Please enter a valid 10-digit number with optional A/U suffix';
-            sendOtpBtn.disabled = true;
         }
-    });
+        
+        sendOtpBtn.disabled = true;
+    }
+});
     
 // Send OTP
 async function sendOtp() {
