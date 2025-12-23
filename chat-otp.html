@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Zulu Club Chat - OTP Login</title>
+    <style>
+        /* WhatsApp-like Design - FULL SCREEN */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background: #0c1317;
+        }
+        
+        /* WhatsApp Container - FULL SCREEN */
+        .whatsapp-container {
+            width: 100vw;
+            height: 100vh;
+            background: #0c1317;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+        }
+        
+        /* WhatsApp Background Pattern with Emojis */
+        .emoji-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 0;
+            background-image: 
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ctext x='50%25' y='50%25' font-size='30' text-anchor='middle' dy='.3em' fill='white'%3E😊%3C/text%3E%3C/svg%3E"),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ctext x='50%25' y='50%25' font-size='35' text-anchor='middle' dy='.3em' fill='white'%3E👍%3C/text%3E%3C/svg%3E"),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ctext x='50%25' y='50%25' font-size='28' text-anchor='middle' dy='.3em' fill='white'%3E💬%3C/text%3E%3C/svg%3E"),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ctext x='50%25' y='50%25' font-size='32' text-anchor='middle' dy='.3em' fill='white'%3E❤️%3C/text%3E%3C/svg%3E"),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ctext x='50%25' y='50%25' font-size='30' text-anchor='middle' dy='.3em' fill='white'%3E😎%3C/text%3E%3C/svg%3E"),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ctext x='50%25' y='50%25' font-size='25' text-anchor='middle' dy='.3em' fill='white'%3E🛒%3C/text%3E%3C/svg%3E");
+            background-repeat: repeat;
+            background-size: 60px 60px, 70px 70px, 50px 50px, 65px 65px, 55px 55px, 45px 45px;
+        }
+        
+        /* Header - WhatsApp Green */
+        .whatsapp-header {
+            background: #202c33;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #222e35;
+            position: relative;
+            z-index: 2;
+            flex-shrink: 0;
+            min-height: 60px;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .back-arrow {
+            color: #aebac1;
+            cursor: pointer;
+            font-size: 18px;
+            min-width: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+            flex: 1;
+        }
+        
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .profile-details {
+            min-width: 0;
+            flex: 1;
+        }
+        
+        .profile-details h3 {
+            color: #e9edef;
+            font-size: 16px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .profile-details p {
+            color: #8696a0;
+            font-size: 13px;
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .header-right {
+            display: flex;
+            gap: 15px;
+            color: #aebac1;
+            font-size: 18px;
+            margin-left: auto;
+        }
+        
+        .header-right i {
+            min-width: 24px;
+            text-align: center;
+        }
+        
+        /* Login/Signup Section */
+        .auth-section {
+            background: #111b21;
+            padding: 20px 15px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow-y: auto;
+            position: relative;
+            z-index: 1;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .auth-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-top: 10px;
+        }
+        
+        .auth-header h2 {
+            color: #e9edef;
+            font-size: 22px;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+        
+        .auth-header p {
+            color: #8696a0;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        /* Auth Form Container */
+        .auth-form-container {
+            background: #202c33;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-left: 4px solid #00a884;
+        }
+        
+        .auth-step {
+            display: none;
+        }
+        
+        .auth-step.active {
+            display: block;
+        }
+        
+        .auth-step h3 {
+            color: #e9edef;
+            font-size: 16px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Input Groups */
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group label {
+            display: block;
+            color: #8696a0;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .phone-input-wrapper {
+            display: flex;
+            position: relative;
+            width: 100%;
+        }
+        
+        .phone-input-wrapper input {
+            flex: 1;
+            padding: 15px 20px;
+            background: #2a3942;
+            border: 1px solid #2a3942;
+            border-radius: 10px;
+            font-size: 16px;
+            color: #e9edef;
+            transition: all 0.3s;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            height: 54px;
+        }
+        
+        .phone-input-wrapper input:focus {
+            outline: none;
+            border-color: #00a884;
+            background: #2a3942;
+        }
+        
+        .phone-input-wrapper input::placeholder {
+            color: #8696a0;
+        }
+        
+        .phone-input-wrapper input.valid {
+            border-color: #00a884;
+        }
+        
+        .phone-input-wrapper input.invalid {
+            border-color: #ff6b6b;
+        }
+        
+        .suffix-badge {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #00a884;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            display: none;
+        }
+        
+        /* OTP Input */
+        .otp-input-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .otp-digit {
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            font-size: 20px;
+            background: #2a3942;
+            border: 1px solid #2a3942;
+            border-radius: 8px;
+            color: #e9edef;
+            transition: all 0.3s;
+        }
+        
+        .otp-digit:focus {
+            outline: none;
+            border-color: #00a884;
+            background: #2a3942;
+        }
+        
+        /* Buttons */
+        .auth-btn {
+            background: #00a884;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-top: 20px;
+            height: 54px;
+        }
+        
+        .auth-btn:hover {
+            background: #06cf9c;
+        }
+        
+        .auth-btn:disabled {
+            background: #2a3942;
+            color: #8696a0;
+            cursor: not-allowed;
+        }
+        
+        .resend-btn {
+            background: transparent;
+            color: #00a884;
+            border: 1px solid #00a884;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+        
+        .resend-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Timer */
+        .timer {
+            text-align: center;
+            color: #8696a0;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        /* Error/Success Messages */
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .error-message {
+            background: #ff6b6b20;
+            color: #ff6b6b;
+            border: 1px solid #ff6b6b;
+        }
+        
+        .success-message {
+            background: #00a88420;
+            color: #00a884;
+            border: 1px solid #00a884;
+        }
+        
+        .info-message {
+            background: #53bdeb20;
+            color: #53bdeb;
+            border: 1px solid #53bdeb;
+        }
+        
+        /* Instructions */
+        .instructions {
+            background: #202c33;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 25px;
+            border-left: 4px solid #00a884;
+        }
+        
+        .instructions h3 {
+            color: #e9edef;
+            font-size: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+            color: #8696a0;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .employee-list {
+            background: #2a3942;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 12px;
+            border: 1px solid #2a3942;
+            line-height: 1.6;
+        }
+        
+        /* Chat Section (hidden by default) */
+        .chat-section {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            background: transparent;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+        
+        .chat-section.active {
+            display: flex;
+        }
+        
+        /* Chat Messages Area */
+        .chat-messages {
+            flex: 1;
+            padding: 15px 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+            z-index: 1;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 80px; /* Space for input area */
+        }
+        
+        /* WhatsApp Message Bubbles */
+        .message-bubble {
+            display: flex;
+            max-width: 85%;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .message-bubble.user {
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        
+        .message-bubble.bot {
+            align-self: flex-start;
+            margin-right: auto;
+        }
+        
+        .message-content {
+            padding: 10px 14px;
+            border-radius: 7.5px;
+            font-size: 14.2px;
+            line-height: 1.4;
+            position: relative;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        .message-bubble.user .message-content {
+            background: #005c4b;
+            color: #e9edef;
+            border-top-right-radius: 0;
+            border-bottom-left-radius: 7.5px;
+        }
+        
+        .message-bubble.bot .message-content {
+            background: #202c33;
+            color: #e9edef;
+            border-top-left-radius: 0;
+            border-bottom-right-radius: 7.5px;
+        }
+        
+        /* Message Input Area */
+        .message-input-area {
+            background: #202c33;
+            padding: 10px 12px;
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+            border-top: 1px solid #222e35;
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            z-index: 2;
+            flex-shrink: 0;
+            min-height: 70px;
+        }
+        
+        .emoji-btn, .attach-btn {
+            color: #8696a0;
+            font-size: 22px;
+            cursor: pointer;
+            transition: color 0.3s;
+            flex-shrink: 0;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .emoji-btn:hover, .attach-btn:hover {
+            color: #e9edef;
+        }
+        
+        .message-input-wrapper {
+            flex: 1;
+            display: flex;
+            background: #2a3942;
+            border-radius: 25px;
+            padding: 8px 16px;
+            min-height: 44px;
+            align-items: center;
+        }
+        
+        .message-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            font-size: 15px;
+            color: #e9edef;
+            outline: none;
+            min-height: 28px;
+            max-height: 100px;
+            resize: none;
+            font-family: inherit;
+            line-height: 1.4;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .message-input::placeholder {
+            color: #8696a0;
+        }
+        
+        .send-btn {
+            background: #00a884;
+            color: white;
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.3s;
+            flex-shrink: 0;
+            margin-left: 4px;
+        }
+        
+        .send-btn:hover {
+            background: #06cf9c;
+        }
+        
+        .send-btn:disabled {
+            background: #2a3942;
+            color: #8696a0;
+            cursor: not-allowed;
+        }
+        
+        /* Status Bar */
+        .status-bar {
+            background: #111b21;
+            padding: 10px 15px;
+            text-align: center;
+            color: #8696a0;
+            font-size: 12px;
+            border-top: 1px solid #222e35;
+            position: relative;
+            z-index: 2;
+            flex-shrink: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* Typing Indicator */
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 10px 14px;
+            background: #202c33;
+            border-radius: 7.5px;
+            border-top-left-radius: 0;
+        }
+        
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: #8696a0;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-4px); }
+        }
+        
+        /* Welcome Message */
+        .welcome-message {
+            background: rgba(32, 44, 51, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #00a884;
+        }
+        
+        .welcome-message h3 {
+            color: #e9edef;
+            margin-bottom: 12px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .welcome-message p {
+            color: #8696a0;
+            margin-bottom: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        /* Hidden Class */
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .whatsapp-container {
+                height: 100vh;
+                height: -webkit-fill-available;
+            }
+            
+            .otp-digit {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+            
+            .auth-form-container {
+                padding: 15px;
+            }
+            
+            .message-bubble {
+                max-width: 90%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .otp-digit {
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+            }
+            
+            .auth-header h2 {
+                font-size: 20px;
+            }
+            
+            .auth-header p {
+                font-size: 13px;
+            }
+        }
+        
+        /* For very small screens */
+        @media (max-height: 600px) {
+            .auth-header {
+                margin-bottom: 15px;
+            }
+            
+            .auth-form-container {
+                margin-bottom: 15px;
+            }
+            
+            .auth-btn {
+                margin-top: 15px;
+            }
+        }
+    </style>
+    <!-- WhatsApp Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="emoji-background"></div>
+    
+    <div class="whatsapp-container">
+        <!-- Header -->
+        <div class="whatsapp-header">
+            <div class="header-left">
+                <div class="back-arrow" id="backBtn">
+                    <i class="fas fa-arrow-left"></i>
+                </div>
+                <div class="profile-info">
+                    <div class="profile-avatar" id="profileAvatar">ZC</div>
+                    <div class="profile-details">
+                        <h3 id="chatTitle">Zulu Club Assistant</h3>
+                        <p id="chatStatus">OTP Login Required</p>
+                    </div>
+                </div>
+            </div>
+            <div class="header-right">
+                <i class="fas fa-info-circle" id="infoBtn"></i>
+            </div>
+        </div>
+        
+        <!-- Auth Section (Login/Signup) -->
+        <div class="auth-section" id="authSection">
+            <div class="auth-header">
+                <h2>Welcome to Zulu Club Chat</h2>
+                <p>Enter your phone number to login with OTP</p>
+            </div>
+            
+            <div class="instructions">
+                <h3><i class="fas fa-info-circle"></i> How it works:</h3>
+                <ul>
+                    <li>Enter your 10-digit phone number</li>
+                    <li>We'll send a 4-digit OTP to verify</li>
+                    <li>Enter the OTP to start chatting</li>
+                    <li><strong>Employee Mode:</strong> Add A/U suffix for admin/user mode</li>
+                    <div class="employee-list">
+                        <div>Example: 8368127760<span style="color:#00a884">A</span> (Admin mode)</div>
+                        <div>Example: 8368127760<span style="color:#00a884">U</span> (User mode)</div>
+                    </div>
+                </ul>
+            </div>
+            
+            <div class="auth-form-container">
+                <!-- Step 1: Phone Number Input -->
+                <div class="auth-step active" id="stepPhone">
+                    <h3><i class="fas fa-phone"></i> Enter Phone Number</h3>
+                    <div class="input-group">
+                        <label for="phoneInput">Phone Number (10 digits)</label>
+                        <div class="phone-input-wrapper">
+                            <input type="text" id="phoneInput" 
+                                   placeholder="Enter 10 digits + optional A/U (e.g., 8368127760A)" 
+                                   maxlength="11"
+                                   inputmode="text"
+                                   autocapitalize="characters">
+                            <div class="suffix-badge" id="suffixBadge"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="phoneError" class="error-message hidden"></div>
+                    
+                    <button class="auth-btn" id="sendOtpBtn">
+                        <i class="fas fa-paper-plane"></i> Send OTP
+                    </button>
+                </div>
+                
+                <!-- Step 2: OTP Verification -->
+                <div class="auth-step" id="stepOtp">
+                    <h3><i class="fas fa-shield-alt"></i> Enter OTP</h3>
+                    <p style="color: #8696a0; margin-bottom: 15px; text-align: center;">
+                        We've sent a 4-digit OTP to <strong id="otpPhoneNumber"></strong>
+                    </p>
+                    
+                    <div class="otp-input-group">
+                        <input type="text" class="otp-digit" id="otp1" maxlength="1" inputmode="numeric">
+                        <input type="text" class="otp-digit" id="otp2" maxlength="1" inputmode="numeric">
+                        <input type="text" class="otp-digit" id="otp3" maxlength="1" inputmode="numeric">
+                        <input type="text" class="otp-digit" id="otp4" maxlength="1" inputmode="numeric">
+                    </div>
+                    
+                    <div id="otpError" class="error-message hidden"></div>
+                    <div id="otpSuccess" class="success-message hidden"></div>
+                    
+                    <button class="auth-btn" id="verifyOtpBtn">
+                        <i class="fas fa-check"></i> Verify OTP
+                    </button>
+                    
+                    <div class="timer" id="timer">
+                        Resend OTP in <span id="countdown">60</span> seconds
+                    </div>
+                    
+                    <button class="resend-btn" id="resendOtpBtn" disabled>
+                        Resend OTP
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Debug Info (for development only) -->
+            <div id="debugInfo" class="info-message hidden">
+                <strong>Development Mode:</strong> Check console for OTP
+            </div>
+        </div>
+        
+        <!-- Chat Section (hidden until verified) -->
+        <div class="chat-section" id="chatSection">
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="chatMessages">
+                <!-- Messages will appear here -->
+            </div>
+            
+            <!-- Message Input Area -->
+            <div class="message-input-area">
+                <div class="emoji-btn" id="emojiBtn">
+                    <i class="far fa-smile"></i>
+                </div>
+                <div class="attach-btn" id="attachBtn">
+                    <i class="fas fa-paperclip"></i>
+                </div>
+                <div class="message-input-wrapper">
+                    <textarea class="message-input" id="messageInput" 
+                           placeholder="Type a message..." 
+                           rows="1"></textarea>
+                </div>
+                <button class="send-btn" id="sendBtn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+            
+            <!-- Status Bar -->
+            <div class="status-bar" id="statusBar">
+                Connected as: <span id="currentPhone"></span>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // Global state
+    let currentPhone = '';
+    let isVerified = false;
+    let isAdmin = false;
+    let otpTimer = null;
+    let countdown = 60;
+    
+    // DOM Elements
+    const authSection = document.getElementById('authSection');
+    const chatSection = document.getElementById('chatSection');
+    const stepPhone = document.getElementById('stepPhone');
+    const stepOtp = document.getElementById('stepOtp');
+    const phoneInput = document.getElementById('phoneInput');
+    const sendOtpBtn = document.getElementById('sendOtpBtn');
+    const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+    const resendOtpBtn = document.getElementById('resendOtpBtn');
+    const otpPhoneNumber = document.getElementById('otpPhoneNumber');
+    const phoneError = document.getElementById('phoneError');
+    const otpError = document.getElementById('otpError');
+    const otpSuccess = document.getElementById('otpSuccess');
+    const timer = document.getElementById('timer');
+    const countdownSpan = document.getElementById('countdown');
+    const debugInfo = document.getElementById('debugInfo');
+    
+    // Chat elements
+    const chatMessages = document.getElementById('chatMessages');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const currentPhoneSpan = document.getElementById('currentPhone');
+    const backBtn = document.getElementById('backBtn');
+    const profileAvatar = document.getElementById('profileAvatar');
+    const chatTitle = document.getElementById('chatTitle');
+    const chatStatus = document.getElementById('chatStatus');
+    
+    // OTP input elements
+    const otp1 = document.getElementById('otp1');
+    const otp2 = document.getElementById('otp2');
+    const otp3 = document.getElementById('otp3');
+    const otp4 = document.getElementById('otp4');
+    
+    // Format phone number input
+    function formatPhoneInput(value) {
+        // Remove all non-digits and letters A/U
+        let cleaned = value.replace(/[^0-9auAU]/g, '');
+        
+        // Get first 10 digits
+        let digits = cleaned.replace(/[^0-9]/g, '').substring(0, 10);
+        
+        // Get suffix if present (A or U)
+        let suffix = '';
+        if (cleaned.length > 10) {
+            let lastChar = cleaned.charAt(cleaned.length - 1).toUpperCase();
+            if (lastChar === 'A' || lastChar === 'U') {
+                suffix = lastChar;
+                digits = digits.substring(0, 10); // Ensure only 10 digits
+            }
+        }
+        
+        return digits + suffix;
+    }
+    
+    // Validate phone number
+    function validatePhoneNumber(phone) {
+        // Check if it's exactly 10 digits or 10 digits + A/U
+        const regex = /^[0-9]{10}[AU]?$/i;
+        if (!regex.test(phone)) {
+            return false;
+        }
+        
+        const digits = phone.replace(/[^0-9]/g, '');
+        const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
+        
+        // If suffix is present, it must be A or U
+        if (suffix && !['A', 'U'].includes(suffix)) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // Update suffix badge display
+    function updateSuffixBadge(phone) {
+        const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
+        if (suffix) {
+            suffixBadge.textContent = suffix;
+            suffixBadge.style.display = 'block';
+        } else {
+            suffixBadge.style.display = 'none';
+        }
+    }
+    
+    // Handle phone input
+    phoneInput.addEventListener('input', function(e) {
+        let formatted = formatPhoneInput(this.value);
+        this.value = formatted;
+        
+        // Update suffix badge
+        updateSuffixBadge(formatted);
+        
+        // Validate and update UI
+        if (validatePhoneNumber(formatted)) {
+            this.classList.remove('invalid');
+            this.classList.add('valid');
+            phoneError.classList.add('hidden');
+            sendOtpBtn.disabled = false;
+        } else {
+            this.classList.remove('valid');
+            this.classList.add('invalid');
+            phoneError.classList.remove('hidden');
+            phoneError.textContent = 'Please enter a valid 10-digit number with optional A/U suffix';
+            sendOtpBtn.disabled = true;
+        }
+    });
+    
+    // Send OTP
+    async function sendOtp() {
+        const phone = phoneInput.value.trim();
+        
+        if (!validatePhoneNumber(phone)) {
+            phoneError.classList.remove('hidden');
+            phoneError.textContent = 'Please enter a valid phone number';
+            return;
+        }
+        
+        sendOtpBtn.disabled = true;
+        sendOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        
+        try {
+            const response = await fetch('/auth/send-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phoneNumber: phone
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Store phone number for OTP verification
+                currentPhone = phone;
+                otpPhoneNumber.textContent = phone;
+                
+                // Show OTP step
+                stepPhone.classList.remove('active');
+                stepOtp.classList.add('active');
+                
+                // Show debug info if available
+                if (data.debugOtp) {
+                    debugInfo.classList.remove('hidden');
+                    debugInfo.innerHTML = `<strong>Development Mode:</strong> OTP is: <strong>${data.debugOtp}</strong>`;
+                    console.log(`📱 OTP for ${phone}: ${data.debugOtp}`);
+                }
+                
+                // Start OTP timer
+                startOtpTimer();
+                
+                // Focus first OTP input
+                otp1.focus();
+            } else {
+                phoneError.classList.remove('hidden');
+                phoneError.textContent = data.error || 'Failed to send OTP';
+                sendOtpBtn.disabled = false;
+                sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
+            }
+        } catch (error) {
+            phoneError.classList.remove('hidden');
+            phoneError.textContent = 'Network error. Please try again.';
+            sendOtpBtn.disabled = false;
+            sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
+            console.error('Error sending OTP:', error);
+        }
+    }
+    
+    // Start OTP timer
+    function startOtpTimer() {
+        countdown = 60;
+        resendOtpBtn.disabled = true;
+        timer.classList.remove('hidden');
+        
+        otpTimer = setInterval(() => {
+            countdown--;
+            countdownSpan.textContent = countdown;
+            
+            if (countdown <= 0) {
+                clearInterval(otpTimer);
+                timer.classList.add('hidden');
+                resendOtpBtn.disabled = false;
+            }
+        }, 1000);
+    }
+    
+    // Verify OTP
+    async function verifyOtp() {
+        const otp = otp1.value + otp2.value + otp3.value + otp4.value;
+        
+        if (otp.length !== 4 || !/^\d{4}$/.test(otp)) {
+            otpError.classList.remove('hidden');
+            otpError.textContent = 'Please enter a valid 4-digit OTP';
+            return;
+        }
+        
+        verifyOtpBtn.disabled = true;
+        verifyOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+        
+        try {
+            const response = await fetch('/auth/verify-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phoneNumber: currentPhone,
+                    otp: otp
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                otpError.classList.add('hidden');
+                otpSuccess.classList.remove('hidden');
+                otpSuccess.textContent = 'OTP verified successfully!';
+                
+                // Store verification info
+                isVerified = true;
+                isAdmin = data.isAdmin || false;
+                
+                // Show success message for 2 seconds then start chat
+                setTimeout(() => {
+                    startChat();
+                }, 2000);
+                
+            } else {
+                otpError.classList.remove('hidden');
+                otpError.textContent = data.error || 'Invalid OTP';
+                verifyOtpBtn.disabled = false;
+                verifyOtpBtn.innerHTML = '<i class="fas fa-check"></i> Verify OTP';
+                
+                // Clear OTP inputs on error
+                clearOtpInputs();
+                otp1.focus();
+            }
+        } catch (error) {
+            otpError.classList.remove('hidden');
+            otpError.textContent = 'Network error. Please try again.';
+            verifyOtpBtn.disabled = false;
+            verifyOtpBtn.innerHTML = '<i class="fas fa-check"></i> Verify OTP';
+            console.error('Error verifying OTP:', error);
+        }
+    }
+    
+    // Resend OTP
+    async function resendOtp() {
+        resendOtpBtn.disabled = true;
+        resendOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resending...';
+        
+        try {
+            const response = await fetch('/auth/send-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phoneNumber: currentPhone
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Restart timer
+                clearInterval(otpTimer);
+                startOtpTimer();
+                
+                // Clear previous OTP inputs
+                clearOtpInputs();
+                otp1.focus();
+                
+                // Show debug info if available
+                if (data.debugOtp) {
+                    debugInfo.classList.remove('hidden');
+                    debugInfo.innerHTML = `<strong>Development Mode:</strong> New OTP is: <strong>${data.debugOtp}</strong>`;
+                    console.log(`📱 New OTP for ${currentPhone}: ${data.debugOtp}`);
+                }
+                
+                otpError.classList.add('hidden');
+                otpSuccess.classList.remove('hidden');
+                otpSuccess.textContent = 'New OTP sent successfully!';
+                
+                setTimeout(() => {
+                    otpSuccess.classList.add('hidden');
+                }, 3000);
+                
+            } else {
+                otpError.classList.remove('hidden');
+                otpError.textContent = data.error || 'Failed to resend OTP';
+            }
+        } catch (error) {
+            otpError.classList.remove('hidden');
+            otpError.textContent = 'Network error. Please try again.';
+            console.error('Error resending OTP:', error);
+        } finally {
+            resendOtpBtn.disabled = false;
+            resendOtpBtn.innerHTML = 'Resend OTP';
+        }
+    }
+    
+    // Clear OTP inputs
+    function clearOtpInputs() {
+        otp1.value = '';
+        otp2.value = '';
+        otp3.value = '';
+        otp4.value = '';
+    }
+    
+    // Handle OTP input navigation
+    function handleOtpInput(e, current, next, prev) {
+        if (e.key === 'Backspace' && !current.value && prev) {
+            prev.focus();
+        } else if (e.key.length === 1 && /^\d$/.test(e.key)) {
+            current.value = e.key;
+            if (next) {
+                next.focus();
+            }
+        } else if (e.key === 'ArrowRight' && next) {
+            next.focus();
+        } else if (e.key === 'ArrowLeft' && prev) {
+            prev.focus();
+        }
+    }
+    
+    // Start chat after verification
+    function startChat() {
+        // Update UI
+        authSection.style.display = 'none';
+        chatSection.classList.add('active');
+        
+        // Update profile
+        const digits = currentPhone.replace(/[^0-9]/g, '');
+        const suffix = currentPhone.replace(/[^AU]/gi, '').toUpperCase();
+        
+        profileAvatar.textContent = digits.substring(0, 2) || 'ZC';
+        currentPhoneSpan.textContent = currentPhone;
+        
+        if (suffix === 'A') {
+            chatTitle.textContent = 'Zulu Club Admin';
+            chatStatus.textContent = 'Online • Admin Mode';
+            profileAvatar.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)';
+        } else if (suffix === 'U') {
+            chatTitle.textContent = 'Zulu Club User';
+            chatStatus.textContent = 'Online • User Mode';
+            profileAvatar.style.background = 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)';
+        } else {
+            chatTitle.textContent = 'Zulu Club Assistant';
+            chatStatus.textContent = 'Online';
+            profileAvatar.style.background = 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)';
+        }
+        
+        // Load chat history and show welcome message
+        loadWelcomeMessage();
+        
+        // Enable chat input
+        messageInput.disabled = false;
+        messageInput.focus();
+    }
+    
+    // Load welcome message
+    function loadWelcomeMessage() {
+        const welcomeHtml = `
+            <div class="welcome-message">
+                <h3><i class="fas fa-shopping-bag"></i> Welcome to Zulu Club!</h3>
+                <p>You're now connected as: <strong>${currentPhone}</strong></p>
+                <p>I'm your personal shopping assistant. I can help you with:</p>
+                <p>• Product browsing and shopping</p>
+                <p>• Seller information and partnerships</p>
+                <p>• Company details and investor queries</p>
+                <p>• Connecting with human agents</p>
+                <p><br>Try asking: <em>"Show me t-shirts"</em> or <em>"Tell me about Zulu Club"</em></p>
+            </div>
+        `;
+        
+        chatMessages.innerHTML = welcomeHtml;
+    }
+    
+    // Send message
+    async function sendMessage() {
+        const message = messageInput.value.trim();
+        if (!message || !isVerified) return;
+        
+        // Display user message
+        displayMessage(message, 'user');
+        
+        // Clear input
+        messageInput.value = '';
+        messageInput.style.height = 'auto';
+        sendBtn.disabled = true;
+        
+        // Show typing indicator
+        showTyping();
+        
+        try {
+            const response = await fetch('/chat/message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phoneNumber: currentPhone,
+                    message: message
+                })
+            });
+            
+            const data = await response.json();
+            
+            // Hide typing indicator
+            hideTyping();
+            
+            if (data.success) {
+                displayMessage(data.response, 'bot');
+            } else {
+                displayMessage('Sorry, there was an error. Please try again.', 'bot');
+            }
+        } catch (error) {
+            hideTyping();
+            displayMessage('Network error. Please check your connection.', 'bot');
+            console.error('Error sending message:', error);
+        }
+        
+        sendBtn.disabled = false;
+        messageInput.focus();
+    }
+    
+    // Display message in chat
+    function displayMessage(text, sender) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message-bubble ${sender}`;
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        contentDiv.textContent = text;
+        
+        messageDiv.appendChild(contentDiv);
+        chatMessages.appendChild(messageDiv);
+        
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Show typing indicator
+    function showTyping() {
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'message-bubble bot';
+        typingDiv.id = 'typingIndicator';
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content typing-indicator';
+        contentDiv.innerHTML = `
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+        `;
+        
+        typingDiv.appendChild(contentDiv);
+        chatMessages.appendChild(typingDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Hide typing indicator
+    function hideTyping() {
+        const typing = document.getElementById('typingIndicator');
+        if (typing) typing.remove();
+    }
+    
+    // Auto-resize textarea
+    function autoResizeTextarea(textarea) {
+        textarea.style.height = 'auto';
+        const newHeight = Math.min(textarea.scrollHeight, 100);
+        textarea.style.height = newHeight + 'px';
+    }
+    
+    // Check verification status on page load
+    async function checkVerification() {
+        // Check if there's a stored phone number in localStorage
+        const storedPhone = localStorage.getItem('zulu_verified_phone');
+        if (!storedPhone) return;
+        
+        try {
+            const response = await fetch('/auth/check-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phoneNumber: storedPhone
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success && data.verified) {
+                // Auto-login
+                currentPhone = storedPhone;
+                isVerified = true;
+                isAdmin = data.isAdmin || false;
+                startChat();
+            } else {
+                // Clear invalid stored phone
+                localStorage.removeItem('zulu_verified_phone');
+            }
+        } catch (error) {
+            console.error('Error checking verification:', error);
+        }
+    }
+    
+    // Logout
+    async function logout() {
+        try {
+            await fetch('/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phoneNumber: currentPhone
+                })
+            });
+            
+            // Clear local storage
+            localStorage.removeItem('zulu_verified_phone');
+            
+            // Reset state
+            currentPhone = '';
+            isVerified = false;
+            isAdmin = false;
+            
+            // Show auth section
+            authSection.style.display = 'flex';
+            chatSection.classList.remove('active');
+            
+            // Reset forms
+            stepPhone.classList.add('active');
+            stepOtp.classList.remove('active');
+            phoneInput.value = '';
+            clearOtpInputs();
+            phoneInput.focus();
+            
+            // Clear any timers
+            if (otpTimer) {
+                clearInterval(otpTimer);
+            }
+            
+        } catch (error) {
+            console.error('Error logging out:', error);
+        }
+    }
+    
+    // Event Listeners
+    sendOtpBtn.addEventListener('click', sendOtp);
+    verifyOtpBtn.addEventListener('click', verifyOtp);
+    resendOtpBtn.addEventListener('click', resendOtp);
+    sendBtn.addEventListener('click', sendMessage);
+    
+    // OTP input navigation
+    otp1.addEventListener('keydown', (e) => handleOtpInput(e, otp1, otp2, null));
+    otp2.addEventListener('keydown', (e) => handleOtpInput(e, otp2, otp3, otp1));
+    otp3.addEventListener('keydown', (e) => handleOtpInput(e, otp3, otp4, otp2));
+    otp4.addEventListener('keydown', (e) => handleOtpInput(e, otp4, null, otp3));
+    
+    // Enter key in OTP inputs
+    [otp1, otp2, otp3, otp4].forEach(input => {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                verifyOtp();
+            }
+        });
+    });
+    
+    // Enter key in phone input
+    phoneInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            sendOtp();
+        }
+    });
+    
+    // Enter key in message input (with shift for new line)
+    messageInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    
+    // Auto-resize message input
+    messageInput.addEventListener('input', function() {
+        autoResizeTextarea(this);
+        sendBtn.disabled = !this.value.trim();
+    });
+    
+    // Back button
+    backBtn.addEventListener('click', () => {
+        if (isVerified) {
+            // Go back to auth
+            logout();
+        } else if (stepOtp.classList.contains('active')) {
+            // Go back to phone input
+            stepOtp.classList.remove('active');
+            stepPhone.classList.add('active');
+            phoneInput.focus();
+            
+            // Clear timer
+            if (otpTimer) {
+                clearInterval(otpTimer);
+            }
+        }
+    });
+    
+    // Info button
+    document.getElementById('infoBtn').addEventListener('click', () => {
+        alert('Zulu Club Chat Assistant\n\nPlease enter your phone number to verify your identity via OTP. This ensures secure access to our chat services.');
+    });
+    
+    // Initialize
+    window.addEventListener('load', () => {
+        phoneInput.focus();
+        // Check if already verified
+        checkVerification();
+    });
+</script>
+</body>
+</html>
