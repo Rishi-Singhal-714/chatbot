@@ -1339,6 +1339,40 @@
         </div>
     </div>
 </div>
+                    <div class="instructions">
+                <h3><i class="fas fa-info-circle"></i> Phone Number Modes</h3>
+                <ul>
+                    <li><strong>Regular User:</strong> Enter any 10-digit number</li>
+                    <li><strong>Employee Mode:</strong> Add A/U suffix to employee numbers</li>
+                    <div class="employee-list">
+                        <div>8368127760<span style="color:#00a884">A</span> (Admin mode)</div>
+                        <div>8368127760<span style="color:#00a884">U</span> (User mode)</div>
+                        <div>9717350080<span style="color:#00a884">A</span>/<span style="color:#00a884">U</span></div>
+                        <div>8860924190<span style="color:#00a884">A</span>/<span style="color:#00a884">U</span></div>
+                        <div>7483654620<span style="color:#00a884">A</span>/<span style="color:#00a884">U</span></div>
+                    </div>
+                </ul>
+            </div>
+            
+            <div class="phone-input-container">
+                <div class="phone-input">
+                    <div class="phone-input-wrapper">
+                        <input type="text" id="phoneInput" 
+                               placeholder="Enter 10 digits + optional A/U (e.g., 8368127760A)" 
+                               maxlength="11"
+                               inputmode="text"
+                               autocapitalize="characters">
+                        <div class="suffix-badge" id="suffixBadge"></div>
+                    </div>
+                    <button class="start-chat-btn" id="startChatBtn">
+                        <i class="fas fa-comments"></i> Start Chat
+                    </button>
+                </div>
+                <div class="error-message" id="errorMessage">
+                    Please enter a valid 10-digit number with optional A/U suffix
+                </div>
+            </div>
+        </div>
         
         <!-- Chat Section -->
         <div class="chat-section hidden" id="chatSection">
