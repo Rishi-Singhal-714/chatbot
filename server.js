@@ -52,21 +52,28 @@ let sellersData = []; // sellers CSV data
 
 /**
  * Sends an OTP to the provided phone number
- * @param phoneNumber - The phone number to send OTP to (10 digits)
+ * @param phoneNumber - The phone number to send OTP to (10 digits, may have A/U suffix)
  * @returns Promise with the OTP response
  */
-const sendOtp = async (phoneNumber) => {
+const sendOtp = async (phoneNumberWithSuffix) => {
   try {
-    // Validate phone number
-    if (!phoneNumber || phoneNumber.length !== 10 || !/^\d{10}$/.test(phoneNumber)) {
-      throw new Error('Invalid phone number. Must be 10 digits.');
+    // Parse phone number and suffix
+    const { basePhone, suffix } = parsePhoneNumberWithSuffix(phoneNumberWithSuffix);
+    
+    if (!basePhone || basePhone.length !== 10 || !/^\d{10}$/.test(basePhone)) {
+      throw new Error('Invalid phone number. Must be 10 digits with optional A/U suffix.');
+    }
+
+    // Validate suffix if present
+    if (suffix && !['A', 'U', 'a', 'u'].includes(suffix)) {
+      throw new Error('Invalid suffix. Only A (Admin) or U (User) allowed.');
     }
 
     // Create form data using URLSearchParams
     const formData = new URLSearchParams();
-    formData.append('mobile', phoneNumber);
+    formData.append('mobile', basePhone);
     
-    console.log(`📱 Sending OTP to ${phoneNumber} via ZuluShop API...`);
+    console.log(`📱 Sending OTP to ${basePhone} (suffix: ${suffix || 'none'}) via ZuluShop API...`);
     
     // Make API request to send OTP
     const response = await axios.post(
@@ -82,23 +89,38 @@ const sendOtp = async (phoneNumber) => {
     
     console.log('Send OTP Response:', response.data);
 
-    // Store request ID for verification
+    // Store request ID for verification with both base phone and full phone
     if (response.data && response.data.request_id) {
-      otpStore.set(phoneNumber, {
+      otpStore.set(basePhone, {
         requestId: response.data.request_id,
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        suffix: suffix || null
+      });
+      
+      // Also store with full phone for lookup
+      otpStore.set(phoneNumberWithSuffix, {
+        requestId: response.data.request_id,
+        createdAt: Date.now(),
+        suffix: suffix || null
       });
       
       // Clear stored OTP after 10 minutes
       setTimeout(() => {
-        if (otpStore.has(phoneNumber)) {
-          otpStore.delete(phoneNumber);
-          console.log(`Cleared OTP request for ${phoneNumber}`);
+        if (otpStore.has(basePhone)) {
+          otpStore.delete(basePhone);
         }
+        if (otpStore.has(phoneNumberWithSuffix)) {
+          otpStore.delete(phoneNumberWithSuffix);
+        }
+        console.log(`Cleared OTP request for ${phoneNumberWithSuffix}`);
       }, 10 * 60 * 1000); // 10 minutes
     }
     
-    return response.data;
+    return {
+      ...response.data,
+      basePhone,
+      suffix
+    };
   } catch (error) {
     console.error('Error sending OTP:', error);
     
@@ -106,33 +128,54 @@ const sendOtp = async (phoneNumber) => {
     if (error.code === 'ECONNREFUSED' || error.response?.status >= 500) {
       console.log('⚠️ API unavailable, using development mode');
       
+      // Parse phone number and suffix
+      const { basePhone, suffix } = parsePhoneNumberWithSuffix(phoneNumberWithSuffix);
+      
+      if (!basePhone || basePhone.length !== 10) {
+        throw new Error('Invalid phone number. Must be 10 digits with optional A/U suffix.');
+      }
+      
       // Generate a random 4-digit OTP for development
       const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
       
       // Store in memory for development
-      otpStore.set(phoneNumber, {
+      otpStore.set(basePhone, {
         otp: generatedOtp,
         requestId: `DEV-${Date.now()}`,
         createdAt: Date.now(),
-        isDevMode: true
+        isDevMode: true,
+        suffix: suffix || null
+      });
+      
+      otpStore.set(phoneNumberWithSuffix, {
+        otp: generatedOtp,
+        requestId: `DEV-${Date.now()}`,
+        createdAt: Date.now(),
+        isDevMode: true,
+        suffix: suffix || null
       });
       
       // Clear OTP after 10 minutes
       setTimeout(() => {
-        if (otpStore.has(phoneNumber)) {
-          otpStore.delete(phoneNumber);
-          console.log(`Cleared development OTP for ${phoneNumber}`);
+        if (otpStore.has(basePhone)) {
+          otpStore.delete(basePhone);
         }
+        if (otpStore.has(phoneNumberWithSuffix)) {
+          otpStore.delete(phoneNumberWithSuffix);
+        }
+        console.log(`Cleared development OTP for ${phoneNumberWithSuffix}`);
       }, 10 * 60 * 1000);
       
-      console.log(`📱 DEVELOPMENT: OTP for ${phoneNumber}: ${generatedOtp}`);
+      console.log(`📱 DEVELOPMENT: OTP for ${basePhone} (suffix: ${suffix || 'none'}): ${generatedOtp}`);
       
       return {
         error: false,
         provider: 'development',
         request_id: `DEV-${Date.now()}`,
         message: 'OTP sent successfully (development mode)',
-        debugOtp: generatedOtp
+        debugOtp: generatedOtp,
+        basePhone,
+        suffix
       };
     }
     
@@ -140,25 +183,32 @@ const sendOtp = async (phoneNumber) => {
   }
 };
 
-
 /**
  * Verifies the OTP entered by the user
- * @param phoneNumber - The phone number to verify OTP for
+ * @param phoneNumberWithSuffix - The phone number with optional suffix to verify OTP for
  * @param otp - The OTP code entered by the user
  * @returns Promise with verification result including user status
  */
-const verifyOtp = async (phoneNumber, otp) => {
+const verifyOtp = async (phoneNumberWithSuffix, otp) => {
   try {
-    if (!phoneNumber || phoneNumber.length !== 10) {
-      throw new Error('Invalid phone number');
+    // Parse phone number and suffix
+    const { basePhone, suffix } = parsePhoneNumberWithSuffix(phoneNumberWithSuffix);
+    
+    if (!basePhone || basePhone.length !== 10) {
+      throw new Error('Invalid phone number. Must be 10 digits with optional A/U suffix.');
     }
 
     if (!otp || otp.length !== 4 || !/^\d{4}$/.test(otp)) {
       throw new Error('Invalid OTP code. Must be 4 digits.');
     }
 
-    // Check if we have a stored request for this phone
-    const stored = otpStore.get(phoneNumber);
+    // Validate suffix if present
+    if (suffix && !['A', 'U', 'a', 'u'].includes(suffix)) {
+      throw new Error('Invalid suffix. Only A (Admin) or U (User) allowed.');
+    }
+
+    // Check if we have a stored request for this phone (try full phone first, then base phone)
+    let stored = otpStore.get(phoneNumberWithSuffix) || otpStore.get(basePhone);
     
     if (!stored) {
       throw new Error('No OTP request found for this number. Please request a new OTP.');
@@ -168,42 +218,48 @@ const verifyOtp = async (phoneNumber, otp) => {
     const isExpired = Date.now() - stored.createdAt > 5 * 60 * 1000; // 5 minutes
     
     if (isExpired) {
-      otpStore.delete(phoneNumber);
+      otpStore.delete(phoneNumberWithSuffix);
+      otpStore.delete(basePhone);
       throw new Error('OTP has expired. Please request a new one.');
     }
 
     // If in development mode, check against stored OTP
     if (stored.isDevMode) {
       if (stored.otp === otp) {
-        // Mark user as verified
-        verifiedUsers[phoneNumber] = {
+        // Mark user as verified with full phone (including suffix)
+        verifiedUsers[phoneNumberWithSuffix] = {
           verified: true,
-          isAdmin: adminUsers.some(user => user.mobile === phoneNumber),
-          verifiedAt: Date.now()
+          isAdmin: adminUsers.some(user => user.mobile === basePhone),
+          verifiedAt: Date.now(),
+          suffix: suffix || null,
+          basePhone: basePhone
         };
 
         // Clear OTP from store
-        otpStore.delete(phoneNumber);
+        otpStore.delete(phoneNumberWithSuffix);
+        otpStore.delete(basePhone);
 
-        console.log(`✅ User ${phoneNumber} verified successfully (dev mode). Admin: ${verifiedUsers[phoneNumber].isAdmin}`);
+        console.log(`✅ User ${phoneNumberWithSuffix} verified successfully (dev mode). Admin: ${verifiedUsers[phoneNumberWithSuffix].isAdmin}`);
         
         return {
           error: false,
           message: 'OTP verified successfully (development mode)',
-          phoneNumber,
-          isAdmin: verifiedUsers[phoneNumber].isAdmin
+          phoneNumber: phoneNumberWithSuffix,
+          basePhone: basePhone,
+          suffix: suffix,
+          isAdmin: verifiedUsers[phoneNumberWithSuffix].isAdmin
         };
       } else {
         throw new Error('Invalid OTP code');
       }
     }
 
-    // Real API verification with ZuluShop
+    // Real API verification with ZuluShop (use base phone only)
     const formData = new URLSearchParams();
-    formData.append('mobile', phoneNumber);
+    formData.append('mobile', basePhone);
     formData.append('otp', otp);
     
-    console.log(`🔐 Verifying OTP for ${phoneNumber} via ZuluShop API...`);
+    console.log(`🔐 Verifying OTP for ${basePhone} (suffix: ${suffix || 'none'}) via ZuluShop API...`);
     
     const response = await axios.post(
       'https://zulushop.in/app/v1/api/verify_otp_new',
@@ -224,25 +280,30 @@ const verifyOtp = async (phoneNumber, otp) => {
     }
 
     // Check if this number is in admin JSON
-    const isAdmin = adminUsers.some(user => user.mobile === phoneNumber);
+    const isAdmin = adminUsers.some(user => user.mobile === basePhone);
 
-    // Mark user as verified
-    verifiedUsers[phoneNumber] = {
+    // Mark user as verified with full phone (including suffix)
+    verifiedUsers[phoneNumberWithSuffix] = {
       verified: true,
       isAdmin: isAdmin,
       verifiedAt: Date.now(),
+      suffix: suffix || null,
+      basePhone: basePhone,
       token: data.token // Store token if available
     };
 
     // Clear OTP from store
-    otpStore.delete(phoneNumber);
+    otpStore.delete(phoneNumberWithSuffix);
+    otpStore.delete(basePhone);
 
-    console.log(`✅ User ${phoneNumber} verified successfully via API. Admin: ${isAdmin}`);
+    console.log(`✅ User ${phoneNumberWithSuffix} verified successfully via API. Admin: ${isAdmin}`);
     
     return {
       error: false,
       message: 'OTP verified successfully',
-      phoneNumber,
+      phoneNumber: phoneNumberWithSuffix,
+      basePhone: basePhone,
+      suffix: suffix,
       isAdmin: isAdmin,
       token: data.token
     };
@@ -254,26 +315,35 @@ const verifyOtp = async (phoneNumber, otp) => {
     if (error.code === 'ECONNREFUSED' || error.response?.status >= 500) {
       console.log('⚠️ API unavailable, checking against development OTP');
       
-      const stored = otpStore.get(phoneNumber);
+      // Parse phone number and suffix
+      const { basePhone, suffix } = parsePhoneNumberWithSuffix(phoneNumberWithSuffix);
+      
+      // Try to get stored OTP
+      let stored = otpStore.get(phoneNumberWithSuffix) || otpStore.get(basePhone);
       
       if (stored && stored.isDevMode && stored.otp === otp) {
-        // Mark user as verified
-        verifiedUsers[phoneNumber] = {
+        // Mark user as verified with full phone (including suffix)
+        verifiedUsers[phoneNumberWithSuffix] = {
           verified: true,
-          isAdmin: adminUsers.some(user => user.mobile === phoneNumber),
-          verifiedAt: Date.now()
+          isAdmin: adminUsers.some(user => user.mobile === basePhone),
+          verifiedAt: Date.now(),
+          suffix: suffix || null,
+          basePhone: basePhone
         };
 
         // Clear OTP from store
-        otpStore.delete(phoneNumber);
+        otpStore.delete(phoneNumberWithSuffix);
+        otpStore.delete(basePhone);
 
-        console.log(`✅ User ${phoneNumber} verified successfully (dev fallback). Admin: ${verifiedUsers[phoneNumber].isAdmin}`);
+        console.log(`✅ User ${phoneNumberWithSuffix} verified successfully (dev fallback). Admin: ${verifiedUsers[phoneNumberWithSuffix].isAdmin}`);
         
         return {
           error: false,
           message: 'OTP verified successfully (development fallback)',
-          phoneNumber,
-          isAdmin: verifiedUsers[phoneNumber].isAdmin
+          phoneNumber: phoneNumberWithSuffix,
+          basePhone: basePhone,
+          suffix: suffix,
+          isAdmin: verifiedUsers[phoneNumberWithSuffix].isAdmin
         };
       }
     }
@@ -281,20 +351,53 @@ const verifyOtp = async (phoneNumber, otp) => {
     throw error;
   }
 };
+
+/**
+ * Helper function to parse phone number with optional suffix
+ * @param phoneNumberWithSuffix - Phone number that may end with A or U
+ * @returns { basePhone: string, suffix: string|null }
+ */
+function parsePhoneNumberWithSuffix(phoneNumberWithSuffix) {
+  if (!phoneNumberWithSuffix || typeof phoneNumberWithSuffix !== 'string') {
+    return { basePhone: null, suffix: null };
+  }
+  
+  const trimmed = phoneNumberWithSuffix.trim();
+  
+  // Check if it ends with A or U (case-insensitive)
+  const lastChar = trimmed.slice(-1).toUpperCase();
+  
+  if (lastChar === 'A' || lastChar === 'U') {
+    // Extract base phone (all but last character) and suffix
+    const basePhone = trimmed.slice(0, -1);
+    return { 
+      basePhone: basePhone, 
+      suffix: lastChar 
+    };
+  }
+  
+  // No suffix, assume entire string is phone number
+  return { 
+    basePhone: trimmed, 
+    suffix: null 
+  };
+}
+
+// Also update the requireVerification middleware to handle suffixes:
 /**
  * Middleware to check if user is verified
  */
 const requireVerification = (req, res, next) => {
-  const phoneNumber = req.body.phoneNumber || req.params.phoneNumber;
+  const phoneNumberWithSuffix = req.body.phoneNumber || req.params.phoneNumber;
   
-  if (!phoneNumber) {
+  if (!phoneNumberWithSuffix) {
     return res.status(400).json({
       success: false,
       error: 'Phone number is required'
     });
   }
 
-  const user = verifiedUsers[phoneNumber];
+  const user = verifiedUsers[phoneNumberWithSuffix];
   
   if (!user || !user.verified) {
     return res.status(401).json({
@@ -304,7 +407,7 @@ const requireVerification = (req, res, next) => {
   }
 
   req.user = user;
-  req.phoneNumber = phoneNumber;
+  req.phoneNumber = phoneNumberWithSuffix;
   next();
 };
 
