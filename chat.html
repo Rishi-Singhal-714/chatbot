@@ -1381,7 +1381,13 @@
         </div>
     </div>
 
-<script>    let otpTimer = null;
+<script>    
+    let currentPhone = '';
+    let isConnected = false;
+    let historyPage = 0;
+    let hasMoreHistory = true;
+    let isLoadingHistory = false;
+    let otpTimer = null;
     let otpTimeLeft = 300; // 5 minutes in seconds
     let resendTimer = null;
     let resendTimeLeft = 30; // 30 seconds
@@ -1389,7 +1395,33 @@
     let currentOtp = '';
     let isEmployee = false;
     let isAdminUser = false;
+     
+    // DOM Elements
+    const chatMessages = document.getElementById('chatMessages');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const setupSection = document.getElementById('setupSection');
+    const chatSection = document.getElementById('chatSection');
+    const phoneInput = document.getElementById('phoneInput');
+    const startChatBtn = document.getElementById('startChatBtn');
+    const currentPhoneSpan = document.getElementById('currentPhone');
+    const backBtn = document.getElementById('backBtn');
+    const profileAvatar = document.getElementById('profileAvatar');
+    const chatTitle = document.getElementById('chatTitle');
+    const statusBar = document.getElementById('statusBar');
+    const chatStatus = document.getElementById('chatStatus');
+    const suffixBadge = document.getElementById('suffixBadge');
+    const errorMessage = document.getElementById('errorMessage');
+    const emojiBtn = document.getElementById('emojiBtn');
+    const attachBtn = document.getElementById('attachBtn');
     
+    // Employee numbers for reference
+    const EMPLOYEE_NUMBERS = [
+        "8368127760",
+        "9717350080", 
+        "8860924190",
+        "7483654620"
+    ];
     // OTP Authentication functions
     function showOtpAuth(phone) {
         currentPhone = phone;
@@ -1793,39 +1825,6 @@
             phoneInput.focus();
         }
     });
-    let currentPhone = '';
-    let isConnected = false;
-    let historyPage = 0;
-    let hasMoreHistory = true;
-    let isLoadingHistory = false;
-    
-    // DOM Elements
-    const chatMessages = document.getElementById('chatMessages');
-    const messageInput = document.getElementById('messageInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const setupSection = document.getElementById('setupSection');
-    const chatSection = document.getElementById('chatSection');
-    const phoneInput = document.getElementById('phoneInput');
-    const startChatBtn = document.getElementById('startChatBtn');
-    const currentPhoneSpan = document.getElementById('currentPhone');
-    const backBtn = document.getElementById('backBtn');
-    const profileAvatar = document.getElementById('profileAvatar');
-    const chatTitle = document.getElementById('chatTitle');
-    const statusBar = document.getElementById('statusBar');
-    const chatStatus = document.getElementById('chatStatus');
-    const suffixBadge = document.getElementById('suffixBadge');
-    const errorMessage = document.getElementById('errorMessage');
-    const emojiBtn = document.getElementById('emojiBtn');
-    const attachBtn = document.getElementById('attachBtn');
-    
-    // Employee numbers for reference
-    const EMPLOYEE_NUMBERS = [
-        "8368127760",
-        "9717350080", 
-        "8860924190",
-        "7483654620"
-    ];
-    
     // Format phone number input
     function formatPhoneInput(value) {
         // Remove all non-digits and letters A/U
