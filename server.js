@@ -154,7 +154,6 @@ app.post('/api/send-otp', async (req, res) => {
     });
   }
 });
-
 /**
  * Verify OTP
  */
