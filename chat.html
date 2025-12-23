@@ -949,6 +949,285 @@
                 padding-right: max(10px, env(safe-area-inset-right));
             }
         }
+            /* OTP Authentication Styles */
+    .otp-auth-section {
+        background: #202c33;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+        border-left: 4px solid #00a884;
+        animation: fadeIn 0.5s ease;
+    }
+    
+    .auth-step h3 {
+        color: #e9edef;
+        font-size: 18px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .auth-step p {
+        color: #8696a0;
+        margin-bottom: 20px;
+        line-height: 1.5;
+    }
+    
+    .phone-display {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+        background: #2a3942;
+        padding: 12px 15px;
+        border-radius: 8px;
+        border: 1px solid #00a884;
+    }
+    
+    .phone-number-display {
+        flex: 1;
+        color: #e9edef;
+        font-size: 18px;
+        font-weight: 500;
+        letter-spacing: 1px;
+    }
+    
+    .change-phone-btn {
+        background: transparent;
+        color: #00a884;
+        border: 1px solid #00a884;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .change-phone-btn:hover {
+        background: #00a884;
+        color: white;
+    }
+    
+    .auth-btn {
+        background: #00a884;
+        color: white;
+        border: none;
+        padding: 15px 20px;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s;
+        width: 100%;
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+    
+    .auth-btn:hover {
+        background: #06cf9c;
+    }
+    
+    .auth-btn:disabled {
+        background: #2a3942;
+        color: #8696a0;
+        cursor: not-allowed;
+    }
+    
+    .otp-note {
+        margin-top: 15px;
+        text-align: center;
+        color: #8696a0;
+    }
+    
+    .otp-input-container {
+        text-align: center;
+    }
+    
+    .otp-inputs {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+    
+    .otp-digit {
+        width: 60px;
+        height: 60px;
+        background: #2a3942;
+        border: 2px solid #374045;
+        border-radius: 10px;
+        font-size: 24px;
+        color: #e9edef;
+        text-align: center;
+        font-weight: bold;
+        transition: all 0.3s;
+    }
+    
+    .otp-digit:focus {
+        outline: none;
+        border-color: #00a884;
+        background: #2a3942;
+    }
+    
+    .otp-digit.filled {
+        border-color: #00a884;
+    }
+    
+    .otp-timer {
+        color: #8696a0;
+        margin-bottom: 20px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+    }
+    
+    #timer {
+        color: #ff6b6b;
+        font-weight: bold;
+        font-family: monospace;
+    }
+    
+    .resend-btn {
+        background: transparent;
+        color: #8696a0;
+        border: 1px solid #374045;
+        padding: 10px 15px;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        transition: all 0.3s;
+    }
+    
+    .resend-btn:hover:not(:disabled) {
+        color: #00a884;
+        border-color: #00a884;
+    }
+    
+    .resend-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .auth-success {
+        background: #00a884;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 8px;
+        text-align: center;
+        margin-top: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        animation: fadeIn 0.5s ease;
+    }
+    
+    .auth-error {
+        background: rgba(255, 107, 107, 0.1);
+        color: #ff6b6b;
+        padding: 10px 15px;
+        border-radius: 8px;
+        text-align: center;
+        margin-top: 15px;
+        border: 1px solid rgba(255, 107, 107, 0.3);
+        animation: fadeIn 0.5s ease;
+    }
+    
+    .employee-bypass-notice {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+        padding: 8px 12px;
+        border-radius: 6px;
+        margin-top: 10px;
+        font-size: 12px;
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        text-align: center;
+    }
+    
+    /* Status indicators */
+    .auth-status {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #8696a0;
+    }
+    
+    .status-dot.active {
+        background: #00a884;
+        animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    /* Mobile responsive adjustments */
+    @media (max-width: 768px) {
+        .otp-auth-section {
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .otp-digit {
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+        }
+        
+        .otp-inputs {
+            gap: 10px;
+        }
+        
+        .phone-number-display {
+            font-size: 16px;
+        }
+        
+        .change-phone-btn {
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .otp-digit {
+            width: 45px;
+            height: 45px;
+            font-size: 18px;
+        }
+        
+        .auth-step h3 {
+            font-size: 16px;
+        }
+        
+        .auth-btn {
+            padding: 12px 15px;
+            font-size: 14px;
+        }
+    }
     </style>
     <!-- WhatsApp Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -1019,7 +1298,56 @@
                 </div>
             </div>
         </div>
+        <!-- Add this in your existing setup-section after the instructions div -->
+<div class="otp-auth-section" id="otpAuthSection" style="display: none;">
+    <div class="auth-steps">
+        <div class="auth-step" id="step1">
+            <h3><i class="fas fa-mobile-alt"></i> Phone Verification Required</h3>
+            <p>For security, we need to verify your phone number before you can chat.</p>
+            
+            <div class="phone-display">
+                <div class="phone-number-display" id="phoneDisplay"></div>
+                <button class="change-phone-btn" onclick="changePhoneNumber()">
+                    <i class="fas fa-edit"></i> Change
+                </button>
+            </div>
+            
+            <button class="auth-btn" onclick="sendOtpRequest()" id="sendOtpBtn">
+                <i class="fas fa-paper-plane"></i> Send OTP
+            </button>
+            
+            <div class="otp-note">
+                <p><small><i class="fas fa-info-circle"></i> You'll receive a 4-digit code via SMS</small></p>
+            </div>
+        </div>
         
+        <div class="auth-step" id="step2" style="display: none;">
+            <h3><i class="fas fa-key"></i> Enter OTP</h3>
+            <p>Enter the 4-digit code sent to your phone</p>
+            
+            <div class="otp-input-container">
+                <div class="otp-inputs">
+                    <input type="text" maxlength="1" class="otp-digit" data-index="0">
+                    <input type="text" maxlength="1" class="otp-digit" data-index="1">
+                    <input type="text" maxlength="1" class="otp-digit" data-index="2">
+                    <input type="text" maxlength="1" class="otp-digit" data-index="3">
+                </div>
+                
+                <div class="otp-timer" id="otpTimer">
+                    Code expires in: <span id="timer">05:00</span>
+                </div>
+                
+                <button class="auth-btn" onclick="verifyOtp()" id="verifyOtpBtn" disabled>
+                    <i class="fas fa-check"></i> Verify OTP
+                </button>
+                
+                <button class="resend-btn" onclick="resendOtp()" id="resendOtpBtn" disabled>
+                    <i class="fas fa-redo"></i> Resend OTP (<span id="resendCount">30</span>s)
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
         <!-- Chat Section -->
         <div class="chat-section hidden" id="chatSection">
             <!-- Chat Messages -->
@@ -1053,7 +1381,418 @@
         </div>
     </div>
 
-<script>
+<script>    let otpTimer = null;
+    let otpTimeLeft = 300; // 5 minutes in seconds
+    let resendTimer = null;
+    let resendTimeLeft = 30; // 30 seconds
+    let otpDigits = ['', '', '', ''];
+    let currentOtp = '';
+    let isEmployee = false;
+    let isAdminUser = false;
+    
+    // OTP Authentication functions
+    function showOtpAuth(phone) {
+        currentPhone = phone;
+        document.getElementById('phoneDisplay').textContent = phone;
+        
+        // Check if this is an employee
+        const digits = phone.replace(/[^0-9]/g, '');
+        const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
+        isEmployee = EMPLOYEE_NUMBERS.includes(digits);
+        isAdminUser = (suffix === 'A' || suffix === '');
+        
+        // Show OTP section
+        document.getElementById('otpAuthSection').style.display = 'block';
+        document.getElementById('setupSection').style.display = 'none';
+        
+        // Check if employee/admin can bypass OTP
+        if (isEmployee && isAdminUser) {
+            // Show bypass option
+            const otpSection = document.getElementById('otpAuthSection');
+            otpSection.innerHTML = `
+                <div class="employee-bypass-notice">
+                    <i class="fas fa-user-tie"></i> Admin/Employee detected - OTP verification optional
+                </div>
+                <div class="auth-success">
+                    <i class="fas fa-check-circle"></i> Click Continue to skip OTP
+                </div>
+                <button class="auth-btn" onclick="skipOtpAndStartChat()">
+                    <i class="fas fa-forward"></i> Continue without OTP
+                </button>
+                <button class="auth-btn" onclick="showOtpSteps()" style="background: #2a3942; margin-top: 10px;">
+                    <i class="fas fa-key"></i> Verify with OTP anyway
+                </button>
+            `;
+        } else {
+            showOtpSteps();
+        }
+    }
+    
+    function showOtpSteps() {
+        document.getElementById('otpAuthSection').innerHTML = `
+            <div class="auth-steps">
+                <div class="auth-step" id="step1">
+                    <h3><i class="fas fa-mobile-alt"></i> Phone Verification Required</h3>
+                    <p>For security, we need to verify your phone number before you can chat.</p>
+                    
+                    <div class="phone-display">
+                        <div class="phone-number-display" id="phoneDisplay">${currentPhone}</div>
+                        <button class="change-phone-btn" onclick="changePhoneNumber()">
+                            <i class="fas fa-edit"></i> Change
+                        </button>
+                    </div>
+                    
+                    <button class="auth-btn" onclick="sendOtpRequest()" id="sendOtpBtn">
+                        <i class="fas fa-paper-plane"></i> Send OTP
+                    </button>
+                    
+                    <div class="otp-note">
+                        <p><small><i class="fas fa-info-circle"></i> You'll receive a 4-digit code via SMS</small></p>
+                    </div>
+                </div>
+                
+                <div class="auth-step" id="step2" style="display: none;">
+                    <h3><i class="fas fa-key"></i> Enter OTP</h3>
+                    <p>Enter the 4-digit code sent to your phone</p>
+                    
+                    <div class="otp-input-container">
+                        <div class="otp-inputs">
+                            <input type="text" maxlength="1" class="otp-digit" data-index="0">
+                            <input type="text" maxlength="1" class="otp-digit" data-index="1">
+                            <input type="text" maxlength="1" class="otp-digit" data-index="2">
+                            <input type="text" maxlength="1" class="otp-digit" data-index="3">
+                        </div>
+                        
+                        <div class="otp-timer" id="otpTimer">
+                            Code expires in: <span id="timer">05:00</span>
+                        </div>
+                        
+                        <button class="auth-btn" onclick="verifyOtp()" id="verifyOtpBtn" disabled>
+                            <i class="fas fa-check"></i> Verify OTP
+                        </button>
+                        
+                        <button class="resend-btn" onclick="resendOtp()" id="resendOtpBtn" disabled>
+                            <i class="fas fa-redo"></i> Resend OTP (<span id="resendCount">30</span>s)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Initialize OTP input listeners
+        initOtpInputs();
+    }
+    
+    function changePhoneNumber() {
+        document.getElementById('otpAuthSection').style.display = 'none';
+        document.getElementById('setupSection').style.display = 'block';
+        document.getElementById('phoneInput').focus();
+    }
+    
+    async function sendOtpRequest() {
+        const phone = currentPhone.replace(/[A-Za-z]$/, ''); // Remove suffix for OTP
+        
+        document.getElementById('sendOtpBtn').disabled = true;
+        document.getElementById('sendOtpBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        
+        try {
+            const response = await fetch('/auth/send-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ phoneNumber: phone })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Show step 2
+                document.getElementById('step1').style.display = 'none';
+                document.getElementById('step2').style.display = 'block';
+                
+                // Start timers
+                startOtpTimer();
+                startResendTimer();
+                
+                // Focus first OTP input
+                document.querySelector('.otp-digit').focus();
+            } else {
+                showAuthError(data.error || 'Failed to send OTP');
+                document.getElementById('sendOtpBtn').disabled = false;
+                document.getElementById('sendOtpBtn').innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
+            }
+        } catch (error) {
+            showAuthError('Network error. Please try again.');
+            document.getElementById('sendOtpBtn').disabled = false;
+            document.getElementById('sendOtpBtn').innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
+        }
+    }
+    
+    function initOtpInputs() {
+        const otpInputs = document.querySelectorAll('.otp-digit');
+        
+        otpInputs.forEach(input => {
+            input.addEventListener('input', function(e) {
+                const index = parseInt(this.dataset.index);
+                const value = this.value;
+                
+                if (/^[0-9]$/.test(value)) {
+                    otpDigits[index] = value;
+                    this.classList.add('filled');
+                    
+                    // Move to next input
+                    if (index < 3) {
+                        otpInputs[index + 1].focus();
+                    }
+                } else {
+                    this.value = '';
+                    otpDigits[index] = '';
+                    this.classList.remove('filled');
+                }
+                
+                // Update verify button state
+                updateVerifyButton();
+            });
+            
+            input.addEventListener('keydown', function(e) {
+                const index = parseInt(this.dataset.index);
+                
+                if (e.key === 'Backspace' && !this.value && index > 0) {
+                    otpInputs[index - 1].focus();
+                    otpInputs[index - 1].value = '';
+                    otpDigits[index - 1] = '';
+                    otpInputs[index - 1].classList.remove('filled');
+                }
+            });
+        });
+    }
+    
+    function updateVerifyButton() {
+        const otpCode = otpDigits.join('');
+        const verifyBtn = document.getElementById('verifyOtpBtn');
+        verifyBtn.disabled = otpCode.length !== 4;
+        currentOtp = otpCode;
+    }
+    
+    async function verifyOtp() {
+        const phone = currentPhone.replace(/[A-Za-z]$/, '');
+        
+        document.getElementById('verifyOtpBtn').disabled = true;
+        document.getElementById('verifyOtpBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+        
+        try {
+            const response = await fetch('/auth/verify-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phoneNumber: phone,
+                    otp: currentOtp
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // OTP verified successfully
+                clearTimers();
+                showAuthSuccess('OTP verified successfully! Starting chat...');
+                
+                // Store authentication status
+                localStorage.setItem('zulu_auth_' + currentPhone, 'verified');
+                localStorage.setItem('zulu_auth_expiry', Date.now() + (10 * 60 * 1000)); // 10 minutes
+                
+                // Wait 2 seconds then start chat
+                setTimeout(() => {
+                    initChat(currentPhone);
+                }, 2000);
+            } else {
+                showAuthError(data.error || 'Invalid OTP');
+                document.getElementById('verifyOtpBtn').disabled = false;
+                document.getElementById('verifyOtpBtn').innerHTML = '<i class="fas fa-check"></i> Verify OTP';
+            }
+        } catch (error) {
+            showAuthError('Network error. Please try again.');
+            document.getElementById('verifyOtpBtn').disabled = false;
+            document.getElementById('verifyOtpBtn').innerHTML = '<i class="fas fa-check"></i> Verify OTP';
+        }
+    }
+    
+    function resendOtp() {
+        if (resendTimeLeft > 0) return;
+        
+        // Reset OTP inputs
+        otpDigits = ['', '', '', ''];
+        document.querySelectorAll('.otp-digit').forEach(input => {
+            input.value = '';
+            input.classList.remove('filled');
+        });
+        
+        // Show step 1
+        document.getElementById('step2').style.display = 'none';
+        document.getElementById('step1').style.display = 'block';
+        
+        // Reset timers
+        clearTimers();
+        otpTimeLeft = 300;
+        resendTimeLeft = 30;
+        
+        // Re-enable send button
+        document.getElementById('sendOtpBtn').disabled = false;
+        document.getElementById('sendOtpBtn').innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
+    }
+    
+    function skipOtpAndStartChat() {
+        // Store as authenticated (bypassed)
+        localStorage.setItem('zulu_auth_' + currentPhone, 'bypassed');
+        localStorage.setItem('zulu_auth_expiry', Date.now() + (60 * 60 * 1000)); // 1 hour for bypass
+        
+        // Start chat immediately
+        initChat(currentPhone);
+    }
+    
+    function startOtpTimer() {
+        clearInterval(otpTimer);
+        otpTimeLeft = 300; // 5 minutes
+        
+        otpTimer = setInterval(() => {
+            otpTimeLeft--;
+            
+            const minutes = Math.floor(otpTimeLeft / 60);
+            const seconds = otpTimeLeft % 60;
+            document.getElementById('timer').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (otpTimeLeft <= 0) {
+                clearInterval(otpTimer);
+                showAuthError('OTP has expired. Please request a new one.');
+                document.getElementById('verifyOtpBtn').disabled = true;
+            }
+        }, 1000);
+    }
+    
+    function startResendTimer() {
+        clearInterval(resendTimer);
+        resendTimeLeft = 30;
+        
+        const resendBtn = document.getElementById('resendOtpBtn');
+        const resendCount = document.getElementById('resendCount');
+        
+        resendBtn.disabled = true;
+        
+        resendTimer = setInterval(() => {
+            resendTimeLeft--;
+            resendCount.textContent = resendTimeLeft;
+            
+            if (resendTimeLeft <= 0) {
+                clearInterval(resendTimer);
+                resendBtn.disabled = false;
+                resendCount.textContent = 'Now';
+            }
+        }, 1000);
+    }
+    
+    function clearTimers() {
+        clearInterval(otpTimer);
+        clearInterval(resendTimer);
+    }
+    
+    function showAuthSuccess(message) {
+        const container = document.querySelector('.otp-input-container') || 
+                         document.getElementById('otpAuthSection');
+        
+        const successDiv = document.createElement('div');
+        successDiv.className = 'auth-success';
+        successDiv.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+        
+        container.appendChild(successDiv);
+    }
+    
+    function showAuthError(message) {
+        const container = document.querySelector('.otp-input-container') || 
+                         document.getElementById('otpAuthSection');
+        
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'auth-error';
+        errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+        
+        container.appendChild(errorDiv);
+        
+        // Remove error after 5 seconds
+        setTimeout(() => {
+            errorDiv.remove();
+        }, 5000);
+    }
+    
+    // Modify your existing start chat function to include OTP check
+    async function checkAuthAndStartChat(phone) {
+        // Check if already authenticated
+        const authKey = 'zulu_auth_' + phone;
+        const authExpiry = localStorage.getItem('zulu_auth_expiry');
+        const authStatus = localStorage.getItem(authKey);
+        
+        const digits = phone.replace(/[^0-9]/g, '');
+        const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
+        isEmployee = EMPLOYEE_NUMBERS.includes(digits);
+        isAdminUser = (suffix === 'A' || suffix === '');
+        
+        // Check if session is expired
+        const isExpired = authExpiry && Date.now() > parseInt(authExpiry);
+        
+        if (authStatus === 'verified' && !isExpired) {
+            // Already authenticated and not expired
+            initChat(phone);
+        } else if (authStatus === 'bypassed' && !isExpired && isEmployee && isAdminUser) {
+            // Bypass still valid for admin/employee
+            initChat(phone);
+        } else {
+            // Need authentication
+            showOtpAuth(phone);
+        }
+    }
+    
+    // Modify your existing initChat function to store auth status
+    function initChat(phone) {
+        // Clear any existing auth status
+        document.getElementById('otpAuthSection').style.display = 'none';
+        document.getElementById('setupSection').style.display = 'none';
+        
+        // Rest of your existing initChat function...
+        // [Keep all your existing initChat code here]
+        
+        // Only change this line at the end:
+        // Store auth status
+        const authKey = 'zulu_auth_' + phone;
+        localStorage.setItem(authKey, 'verified');
+        localStorage.setItem('zulu_auth_expiry', Date.now() + (10 * 60 * 1000)); // 10 minutes
+    }
+    
+    // Modify your existing goBackToSetup function
+    function goBackToSetup() {
+        // Clear OTP timers
+        clearTimers();
+        
+        // Rest of your existing goBackToSetup function...
+        // [Keep all your existing goBackToSetup code here]
+        
+        // Show setup section
+        document.getElementById('setupSection').style.display = 'block';
+        document.getElementById('otpAuthSection').style.display = 'none';
+    }
+    
+    // Update your start chat button event listener
+    startChatBtn.addEventListener('click', () => {
+        const phone = phoneInput.value.trim();
+        if (phone && validatePhoneNumber(phone)) {
+            checkAuthAndStartChat(phone); // Changed from initChat to checkAuthAndStartChat
+        } else {
+            errorMessage.style.display = 'block';
+            phoneInput.classList.add('invalid');
+            phoneInput.focus();
+        }
+    });
     let currentPhone = '';
     let isConnected = false;
     let historyPage = 0;
