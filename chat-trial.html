@@ -1114,6 +1114,18 @@ function formatPhoneInput(value) {
     return digits + suffix;
 }
 
+// Show/hide auth section
+authSection.classList.remove('visible');
+authSection.classList.add('hidden');
+
+// Show/hide chat section
+chatSection.classList.remove('hidden');
+chatSection.classList.add('visible');
+
+// Show/hide trial banner
+trialBanner.classList.remove('hidden');
+trialBanner.classList.add('visible');
+
 // Update trial banner for verified users
 function updateTrialBanner() {
     if (isVerified) {
@@ -1129,6 +1141,10 @@ function updateTrialBanner() {
         trialBanner.classList.add('hidden');
     }
 }
+
+// Update phone form container visibility
+phoneFormContainer.classList.remove('hidden');
+phoneFormContainer.classList.add('visible');
 
 // Validate phone number
 function validatePhoneNumber(phone) {
