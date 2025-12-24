@@ -28,6 +28,9 @@ const EMPLOYEE_NUMBERS = [
 // OTP Store - store OTPs temporarily
 const otpStore = new Map();
 
+// Trial messages store - track free trial usage per session
+const trialStore = new Map(); // sessionId -> { count: number, messages: [] }
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -41,7 +44,7 @@ const openai = new OpenAI({
 // -------------------------
 // PERSISTED DATA: conversations, csvs
 // -------------------------
-let conversations = {}; // sessionId -> { history: [{role, content, ts}], lastActive }
+let conversations = {}; // sessionId -> { history: [{role, content, ts}], lastActive, isTrial: boolean, trialMessages: [] }
 let verifiedUsers = {}; // phoneNumber -> { verified: boolean, isAdmin: boolean, verifiedAt: timestamp }
 let galleriesData = [];
 let sellersData = []; // sellers CSV data
@@ -383,32 +386,58 @@ function parsePhoneNumberWithSuffix(phoneNumberWithSuffix) {
   };
 }
 
-// Also update the requireVerification middleware to handle suffixes:
-/**
- * Middleware to check if user is verified
- */
-const requireVerification = (req, res, next) => {
-  const phoneNumberWithSuffix = req.body.phoneNumber || req.params.phoneNumber;
+// Trial session middleware - no verification required for trial
+const checkTrialOrVerification = (req, res, next) => {
+  const sessionId = req.body.sessionId || req.body.phoneNumber;
   
-  if (!phoneNumberWithSuffix) {
+  if (!sessionId) {
     return res.status(400).json({
       success: false,
-      error: 'Phone number is required'
+      error: 'Session ID or phone number is required'
     });
   }
 
-  const user = verifiedUsers[phoneNumberWithSuffix];
-  
-  if (!user || !user.verified) {
-    return res.status(401).json({
-      success: false,
-      error: 'User not verified. Please complete OTP verification first.'
-    });
-  }
+  // If session ID is a phone number (verified user)
+  if (sessionId.match(/^\d{10}[AU]?$/)) {
+    const user = verifiedUsers[sessionId];
+    
+    if (!user || !user.verified) {
+      return res.status(401).json({
+        success: false,
+        error: 'User not verified. Please complete OTP verification first.'
+      });
+    }
 
-  req.user = user;
-  req.phoneNumber = phoneNumberWithSuffix;
-  next();
+    req.user = user;
+    req.phoneNumber = sessionId;
+    req.isTrial = false;
+    next();
+  } 
+  // Trial session (temporary ID)
+  else {
+    const session = trialStore.get(sessionId) || conversations[sessionId];
+    
+    if (!session) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid session'
+      });
+    }
+    
+    // Check if trial messages exceeded
+    if (session.trialCount >= 10) {
+      return res.status(403).json({
+        success: false,
+        error: 'Free trial limit reached. Please verify your phone number to continue.',
+        trialEnded: true
+      });
+    }
+    
+    req.sessionId = sessionId;
+    req.isTrial = true;
+    req.trialCount = session.trialCount || 0;
+    next();
+  }
 };
 
 // -------------------------
@@ -560,6 +589,7 @@ async function appendUnderColumn(headerName, text) {
     console.error('❌ appendUnderColumn error', e);
   }
 }
+
 // -------------------------
 // Helper function to parse India time for display
 // -------------------------
@@ -589,7 +619,7 @@ function parseIndiaTimeForDisplay(timestampStr) {
 // -------------------------
 const ZULU_CLUB_INFO = `
 Zulu Club is a hyperlocal lifestyle shopping app designed to deliver curated products ASAP.
-Its tagline is: “A shopping app, delivering ASAP. Lifestyle upgrades, specially curated for you.”
+Its tagline is: "A shopping app, delivering ASAP. Lifestyle upgrades, specially curated for you."
 Users discover products through short videos from nearby stores, popups, markets, and sellers.
 They can directly call or WhatsApp chat with sellers and purchase locally available lifestyle products.
 Zulu Club also offers curated selections on its app homepage, sourced from Zulu showrooms and partner stores,
@@ -1625,7 +1655,7 @@ Rules:
 • Include relevant metrics: funding, founders, growth stage, HQ, legal info according to user's question: "${userMessage}"
 • Max 200 characters (2–4 sentences)
 • Avoid emojis inside the explanation
-• Do not mention “paragraph above” or internal sources
+• Do not mention "paragraph above" or internal sources
 • If user asks broad or unclear query → Give concise Zulu overview
 
 At the end, always add a separate CTA line:
@@ -1650,7 +1680,7 @@ Use ONLY this factual data when answering:
 ${SELLER_KNOWLEDGE}
 
 Rules:
-• Respond specifically to the seller’s question: "${userMessage}"
+• Respond specifically to the seller's question: "${userMessage}"
 • Respond in Hinglish language or Hindi language according to "${userMessage}" based totally on user message language
 • Highlight benefits that match their intent (reach, logistics, onboarding, customers) according to user's question: "${userMessage}"
 • Premium but friendly business tone
@@ -1681,26 +1711,44 @@ const MAX_HISTORY_MESSAGES = 2000;
 
 function nowMs() { return Date.now(); }
 
-function createOrTouchSession(sessionId) {
+function createOrTouchSession(sessionId, isTrial = false) {
   if (!conversations[sessionId]) {
     conversations[sessionId] = {
       history: [],
       lastActive: nowMs(),
       lastDetectedIntent: null,
       lastDetectedIntentTs: 0,
-      lastMedia: null
+      lastMedia: null,
+      isTrial: isTrial,
+      trialMessages: [],
+      trialCount: 0
     };
+    
+    // Also store in trial store for quick lookup
+    if (isTrial) {
+      trialStore.set(sessionId, conversations[sessionId]);
+    }
   } else {
     conversations[sessionId].lastActive = nowMs();
+    if (isTrial && !trialStore.has(sessionId)) {
+      trialStore.set(sessionId, conversations[sessionId]);
+    }
   }
   
   return conversations[sessionId];
 }
 
 function appendToSessionHistory(sessionId, role, content) {
-  createOrTouchSession(sessionId);
+  createOrTouchSession(sessionId, sessionId.startsWith('temp-'));
   const entry = { role, content, ts: nowMs() };
   conversations[sessionId].history.push(entry);
+  
+  // Track trial messages
+  if (sessionId.startsWith('temp-')) {
+    conversations[sessionId].trialMessages.push(entry);
+    conversations[sessionId].trialCount = conversations[sessionId].history.filter(m => m.role === 'user').length;
+    trialStore.set(sessionId, conversations[sessionId]);
+  }
   
   if (conversations[sessionId].history.length > MAX_HISTORY_MESSAGES) {
     conversations[sessionId].history = conversations[sessionId].history.slice(-MAX_HISTORY_MESSAGES);
@@ -1722,6 +1770,7 @@ function purgeExpiredSessions() {
   for (const id of Object.keys(conversations)) {
     if (!conversations[id].lastActive || conversations[id].lastActive < cutoff) {
       delete conversations[id];
+      trialStore.delete(id);
     }
   }
   
@@ -1753,47 +1802,50 @@ async function getChatGPTResponse(sessionId, userMessage, companyInfo = ZULU_CLU
   
   try {
     // ensure session exists
-    createOrTouchSession(sessionId);
+    const isTrial = sessionId.startsWith('temp-');
+    createOrTouchSession(sessionId, isTrial);
     const session = conversations[sessionId];
     
-    // Check employee mode with suffix logic
-    const basePhone = sessionId.replace(/[A-Za-z]$/, '');
-    const isEmployee = EMPLOYEE_NUMBERS.includes(basePhone);
-    const suffix = /[A-Za-z]$/.test(sessionId) ? sessionId.slice(-1).toUpperCase() : '';
-    
-    console.log(`🔍 Employee check: ${sessionId} -> base: ${basePhone}, isEmployee: ${isEmployee}, suffix: ${suffix}`);
-    
-    if (isEmployee) {
-      console.log("⚡ Employee detected, checking mode...");
+    // Check employee mode with suffix logic (only for verified users)
+    if (!isTrial) {
+      const basePhone = sessionId.replace(/[A-Za-z]$/, '');
+      const isEmployee = EMPLOYEE_NUMBERS.includes(basePhone);
+      const suffix = /[A-Za-z]$/.test(sessionId) ? sessionId.slice(-1).toUpperCase() : '';
       
-      // If suffix is 'U', treat as user (bypass employee flow)
-      if (suffix === 'U') {
-        console.log("👤 User mode (suffix U) - bypassing employee flow");
-      } 
-      // If suffix is 'A' or no suffix, treat as admin/employee
-      else if (suffix === 'A' || suffix === '') {
-        console.log("👔 Admin/Employee mode activated, calling preIntentFilter");
+      console.log(`🔍 Employee check: ${sessionId} -> base: ${basePhone}, isEmployee: ${isEmployee}, suffix: ${suffix}`);
+      
+      if (isEmployee) {
+        console.log("⚡ Employee detected, checking mode...");
         
-        // Process through preIntentFilter for employee messages
-        const employeeHandled = await preIntentFilter(
-          openai,
-          session,
-          sessionId,
-          userMessage,
-          getSheets,
-          createAgentTicket,
-          appendUnderColumn
-        );
-        
-        console.log(`📊 preIntentFilter returned: ${employeeHandled ? 'handled' : 'not handled'}`);
-        
-        // If preIntentFilter returned a response (not null), use it
-        if (employeeHandled !== null && employeeHandled !== undefined && employeeHandled.trim().length > 0) {
-          return employeeHandled;
+        // If suffix is 'U', treat as user (bypass employee flow)
+        if (suffix === 'U') {
+          console.log("👤 User mode (suffix U) - bypassing employee flow");
+        } 
+        // If suffix is 'A' or no suffix, treat as admin/employee
+        else if (suffix === 'A' || suffix === '') {
+          console.log("👔 Admin/Employee mode activated, calling preIntentFilter");
+          
+          // Process through preIntentFilter for employee messages
+          const employeeHandled = await preIntentFilter(
+            openai,
+            session,
+            sessionId,
+            userMessage,
+            getSheets,
+            createAgentTicket,
+            appendUnderColumn
+          );
+          
+          console.log(`📊 preIntentFilter returned: ${employeeHandled ? 'handled' : 'not handled'}`);
+          
+          // If preIntentFilter returned a response (not null), use it
+          if (employeeHandled !== null && employeeHandled !== undefined && employeeHandled.trim().length > 0) {
+            return employeeHandled;
+          }
+          
+          // If preIntentFilter returned null/empty, continue with normal flow
+          console.log("🔄 Employee mode but preIntentFilter returned null, continuing with normal flow");
         }
-        
-        // If preIntentFilter returned null/empty, continue with normal flow
-        console.log("🔄 Employee mode but preIntentFilter returned null, continuing with normal flow");
       }
     }
     
@@ -1826,7 +1878,10 @@ async function getChatGPTResponse(sessionId, userMessage, companyInfo = ZULU_CLU
       }
       
       try {
-        await appendUnderColumn(sessionId, `AGENT_TICKET_CREATED: ${ticketId}`);
+        // Only log to Google Sheets for verified users
+        if (!isTrial) {
+          await appendUnderColumn(sessionId, `AGENT_TICKET_CREATED: ${ticketId}`);
+        }
       } catch (e) {
         console.error('Failed to log agent ticket into column:', e);
       }
@@ -1927,21 +1982,23 @@ For more details, please contact our support team.`;
   }
 }
 
-async function handleMessage(sessionId, userMessage) {
+async function handleMessage(sessionId, userMessage, isTrial = false) {
   try {
     // 1) Save incoming user message to session
     appendToSessionHistory(sessionId, 'user', userMessage);
     
-    // 2) Log user message to Google Sheet
-    try {
-      await appendUnderColumn(sessionId, `USER: ${userMessage}`);
-    } catch (e) {
-      console.error('sheet log user failed', e);
+    // 2) Log user message to Google Sheets (only for verified users)
+    if (!isTrial) {
+      try {
+        await appendUnderColumn(sessionId, `USER: ${userMessage}`);
+      } catch (e) {
+        console.error('sheet log user failed', e);
+      }
     }
     
     // 3) Debug print compact history
     const fullHistory = getFullSessionHistory(sessionId);
-    console.log(`🔁 Session ${sessionId} history length: ${fullHistory.length}`);
+    console.log(`🔁 Session ${sessionId} history length: ${fullHistory.length}, Trial: ${isTrial}, Trial count: ${conversations[sessionId]?.trialCount || 0}`);
     
     // 4) Get response
     const aiResponse = await getChatGPTResponse(sessionId, userMessage);
@@ -1949,11 +2006,13 @@ async function handleMessage(sessionId, userMessage) {
     // 5) Save AI response back into session history
     appendToSessionHistory(sessionId, 'assistant', aiResponse);
     
-    // 6) Log assistant response
-    try {
-      await appendUnderColumn(sessionId, `ASSISTANT: ${aiResponse}`);
-    } catch (e) {
-      console.error('sheet log assistant failed', e);
+    // 6) Log assistant response (only for verified users)
+    if (!isTrial) {
+      try {
+        await appendUnderColumn(sessionId, `ASSISTANT: ${aiResponse}`);
+      } catch (e) {
+        console.error('sheet log assistant failed', e);
+      }
     }
     
     // 7) update lastActive
@@ -1966,6 +2025,49 @@ async function handleMessage(sessionId, userMessage) {
     return `⚠️ Sorry, I encountered an error. Please try again.`;
   }
 }
+
+// -------------------------
+// Transfer trial messages to verified user
+// -------------------------
+async function transferTrialMessages(tempSessionId, phoneNumber) {
+  try {
+    const session = conversations[tempSessionId];
+    if (!session) {
+      console.log(`No trial session found for ${tempSessionId}`);
+      return;
+    }
+    
+    const trialMessages = session.history || [];
+    
+    // Log all trial messages to Google Sheets for the verified user
+    for (const msg of trialMessages) {
+      const prefix = msg.role === 'user' ? 'USER' : 'ASSISTANT';
+      try {
+        await appendUnderColumn(phoneNumber, `${prefix}: ${msg.content}`);
+      } catch (e) {
+        console.error(`Failed to log trial message: ${e.message}`);
+      }
+    }
+    
+    // Move conversation to verified user
+    conversations[phoneNumber] = {
+      ...session,
+      history: [...trialMessages],
+      lastActive: nowMs(),
+      isTrial: false
+    };
+    
+    // Remove trial session
+    delete conversations[tempSessionId];
+    trialStore.delete(tempSessionId);
+    
+    console.log(`✅ Transferred ${trialMessages.length} trial messages from ${tempSessionId} to ${phoneNumber}`);
+    
+  } catch (error) {
+    console.error('Error transferring trial messages:', error);
+  }
+}
+
 // -------------------------
 // OTP Authentication Endpoints
 // -------------------------
@@ -2010,7 +2112,7 @@ app.post('/auth/send-otp', async (req, res) => {
  */
 app.post('/auth/verify-otp', async (req, res) => {
   try {
-    const { phoneNumber, otp } = req.body;
+    const { phoneNumber, otp, tempSessionId } = req.body;
     
     if (!phoneNumber || !otp) {
       return res.status(400).json({
@@ -2022,6 +2124,11 @@ app.post('/auth/verify-otp', async (req, res) => {
     console.log(`🔐 Verifying OTP for: ${phoneNumber}`);
     
     const result = await verifyOtp(phoneNumber, otp);
+    
+    // Transfer trial messages if tempSessionId provided
+    if (tempSessionId && tempSessionId.startsWith('temp-')) {
+      await transferTrialMessages(tempSessionId, phoneNumber);
+    }
     
     return res.json({
       success: true,
@@ -2115,41 +2222,46 @@ app.post('/auth/logout', async (req, res) => {
 });
 
 // -------------------------
-// Chat API Endpoints (with verification middleware)
+// Chat API Endpoints (with trial/verification middleware)
 // -------------------------
 
-// Serve chat interface (now with OTP)
+// Serve chat interface (with trial support)
 app.get('/chat', (req, res) => {
-  res.sendFile(__dirname + '/chat-otp.html');
+  res.sendFile(__dirname + '/chat-trial.html');
 });
 
-// Old chat interface (for backward compatibility)
-app.get('/chat-old', (req, res) => {
-  res.sendFile(__dirname + '/chat.html');
-});
-
-// API endpoint for sending messages (now requires verification)
-app.post('/chat/message', requireVerification, async (req, res) => {
+// API endpoint for sending messages (supports trial)
+app.post('/chat/message', checkTrialOrVerification, async (req, res) => {
   try {
-    const { phoneNumber, message } = req.body;
+    const sessionId = req.sessionId || req.phoneNumber;
+    const isTrial = req.isTrial;
+    const { message } = req.body;
     
-    if (!phoneNumber || !message) {
+    if (!message) {
       return res.status(400).json({
         success: false,
-        error: 'Phone number and message are required'
+        error: 'Message is required'
       });
     }
     
-    console.log(`💬 Chat message from ${phoneNumber}: ${message}`);
+    console.log(`💬 Chat message from ${sessionId} (Trial: ${isTrial}): ${message}`);
     
     // Process the message
-    const response = await handleMessage(phoneNumber, message);
+    const response = await handleMessage(sessionId, message, isTrial);
     
-    // Return the response
+    // Get updated trial count
+    const trialCount = conversations[sessionId]?.trialCount || 0;
+    const messagesLeft = 10 - trialCount;
+    
+    // Return the response with trial info
     return res.json({
       success: true,
       response: response,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      isTrial: isTrial,
+      trialCount: trialCount,
+      messagesLeft: messagesLeft,
+      trialEnded: trialCount >= 10
     });
     
   } catch (error) {
@@ -2161,16 +2273,48 @@ app.post('/chat/message', requireVerification, async (req, res) => {
   }
 });
 
-// Get chat history for a phone number (requires verification)
-app.get('/chat/history/:phoneNumber', requireVerification, async (req, res) => {
+// Create trial session
+app.post('/chat/create-trial', (req, res) => {
   try {
-    const { phoneNumber } = req.params;
-    const history = getFullSessionHistory(phoneNumber);
+    // Generate unique trial session ID
+    const trialId = 'temp-' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+    
+    // Create trial session
+    createOrTouchSession(trialId, true);
+    
+    console.log(`🎁 Created trial session: ${trialId}`);
+    
+    return res.json({
+      success: true,
+      sessionId: trialId,
+      message: 'Trial session created',
+      trialLimit: 10
+    });
+    
+  } catch (error) {
+    console.error('Error creating trial session:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get chat history for a session (supports trial)
+app.get('/chat/history/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const history = getFullSessionHistory(sessionId);
+    const isTrial = sessionId.startsWith('temp-');
+    const trialCount = conversations[sessionId]?.trialCount || 0;
     
     return res.json({
       success: true,
       history: history,
-      sessionActive: !!conversations[phoneNumber]
+      sessionActive: !!conversations[sessionId],
+      isTrial: isTrial,
+      trialCount: trialCount,
+      messagesLeft: 10 - trialCount
     });
     
   } catch (error) {
@@ -2182,23 +2326,45 @@ app.get('/chat/history/:phoneNumber', requireVerification, async (req, res) => {
   }
 });
 
-// Get active sessions (admin only)
-app.get('/chat/sessions', (req, res) => {
-  const activeSessions = Object.keys(conversations).map(id => ({
-    phoneNumber: id,
-    lastActive: new Date(conversations[id].lastActive).toISOString(),
-    historyLength: conversations[id].history.length,
-    lastIntent: conversations[id].lastDetectedIntent
-  }));
-  
-  const verifiedCount = Object.keys(verifiedUsers).length;
-  
-  return res.json({
-    success: true,
-    activeSessions,
-    verifiedUsers: verifiedCount,
-    totalSessions: activeSessions.length
-  });
+// Get trial session info
+app.get('/chat/trial-info/:sessionId', (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    
+    if (!sessionId.startsWith('temp-')) {
+      return res.json({
+        success: false,
+        error: 'Not a trial session'
+      });
+    }
+    
+    const session = conversations[sessionId];
+    if (!session) {
+      return res.json({
+        success: false,
+        error: 'Session not found'
+      });
+    }
+    
+    const trialCount = session.trialCount || 0;
+    const messagesLeft = 10 - trialCount;
+    
+    return res.json({
+      success: true,
+      sessionId: sessionId,
+      trialCount: trialCount,
+      messagesLeft: messagesLeft,
+      trialEnded: trialCount >= 10,
+      lastActive: session.lastActive
+    });
+    
+  } catch (error) {
+    console.error('Error getting trial info:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
 // -------------------------
@@ -2206,25 +2372,26 @@ app.get('/chat/sessions', (req, res) => {
 // -------------------------
 app.get('/', (req, res) => {
   res.json({ 
-    status: 'Zulu Club Chat Server with OTP Authentication is running', 
+    status: 'Zulu Club Chat Server with Trial & OTP Authentication is running', 
     service: 'Zulu Club Chat AI Assistant',
-    version: '8.0 - OTP Authentication Required',
+    version: '9.0 - 10-Message Free Trial',
     employee_numbers: EMPLOYEE_NUMBERS,
     endpoints: {
       chat_interface: '/chat',
+      create_trial: 'POST /chat/create-trial',
       send_otp: 'POST /auth/send-otp',
       verify_otp: 'POST /auth/verify-otp',
       check_status: 'POST /auth/check-status',
       logout: 'POST /auth/logout',
-      send_message: 'POST /chat/message (requires verification)',
-      get_history: 'GET /chat/history/:phoneNumber (requires verification)',
-      get_sessions: 'GET /chat/sessions',
-      refresh_csv: 'GET /refresh-csv'
+      send_message: 'POST /chat/message (trial or verified)',
+      get_history: 'GET /chat/history/:sessionId',
+      get_trial_info: 'GET /chat/trial-info/:sessionId'
     },
     stats: {
       product_categories_loaded: galleriesData.length,
       sellers_loaded: sellersData.length,
       active_conversations: Object.keys(conversations).length,
+      trial_sessions: Array.from(trialStore.keys()).length,
       verified_users: Object.keys(verifiedUsers).length
     },
     timestamp: new Date().toISOString()
@@ -2246,8 +2413,8 @@ app.get('/refresh-csv', async (req, res) => {
   }
 });
 
-// Get chat history from Google Sheets with pagination (requires verification)
-app.post('/chat/history', requireVerification, async (req, res) => {
+// Get chat history from Google Sheets (for verified users only)
+app.post('/chat/history-sheets', async (req, res) => {
     try {
         const { phoneNumber, page = 0, pageSize = 10 } = req.body;
         
@@ -2258,7 +2425,16 @@ app.post('/chat/history', requireVerification, async (req, res) => {
             });
         }
         
-        console.log(`📜 Fetching history for ${phoneNumber}, page ${page}, pageSize ${pageSize}`);
+        // Check if user is verified
+        const user = verifiedUsers[phoneNumber];
+        if (!user || !user.verified) {
+            return res.status(401).json({
+                success: false,
+                error: 'User not verified'
+            });
+        }
+        
+        console.log(`📜 Fetching sheets history for ${phoneNumber}, page ${page}, pageSize ${pageSize}`);
         
         // Get the Google Sheets client
         const sheets = await getSheets();
@@ -2283,7 +2459,6 @@ app.post('/chat/history', requireVerification, async (req, res) => {
             const headers = (headersResp.data.values && headersResp.data.values[0]) || [];
             
             // Find the column index for this phone number
-            // Phone numbers are stored as column headers in format: "8368127760A"
             let colIndex = -1;
             for (let i = 0; i < headers.length; i++) {
                 const header = String(headers[i]).trim();
@@ -2294,7 +2469,7 @@ app.post('/chat/history', requireVerification, async (req, res) => {
             }
             
             if (colIndex === -1) {
-                console.log(`📜 No history found for ${phoneNumber}`);
+                console.log(`📜 No history found for ${phoneNumber} in sheets`);
                 return res.json({
                     success: true,
                     history: '',
@@ -2362,7 +2537,7 @@ app.post('/chat/history', requireVerification, async (req, res) => {
             // Get messages for this page (we'll return newest first for display)
             const pageMessages = allMessages.slice(startIndex, endIndex);
             
-            console.log(`📜 Found ${totalMessages} total messages, returning ${pageMessages.length} for page ${page}`);
+            console.log(`📜 Found ${totalMessages} total messages in sheets, returning ${pageMessages.length} for page ${page}`);
             
             // Format as string for backward compatibility
             const historyString = allMessages
@@ -2390,45 +2565,6 @@ app.post('/chat/history', requireVerification, async (req, res) => {
         
     } catch (error) {
         console.error('💥 Chat history endpoint error:', error.message);
-        return res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
-
-// Optional: Add an endpoint to get column headers (for debugging)
-app.get('/chat/history-headers', async (req, res) => {
-    try {
-        const sheets = await getSheets();
-        if (!sheets) {
-            return res.json({
-                success: false,
-                error: 'Google Sheets not configured'
-            });
-        }
-        
-        const headersResp = await sheets.spreadsheets.values.get({ 
-            spreadsheetId: GOOGLE_SHEET_ID, 
-            range: 'History!1:1' 
-        });
-        
-        const headers = (headersResp.data.values && headersResp.data.values[0]) || [];
-        
-        // Filter for phone number columns (assuming they follow 10-digit pattern)
-        const phoneColumns = headers
-            .map((header, index) => ({ header, index }))
-            .filter(item => /^\d{10}[AU]?$/.test(String(item.header).trim()));
-        
-        return res.json({
-            success: true,
-            headers: headers,
-            phoneColumns: phoneColumns,
-            totalColumns: headers.length
-        });
-        
-    } catch (error) {
-        console.error('Error getting headers:', error);
         return res.status(500).json({
             success: false,
             error: error.message
