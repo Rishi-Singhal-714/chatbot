@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Zulu Club Chat - OTP Login</title>
+    <title>Zulu Club Chat - Free Trial</title>
     <style>
         /* WhatsApp-like Design - FULL SCREEN */
         * {
@@ -145,6 +145,31 @@
         .header-right i {
             min-width: 24px;
             text-align: center;
+        }
+        
+        /* Trial Banner */
+        .trial-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 12px 15px;
+            text-align: center;
+            color: white;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-shrink: 0;
+            animation: pulse 2s infinite;
+        }
+        
+        .trial-banner.warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.9; }
+            100% { opacity: 1; }
         }
         
         /* Login/Signup Section */
@@ -326,6 +351,29 @@
             cursor: not-allowed;
         }
         
+        .trial-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-top: 20px;
+            height: 54px;
+        }
+        
+        .trial-btn:hover {
+            transform: translateY(-2px);
+        }
+        
         .resend-btn {
             background: transparent;
             color: #00a884;
@@ -407,17 +455,15 @@
             line-height: 1.5;
         }
         
-        .employee-list {
-            background: #2a3942;
-            padding: 12px;
+        .trial-info {
+            background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+            border: 1px solid #667eea;
+            padding: 15px;
             border-radius: 8px;
-            margin-top: 10px;
-            font-size: 12px;
-            border: 1px solid #2a3942;
-            line-height: 1.6;
+            margin-top: 15px;
         }
         
-        /* Chat Section (hidden by default) */
+        /* Chat Section */
         .chat-section {
             display: none;
             flex: 1;
@@ -695,55 +741,127 @@
             }
         }
         
-        /* For very small screens */
-        @media (max-height: 600px) {
-            .auth-header {
-                margin-bottom: 15px;
-            }
-            
-            .auth-form-container {
-                margin-bottom: 15px;
-            }
-            
-            .auth-btn {
-                margin-top: 15px;
-            }
-        }
         /* Link styling in message content */
-.message-content a {
-    color: #53bdeb;
-    text-decoration: none;
-    word-break: break-all;
-}
+        .message-content a {
+            color: #53bdeb;
+            text-decoration: none;
+            word-break: break-all;
+        }
 
-.message-content a:hover {
-    text-decoration: underline;
-}
+        .message-content a:hover {
+            text-decoration: underline;
+        }
 
-.message-bubble.user .message-content a {
-    color: #a3d9e8;
-}
+        .message-bubble.user .message-content a {
+            color: #a3d9e8;
+        }
 
-/* Message bubble links */
-.message-content .link {
-    color: #53bdeb;
-    text-decoration: none;
-    word-break: break-all;
-}
+        /* Message bubble links */
+        .message-content .link {
+            color: #53bdeb;
+            text-decoration: none;
+            word-break: break-all;
+        }
 
-.message-content .link:hover {
-    text-decoration: underline;
-}
+        .message-content .link:hover {
+            text-decoration: underline;
+        }
 
-.message-bubble.user .message-content .link {
-    color: #a3d9e8;
-}
+        .message-bubble.user .message-content .link {
+            color: #a3d9e8;
+        }
+        
+        /* Trial Modal */
+        .trial-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .trial-modal-content {
+            background: #202c33;
+            border-radius: 15px;
+            padding: 25px;
+            max-width: 400px;
+            width: 100%;
+            animation: slideUp 0.3s ease;
+            border: 2px solid #00a884;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .trial-modal h3 {
+            color: #e9edef;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 18px;
+        }
+        
+        .trial-modal p {
+            color: #8696a0;
+            margin-bottom: 20px;
+            text-align: center;
+            line-height: 1.5;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .modal-btn.primary {
+            background: #00a884;
+            color: white;
+        }
+        
+        .modal-btn.secondary {
+            background: #2a3942;
+            color: #e9edef;
+        }
+        
+        .modal-btn:hover {
+            transform: translateY(-2px);
+        }
     </style>
     <!-- WhatsApp Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="emoji-background"></div>
+    
+    <!-- Trial Limit Modal -->
+    <div class="trial-modal hidden" id="trialModal">
+        <div class="trial-modal-content">
+            <h3><i class="fas fa-exclamation-triangle"></i> Trial Limit Reached</h3>
+            <p>You've used all 10 free trial messages. Please verify your phone number to continue chatting with our AI assistant.</p>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" id="skipBtn">Maybe Later</button>
+                <button class="modal-btn primary" id="verifyNowBtn">Verify Now</button>
+            </div>
+        </div>
+    </div>
     
     <div class="whatsapp-container">
         <!-- Header -->
@@ -756,7 +874,7 @@
                     <div class="profile-avatar" id="profileAvatar">ZC</div>
                     <div class="profile-details">
                         <h3 id="chatTitle">Zulu Club Assistant</h3>
-                        <p id="chatStatus">OTP Login Required</p>
+                        <p id="chatStatus">Free Trial Active</p>
                     </div>
                 </div>
             </div>
@@ -765,30 +883,44 @@
             </div>
         </div>
         
+        <!-- Trial Banner -->
+        <div class="trial-banner" id="trialBanner">
+            <i class="fas fa-gift"></i>
+            <span id="trialMessage">🎁 You have <strong>10</strong> free trial messages!</span>
+        </div>
+        
         <!-- Auth Section (Login/Signup) -->
         <div class="auth-section" id="authSection">
             <div class="auth-header">
                 <h2>Welcome to Zulu Club Chat</h2>
-                <p>Enter your phone number to login with OTP</p>
+                <p>Try our AI assistant for free, then verify to continue</p>
             </div>
             
             <div class="instructions">
                 <h3><i class="fas fa-info-circle"></i> How it works:</h3>
                 <ul>
-                    <li>Enter your 10-digit phone number</li>
-                    <li><strong>Optional:</strong> Add A for Admin mode or U for User mode</li>
+                    <li><strong>Start with 10 free trial messages</strong> - no signup required</li>
+                    <li>After 10 messages, verify your phone number to continue</li>
+                    <li>Enter your 10-digit phone number with optional A/U suffix</li>
                     <li>We'll send a 4-digit OTP to verify</li>
-                    <li>Enter the OTP to start chatting</li>
-                    <div class="employee-list">
-                        <div><br><strong>Note:</strong> Only A and U suffixes are allowed</div>
-                    </div>
+                    <li>You can also verify anytime during the trial</li>
                 </ul>
+                
+                <div class="trial-info">
+                    <p><strong>💡 Tip:</strong> Your trial messages will be saved and transferred to your account after verification.</p>
+                </div>
             </div>
             
-            <div class="auth-form-container">
+            <button class="trial-btn" id="startTrialBtn">
+                <i class="fas fa-play-circle"></i> Start Free Trial (10 Messages)
+            </button>
+            
+            <div class="auth-form-container" id="phoneFormContainer">
                 <!-- Step 1: Phone Number Input -->
                 <div class="auth-step active" id="stepPhone">
-                    <h3><i class="fas fa-phone"></i> Enter Phone Number</h3>
+                    <h3><i class="fas fa-phone"></i> Verify Phone Number</h3>
+                    <p style="color: #8696a0; margin-bottom: 15px;">You can verify now or after your trial. Your messages will be saved.</p>
+                    
                     <div class="input-group">
                         <label for="phoneInput">Phone Number (10 digits)</label>
                         <div class="phone-input-wrapper">
@@ -845,7 +977,7 @@
             </div>
         </div>
         
-        <!-- Chat Section (hidden until verified) -->
+        <!-- Chat Section (hidden until trial starts) -->
         <div class="chat-section" id="chatSection">
             <!-- Chat Messages -->
             <div class="chat-messages" id="chatMessages">
@@ -872,28 +1004,34 @@
             
             <!-- Status Bar -->
             <div class="status-bar" id="statusBar">
-                Connected as: <span id="currentPhone"></span>
+                <span id="statusMessage">Free Trial: <span id="messagesLeft">10</span> messages left</span>
             </div>
         </div>
     </div>
 
 <script>
     // Global state
-    let currentPhone = '';
+    let currentSessionId = '';
+    let isTrial = true;
     let isVerified = false;
     let isAdmin = false;
     let otpTimer = null;
     let countdown = 60;
+    let trialCount = 0;
+    let messagesLeft = 10;
     
     // DOM Elements
     const authSection = document.getElementById('authSection');
     const chatSection = document.getElementById('chatSection');
+    const trialBanner = document.getElementById('trialBanner');
+    const trialModal = document.getElementById('trialModal');
     const stepPhone = document.getElementById('stepPhone');
     const stepOtp = document.getElementById('stepOtp');
     const phoneInput = document.getElementById('phoneInput');
     const sendOtpBtn = document.getElementById('sendOtpBtn');
     const verifyOtpBtn = document.getElementById('verifyOtpBtn');
     const resendOtpBtn = document.getElementById('resendOtpBtn');
+    const startTrialBtn = document.getElementById('startTrialBtn');
     const otpPhoneNumber = document.getElementById('otpPhoneNumber');
     const phoneError = document.getElementById('phoneError');
     const otpError = document.getElementById('otpError');
@@ -906,11 +1044,16 @@
     const chatMessages = document.getElementById('chatMessages');
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
-    const currentPhoneSpan = document.getElementById('currentPhone');
-    const backBtn = document.getElementById('backBtn');
     const profileAvatar = document.getElementById('profileAvatar');
     const chatTitle = document.getElementById('chatTitle');
     const chatStatus = document.getElementById('chatStatus');
+    const statusMessage = document.getElementById('statusMessage');
+    const messagesLeftSpan = document.getElementById('messagesLeft');
+    const trialMessageSpan = document.getElementById('trialMessage');
+    
+    // Modal buttons
+    const skipBtn = document.getElementById('skipBtn');
+    const verifyNowBtn = document.getElementById('verifyNowBtn');
     
     // OTP input elements
     const otp1 = document.getElementById('otp1');
@@ -969,183 +1112,111 @@
         }
     }
     
-// In phone input event listener
-phoneInput.addEventListener('input', function(e) {
-    let formatted = formatPhoneInput(this.value);
-    this.value = formatted;
-    
-    // Update suffix badge
-    updateSuffixBadge(formatted);
-    
-    // Validate and update UI
-    if (validatePhoneNumber(formatted)) {
-        this.classList.remove('invalid');
-        this.classList.add('valid');
-        phoneError.classList.add('hidden');
-        sendOtpBtn.disabled = false;
-    } else {
-        this.classList.remove('valid');
-        this.classList.add('invalid');
-        phoneError.classList.remove('hidden');
-        
-        // Provide specific error message
-        if (formatted.length === 11) {
-            const suffix = formatted.slice(-1).toUpperCase();
-            if (!['A', 'U'].includes(suffix)) {
-                phoneError.textContent = 'Invalid suffix. Only A (Admin) or U (User) allowed.';
-            } else if (formatted.slice(0, 10).length !== 10 || !/^\d{10}$/.test(formatted.slice(0, 10))) {
-                phoneError.textContent = 'First 10 characters must be digits.';
+    // Start free trial
+    async function startFreeTrial() {
+        try {
+            startTrialBtn.disabled = true;
+            startTrialBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Starting Trial...';
+            
+            const response = await fetch('/chat/create-trial', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                currentSessionId = data.sessionId;
+                isTrial = true;
+                isVerified = false;
+                trialCount = 0;
+                messagesLeft = 10;
+                
+                // Hide auth section, show chat section
+                authSection.style.display = 'none';
+                chatSection.classList.add('active');
+                trialBanner.style.display = 'flex';
+                
+                // Update UI
+                updateTrialUI();
+                loadWelcomeMessage();
+                
+                // Enable chat input
+                messageInput.disabled = false;
+                messageInput.focus();
+                
+                console.log(`🎁 Trial started with session ID: ${currentSessionId}`);
+            } else {
+                alert('Failed to start trial. Please try again.');
+                startTrialBtn.disabled = false;
+                startTrialBtn.innerHTML = '<i class="fas fa-play-circle"></i> Start Free Trial (10 Messages)';
             }
-        } else if (formatted.length > 0 && formatted.length < 10) {
-            phoneError.textContent = 'Phone number must be 10 digits.';
-        } else if (formatted.length > 11) {
-            phoneError.textContent = 'Maximum 11 characters (10 digits + A/U).';
+        } catch (error) {
+            console.error('Error starting trial:', error);
+            alert('Network error. Please try again.');
+            startTrialBtn.disabled = false;
+            startTrialBtn.innerHTML = '<i class="fas fa-play-circle"></i> Start Free Trial (10 Messages)';
+        }
+    }
+    
+    // Update trial UI
+    function updateTrialUI() {
+        messagesLeft = 10 - trialCount;
+        messagesLeftSpan.textContent = messagesLeft;
+        
+        if (messagesLeft > 5) {
+            trialBanner.className = 'trial-banner';
+            trialMessageSpan.innerHTML = `🎁 You have <strong>${messagesLeft}</strong> free trial messages left!`;
+            trialBanner.style.display = 'flex';
+        } else if (messagesLeft > 0) {
+            trialBanner.className = 'trial-banner warning';
+            trialMessageSpan.innerHTML = `⚠️ Only <strong>${messagesLeft}</strong> trial messages left!`;
+            trialBanner.style.display = 'flex';
         } else {
-            phoneError.textContent = 'Please enter a valid 10-digit number with optional A/U suffix';
+            trialBanner.className = 'trial-banner warning';
+            trialMessageSpan.innerHTML = '⛔ Trial ended. Please verify to continue.';
+            trialBanner.style.display = 'flex';
+        }
+        
+        // Update status bar
+        if (isTrial) {
+            statusMessage.innerHTML = `Free Trial: <strong>${messagesLeft}</strong> messages left`;
+            chatTitle.textContent = 'Zulu Club Trial';
+            chatStatus.textContent = 'Free Trial Active';
+            profileAvatar.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        } else {
+            statusMessage.innerHTML = `Verified User: ${currentSessionId}`;
+            chatTitle.textContent = 'Zulu Club Assistant';
+            chatStatus.textContent = 'Online • Verified';
+            profileAvatar.style.background = 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)';
+        }
+    }
+    
+    // Show trial limit modal
+    function showTrialLimitModal() {
+        trialModal.classList.remove('hidden');
+    }
+    
+    // Hide trial limit modal
+    function hideTrialLimitModal() {
+        trialModal.classList.add('hidden');
+    }
+    
+    // Send OTP
+    async function sendOtp() {
+        const phone = phoneInput.value.trim();
+        
+        if (!validatePhoneNumber(phone)) {
+            phoneError.classList.remove('hidden');
+            phoneError.textContent = 'Please enter a valid phone number';
+            return;
         }
         
         sendOtpBtn.disabled = true;
-    }
-});
-    
-// Send OTP
-async function sendOtp() {
-    const phone = phoneInput.value.trim();
-    
-    if (!validatePhoneNumber(phone)) {
-        phoneError.classList.remove('hidden');
-        phoneError.textContent = 'Please enter a valid phone number';
-        return;
-    }
-    
-    sendOtpBtn.disabled = true;
-    sendOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-    phoneError.classList.add('hidden');
-    
-    try {
-        const response = await fetch('/auth/send-otp', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                phoneNumber: phone
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            // Store phone number for OTP verification
-            currentPhone = phone;
-            otpPhoneNumber.textContent = phone;
-            
-            // Show OTP step
-            stepPhone.classList.remove('active');
-            stepOtp.classList.add('active');
-            
-            // Show appropriate message based on mode
-            if (data.debugOtp) {
-                debugInfo.classList.remove('hidden');
-                debugInfo.innerHTML = `
-                    <strong>Development Mode:</strong> OTP is sent to your console.<br>
-                    Check server terminal for OTP code.
-                `;
-                console.log(`📱 DEVELOPMENT OTP for ${phone}: ${data.debugOtp}`);
-            } else {
-                debugInfo.classList.add('hidden');
-                console.log(`📱 OTP sent via ZuluShop API to ${phone}`);
-            }
-            
-            // Start OTP timer
-            startOtpTimer();
-            
-            // Focus first OTP input
-            otp1.focus();
-        } else {
-            phoneError.classList.remove('hidden');
-            phoneError.textContent = data.error || 'Failed to send OTP';
-            sendOtpBtn.disabled = false;
-            sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
-        }
-    } catch (error) {
-        phoneError.classList.remove('hidden');
-        phoneError.textContent = 'Network error. Please try again.';
-        sendOtpBtn.disabled = false;
-        sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
-        console.error('Error sending OTP:', error);
-    }
-}
-
-// Verify OTP
-async function verifyOtp() {
-    const otp = otp1.value + otp2.value + otp3.value + otp4.value;
-    
-    if (otp.length !== 4 || !/^\d{4}$/.test(otp)) {
-        otpError.classList.remove('hidden');
-        otpError.textContent = 'Please enter a valid 4-digit OTP';
-        return;
-    }
-    
-    verifyOtpBtn.disabled = true;
-    verifyOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
-    otpError.classList.add('hidden');
-    otpSuccess.classList.add('hidden');
-    
-    try {
-        const response = await fetch('/auth/verify-otp', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                phoneNumber: currentPhone,
-                otp: otp
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            otpError.classList.add('hidden');
-            otpSuccess.classList.remove('hidden');
-            otpSuccess.textContent = 'OTP verified successfully!';
-            
-            // Store verification info
-            isVerified = true;
-            isAdmin = data.isAdmin || false;
-            
-            // Store phone in localStorage for auto-login
-            localStorage.setItem('zulu_verified_phone', currentPhone);
-            
-            // Show success message for 2 seconds then start chat
-            setTimeout(() => {
-                startChat();
-            }, 2000);
-            
-        } else {
-            otpError.classList.remove('hidden');
-            otpError.textContent = data.error || 'Invalid OTP. Please check and try again.';
-            verifyOtpBtn.disabled = false;
-            verifyOtpBtn.innerHTML = '<i class="fas fa-check"></i> Verify OTP';
-            
-            // Clear OTP inputs on error
-            clearOtpInputs();
-            otp1.focus();
-        }
-    } catch (error) {
-        otpError.classList.remove('hidden');
-        otpError.textContent = 'Network error. Please try again.';
-        verifyOtpBtn.disabled = false;
-        verifyOtpBtn.innerHTML = '<i class="fas fa-check"></i> Verify OTP';
-        console.error('Error verifying OTP:', error);
-    }
-}
-    
-    // Resend OTP
-    async function resendOtp() {
-        resendOtpBtn.disabled = true;
-        resendOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resending...';
+        sendOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        phoneError.classList.add('hidden');
         
         try {
             const response = await fetch('/auth/send-otp', {
@@ -1154,7 +1225,150 @@ async function verifyOtp() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    phoneNumber: currentPhone
+                    phoneNumber: phone
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Store phone number for OTP verification
+                otpPhoneNumber.textContent = phone;
+                
+                // Show OTP step
+                stepPhone.classList.remove('active');
+                stepOtp.classList.add('active');
+                
+                // Show appropriate message based on mode
+                if (data.debugOtp) {
+                    debugInfo.classList.remove('hidden');
+                    debugInfo.innerHTML = `
+                        <strong>Development Mode:</strong> OTP is sent to your console.<br>
+                        Check server terminal for OTP code.
+                    `;
+                    console.log(`📱 DEVELOPMENT OTP for ${phone}: ${data.debugOtp}`);
+                } else {
+                    debugInfo.classList.add('hidden');
+                    console.log(`📱 OTP sent via ZuluShop API to ${phone}`);
+                }
+                
+                // Start OTP timer
+                startOtpTimer();
+                
+                // Focus first OTP input
+                otp1.focus();
+            } else {
+                phoneError.classList.remove('hidden');
+                phoneError.textContent = data.error || 'Failed to send OTP';
+                sendOtpBtn.disabled = false;
+                sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
+            }
+        } catch (error) {
+            phoneError.classList.remove('hidden');
+            phoneError.textContent = 'Network error. Please try again.';
+            sendOtpBtn.disabled = false;
+            sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
+            console.error('Error sending OTP:', error);
+        }
+    }
+    
+    // Verify OTP
+    async function verifyOtp() {
+        const otp = otp1.value + otp2.value + otp3.value + otp4.value;
+        const phone = otpPhoneNumber.textContent;
+        
+        if (otp.length !== 4 || !/^\d{4}$/.test(otp)) {
+            otpError.classList.remove('hidden');
+            otpError.textContent = 'Please enter a valid 4-digit OTP';
+            return;
+        }
+        
+        verifyOtpBtn.disabled = true;
+        verifyOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+        otpError.classList.add('hidden');
+        otpSuccess.classList.add('hidden');
+        
+        try {
+            const response = await fetch('/auth/verify-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phoneNumber: phone,
+                    otp: otp,
+                    tempSessionId: isTrial ? currentSessionId : null
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                otpError.classList.add('hidden');
+                otpSuccess.classList.remove('hidden');
+                otpSuccess.textContent = 'OTP verified successfully!';
+                
+                // Update state
+                isVerified = true;
+                isTrial = false;
+                isAdmin = data.isAdmin || false;
+                currentSessionId = phone; // Switch to phone number as session ID
+                
+                // Store in localStorage for auto-login
+                localStorage.setItem('zulu_verified_phone', phone);
+                
+                // Update UI
+                updateTrialUI();
+                
+                // Show success message for 2 seconds then continue chat
+                setTimeout(() => {
+                    // Hide OTP form
+                    stepOtp.classList.remove('active');
+                    stepPhone.classList.add('active');
+                    phoneInput.value = '';
+                    clearOtpInputs();
+                    
+                    // Update chat UI
+                    if (chatSection.classList.contains('active')) {
+                        displayMessage('✅ Your phone has been verified! All trial messages have been saved.', 'bot');
+                    }
+                    
+                    console.log(`✅ User ${phone} verified successfully`);
+                }, 2000);
+                
+            } else {
+                otpError.classList.remove('hidden');
+                otpError.textContent = data.error || 'Invalid OTP. Please check and try again.';
+                verifyOtpBtn.disabled = false;
+                verifyOtpBtn.innerHTML = '<i class="fas fa-check"></i> Verify OTP';
+                
+                // Clear OTP inputs on error
+                clearOtpInputs();
+                otp1.focus();
+            }
+        } catch (error) {
+            otpError.classList.remove('hidden');
+            otpError.textContent = 'Network error. Please try again.';
+            verifyOtpBtn.disabled = false;
+            verifyOtpBtn.innerHTML = '<i class="fas fa-check"></i> Verify OTP';
+            console.error('Error verifying OTP:', error);
+        }
+    }
+    
+    // Resend OTP
+    async function resendOtp() {
+        resendOtpBtn.disabled = true;
+        resendOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resending...';
+        
+        try {
+            const phone = otpPhoneNumber.textContent;
+            const response = await fetch('/auth/send-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phoneNumber: phone
                 })
             });
             
@@ -1173,7 +1387,7 @@ async function verifyOtp() {
                 if (data.debugOtp) {
                     debugInfo.classList.remove('hidden');
                     debugInfo.innerHTML = `<strong>Development Mode:</strong> New OTP is: <strong>${data.debugOtp}</strong>`;
-                    console.log(`📱 New OTP for ${currentPhone}: ${data.debugOtp}`);
+                    console.log(`📱 New OTP for ${phone}: ${data.debugOtp}`);
                 }
                 
                 otpError.classList.add('hidden');
@@ -1222,63 +1436,29 @@ async function verifyOtp() {
         }
     }
     
-    // Start chat after verification
-    function startChat() {
-        // Update UI
-        authSection.style.display = 'none';
-        chatSection.classList.add('active');
-        
-        // Update profile
-        const digits = currentPhone.replace(/[^0-9]/g, '');
-        const suffix = currentPhone.replace(/[^AU]/gi, '').toUpperCase();
-        
-        profileAvatar.textContent = digits.substring(0, 2) || 'ZC';
-        currentPhoneSpan.textContent = currentPhone;
-        
-        if (suffix === 'A') {
-            chatTitle.textContent = 'Zulu Club Admin';
-            chatStatus.textContent = 'Online • Admin Mode';
-            profileAvatar.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)';
-        } else if (suffix === 'U') {
-            chatTitle.textContent = 'Zulu Club User';
-            chatStatus.textContent = 'Online • User Mode';
-            profileAvatar.style.background = 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)';
-        } else {
-            chatTitle.textContent = 'Zulu Club Assistant';
-            chatStatus.textContent = 'Online';
-            profileAvatar.style.background = 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)';
-        }
-        
-        // Load chat history and show welcome message
-        loadWelcomeMessage();
-        
-        // Enable chat input
-        messageInput.disabled = false;
-        messageInput.focus();
-    }
-    
-// Load welcome message
-function loadWelcomeMessage() {
-    const welcomeText = `Welcome to Zulu Club!
+    // Load welcome message
+    function loadWelcomeMessage() {
+        const welcomeText = `Welcome to Zulu Club Free Trial!
 
-You're now connected as: ${currentPhone}
+You have **10 free messages** to try our AI assistant.
 
-I'm your personal shopping assistant. I can help you with:
-
-• Product browsing and shopping
+I can help you with:
+• Product browsing and shopping recommendations
 • Seller information and partnerships
 • Company details and investor queries
 • Connecting with human agents
 
-Try asking: "Show me t-shirts" or "Tell me about Zulu Club"`;
+After 10 messages, you'll need to verify your phone number to continue.
 
-    displayMessage(welcomeText, 'bot');
-}
+Try asking: "Show me home decor items" or "Tell me about Zulu Club"`;
+
+        displayMessage(welcomeText, 'bot');
+    }
     
     // Send message
     async function sendMessage() {
         const message = messageInput.value.trim();
-        if (!message || !isVerified) return;
+        if (!message || (!isTrial && !isVerified)) return;
         
         // Display user message
         displayMessage(message, 'user');
@@ -1298,7 +1478,7 @@ Try asking: "Show me t-shirts" or "Tell me about Zulu Club"`;
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    phoneNumber: currentPhone,
+                    sessionId: currentSessionId,
                     message: message
                 })
             });
@@ -1310,8 +1490,33 @@ Try asking: "Show me t-shirts" or "Tell me about Zulu Club"`;
             
             if (data.success) {
                 displayMessage(data.response, 'bot');
+                
+                // Update trial count
+                if (data.isTrial) {
+                    trialCount = data.trialCount;
+                    messagesLeft = data.messagesLeft;
+                    
+                    // Update UI
+                    updateTrialUI();
+                    
+                    // Check if trial ended
+                    if (data.trialEnded) {
+                        showTrialLimitModal();
+                        messageInput.disabled = true;
+                    }
+                }
             } else {
-                displayMessage('Sorry, there was an error. Please try again.', 'bot');
+                if (data.error && data.trialEnded) {
+                    // Trial ended
+                    trialCount = 10;
+                    messagesLeft = 0;
+                    updateTrialUI();
+                    showTrialLimitModal();
+                    messageInput.disabled = true;
+                    displayMessage('⚠️ Your free trial has ended. Please verify your phone number to continue chatting.', 'bot');
+                } else {
+                    displayMessage('Sorry, there was an error. Please try again.', 'bot');
+                }
             }
         } catch (error) {
             hideTyping();
@@ -1323,106 +1528,86 @@ Try asking: "Show me t-shirts" or "Tell me about Zulu Club"`;
         messageInput.focus();
     }
     
-// Function to detect and convert URLs to clickable links
-function convertLinksToClickable(text) {
-    // Improved regular expression to match various URL formats
-    const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(app\.zulu\.club\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|[A-Za-z0-9.-]+\.[A-Za-z]{2,}\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]))/ig;
-    
-    // Replace URLs with anchor tags
-    return text.replace(urlRegex, function(url) {
-        // Add https:// if it's a www link or domain without protocol
-        let finalUrl = url;
-        if (!url.match(/^(https?|ftp|file):\/\//i)) {
-            if (url.startsWith('www.') || url.includes('app.zulu.club') || url.includes('.club/')) {
-                finalUrl = 'https://' + url;
+    // Function to detect and convert URLs to clickable links
+    function convertLinksToClickable(text) {
+        const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(app\.zulu\.club\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|[A-Za-z0-9.-]+\.[A-Za-z]{2,}\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]))/ig;
+        
+        return text.replace(urlRegex, function(url) {
+            let finalUrl = url;
+            if (!url.match(/^(https?|ftp|file):\/\//i)) {
+                if (url.startsWith('www.') || url.includes('app.zulu.club') || url.includes('.club/')) {
+                    finalUrl = 'https://' + url;
+                }
             }
+            
+            return `<a href="${finalUrl}" target="_blank" rel="noopener noreferrer" class="link">${url}</a>`;
+        });
+    }
+    
+    // Display a message in the chat
+    function displayMessage(text, sender) {
+        const messageWrapper = document.createElement('div');
+        messageWrapper.className = `message-bubble ${sender}`;
+        
+        const now = new Date();
+        const messageIsoTime = now.toISOString();
+        const messageDisplayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        messageWrapper.dataset.isoTime = messageIsoTime;
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message-wrapper';
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        
+        const processedText = convertLinksToClickable(text);
+        const formattedText = processedText.replace(/\n/g, '<br>');
+        contentDiv.innerHTML = formattedText;
+        
+        messageDiv.appendChild(contentDiv);
+        
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'message-info';
+        infoDiv.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-top: 3px; font-size: 11px; color: #ffffff99; gap: 5px; padding: 0 2px;';
+        
+        const timeSpan = document.createElement('span');
+        timeSpan.className = 'message-time';
+        timeSpan.textContent = messageDisplayTime;
+        
+        if (sender === 'user') {
+            const tickIcon = document.createElement('span');
+            tickIcon.className = 'message-status';
+            tickIcon.innerHTML = '✓✓';
+            tickIcon.style.color = '#53bdeb';
+            infoDiv.appendChild(timeSpan);
+            infoDiv.appendChild(tickIcon);
+        } else {
+            infoDiv.appendChild(timeSpan);
         }
         
-        return `<a href="${finalUrl}" target="_blank" rel="noopener noreferrer" class="link">${url}</a>`;
-    });
-}
-
-// Display a message in the chat
-function displayMessage(text, sender, displayTime = null, isoTime = null) {
-    const messageWrapper = document.createElement('div');
-    messageWrapper.className = `message-bubble ${sender}`;
-    
-    // Store ISO time for sorting if provided
-    let messageIsoTime = isoTime;
-    let messageDisplayTime = displayTime;
-    
-    // If no time provided, use current time
-    if (!messageIsoTime) {
-        const now = new Date();
-        messageIsoTime = now.toISOString();
-        messageDisplayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        messageDiv.appendChild(infoDiv);
+        messageWrapper.appendChild(messageDiv);
+        
+        setTimeout(() => {
+            const links = contentDiv.querySelectorAll('a.link, a');
+            links.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+                
+                link.addEventListener('touchstart', (e) => {
+                    e.stopPropagation();
+                });
+            });
+        }, 100);
+        
+        chatMessages.appendChild(messageWrapper);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        return messageWrapper;
     }
     
-    // Store ISO time in data attribute for sorting
-    messageWrapper.dataset.isoTime = messageIsoTime;
-    
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'message-wrapper';
-    
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content';
-    
-    // Convert URLs to clickable links
-    const processedText = convertLinksToClickable(text);
-    // Format text with line breaks and preserve links
-    const formattedText = processedText.replace(/\n/g, '<br>');
-    contentDiv.innerHTML = formattedText;
-    
-    messageDiv.appendChild(contentDiv);
-    
-    // Add message info with timestamp
-    const infoDiv = document.createElement('div');
-    infoDiv.className = 'message-info';
-    infoDiv.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-top: 3px; font-size: 11px; color: #ffffff99; gap: 5px; padding: 0 2px;';
-    
-    const timeSpan = document.createElement('span');
-    timeSpan.className = 'message-time';
-    timeSpan.textContent = messageDisplayTime;
-    
-    if (sender === 'user') {
-        const tickIcon = document.createElement('span');
-        tickIcon.className = 'message-status';
-        tickIcon.innerHTML = '✓✓';
-        tickIcon.style.color = '#53bdeb';
-        infoDiv.appendChild(timeSpan);
-        infoDiv.appendChild(tickIcon);
-    } else {
-        infoDiv.appendChild(timeSpan);
-    }
-    
-    messageDiv.appendChild(infoDiv);
-    messageWrapper.appendChild(messageDiv);
-    
-    // Add click handler to links after they're added to DOM
-    setTimeout(() => {
-        const links = contentDiv.querySelectorAll('a.link, a');
-        links.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.stopPropagation();
-                // Link will open in new tab by default due to target="_blank"
-                console.log('Link clicked:', link.href);
-            });
-            
-            // Also handle touch events for mobile
-            link.addEventListener('touchstart', (e) => {
-                e.stopPropagation();
-            });
-        });
-    }, 100);
-    
-    // Add to chat messages
-    chatMessages.appendChild(messageWrapper);
-    
-    // Scroll to bottom
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-    
-    return messageWrapper;
-}
     // Show typing indicator
     function showTyping() {
         const typingDiv = document.createElement('div');
@@ -1455,11 +1640,61 @@ function displayMessage(text, sender, displayTime = null, isoTime = null) {
         textarea.style.height = newHeight + 'px';
     }
     
+    // Start OTP timer
+    function startOtpTimer() {
+        countdown = 60;
+        countdownSpan.textContent = countdown;
+        timer.classList.remove('hidden');
+        resendOtpBtn.disabled = true;
+        
+        otpTimer = setInterval(() => {
+            countdown--;
+            countdownSpan.textContent = countdown;
+            
+            if (countdown <= 0) {
+                clearInterval(otpTimer);
+                timer.classList.add('hidden');
+                resendOtpBtn.disabled = false;
+            }
+        }, 1000);
+    }
+    
     // Check verification status on page load
     async function checkVerification() {
         // Check if there's a stored phone number in localStorage
         const storedPhone = localStorage.getItem('zulu_verified_phone');
-        if (!storedPhone) return;
+        if (!storedPhone) {
+            // Check if there's a trial session in sessionStorage
+            const trialId = sessionStorage.getItem('zulu_trial_id');
+            if (trialId) {
+                try {
+                    const response = await fetch(`/chat/trial-info/${trialId}`);
+                    const data = await response.json();
+                    if (data.success) {
+                        currentSessionId = trialId;
+                        isTrial = true;
+                        trialCount = data.trialCount;
+                        messagesLeft = data.messagesLeft;
+                        
+                        // Start chat with existing trial
+                        authSection.style.display = 'none';
+                        chatSection.classList.add('active');
+                        trialBanner.style.display = 'flex';
+                        updateTrialUI();
+                        loadWelcomeMessage();
+                        messageInput.disabled = false;
+                        messageInput.focus();
+                        
+                        // Load existing chat history
+                        loadChatHistory();
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Error checking trial session:', error);
+                }
+            }
+            return;
+        }
         
         try {
             const response = await fetch('/auth/check-status', {
@@ -1475,13 +1710,23 @@ function displayMessage(text, sender, displayTime = null, isoTime = null) {
             const data = await response.json();
             
             if (data.success && data.verified) {
-                // Auto-login
-                currentPhone = storedPhone;
+                // Auto-login verified user
+                currentSessionId = storedPhone;
                 isVerified = true;
+                isTrial = false;
                 isAdmin = data.isAdmin || false;
-                startChat();
+                
+                authSection.style.display = 'none';
+                chatSection.classList.add('active');
+                trialBanner.style.display = 'none';
+                updateTrialUI();
+                loadWelcomeMessage();
+                messageInput.disabled = false;
+                messageInput.focus();
+                
+                // Load chat history
+                loadChatHistory();
             } else {
-                // Clear invalid stored phone
                 localStorage.removeItem('zulu_verified_phone');
             }
         } catch (error) {
@@ -1489,37 +1734,79 @@ function displayMessage(text, sender, displayTime = null, isoTime = null) {
         }
     }
     
+    // Load chat history
+    async function loadChatHistory() {
+        try {
+            const response = await fetch(`/chat/history/${currentSessionId}`);
+            const data = await response.json();
+            
+            if (data.success && data.history && data.history.length > 0) {
+                // Clear current messages
+                chatMessages.innerHTML = '';
+                
+                // Display all messages from history
+                data.history.forEach(msg => {
+                    if (msg.role === 'user' || msg.role === 'assistant') {
+                        displayMessage(msg.content, msg.role === 'user' ? 'user' : 'bot');
+                    }
+                });
+                
+                // Update trial count if applicable
+                if (data.isTrial) {
+                    trialCount = data.trialCount;
+                    messagesLeft = data.messagesLeft;
+                    updateTrialUI();
+                    
+                    if (data.trialCount >= 10) {
+                        showTrialLimitModal();
+                        messageInput.disabled = true;
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error loading chat history:', error);
+        }
+    }
+    
     // Logout
     async function logout() {
         try {
-            await fetch('/auth/logout', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    phoneNumber: currentPhone
-                })
-            });
+            if (isVerified) {
+                await fetch('/auth/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        phoneNumber: currentSessionId
+                    })
+                });
+            }
             
-            // Clear local storage
+            // Clear storage
             localStorage.removeItem('zulu_verified_phone');
+            sessionStorage.removeItem('zulu_trial_id');
             
             // Reset state
-            currentPhone = '';
+            currentSessionId = '';
             isVerified = false;
+            isTrial = false;
             isAdmin = false;
+            trialCount = 0;
+            messagesLeft = 10;
             
-            // Show auth section
+            // Reset UI
             authSection.style.display = 'flex';
             chatSection.classList.remove('active');
+            trialBanner.style.display = 'none';
+            trialModal.classList.add('hidden');
+            chatMessages.innerHTML = '';
             
             // Reset forms
             stepPhone.classList.add('active');
             stepOtp.classList.remove('active');
             phoneInput.value = '';
             clearOtpInputs();
-            phoneInput.focus();
             
             // Clear any timers
             if (otpTimer) {
@@ -1532,10 +1819,55 @@ function displayMessage(text, sender, displayTime = null, isoTime = null) {
     }
     
     // Event Listeners
+    phoneInput.addEventListener('input', function(e) {
+        let formatted = formatPhoneInput(this.value);
+        this.value = formatted;
+        
+        updateSuffixBadge(formatted);
+        
+        if (validatePhoneNumber(formatted)) {
+            this.classList.remove('invalid');
+            this.classList.add('valid');
+            phoneError.classList.add('hidden');
+            sendOtpBtn.disabled = false;
+        } else {
+            this.classList.remove('valid');
+            this.classList.add('invalid');
+            phoneError.classList.remove('hidden');
+            
+            if (formatted.length === 11) {
+                const suffix = formatted.slice(-1).toUpperCase();
+                if (!['A', 'U'].includes(suffix)) {
+                    phoneError.textContent = 'Invalid suffix. Only A (Admin) or U (User) allowed.';
+                } else if (formatted.slice(0, 10).length !== 10 || !/^\d{10}$/.test(formatted.slice(0, 10))) {
+                    phoneError.textContent = 'First 10 characters must be digits.';
+                }
+            } else if (formatted.length > 0 && formatted.length < 10) {
+                phoneError.textContent = 'Phone number must be 10 digits.';
+            } else if (formatted.length > 11) {
+                phoneError.textContent = 'Maximum 11 characters (10 digits + A/U).';
+            } else {
+                phoneError.textContent = 'Please enter a valid 10-digit number with optional A/U suffix';
+            }
+            
+            sendOtpBtn.disabled = true;
+        }
+    });
+    
     sendOtpBtn.addEventListener('click', sendOtp);
     verifyOtpBtn.addEventListener('click', verifyOtp);
     resendOtpBtn.addEventListener('click', resendOtp);
+    startTrialBtn.addEventListener('click', startFreeTrial);
     sendBtn.addEventListener('click', sendMessage);
+    
+    // Modal buttons
+    skipBtn.addEventListener('click', hideTrialLimitModal);
+    verifyNowBtn.addEventListener('click', () => {
+        hideTrialLimitModal();
+        // Show phone input form
+        phoneFormContainer.style.display = 'block';
+        phoneInput.focus();
+    });
     
     // OTP input navigation
     otp1.addEventListener('keydown', (e) => handleOtpInput(e, otp1, otp2, null));
@@ -1575,7 +1907,7 @@ function displayMessage(text, sender, displayTime = null, isoTime = null) {
     
     // Back button
     backBtn.addEventListener('click', () => {
-        if (isVerified) {
+        if (chatSection.classList.contains('active')) {
             // Go back to auth
             logout();
         } else if (stepOtp.classList.contains('active')) {
@@ -1593,13 +1925,12 @@ function displayMessage(text, sender, displayTime = null, isoTime = null) {
     
     // Info button
     document.getElementById('infoBtn').addEventListener('click', () => {
-        alert('Zulu Club Chat Assistant\n\nPlease enter your phone number to verify your identity via OTP. This ensures secure access to our chat services.');
+        alert('Zulu Club Chat Assistant\n\nStart with 10 free trial messages. Verify your phone number anytime during the trial. All trial messages will be saved when you verify.');
     });
     
     // Initialize
     window.addEventListener('load', () => {
         phoneInput.focus();
-        // Check if already verified
         checkVerification();
     });
 </script>
