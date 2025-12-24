@@ -1236,49 +1236,7 @@
             
             // Show typing indicator
             showTyping();
-            
-            try {
-                // Simulate API delay for demo
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                // For trial mode, simulate AI responses
-                const mockResponses = [
-                    "Hello! I'm your Zulu Club AI assistant. How can I help you today?",
-                    "I can help you browse products, connect with sellers, or provide company information.",
-                    "Feel free to ask me anything about Zulu Club's services or products!",
-                    "You can ask me about home decor items, electronics, or fashion products.",
-                    "I'm here to assist you with shopping and seller information.",
-                    "Need help finding something specific? Just ask!",
-                    "Remember, you can verify your phone anytime to continue chatting after your trial.",
-                    "I'm connected to Zulu Club's database to provide you with accurate information.",
-                    "You can also ask me to connect you with a human agent if needed.",
-                    "Let me know what you're looking for and I'll help you find it!"
-                ];
-                
-                // Select a random response
-                const randomResponse = mockResponses[Math.floor(Math.random() * mockResponses.length)];
-                
-                hideTyping();
-                displayMessage(randomResponse, 'assistant');
-                
-                // Update trial count
-                if (isTrial) {
-                    trialCount++;
-                    messagesLeft = 10 - trialCount;
-                    
-                    // Save updated session
-                    saveSession();
-                    
-                    // Update UI
-                    updateUI();
-                    
-                    // Check if trial ended
-                    if (trialCount >= 10) {
-                        showTrialLimitModal();
-                    }
-                }
-                
-            } catch (error) {
+            catch (error) {
                 hideTyping();
                 displayMessage('Sorry, I encountered an error. Please try again.', 'assistant');
                 console.error('Error sending message:', error);
