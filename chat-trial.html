@@ -148,6 +148,10 @@
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         }
 
+        .trial-banner.hidden {
+            display: none;
+        }
+
         /* Chat Messages */
         .chat-messages {
             flex: 1;
@@ -254,6 +258,75 @@
         @keyframes bounce {
             0%, 60%, 100% { transform: translateY(0); }
             30% { transform: translateY(-4px); }
+        }
+
+        /* Welcome Message */
+        .welcome-message {
+            background: #1a2733;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+            border-left: 4px solid #0084ff;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .welcome-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .welcome-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .welcome-text h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .welcome-text p {
+            color: #a0b3c5;
+            font-size: 14px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            font-size: 13px;
+            color: #a0b3c5;
+        }
+
+        .feature-icon {
+            width: 24px;
+            height: 24px;
+            background: #0084ff;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
         }
 
         /* Chat Input */
@@ -689,6 +762,15 @@
                 display: none;
             }
 
+            .welcome-message {
+                padding: 20px;
+                margin: 0 16px 16px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
             .chat-messages {
                 padding: 16px;
             }
@@ -770,7 +852,7 @@
         <!-- Header -->
         <header class="header">
             <div class="header-left">
-                <button class="header-btn logout" id="logoutBtn">
+                <button class="header-btn logout hidden" id="logoutBtn">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Logout</span>
                 </button>
@@ -800,7 +882,7 @@
         <div class="chat-container">
             <!-- Chat Messages -->
             <div class="chat-messages" id="chatMessages">
-                <!-- Messages will appear here -->
+                <!-- Welcome message will be inserted here -->
             </div>
 
             <!-- Chat Input -->
@@ -834,10 +916,9 @@
                     <!-- Phone Input Step -->
                     <div id="phoneStep">
                         <div class="form-group">
-                            <label class="form-label">Phone Number (10 digits + optional A/U)</label>
+                            <label class="form-label">Phone Number (10 digits)</label>
                             <input type="text" class="phone-input" id="phoneInput" 
-                                   placeholder="8368127760A" maxlength="11">
-                            <div class="hint">Example: 8368127760A (A for Admin) or 8368127760U (U for User)</div>
+                                   placeholder="" maxlength="11">
                             <div id="phoneAlert" class="alert hidden"></div>
                         </div>
                         <button class="action-btn primary" id="sendOtpBtn">
@@ -919,182 +1000,182 @@
     </div>
 
     <script>
-        // State Management
+        // Global state - EXACTLY as in your working reference
         let currentSessionId = '';
         let isTrial = true;
         let isVerified = false;
-        let trialCount = 0;
-        let messagesLeft = 10;
+        let isAdmin = false;
         let otpTimer = null;
         let countdown = 60;
-        let chatHistory = [];
-
+        let trialCount = 0;
+        let messagesLeft = 10;
+            
         // DOM Elements
+        const trialBanner = document.getElementById('trialBanner');
+        const trialLimitModal = document.getElementById('trialLimitModal');
+        const phoneInput = document.getElementById('phoneInput');
+        const sendOtpBtn = document.getElementById('sendOtpBtn');
+        const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+        const resendOtpBtn = document.getElementById('resendOtpBtn');
+        const otpPhoneNumber = document.getElementById('otpPhoneNumber');
+        const phoneAlert = document.getElementById('phoneAlert');
+        const otpAlert = document.getElementById('otpAlert');
+        const timer = document.getElementById('timer');
+        const countdownSpan = document.getElementById('countdown');
+            
+        // Chat elements
         const chatMessages = document.getElementById('chatMessages');
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
-        const trialBanner = document.getElementById('trialBanner');
+        const profileAvatar = document.getElementById('profileAvatar');
+        const profileName = document.getElementById('profileName');
         const statusMessage = document.getElementById('statusMessage');
         const messagesLeftSpan = document.getElementById('messagesLeft');
         const remainingCount = document.getElementById('remainingCount');
-        const profileAvatar = document.getElementById('profileAvatar');
-        const profileName = document.getElementById('profileName');
-
+            
+        // Modal buttons
+        const skipVerificationBtn = document.getElementById('skipVerificationBtn');
+        const verifyNowBtn = document.getElementById('verifyNowBtn');
+            
         // Header buttons
         const logoutBtn = document.getElementById('logoutBtn');
         const verifyBtn = document.getElementById('verifyBtn');
         const infoBtn = document.getElementById('infoBtn');
-
+            
         // Modals
         const verificationModal = document.getElementById('verificationModal');
         const instructionsPanel = document.getElementById('instructionsPanel');
-        const trialLimitModal = document.getElementById('trialLimitModal');
-
-        // Verification modal elements
-        const phoneInput = document.getElementById('phoneInput');
-        const sendOtpBtn = document.getElementById('sendOtpBtn');
-        const otpStep = document.getElementById('otpStep');
+            
+        // Steps
         const phoneStep = document.getElementById('phoneStep');
-        const otpPhoneNumber = document.getElementById('otpPhoneNumber');
-        const verifyOtpBtn = document.getElementById('verifyOtpBtn');
-        const resendOtpBtn = document.getElementById('resendOtpBtn');
-        const closeVerifyModal = document.getElementById('closeVerifyModal');
-        const countdownSpan = document.getElementById('countdown');
-        const phoneAlert = document.getElementById('phoneAlert');
-        const otpAlert = document.getElementById('otpAlert');
-        const timer = document.getElementById('timer');
-
-        // Trial limit modal buttons
-        const skipVerificationBtn = document.getElementById('skipVerificationBtn');
-        const verifyNowBtn = document.getElementById('verifyNowBtn');
-
-        // OTP inputs
-        const otpInputs = [
-            document.getElementById('otp1'),
-            document.getElementById('otp2'),
-            document.getElementById('otp3'),
-            document.getElementById('otp4')
-        ];
-
+        const otpStep = document.getElementById('otpStep');
+            
         // Close buttons
+        const closeVerifyModal = document.getElementById('closeVerifyModal');
         const closeInstructionsBtn = document.getElementById('closeInstructionsBtn');
-
-        // Initialize App
-        async function init() {
-            // Check for existing session
-            await checkExistingSession();
             
-            // Update UI
-            updateUI();
+        // OTP input elements
+        const otp1 = document.getElementById('otp1');
+        const otp2 = document.getElementById('otp2');
+        const otp3 = document.getElementById('otp3');
+        const otp4 = document.getElementById('otp4');
             
-            // Focus message input
-            setTimeout(() => messageInput.focus(), 500);
-        }
-
-        // Check for existing session
-        async function checkExistingSession() {
-            // Check localStorage for session
-            const savedSession = localStorage.getItem('zulu_session');
+        // Format phone number input - EXACTLY as in your working reference
+        function formatPhoneInput(value) {
+            // Remove all non-digits and letters A/U
+            let cleaned = value.replace(/[^0-9auAU]/g, '');
             
-            if (savedSession) {
-                try {
-                    const session = JSON.parse(savedSession);
-                    
-                    // Check if session is still valid
-                    if (session.expires > Date.now()) {
-                        currentSessionId = session.id;
-                        isTrial = session.isTrial;
-                        isVerified = session.isVerified;
-                        trialCount = session.trialCount || 0;
-                        messagesLeft = 10 - trialCount;
-                        
-                        // Load chat history from localStorage
-                        loadLocalChatHistory();
-                        return;
-                    }
-                } catch (error) {
-                    console.log('Invalid session data, creating new one');
+            // Get first 10 digits
+            let digits = cleaned.replace(/[^0-9]/g, '').substring(0, 10);
+            
+            // Get suffix if present (A or U)
+            let suffix = '';
+            if (cleaned.length > 10) {
+                let lastChar = cleaned.charAt(cleaned.length - 1).toUpperCase();
+                if (lastChar === 'A' || lastChar === 'U') {
+                    suffix = lastChar;
+                    digits = digits.substring(0, 10); // Ensure only 10 digits
                 }
             }
             
-            // Create new trial session
-            await createTrialSession();
+            return digits + suffix;
         }
-
-        // Create new trial session
-        async function createTrialSession() {
+            
+        // Validate phone number - EXACTLY as in your working reference
+        function validatePhoneNumber(phone) {
+            // Check if it's exactly 10 digits or 10 digits + A/U
+            const regex = /^[0-9]{10}[AU]?$/i;
+            if (!regex.test(phone)) {
+                return false;
+            }
+            
+            const digits = phone.replace(/[^0-9]/g, '');
+            const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
+            
+            // If suffix is present, it must be A or U
+            if (suffix && !['A', 'U'].includes(suffix)) {
+                return false;
+            }
+            
+            return true;
+        }
+            
+        // Start free trial - EXACTLY as in your working reference
+        async function startFreeTrial() {
             try {
-                // Generate unique session ID
-                const sessionId = 'trial_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                currentSessionId = sessionId;
-                isTrial = true;
-                isVerified = false;
-                trialCount = 0;
-                messagesLeft = 10;
+                const response = await fetch('/chat/create-trial', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
                 
-                // Save to localStorage with 30 day expiry
-                const sessionData = {
-                    id: sessionId,
-                    isTrial: true,
-                    isVerified: false,
-                    trialCount: 0,
-                    created: Date.now(),
-                    expires: Date.now() + (30 * 24 * 60 * 60 * 1000) // 30 days
-                };
+                const data = await response.json();
                 
-                localStorage.setItem('zulu_session', JSON.stringify(sessionData));
-                localStorage.setItem('zulu_trial_id', sessionId);
-                
-                // Initialize empty chat history
-                chatHistory = [];
-                localStorage.setItem(`zulu_chat_${sessionId}`, JSON.stringify(chatHistory));
-                
-                console.log('New trial session created:', sessionId);
+                if (data.success) {
+                    currentSessionId = data.sessionId;
+                    isTrial = true;
+                    isVerified = false;
+                    trialCount = 0;
+                    messagesLeft = 10;
+                    
+                    // Store trial ID in sessionStorage
+                    sessionStorage.setItem('zulu_trial_id', currentSessionId);
+                    
+                    // Update UI
+                    updateTrialUI();
+                    loadWelcomeMessage();
+                    
+                    // Enable chat input
+                    messageInput.disabled = false;
+                    messageInput.focus();
+                    
+                    console.log(`🎁 Trial started with session ID: ${currentSessionId}`);
+                } else {
+                    alert('Failed to start trial. Please try again.');
+                }
             } catch (error) {
-                console.error('Error creating session:', error);
-                // Fallback to simple session ID
-                currentSessionId = 'trial_' + Date.now();
-                localStorage.setItem('zulu_trial_id', currentSessionId);
+                console.error('Error starting trial:', error);
+                alert('Network error. Please try again.');
             }
         }
-
-        // Update UI
-        function updateUI() {
+            
+        // Update trial UI - ADAPTED from your working reference
+        function updateTrialUI() {
             messagesLeft = 10 - trialCount;
             messagesLeftSpan.textContent = messagesLeft;
             remainingCount.textContent = messagesLeft;
             
-            // Update trial banner
             if (messagesLeft > 5) {
                 trialBanner.className = 'trial-banner';
                 trialBanner.innerHTML = `🎁 You have <strong>${messagesLeft}</strong> free trial messages remaining`;
+                trialBanner.classList.remove('hidden');
             } else if (messagesLeft > 0) {
                 trialBanner.className = 'trial-banner warning';
                 trialBanner.innerHTML = `⚠️ Only <strong>${messagesLeft}</strong> trial messages left!`;
+                trialBanner.classList.remove('hidden');
             } else {
                 trialBanner.className = 'trial-banner warning';
                 trialBanner.innerHTML = '⛔ Trial ended. Please verify to continue.';
-            }
-            
-            // Update profile
-            if (isVerified) {
-                profileAvatar.textContent = '✓';
-                profileAvatar.style.background = 'linear-gradient(135deg, #00b894 0%, #00cec9 100%)';
-                profileName.textContent = 'Verified User';
-                profileName.innerHTML += ' <span class="verified-badge">Verified</span>';
-                verifyBtn.style.display = 'none';
-            } else {
-                profileAvatar.textContent = 'ZC';
-                profileAvatar.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-                profileName.textContent = 'Trial User';
-                verifyBtn.style.display = 'flex';
+                trialBanner.classList.remove('hidden');
             }
             
             // Update status bar
             if (isTrial) {
                 statusMessage.innerHTML = `Free Trial • <strong>${messagesLeft}</strong> messages left`;
+                profileName.textContent = 'Trial User';
+                profileAvatar.textContent = 'ZC';
+                profileAvatar.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                verifyBtn.style.display = 'flex';
+                logoutBtn.classList.add('hidden');
             } else {
                 statusMessage.innerHTML = 'Verified • Unlimited Access';
+                profileName.innerHTML = 'Verified User <span class="verified-badge">Verified</span>';
+                profileAvatar.textContent = '✓';
+                profileAvatar.style.background = 'linear-gradient(135deg, #00b894 0%, #00cec9 100%)';
+                verifyBtn.style.display = 'none';
+                logoutBtn.classList.remove('hidden');
+                trialBanner.classList.add('hidden');
             }
             
             // Update message input state
@@ -1105,300 +1186,31 @@
             } else {
                 messageInput.disabled = false;
                 messageInput.placeholder = 'Type your message...';
+                sendBtn.disabled = !messageInput.value.trim();
             }
         }
-
-        // Send message - FIXED: Using mock backend for trial
-        async function sendMessage() {
-            const message = messageInput.value.trim();
-            if (!message) return;
             
-            // Check trial limit
-            if (isTrial && trialCount >= 10) {
-                showTrialLimitModal();
-                return;
-            }
-            
-            // Display user message
-            displayMessage(message, 'user');
-            
-            // Clear input
-            messageInput.value = '';
-            messageInput.style.height = 'auto';
+        // Show trial limit modal - EXACTLY as in your working reference
+        function showTrialLimitModal() {
+            trialLimitModal.classList.add('active');
+            messageInput.disabled = true;
             sendBtn.disabled = true;
-            
-            // Show typing indicator
-            showTyping();
-            
-            try {
-                // For trial mode: Use mock response if backend is not available
-                let responseData;
-                
-                if (typeof window.mockBackend === 'undefined') {
-                    // Mock backend for trial messages
-                    responseData = {
-                        success: true,
-                        response: getAIResponse(message),
-                        isTrial: true,
-                        trialCount: trialCount + 1,
-                        messagesLeft: 10 - (trialCount + 1),
-                        trialEnded: (trialCount + 1) >= 10
-                    };
-                } else {
-                    // Try real backend
-                    const response = await fetch('/chat/message', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            sessionId: currentSessionId,
-                            message: message
-                        })
-                    });
-                    
-                    responseData = await response.json();
-                }
-                
-                hideTyping();
-                
-                if (responseData.success) {
-                    displayMessage(responseData.response, 'assistant');
-                    
-                    // Update trial count
-                    if (responseData.isTrial) {
-                        trialCount = responseData.trialCount || (trialCount + 1);
-                        messagesLeft = responseData.messagesLeft || (10 - trialCount);
-                        
-                        // Save updated session
-                        saveSession();
-                        
-                        // Save chat history
-                        saveChatHistory(message, responseData.response);
-                        
-                        // Update UI
-                        updateUI();
-                        
-                        // Check if trial ended
-                        if (responseData.trialEnded) {
-                            showTrialLimitModal();
-                        }
-                    }
-                } else {
-                    // Handle error from backend
-                    if (responseData.error && responseData.trialEnded) {
-                        // Trial ended
-                        trialCount = 10;
-                        messagesLeft = 0;
-                        updateUI();
-                        showTrialLimitModal();
-                        displayMessage('⚠️ Your free trial has ended. Please verify your phone number to continue chatting.', 'assistant');
-                    } else {
-                        // Fallback to mock response if backend error
-                        displayMessage(getAIResponse(message), 'assistant');
-                        trialCount++;
-                        messagesLeft = 10 - trialCount;
-                        saveSession();
-                        saveChatHistory(message, getAIResponse(message));
-                        updateUI();
-                        
-                        if (trialCount >= 10) {
-                            showTrialLimitModal();
-                        }
-                    }
-                }
-            } catch (error) {
-                hideTyping();
-                // Fallback to mock response on network error
-                displayMessage(getAIResponse(message), 'assistant');
-                trialCount++;
-                messagesLeft = 10 - trialCount;
-                saveSession();
-                saveChatHistory(message, getAIResponse(message));
-                updateUI();
-                
-                if (trialCount >= 10) {
-                    showTrialLimitModal();
-                }
-                
-                console.log('Using mock response due to network error');
-            }
-            
-            sendBtn.disabled = false;
-            messageInput.focus();
         }
-
-        // Simple AI response generator for trial
-        function getAIResponse(userMessage) {
-            const responses = [
-                "I'm Zulu Club AI Assistant. I can help you with product browsing, seller information, company details, and connecting with human agents.",
-                "You're currently using the free trial. You can verify your phone anytime to continue chatting after 10 messages.",
-                "I can help you find products, connect with sellers, or answer questions about Zulu Club. What specifically would you like to know?",
-                "For detailed assistance, you might want to verify your phone after the trial. This will give you unlimited access to all features.",
-                "I'm here to help! You can ask me about shopping recommendations, seller partnerships, or any questions about our services.",
-                "Remember, you have " + (10 - trialCount) + " trial messages left. Verify your phone to continue chatting without limits.",
-                "I can assist with a wide range of queries. Try asking about specific products, services, or how Zulu Club can help your business.",
-                "Your trial session is active. All messages are saved and will be available after verification.",
-                "I'm powered by AI to provide the best assistance. Feel free to ask anything related to shopping, selling, or business inquiries.",
-                "Welcome to Zulu Club! I'm excited to help you explore our platform and services."
-            ];
             
-            // Simple keyword matching
-            const message = userMessage.toLowerCase();
-            
-            if (message.includes('product') || message.includes('shop') || message.includes('buy')) {
-                return "I can help you browse products! We have categories like home decor, electronics, fashion, and more. You can search for specific items or browse by category.";
-            } else if (message.includes('seller') || message.includes('partner')) {
-                return "For seller partnerships, we offer various programs. You can register as a seller on our platform to reach millions of customers.";
-            } else if (message.includes('company') || message.includes('about') || message.includes('zulu')) {
-                return "Zulu Club is a comprehensive e-commerce platform connecting buyers and sellers. We offer AI-powered assistance, secure transactions, and business growth opportunities.";
-            } else if (message.includes('help') || message.includes('support')) {
-                return "I'm here to help! You can ask about products, sellers, account verification, or connect with a human agent if needed.";
-            } else if (message.includes('verify') || message.includes('phone') || message.includes('otp')) {
-                return "You can verify your phone by clicking the 'Verify' button in the header. Enter your 10-digit number + optional A/U suffix, then enter the OTP sent to your phone.";
-            } else if (message.includes('trial') || message.includes('free') || message.includes('message')) {
-                return `You have ${10 - trialCount} free trial messages remaining. After that, verify your phone to continue chatting.`;
-            } else {
-                // Return a random response
-                return responses[Math.floor(Math.random() * responses.length)];
+        // Hide trial limit modal - EXACTLY as in your working reference
+        function hideTrialLimitModal() {
+            trialLimitModal.classList.remove('active');
+            if (messagesLeft > 0) {
+                messageInput.disabled = false;
+                sendBtn.disabled = false;
             }
         }
-
-        // Display message
-        function displayMessage(text, sender) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${sender}`;
             
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'message-content';
-            
-            const time = new Date().toLocaleTimeString([], { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-            
-            // Convert URLs to clickable links
-            const processedText = text.replace(
-                /(https?:\/\/[^\s]+)/g,
-                '<a href="$1" target="_blank" style="color: #0084ff; text-decoration: underline;">$1</a>'
-            ).replace(/\n/g, '<br>');
-            
-            contentDiv.innerHTML = `
-                ${processedText}
-                <span class="message-time">${time}</span>
-            `;
-            
-            messageDiv.appendChild(contentDiv);
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        // Show typing indicator
-        function showTyping() {
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'message assistant';
-            
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'message-content typing-indicator';
-            contentDiv.innerHTML = `
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-            `;
-            
-            typingDiv.appendChild(contentDiv);
-            typingDiv.id = 'typingIndicator';
-            chatMessages.appendChild(typingDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        // Hide typing indicator
-        function hideTyping() {
-            const typing = document.getElementById('typingIndicator');
-            if (typing) typing.remove();
-        }
-
-        // Save session to localStorage
-        function saveSession() {
-            const sessionData = {
-                id: currentSessionId,
-                isTrial: isTrial,
-                isVerified: isVerified,
-                trialCount: trialCount,
-                updated: Date.now(),
-                expires: Date.now() + (30 * 24 * 60 * 60 * 1000) // 30 days
-            };
-            
-            localStorage.setItem('zulu_session', JSON.stringify(sessionData));
-        }
-
-        // Save chat history to localStorage
-        function saveChatHistory(userMessage, aiResponse) {
-            const historyKey = `zulu_chat_${currentSessionId}`;
-            let history = JSON.parse(localStorage.getItem(historyKey)) || [];
-            
-            history.push({
-                role: 'user',
-                content: userMessage,
-                timestamp: new Date().toISOString()
-            });
-            
-            history.push({
-                role: 'assistant',
-                content: aiResponse,
-                timestamp: new Date().toISOString()
-            });
-            
-            localStorage.setItem(historyKey, JSON.stringify(history));
-            chatHistory = history;
-        }
-
-        // Load chat history from localStorage
-        function loadLocalChatHistory() {
-            const historyKey = `zulu_chat_${currentSessionId}`;
-            const history = JSON.parse(localStorage.getItem(historyKey)) || [];
-            chatHistory = history;
-            
-            if (history.length > 0) {
-                history.forEach(msg => {
-                    if (msg.role === 'user' || msg.role === 'assistant') {
-                        displayMessage(msg.content, msg.role === 'user' ? 'user' : 'assistant');
-                    }
-                });
-            }
-        }
-
-        // Phone validation
-        function validatePhone(phone) {
-            const regex = /^[0-9]{10}[AU]?$/i;
-            if (!regex.test(phone)) return false;
-            
-            const digits = phone.replace(/[^0-9]/g, '');
-            const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
-            
-            return digits.length === 10 && (!suffix || ['A', 'U'].includes(suffix));
-        }
-
-        // Format phone input
-        function formatPhoneInput(value) {
-            let cleaned = value.replace(/[^0-9auAU]/g, '');
-            let digits = cleaned.replace(/[^0-9]/g, '').substring(0, 10);
-            
-            if (cleaned.length > 10) {
-                const lastChar = cleaned.charAt(cleaned.length - 1).toUpperCase();
-                if (lastChar === 'A' || lastChar === 'U') {
-                    return digits + lastChar;
-                }
-            }
-            
-            return digits;
-        }
-
-        // Send OTP - Using mock for trial
+        // Send OTP - EXACTLY as in your working reference
         async function sendOtp() {
             const phone = phoneInput.value.trim();
             
-            if (!validatePhone(phone)) {
+            if (!validatePhoneNumber(phone)) {
                 phoneAlert.className = 'alert error';
                 phoneAlert.textContent = 'Please enter a valid phone number (10 digits + optional A/U)';
                 phoneAlert.classList.remove('hidden');
@@ -1410,7 +1222,6 @@
             phoneAlert.classList.add('hidden');
             
             try {
-                // Try real backend first
                 const response = await fetch('/auth/send-otp', {
                     method: 'POST',
                     headers: {
@@ -1424,60 +1235,51 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    // Switch to OTP step
+                    // Store phone number for OTP verification
                     otpPhoneNumber.textContent = phone;
+                    
+                    // Show OTP step
                     phoneStep.classList.add('hidden');
                     otpStep.classList.remove('hidden');
                     
-                    // Start timer
+                    // Show debug info if available
+                    if (data.debugOtp) {
+                        phoneAlert.className = 'alert success';
+                        phoneAlert.innerHTML = `<strong>Development Mode:</strong> OTP is: <strong>${data.debugOtp}</strong>`;
+                        phoneAlert.classList.remove('hidden');
+                        console.log(`📱 DEVELOPMENT OTP for ${phone}: ${data.debugOtp}`);
+                    }
+                    
+                    // Start OTP timer
                     startOtpTimer();
                     
                     // Focus first OTP input
-                    otpInputs[0].focus();
-                    
-                    console.log(`OTP sent to ${phone}`);
-                    
-                    // For development: Show mock OTP in console
-                    console.log('📱 Mock OTP for development: 1234');
+                    otp1.focus();
                 } else {
-                    throw new Error(data.error || 'Failed to send OTP');
+                    phoneAlert.className = 'alert error';
+                    phoneAlert.textContent = data.error || 'Failed to send OTP';
+                    phoneAlert.classList.remove('hidden');
+                    sendOtpBtn.disabled = false;
+                    sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Verification Code';
                 }
             } catch (error) {
-                console.log('Using mock OTP due to:', error.message);
-                
-                // Mock OTP for development
-                otpPhoneNumber.textContent = phone;
-                phoneStep.classList.add('hidden');
-                otpStep.classList.remove('hidden');
-                
-                // Start timer
-                startOtpTimer();
-                
-                // Focus first OTP input
-                otpInputs[0].focus();
-                
-                console.log(`📱 Mock OTP sent to ${phone}: 1234`);
-                
-                phoneAlert.className = 'alert success';
-                phoneAlert.textContent = 'Mock OTP sent (check console: 1234)';
+                phoneAlert.className = 'alert error';
+                phoneAlert.textContent = 'Network error. Please try again.';
                 phoneAlert.classList.remove('hidden');
-                
-                setTimeout(() => {
-                    phoneAlert.classList.add('hidden');
-                }, 3000);
-            } finally {
-                sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Verification Code';
                 sendOtpBtn.disabled = false;
+                sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Verification Code';
+                console.error('Error sending OTP:', error);
             }
         }
-
-        // Verify OTP - Using mock for trial
-        async function verifyOtp() {
-            const otp = otpInputs.map(input => input.value).join('');
             
-            if (!/^\d{4}$/.test(otp)) {
+        // Verify OTP - EXACTLY as in your working reference
+        async function verifyOtp() {
+            const otp = otp1.value + otp2.value + otp3.value + otp4.value;
+            const phone = otpPhoneNumber.textContent;
+            
+            if (otp.length !== 4 || !/^\d{4}$/.test(otp)) {
                 otpAlert.className = 'alert error';
-                otpAlert.textContent = 'Please enter a valid 4-digit code';
+                otpAlert.textContent = 'Please enter a valid 4-digit OTP';
                 otpAlert.classList.remove('hidden');
                 return;
             }
@@ -1487,98 +1289,338 @@
             otpAlert.classList.add('hidden');
             
             try {
-                // Try real backend
                 const response = await fetch('/auth/verify-otp', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        phoneNumber: otpPhoneNumber.textContent,
+                        phoneNumber: phone,
                         otp: otp,
-                        tempSessionId: currentSessionId
+                        tempSessionId: isTrial ? currentSessionId : null
                     })
                 });
                 
                 const data = await response.json();
                 
                 if (data.success) {
-                    handleVerificationSuccess(otpPhoneNumber.textContent);
+                    otpAlert.className = 'alert success';
+                    otpAlert.textContent = '✓ Phone verified successfully!';
+                    otpAlert.classList.remove('hidden');
+                    
+                    // Update state
+                    isVerified = true;
+                    isTrial = false;
+                    isAdmin = data.isAdmin || false;
+                    const oldSessionId = currentSessionId;
+                    currentSessionId = phone; // Switch to phone number as session ID
+                    
+                    // Store in localStorage for auto-login
+                    localStorage.setItem('zulu_verified_phone', phone);
+                    
+                    // Clear trial session storage
+                    sessionStorage.removeItem('zulu_trial_id');
+                    
+                    // Update UI
+                    updateTrialUI();
+                    
+                    // Show success message for 2 seconds then continue chat
+                    setTimeout(() => {
+                        verificationModal.classList.remove('active');
+                        displayMessage('✅ Your phone has been verified! All trial messages have been saved. You can now continue chatting.', 'assistant');
+                        
+                        // Enable chat input
+                        messageInput.disabled = false;
+                        sendBtn.disabled = false;
+                        messageInput.focus();
+                        
+                        console.log(`✅ User ${phone} verified successfully, continuing chat`);
+                    }, 2000);
+                    
                 } else {
-                    // Mock verification for development (accepts 1234 or any 4 digits in dev)
-                    if (otp === '1234' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                        handleVerificationSuccess(otpPhoneNumber.textContent);
+                    otpAlert.className = 'alert error';
+                    otpAlert.textContent = data.error || 'Invalid OTP. Please check and try again.';
+                    otpAlert.classList.remove('hidden');
+                    verifyOtpBtn.disabled = false;
+                    verifyOtpBtn.innerHTML = '<i class="fas fa-check"></i> Verify Code';
+                    
+                    // Clear OTP inputs on error
+                    clearOtpInputs();
+                    otp1.focus();
+                }
+            } catch (error) {
+                otpAlert.className = 'alert error';
+                otpAlert.textContent = 'Network error. Please try again.';
+                otpAlert.classList.remove('hidden');
+                verifyOtpBtn.disabled = false;
+                verifyOtpBtn.innerHTML = '<i class="fas fa-check"></i> Verify Code';
+                console.error('Error verifying OTP:', error);
+            }
+        }
+            
+        // Resend OTP - EXACTLY as in your working reference
+        async function resendOtp() {
+            resendOtpBtn.innerHTML = '<div class="spinner"></div>';
+            resendOtpBtn.disabled = true;
+            
+            try {
+                const phone = otpPhoneNumber.textContent;
+                const response = await fetch('/auth/send-otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        phoneNumber: phone
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Restart timer
+                    clearInterval(otpTimer);
+                    startOtpTimer();
+                    
+                    // Clear previous OTP inputs
+                    clearOtpInputs();
+                    otp1.focus();
+                    
+                    // Show debug info if available
+                    if (data.debugOtp) {
+                        otpAlert.className = 'alert success';
+                        otpAlert.innerHTML = `<strong>Development Mode:</strong> New OTP is: <strong>${data.debugOtp}</strong>`;
+                        otpAlert.classList.remove('hidden');
+                        console.log(`📱 New OTP for ${phone}: ${data.debugOtp}`);
+                    }
+                    
+                    setTimeout(() => {
+                        otpAlert.classList.add('hidden');
+                    }, 3000);
+                    
+                } else {
+                    otpAlert.className = 'alert error';
+                    otpAlert.textContent = data.error || 'Failed to resend OTP';
+                    otpAlert.classList.remove('hidden');
+                }
+            } catch (error) {
+                otpAlert.className = 'alert error';
+                otpAlert.textContent = 'Network error. Please try again.';
+                otpAlert.classList.remove('hidden');
+                console.error('Error resending OTP:', error);
+            } finally {
+                resendOtpBtn.disabled = false;
+                resendOtpBtn.innerHTML = 'Resend Code';
+            }
+        }
+            
+        // Clear OTP inputs
+        function clearOtpInputs() {
+            otp1.value = '';
+            otp2.value = '';
+            otp3.value = '';
+            otp4.value = '';
+        }
+            
+        // Handle OTP input navigation - EXACTLY as in your working reference
+        function handleOtpInput(e, current, next, prev) {
+            if (e.key === 'Backspace' && !current.value && prev) {
+                prev.focus();
+            } else if (e.key.length === 1 && /^\d$/.test(e.key)) {
+                current.value = e.key;
+                if (next) {
+                    next.focus();
+                }
+            } else if (e.key === 'ArrowRight' && next) {
+                next.focus();
+            } else if (e.key === 'ArrowLeft' && prev) {
+                prev.focus();
+            }
+        }
+            
+        // Load welcome message - ADAPTED from your working reference
+        function loadWelcomeMessage() {
+            const welcomeText = `Welcome to Zulu Club${isTrial ? ' Free Trial!' : '!'}
+
+${isTrial ? `You have **10 free messages** to try our AI assistant.` : 'You are now a verified user!'}
+
+I can help you with:
+• Product browsing and shopping recommendations
+• Seller information and partnerships
+• Company details and investor queries
+• Connecting with human agents
+
+${isTrial ? 'After 10 messages, you\'ll need to verify your phone number to continue.\n\n' : ''}
+Try asking: "Show me home decor items" or "Tell me about Zulu Club"`;
+
+            displayMessage(welcomeText, 'assistant');
+        }
+            
+        // Send message - EXACTLY as in your working reference
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message || (!isTrial && !isVerified)) return;
+            
+            // Display user message
+            displayMessage(message, 'user');
+            
+            // Clear input
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            sendBtn.disabled = true;
+            
+            // Show typing indicator
+            showTyping();
+            
+            try {
+                const response = await fetch('/chat/message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sessionId: currentSessionId,
+                        message: message
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // Hide typing indicator
+                hideTyping();
+                
+                if (data.success) {
+                    displayMessage(data.response, 'assistant');
+                    
+                    // Update trial count
+                    if (data.isTrial) {
+                        trialCount = data.trialCount;
+                        messagesLeft = data.messagesLeft;
+                        
+                        // Update UI
+                        updateTrialUI();
+                        
+                        // Check if trial ended
+                        if (data.trialEnded) {
+                            showTrialLimitModal();
+                        }
+                    }
+                } else {
+                    if (data.error && data.trialEnded) {
+                        // Trial ended
+                        trialCount = 10;
+                        messagesLeft = 0;
+                        updateTrialUI();
+                        showTrialLimitModal();
+                        displayMessage('⚠️ Your free trial has ended. Please verify your phone number to continue chatting.', 'assistant');
                     } else {
-                        throw new Error(data.error || 'Invalid verification code');
+                        displayMessage('Sorry, there was an error. Please try again.', 'assistant');
                     }
                 }
             } catch (error) {
-                console.log('Using mock verification');
-                
-                // Mock verification for development
-                if (otp === '1234' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                    handleVerificationSuccess(otpPhoneNumber.textContent);
-                } else {
-                    otpAlert.className = 'alert error';
-                    otpAlert.textContent = 'Invalid verification code. Try 1234 for mock verification.';
-                    otpAlert.classList.remove('hidden');
-                    verifyOtpBtn.innerHTML = '<i class="fas fa-check"></i> Verify Code';
-                    verifyOtpBtn.disabled = false;
-                    
-                    // Clear OTP inputs on error
-                    otpInputs.forEach(input => input.value = '');
-                    otpInputs[0].focus();
-                }
+                hideTyping();
+                displayMessage('Network error. Please check your connection.', 'assistant');
+                console.error('Error sending message:', error);
             }
+            
+            sendBtn.disabled = !messageInput.value.trim();
+            messageInput.focus();
         }
-
-        // Handle verification success
-        function handleVerificationSuccess(phone) {
-            otpAlert.className = 'alert success';
-            otpAlert.textContent = '✓ Phone verified successfully!';
-            otpAlert.classList.remove('hidden');
             
-            // Update state
-            isVerified = true;
-            isTrial = false;
-            currentSessionId = phone;
+        // Function to detect and convert URLs to clickable links - EXACTLY as in your working reference
+        function convertLinksToClickable(text) {
+            const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(app\.zulu\.club\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|[A-Za-z0-9.-]+\.[A-Za-z]{2,}\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]))/ig;
             
-            // Save to localStorage
-            localStorage.setItem('zulu_verified_phone', phone);
-            localStorage.removeItem('zulu_trial_id');
+            return text.replace(urlRegex, function(url) {
+                let finalUrl = url;
+                if (!url.match(/^(https?|ftp|file):\/\//i)) {
+                    if (url.startsWith('www.') || url.includes('app.zulu.club') || url.includes('.club/')) {
+                        finalUrl = 'https://' + url;
+                    }
+                }
+                
+                return `<a href="${finalUrl}" target="_blank" rel="noopener noreferrer" style="color: #0084ff; text-decoration: underline;">${url}</a>`;
+            });
+        }
             
-            // Transfer chat history
-            const oldHistoryKey = `zulu_chat_${currentSessionId}`;
-            const oldHistory = JSON.parse(localStorage.getItem(oldHistoryKey)) || [];
-            localStorage.setItem(`zulu_chat_${phone}`, JSON.stringify(oldHistory));
+        // Display a message in the chat - ADAPTED from your working reference
+        function displayMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
             
-            saveSession();
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
             
-            // Update UI and close modal
+            const now = new Date();
+            const messageDisplayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            const processedText = convertLinksToClickable(text);
+            const formattedText = processedText.replace(/\n/g, '<br>');
+            contentDiv.innerHTML = `
+                ${formattedText}
+                <span class="message-time">${messageDisplayTime}</span>
+            `;
+            
+            messageDiv.appendChild(contentDiv);
+            
+            // Add click handlers for links
             setTimeout(() => {
-                verificationModal.classList.remove('active');
-                updateUI();
-                displayMessage('✅ Your phone has been verified! Welcome to unlimited access.', 'assistant');
-                
-                // Clear forms
-                phoneStep.classList.remove('hidden');
-                otpStep.classList.add('hidden');
-                phoneInput.value = '';
-                otpInputs.forEach(input => input.value = '');
-                
-                // Enable chat input
-                messageInput.disabled = false;
-                sendBtn.disabled = false;
-                messageInput.focus();
-            }, 1500);
+                const links = contentDiv.querySelectorAll('a');
+                links.forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                    });
+                    
+                    link.addEventListener('touchstart', (e) => {
+                        e.stopPropagation();
+                    });
+                });
+            }, 100);
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            return messageDiv;
         }
-
-        // Start OTP timer
+            
+        // Show typing indicator
+        function showTyping() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message assistant';
+            typingDiv.id = 'typingIndicator';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content typing-indicator';
+            contentDiv.innerHTML = `
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            `;
+            
+            typingDiv.appendChild(contentDiv);
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+            
+        // Hide typing indicator
+        function hideTyping() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+            
+        // Auto-resize textarea
+        function autoResizeTextarea(textarea) {
+            textarea.style.height = 'auto';
+            const newHeight = Math.min(textarea.scrollHeight, 100);
+            textarea.style.height = newHeight + 'px';
+        }
+            
+        // Start OTP timer - EXACTLY as in your working reference
         function startOtpTimer() {
             countdown = 60;
             countdownSpan.textContent = countdown;
-            resendOtpBtn.disabled = true;
             timer.classList.remove('hidden');
+            resendOtpBtn.disabled = true;
             
             otpTimer = setInterval(() => {
                 countdown--;
@@ -1586,206 +1628,309 @@
                 
                 if (countdown <= 0) {
                     clearInterval(otpTimer);
-                    resendOtpBtn.disabled = false;
                     timer.classList.add('hidden');
+                    resendOtpBtn.disabled = false;
                 }
             }, 1000);
         }
-
-        // Resend OTP
-        async function resendOtp() {
-            resendOtpBtn.innerHTML = '<div class="spinner"></div>';
-            resendOtpBtn.disabled = true;
             
+        // Check verification status on page load - EXACTLY as in your working reference
+        async function checkVerification() {
+            // Check if there's a stored phone number in localStorage
+            const storedPhone = localStorage.getItem('zulu_verified_phone');
+            if (storedPhone) {
+                try {
+                    const response = await fetch('/auth/check-status', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            phoneNumber: storedPhone
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.verified) {
+                        // Auto-login verified user
+                        currentSessionId = storedPhone;
+                        isVerified = true;
+                        isTrial = false;
+                        isAdmin = data.isAdmin || false;
+                        
+                        // Update UI
+                        updateTrialUI();
+                        loadWelcomeMessage();
+                        messageInput.disabled = false;
+                        messageInput.focus();
+                        
+                        // Load chat history
+                        await loadChatHistory();
+                        return;
+                    } else {
+                        localStorage.removeItem('zulu_verified_phone');
+                    }
+                } catch (error) {
+                    console.error('Error checking verification:', error);
+                }
+            }
+            
+            // Check if there's a trial session in sessionStorage
+            const trialId = sessionStorage.getItem('zulu_trial_id');
+            if (trialId) {
+                try {
+                    const response = await fetch(`/chat/trial-info/${trialId}`);
+                    const data = await response.json();
+                    if (data.success) {
+                        currentSessionId = trialId;
+                        isTrial = true;
+                        trialCount = data.trialCount;
+                        messagesLeft = data.messagesLeft;
+                        
+                        // Update UI
+                        updateTrialUI();
+                        loadWelcomeMessage();
+                        messageInput.disabled = false;
+                        messageInput.focus();
+                        
+                        // Load existing chat history
+                        await loadChatHistory();
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Error checking trial session:', error);
+                }
+            }
+            
+            // If no existing session, create a new trial
+            await startFreeTrial();
+        }
+            
+        // Load chat history - EXACTLY as in your working reference
+        async function loadChatHistory() {
             try {
-                const response = await fetch('/auth/send-otp', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        phoneNumber: otpPhoneNumber.textContent
-                    })
-                });
-                
+                const response = await fetch(`/chat/history/${currentSessionId}`);
                 const data = await response.json();
                 
-                if (data.success) {
-                    clearInterval(otpTimer);
-                    startOtpTimer();
+                if (data.success && data.history && data.history.length > 0) {
+                    // Clear current messages
+                    chatMessages.innerHTML = '';
                     
-                    otpAlert.className = 'alert success';
-                    otpAlert.textContent = 'New code sent successfully!';
-                    otpAlert.classList.remove('hidden');
+                    // Display all messages from history
+                    data.history.forEach(msg => {
+                        if (msg.role === 'user' || msg.role === 'assistant') {
+                            displayMessage(msg.content, msg.role === 'user' ? 'user' : 'assistant');
+                        }
+                    });
                     
-                    setTimeout(() => {
-                        otpAlert.classList.add('hidden');
-                    }, 3000);
-                    
-                    console.log('📱 New mock OTP: 1234');
+                    // Update trial count if applicable
+                    if (data.isTrial) {
+                        trialCount = data.trialCount;
+                        messagesLeft = data.messagesLeft;
+                        updateTrialUI();
+                        
+                        if (data.trialCount >= 10) {
+                            showTrialLimitModal();
+                        }
+                    }
                 } else {
-                    throw new Error('Failed to resend code');
+                    // If no history, show welcome message
+                    loadWelcomeMessage();
                 }
             } catch (error) {
-                console.log('Using mock OTP resend');
-                clearInterval(otpTimer);
-                startOtpTimer();
-                
-                otpAlert.className = 'alert success';
-                otpAlert.textContent = 'New mock code sent (1234)';
-                otpAlert.classList.remove('hidden');
-                
-                setTimeout(() => {
-                    otpAlert.classList.add('hidden');
-                }, 3000);
-            } finally {
-                resendOtpBtn.innerHTML = 'Resend Code';
+                console.error('Error loading chat history:', error);
+                loadWelcomeMessage();
             }
         }
-
-        // Show verification modal
-        function showVerificationModal() {
-            verificationModal.classList.add('active');
-            phoneInput.value = '';
-            phoneAlert.classList.add('hidden');
-            phoneStep.classList.remove('hidden');
-            otpStep.classList.add('hidden');
-            phoneInput.focus();
-        }
-
-        // Show trial limit modal
-        function showTrialLimitModal() {
-            trialLimitModal.classList.add('active');
-            messageInput.disabled = true;
-            sendBtn.disabled = true;
-        }
-
-        // Logout
-        function logout() {
-            if (confirm('Are you sure you want to logout?')) {
-                // Clear all storage
-                localStorage.removeItem('zulu_session');
-                localStorage.removeItem('zulu_trial_id');
-                localStorage.removeItem('zulu_verified_phone');
+            
+        // Logout - ADAPTED from your working reference
+        async function logout() {
+            try {
+                if (isVerified) {
+                    await fetch('/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            phoneNumber: currentSessionId
+                        })
+                    });
+                }
                 
-                // Clear chat history for current session
-                localStorage.removeItem(`zulu_chat_${currentSessionId}`);
+                // Clear storage
+                localStorage.removeItem('zulu_verified_phone');
+                sessionStorage.removeItem('zulu_trial_id');
                 
                 // Reset state
                 currentSessionId = '';
-                isTrial = true;
                 isVerified = false;
+                isTrial = true;
+                isAdmin = false;
                 trialCount = 0;
                 messagesLeft = 10;
-                chatHistory = [];
                 
                 // Clear chat
                 chatMessages.innerHTML = '';
                 
-                // Create new session
-                createTrialSession();
-                
-                // Update UI
-                updateUI();
-                
-                // Close any open modals
+                // Reset modals
                 verificationModal.classList.remove('active');
                 instructionsPanel.classList.remove('active');
                 trialLimitModal.classList.remove('active');
                 
-                console.log('User logged out, new session created');
+                // Start new trial
+                await startFreeTrial();
+                
+            } catch (error) {
+                console.error('Error logging out:', error);
             }
         }
-
-        // Event Listeners
-        document.addEventListener('DOMContentLoaded', init);
-
-        // Message input events
-        messageInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-            sendBtn.disabled = !this.value.trim();
+            
+        // Event Listeners - EXACTLY as in your working reference
+        phoneInput.addEventListener('input', function(e) {
+            let formatted = formatPhoneInput(this.value);
+            this.value = formatted;
+            
+            if (validatePhoneNumber(formatted)) {
+                this.classList.remove('invalid');
+                this.classList.add('valid');
+                phoneAlert.classList.add('hidden');
+                sendOtpBtn.disabled = false;
+            } else {
+                this.classList.remove('valid');
+                this.classList.add('invalid');
+                phoneAlert.classList.remove('hidden');
+                
+                if (formatted.length === 11) {
+                    const suffix = formatted.slice(-1).toUpperCase();
+                    if (!['A', 'U'].includes(suffix)) {
+                        phoneAlert.textContent = 'Invalid suffix. Only A (Admin) or U (User) allowed.';
+                    } else if (formatted.slice(0, 10).length !== 10 || !/^\d{10}$/.test(formatted.slice(0, 10))) {
+                        phoneAlert.textContent = 'First 10 characters must be digits.';
+                    }
+                } else if (formatted.length > 0 && formatted.length < 10) {
+                    phoneAlert.textContent = 'Phone number must be 10 digits.';
+                } else if (formatted.length > 11) {
+                    phoneAlert.textContent = 'Maximum 11 characters (10 digits + A/U).';
+                } else {
+                    phoneAlert.textContent = 'Please enter a valid 10-digit number with optional A/U suffix';
+                }
+                
+                sendOtpBtn.disabled = true;
+            }
         });
-
-        messageInput.addEventListener('keydown', function(e) {
+            
+        sendOtpBtn.addEventListener('click', sendOtp);
+        verifyOtpBtn.addEventListener('click', verifyOtp);
+        resendOtpBtn.addEventListener('click', resendOtp);
+        sendBtn.addEventListener('click', sendMessage);
+            
+        // Modal buttons
+        skipVerificationBtn.addEventListener('click', () => {
+            hideTrialLimitModal();
+        });
+        
+        verifyNowBtn.addEventListener('click', () => {
+            hideTrialLimitModal();
+            showVerificationModal();
+        });
+            
+        // OTP input navigation
+        otp1.addEventListener('keydown', (e) => handleOtpInput(e, otp1, otp2, null));
+        otp2.addEventListener('keydown', (e) => handleOtpInput(e, otp2, otp3, otp1));
+        otp3.addEventListener('keydown', (e) => handleOtpInput(e, otp3, otp4, otp2));
+        otp4.addEventListener('keydown', (e) => handleOtpInput(e, otp4, null, otp3));
+            
+        // Enter key in OTP inputs
+        [otp1, otp2, otp3, otp4].forEach(input => {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    verifyOtp();
+                }
+            });
+        });
+            
+        // Enter key in phone input
+        phoneInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                sendOtp();
+            }
+        });
+            
+        // Enter key in message input (with shift for new line)
+        messageInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 sendMessage();
             }
         });
-
-        // Send button
-        sendBtn.addEventListener('click', sendMessage);
-
-        // Header buttons
-        logoutBtn.addEventListener('click', logout);
-        verifyBtn.addEventListener('click', showVerificationModal);
+            
+        // Auto-resize message input
+        messageInput.addEventListener('input', function() {
+            autoResizeTextarea(this);
+            sendBtn.disabled = !this.value.trim();
+        });
+            
+        // Info button
         infoBtn.addEventListener('click', () => {
             instructionsPanel.classList.add('active');
         });
-
-        // Phone input formatting
-        phoneInput.addEventListener('input', function() {
-            this.value = formatPhoneInput(this.value);
-            
-            if (validatePhone(this.value)) {
-                this.classList.remove('invalid');
-                this.classList.add('valid');
-                phoneAlert.classList.add('hidden');
-            } else {
-                this.classList.remove('valid');
-                this.classList.add('invalid');
-            }
-        });
-
-        // OTP input navigation
-        otpInputs.forEach((input, index) => {
-            input.addEventListener('input', (e) => {
-                if (e.target.value && index < 3) {
-                    otpInputs[index + 1].focus();
-                }
-            });
-            
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Backspace' && !e.target.value && index > 0) {
-                    otpInputs[index - 1].focus();
-                } else if (e.key === 'Enter') {
-                    verifyOtp();
-                }
-            });
-        });
-
-        // Modal close buttons
+        
+        // Close buttons
         closeVerifyModal.addEventListener('click', () => {
             verificationModal.classList.remove('active');
+            phoneStep.classList.remove('hidden');
+            otpStep.classList.add('hidden');
+            phoneInput.value = '';
+            clearOtpInputs();
+            phoneAlert.classList.add('hidden');
+            otpAlert.classList.add('hidden');
+            
+            if (otpTimer) {
+                clearInterval(otpTimer);
+                timer.classList.add('hidden');
+            }
         });
-
+        
         closeInstructionsBtn.addEventListener('click', () => {
             instructionsPanel.classList.remove('active');
         });
-
-        // Verification buttons
-        sendOtpBtn.addEventListener('click', sendOtp);
-        verifyOtpBtn.addEventListener('click', verifyOtp);
-        resendOtpBtn.addEventListener('click', resendOtp);
-
-        // Trial limit modal buttons
-        skipVerificationBtn.addEventListener('click', () => {
-            trialLimitModal.classList.remove('active');
+        
+        // Verify button
+        verifyBtn.addEventListener('click', () => {
+            verificationModal.classList.add('active');
+            phoneInput.focus();
         });
-
-        verifyNowBtn.addEventListener('click', () => {
-            trialLimitModal.classList.remove('active');
-            showVerificationModal();
+        
+        // Logout button
+        logoutBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to logout?')) {
+                logout();
+            }
         });
-
+        
         // Close modals on outside click
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal-overlay')) {
                 e.target.classList.remove('active');
+                
+                if (e.target.id === 'verificationModal') {
+                    phoneStep.classList.remove('hidden');
+                    otpStep.classList.add('hidden');
+                    phoneInput.value = '';
+                    clearOtpInputs();
+                    phoneAlert.classList.add('hidden');
+                    otpAlert.classList.add('hidden');
+                    
+                    if (otpTimer) {
+                        clearInterval(otpTimer);
+                        timer.classList.add('hidden');
+                    }
+                }
             }
         });
-
+        
         // Close modals on Escape key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -1794,23 +1939,11 @@
                 trialLimitModal.classList.remove('active');
             }
         });
-
-        // Auto-resize textarea on load
+            
+        // Initialize
         window.addEventListener('load', () => {
-            messageInput.style.height = 'auto';
-            messageInput.style.height = messageInput.scrollHeight + 'px';
+            checkVerification();
         });
-
-        // Handle session persistence
-        window.addEventListener('beforeunload', () => {
-            saveSession();
-        });
-
-        // Initialize message input height
-        setTimeout(() => {
-            messageInput.style.height = 'auto';
-            messageInput.style.height = messageInput.scrollHeight + 'px';
-        }, 100);
     </script>
 </body>
 </html>
