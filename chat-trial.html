@@ -873,10 +873,12 @@
             </div>
         </header>
 
-        <!-- Trial Banner -->
-        <div class="trial-banner" id="trialBanner">
-            🎁 You have <strong id="messagesLeft">10</strong> free trial messages remaining
-        </div>
+        <<!-- Trial Banner -->
+            <div class="trial-banner" id="trialBanner">
+                <span id="trialMessage">
+                    🎁 You have <strong id="messagesLeft">10</strong> free trial messages remaining
+                </span>
+            </div>
 
         <!-- Chat Container -->
         <div class="chat-container">
@@ -1145,55 +1147,78 @@
             }
         }
             
-        // Update trial UI
-        function updateTrialUI() {
-            messagesLeft = 10 - trialCount;
-            messagesLeftSpan.textContent = messagesLeft;
-            remainingCount.textContent = messagesLeft;
-            
-            if (messagesLeft > 5) {
-                trialBanner.className = 'trial-banner';
-                trialBanner.innerHTML = `🎁 You have <strong>${messagesLeft}</strong> free trial messages remaining`;
-                trialBanner.classList.remove('hidden');
-            } else if (messagesLeft > 0) {
-                trialBanner.className = 'trial-banner warning';
-                trialBanner.innerHTML = `⚠️ Only <strong>${messagesLeft}</strong> trial messages left!`;
-                trialBanner.classList.remove('hidden');
-            } else {
-                trialBanner.className = 'trial-banner warning';
-                trialBanner.innerHTML = '⛔ Trial ended. Please verify to continue.';
-                trialBanner.classList.remove('hidden');
-            }
-            
-            // Update status bar
-            if (isTrial) {
-                statusMessage.innerHTML = `Free Trial • <strong>${messagesLeft}</strong> messages left`;
-                profileName.textContent = 'Trial User';
-                profileAvatar.textContent = 'ZC';
-                profileAvatar.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-                verifyBtn.style.display = 'flex';
-                logoutBtn.classList.add('hidden');
-            } else {
-                statusMessage.innerHTML = 'Verified • Unlimited Access';
-                profileName.innerHTML = 'Verified User <span class="verified-badge">Verified</span>';
-                profileAvatar.textContent = '✓';
-                profileAvatar.style.background = 'linear-gradient(135deg, #00b894 0%, #00cec9 100%)';
-                verifyBtn.style.display = 'none';
-                logoutBtn.classList.remove('hidden');
-                trialBanner.classList.add('hidden');
-            }
-            
-            // Update message input state
-            if (messagesLeft <= 0 && isTrial) {
-                messageInput.disabled = true;
-                messageInput.placeholder = 'Verify phone to continue...';
-                sendBtn.disabled = true;
-            } else {
-                messageInput.disabled = false;
-                messageInput.placeholder = 'Type your message...';
-                sendBtn.disabled = !messageInput.value.trim();
-            }
-        }
+// Updated updateTrialUI function to handle trial already used case
+function updateTrialUI() {
+    messagesLeft = 10 - trialCount;
+    messagesLeftSpan.textContent = messagesLeft;
+    remainingCount.textContent = messagesLeft;
+    
+    // Check if trial has been used on this device
+    const trialUsed = localStorage.getItem('zulu_verified_trial_used') === 'true';
+    
+    if (trialUsed || trialCount >= 10) {
+        // Trial already used or expired
+        trialBanner.className = 'trial-banner warning';
+        trialBanner.innerHTML = '⛔ Trial ended. Please verify to continue.';
+        trialBanner.classList.remove('hidden');
+        
+        // Update status bar
+        statusMessage.innerHTML = 'Trial Ended • <strong>0</strong> messages left';
+        
+        // Show verification button
+        verifyBtn.style.display = 'flex';
+        logoutBtn.classList.add('hidden');
+        
+    } else if (messagesLeft > 5) {
+        trialBanner.className = 'trial-banner';
+        trialBanner.innerHTML = `🎁 You have <strong>${messagesLeft}</strong> free trial messages remaining`;
+        trialBanner.classList.remove('hidden');
+    } else if (messagesLeft > 0) {
+        trialBanner.className = 'trial-banner warning';
+        trialBanner.innerHTML = `⚠️ Only <strong>${messagesLeft}</strong> trial messages left!`;
+        trialBanner.classList.remove('hidden');
+    } else {
+        trialBanner.className = 'trial-banner warning';
+        trialBanner.innerHTML = '⛔ Trial ended. Please verify to continue.';
+        trialBanner.classList.remove('hidden');
+    }
+    
+    // Update profile and buttons based on verification status
+    if (isVerified) {
+        statusMessage.innerHTML = 'Verified • Unlimited Access';
+        profileName.innerHTML = 'Verified User <span class="verified-badge">Verified</span>';
+        profileAvatar.textContent = '✓';
+        profileAvatar.style.background = 'linear-gradient(135deg, #00b894 0%, #00cec9 100%)';
+        verifyBtn.style.display = 'none';
+        logoutBtn.classList.remove('hidden');
+        trialBanner.classList.add('hidden');
+    } else if (trialUsed || trialCount >= 10) {
+        // Trial already used but not verified
+        profileName.textContent = 'Trial Ended';
+        profileAvatar.textContent = '⛔';
+        profileAvatar.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #f5576c 100%)';
+        verifyBtn.style.display = 'flex';
+        logoutBtn.classList.add('hidden');
+    } else {
+        // Active trial
+        profileName.textContent = 'Trial User';
+        profileAvatar.textContent = 'ZC';
+        profileAvatar.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        verifyBtn.style.display = 'flex';
+        logoutBtn.classList.add('hidden');
+    }
+    
+    // Update message input state
+    if ((trialUsed && !isVerified) || (messagesLeft <= 0 && isTrial && !isVerified)) {
+        messageInput.disabled = true;
+        messageInput.placeholder = 'Verify phone to continue...';
+        sendBtn.disabled = true;
+    } else {
+        messageInput.disabled = false;
+        messageInput.placeholder = 'Type your message...';
+        sendBtn.disabled = !messageInput.value.trim();
+    }
+}
             
         // Show trial limit modal
         function showTrialLimitModal() {
@@ -1655,90 +1680,108 @@ Try asking: "Show me home decor items" or "Tell me about Zulu Club"`;
             }, 1000);
         }
             
-        // Check verification status on page load
-        async function checkVerification() {
-            // Check if there's a stored phone number in localStorage
-            const storedPhone = localStorage.getItem('zulu_verified_phone');
-            if (storedPhone) {
-                try {
-                    const response = await fetch('/auth/check-status', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            phoneNumber: storedPhone
-                        })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.success && data.verified) {
-                        // Auto-login verified user
-                        currentSessionId = storedPhone;
-                        isVerified = true;
-                        isTrial = false;
-                        isAdmin = data.isAdmin || false;
-                        
-                        // Update UI
-                        updateTrialUI();
-                        loadWelcomeMessage();
-                        messageInput.disabled = false;
-                        messageInput.focus();
-                        
-                        // Load chat history
-                        await loadChatHistory();
-                        return;
-                    } else {
-                        localStorage.removeItem('zulu_verified_phone');
-                    }
-                } catch (error) {
-                    console.error('Error checking verification:', error);
-                }
-            }
+// Updated checkVerification function
+async function checkVerification() {
+    // Check if there's a stored phone number in localStorage
+    const storedPhone = localStorage.getItem('zulu_verified_phone');
+    if (storedPhone) {
+        try {
+            const response = await fetch('/auth/check-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phoneNumber: storedPhone
+                })
+            });
             
-            // Check if trial has already been used on this device (one-time per device)
-            const trialUsed = localStorage.getItem('zulu_verified_trial_used');
-            if (trialUsed === 'true') {
-                // Trial already used on this device, user must verify
-                displayMessage('This device has already used the free trial. Please verify your phone number to continue.', 'assistant');
-                showVerificationModal();
+            const data = await response.json();
+            
+            if (data.success && data.verified) {
+                // Auto-login verified user
+                currentSessionId = storedPhone;
+                isVerified = true;
+                isTrial = false;
+                isAdmin = data.isAdmin || false;
+                
+                // Update UI
+                updateTrialUI();
+                loadWelcomeMessage();
+                messageInput.disabled = false;
+                messageInput.focus();
+                
+                // Load chat history
+                await loadChatHistory();
+                return;
+            } else {
+                localStorage.removeItem('zulu_verified_phone');
+            }
+        } catch (error) {
+            console.error('Error checking verification:', error);
+        }
+    }
+    
+    // Check if trial has already been used on this device (one-time per device)
+    const trialUsed = localStorage.getItem('zulu_verified_trial_used');
+    if (trialUsed === 'true') {
+        // Trial already used on this device, user must verify
+        trialCount = 10; // Set trial count to max
+        messagesLeft = 0; // No messages left
+        isTrial = true; // Still in trial state (but expired)
+        
+        // Update UI to show trial ended
+        updateTrialUI();
+        
+        // Display message
+        displayMessage('This device has already used the free trial. Please verify your phone number to continue.', 'assistant');
+        
+        // Disable chat input
+        messageInput.disabled = true;
+        messageInput.placeholder = 'Verify phone to continue...';
+        sendBtn.disabled = true;
+        
+        // Show verification modal after a delay
+        setTimeout(() => {
+            showVerificationModal();
+        }, 1000);
+        
+        return;
+    }
+    
+    // Check if there's a trial session in localStorage
+    const trialId = localStorage.getItem('zulu_trial_id');
+    const savedTrialCount = localStorage.getItem('zulu_trial_count');
+    
+    if (trialId && savedTrialCount !== null) {
+        try {
+            const response = await fetch(`/chat/trial-info/${trialId}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                currentSessionId = trialId;
+                isTrial = true;
+                trialCount = parseInt(savedTrialCount) || 0;
+                messagesLeft = 10 - trialCount;
+                
+                // Update UI
+                updateTrialUI();
+                loadWelcomeMessage();
+                messageInput.disabled = false;
+                messageInput.focus();
+                
+                // Load existing chat history
+                await loadChatHistory();
                 return;
             }
-            
-            // Check if there's a trial session in localStorage
-            const trialId = localStorage.getItem('zulu_trial_id');
-            const savedTrialCount = localStorage.getItem('zulu_trial_count');
-            
-            if (trialId && savedTrialCount !== null) {
-                try {
-                    const response = await fetch(`/chat/trial-info/${trialId}`);
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        currentSessionId = trialId;
-                        isTrial = true;
-                        trialCount = parseInt(savedTrialCount) || 0;
-                        messagesLeft = 10 - trialCount;
-                        
-                        // Update UI
-                        updateTrialUI();
-                        loadWelcomeMessage();
-                        messageInput.disabled = false;
-                        messageInput.focus();
-                        
-                        // Load existing chat history
-                        await loadChatHistory();
-                        return;
-                    }
-                } catch (error) {
-                    console.error('Error checking trial session:', error);
-                }
-            }
-            
-            // If no existing session, create a new trial
-            await startFreeTrial();
+        } catch (error) {
+            console.error('Error checking trial session:', error);
         }
+    }
+    
+    // If no existing session, create a new trial
+    await startFreeTrial();
+}
             
         // Load chat history
         async function loadChatHistory() {
@@ -1777,66 +1820,333 @@ Try asking: "Show me home decor items" or "Tell me about Zulu Club"`;
             }
         }
             
-        // Logout - FIXED: Trial should not reset after verification
-        async function logout() {
-            try {
-                if (isVerified) {
-                    await fetch('/auth/logout', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            phoneNumber: currentSessionId
-                        })
-                    });
-                    
-                    // Clear verified user data but keep trial used flag
-                    localStorage.removeItem('zulu_verified_phone');
-                    // Don't remove zulu_verified_trial_used - trial is one-time per device
-                }
-                
-                // Reset state for new session
-                currentSessionId = '';
-                isVerified = false;
-                isTrial = true;
-                isAdmin = false;
-                trialCount = 0;
-                messagesLeft = 10;
-                
-                // Clear chat
-                chatMessages.innerHTML = '';
-                
-                // Reset modals
-                verificationModal.classList.remove('active');
-                instructionsPanel.classList.remove('active');
-                trialLimitModal.classList.remove('active');
-                
-                // Check if trial has been used on this device
-                const trialUsed = localStorage.getItem('zulu_verified_trial_used');
-                if (trialUsed === 'true') {
-                    // Trial already used, show verification modal
-                    displayMessage('This device has already used the free trial. Please verify your phone number to continue.', 'assistant');
-                    showVerificationModal();
-                } else {
-                    // Start new trial
-                    await startFreeTrial();
-                }
-                
-            } catch (error) {
-                console.error('Error logging out:', error);
-            }
+// Updated logout function
+async function logout() {
+    try {
+        if (isVerified) {
+            await fetch('/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phoneNumber: currentSessionId
+                })
+            });
         }
+        
+        // Clear ALL localStorage data
+        localStorage.clear();
+        
+        // Reset ALL state variables
+        currentSessionId = '';
+        isTrial = true;
+        isVerified = false;
+        isAdmin = false;
+        trialCount = 10; // Set to max to indicate trial used
+        messagesLeft = 0; // Set to 0
+        
+        // Clear chat messages
+        chatMessages.innerHTML = '';
+        
+        // Hide all modals
+        verificationModal.classList.remove('active');
+        instructionsPanel.classList.remove('active');
+        trialLimitModal.classList.remove('active');
+        
+        // Reset verification modal
+        phoneStep.classList.remove('hidden');
+        otpStep.classList.add('hidden');
+        phoneInput.value = '';
+        clearOtpInputs();
+        phoneAlert.classList.add('hidden');
+        otpAlert.classList.add('hidden');
+        
+        if (otpTimer) {
+            clearInterval(otpTimer);
+            timer.classList.add('hidden');
+        }
+        
+        // Show trial already used state
+        updateTrialUI();
+        displayMessage('This device has already used the free trial. Please verify your phone number to continue.', 'assistant');
+        
+        // Disable chat input until verification
+        messageInput.disabled = true;
+        messageInput.placeholder = 'Verify phone to continue...';
+        sendBtn.disabled = true;
+        
+        console.log('🔄 Logout completed - Trial marked as used on this device');
+        
+    } catch (error) {
+        console.error('Error logging out:', error);
+    }
+}
             
-        // Show verification modal
-        function showVerificationModal() {
-            verificationModal.classList.add('active');
-            phoneInput.value = '';
-            phoneAlert.classList.add('hidden');
-            phoneStep.classList.remove('hidden');
-            otpStep.classList.add('hidden');
-            phoneInput.focus();
+// Updated logout function
+async function logout() {
+    try {
+        if (isVerified) {
+            await fetch('/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phoneNumber: currentSessionId
+                })
+            });
         }
+        
+        // Clear ALL localStorage data
+        localStorage.clear();
+        
+        // Reset ALL state variables
+        currentSessionId = '';
+        isTrial = true;
+        isVerified = false;
+        isAdmin = false;
+        trialCount = 10; // Set to max to indicate trial used
+        messagesLeft = 0; // Set to 0
+        
+        // Clear chat messages
+        chatMessages.innerHTML = '';
+        
+        // Hide all modals
+        verificationModal.classList.remove('active');
+        instructionsPanel.classList.remove('active');
+        trialLimitModal.classList.remove('active');
+        
+        // Reset verification modal
+        phoneStep.classList.remove('hidden');
+        otpStep.classList.add('hidden');
+        phoneInput.value = '';
+        clearOtpInputs();
+        phoneAlert.classList.add('hidden');
+        otpAlert.classList.add('hidden');
+        
+        if (otpTimer) {
+            clearInterval(otpTimer);
+            timer.classList.add('hidden');
+        }
+        
+        // Show trial already used state
+        updateTrialUI();
+        displayMessage('This device has already used the free trial. Please verify your phone number to continue.', 'assistant');
+        
+        // Disable chat input until verification
+        messageInput.disabled = true;
+        messageInput.placeholder = 'Verify phone to continue...';
+        sendBtn.disabled = true;
+        
+        console.log('🔄 Logout completed - Trial marked as used on this device');
+        
+    } catch (error) {
+        console.error('Error logging out:', error);
+    }
+}
+
+// Updated updateTrialUI function to handle trial already used case
+function updateTrialUI() {
+    messagesLeft = 10 - trialCount;
+    messagesLeftSpan.textContent = messagesLeft;
+    remainingCount.textContent = messagesLeft;
+    
+    // Check if trial has been used on this device
+    const trialUsed = localStorage.getItem('zulu_verified_trial_used') === 'true';
+    
+    if (trialUsed || trialCount >= 10) {
+        // Trial already used or expired
+        trialBanner.className = 'trial-banner warning';
+        trialBanner.innerHTML = '⛔ Trial ended. Please verify to continue.';
+        trialBanner.classList.remove('hidden');
+        
+        // Update status bar
+        statusMessage.innerHTML = 'Trial Ended • <strong>0</strong> messages left';
+        
+        // Show verification button
+        verifyBtn.style.display = 'flex';
+        logoutBtn.classList.add('hidden');
+        
+    } else if (messagesLeft > 5) {
+        trialBanner.className = 'trial-banner';
+        trialBanner.innerHTML = `🎁 You have <strong>${messagesLeft}</strong> free trial messages remaining`;
+        trialBanner.classList.remove('hidden');
+    } else if (messagesLeft > 0) {
+        trialBanner.className = 'trial-banner warning';
+        trialBanner.innerHTML = `⚠️ Only <strong>${messagesLeft}</strong> trial messages left!`;
+        trialBanner.classList.remove('hidden');
+    } else {
+        trialBanner.className = 'trial-banner warning';
+        trialBanner.innerHTML = '⛔ Trial ended. Please verify to continue.';
+        trialBanner.classList.remove('hidden');
+    }
+    
+    // Update profile and buttons based on verification status
+    if (isVerified) {
+        statusMessage.innerHTML = 'Verified • Unlimited Access';
+        profileName.innerHTML = 'Verified User <span class="verified-badge">Verified</span>';
+        profileAvatar.textContent = '✓';
+        profileAvatar.style.background = 'linear-gradient(135deg, #00b894 0%, #00cec9 100%)';
+        verifyBtn.style.display = 'none';
+        logoutBtn.classList.remove('hidden');
+        trialBanner.classList.add('hidden');
+    } else if (trialUsed || trialCount >= 10) {
+        // Trial already used but not verified
+        profileName.textContent = 'Trial Ended';
+        profileAvatar.textContent = '⛔';
+        profileAvatar.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #f5576c 100%)';
+        verifyBtn.style.display = 'flex';
+        logoutBtn.classList.add('hidden');
+    } else {
+        // Active trial
+        profileName.textContent = 'Trial User';
+        profileAvatar.textContent = 'ZC';
+        profileAvatar.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        verifyBtn.style.display = 'flex';
+        logoutBtn.classList.add('hidden');
+    }
+    
+    // Update message input state
+    if ((trialUsed && !isVerified) || (messagesLeft <= 0 && isTrial && !isVerified)) {
+        messageInput.disabled = true;
+        messageInput.placeholder = 'Verify phone to continue...';
+        sendBtn.disabled = true;
+    } else {
+        messageInput.disabled = false;
+        messageInput.placeholder = 'Type your message...';
+        sendBtn.disabled = !messageInput.value.trim();
+    }
+}
+
+// Updated checkVerification function
+async function checkVerification() {
+    // Check if there's a stored phone number in localStorage
+    const storedPhone = localStorage.getItem('zulu_verified_phone');
+    if (storedPhone) {
+        try {
+            const response = await fetch('/auth/check-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phoneNumber: storedPhone
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success && data.verified) {
+                // Auto-login verified user
+                currentSessionId = storedPhone;
+                isVerified = true;
+                isTrial = false;
+                isAdmin = data.isAdmin || false;
+                
+                // Update UI
+                updateTrialUI();
+                loadWelcomeMessage();
+                messageInput.disabled = false;
+                messageInput.focus();
+                
+                // Load chat history
+                await loadChatHistory();
+                return;
+            } else {
+                localStorage.removeItem('zulu_verified_phone');
+            }
+        } catch (error) {
+            console.error('Error checking verification:', error);
+        }
+    }
+    
+    // Check if trial has already been used on this device (one-time per device)
+    const trialUsed = localStorage.getItem('zulu_verified_trial_used');
+    if (trialUsed === 'true') {
+        // Trial already used on this device, user must verify
+        trialCount = 10; // Set trial count to max
+        messagesLeft = 0; // No messages left
+        isTrial = true; // Still in trial state (but expired)
+        
+        // Update UI to show trial ended
+        updateTrialUI();
+        
+        // Display message
+        displayMessage('This device has already used the free trial. Please verify your phone number to continue.', 'assistant');
+        
+        // Disable chat input
+        messageInput.disabled = true;
+        messageInput.placeholder = 'Verify phone to continue...';
+        sendBtn.disabled = true;
+        
+        // Show verification modal after a delay
+        setTimeout(() => {
+            showVerificationModal();
+        }, 1000);
+        
+        return;
+    }
+    
+    // Check if there's a trial session in localStorage
+    const trialId = localStorage.getItem('zulu_trial_id');
+    const savedTrialCount = localStorage.getItem('zulu_trial_count');
+    
+    if (trialId && savedTrialCount !== null) {
+        try {
+            const response = await fetch(`/chat/trial-info/${trialId}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                currentSessionId = trialId;
+                isTrial = true;
+                trialCount = parseInt(savedTrialCount) || 0;
+                messagesLeft = 10 - trialCount;
+                
+                // Update UI
+                updateTrialUI();
+                loadWelcomeMessage();
+                messageInput.disabled = false;
+                messageInput.focus();
+                
+                // Load existing chat history
+                await loadChatHistory();
+                return;
+            }
+        } catch (error) {
+            console.error('Error checking trial session:', error);
+        }
+    }
+    
+    // If no existing session, create a new trial
+    await startFreeTrial();
+}
+
+// Updated showVerificationModal function to handle trial already used case
+function showVerificationModal() {
+    verificationModal.classList.add('active');
+    phoneInput.value = '';
+    phoneAlert.classList.add('hidden');
+    phoneStep.classList.remove('hidden');
+    otpStep.classList.add('hidden');
+    
+    // Update modal message if trial already used
+    if (trialCount >= 10 || localStorage.getItem('zulu_verified_trial_used') === 'true') {
+        const modalHeader = document.querySelector('.verification-modal .modal-header h3');
+        modalHeader.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Verify to Continue';
+        
+        // Add explanation text
+        const existingMessage = document.querySelector('#phoneStep p');
+        if (!existingMessage) {
+            const explanation = document.createElement('p');
+            explanation.style.cssText = 'color: #a0b3c5; font-size: 14px; margin-bottom: 16px; text-align: center;';
+            explanation.innerHTML = 'Your free trial has ended. Verify your phone to continue chatting.';
+            phoneStep.insertBefore(explanation, phoneStep.firstChild);
+        }
+    }
+    
+    phoneInput.focus();
+}
             
         // Event Listeners
         phoneInput.addEventListener('input', function(e) {
