@@ -916,9 +916,10 @@
                     <!-- Phone Input Step -->
                     <div id="phoneStep">
                         <div class="form-group">
-                            <label class="form-label">Phone Number (10 digits)</label>
+                            <label class="form-label">Phone Number (10 digits + optional A/U)</label>
                             <input type="text" class="phone-input" id="phoneInput" 
-                                   placeholder="" maxlength="11">
+                                   placeholder="8368127760A" maxlength="11">
+                            <div class="hint">Format: 10 digits + optional A/U (A for Admin, U for User)</div>
                             <div id="phoneAlert" class="alert hidden"></div>
                         </div>
                         <button class="action-btn primary" id="sendOtpBtn">
@@ -1000,7 +1001,7 @@
     </div>
 
     <script>
-        // Global state - EXACTLY as in your working reference
+        // Global state
         let currentSessionId = '';
         let isTrial = true;
         let isVerified = false;
@@ -1060,7 +1061,7 @@
         const otp3 = document.getElementById('otp3');
         const otp4 = document.getElementById('otp4');
             
-        // Format phone number input - EXACTLY as in your working reference
+        // Format phone number input
         function formatPhoneInput(value) {
             // Remove all non-digits and letters A/U
             let cleaned = value.replace(/[^0-9auAU]/g, '');
@@ -1081,7 +1082,7 @@
             return digits + suffix;
         }
             
-        // Validate phone number - EXACTLY as in your working reference
+        // Validate phone number
         function validatePhoneNumber(phone) {
             // Check if it's exactly 10 digits or 10 digits + A/U
             const regex = /^[0-9]{10}[AU]?$/i;
@@ -1100,7 +1101,7 @@
             return true;
         }
             
-        // Start free trial - EXACTLY as in your working reference
+        // Start free trial
         async function startFreeTrial() {
             try {
                 const response = await fetch('/chat/create-trial', {
@@ -1119,8 +1120,9 @@
                     trialCount = 0;
                     messagesLeft = 10;
                     
-                    // Store trial ID in sessionStorage
-                    sessionStorage.setItem('zulu_trial_id', currentSessionId);
+                    // Store trial ID in localStorage (not sessionStorage for persistence)
+                    localStorage.setItem('zulu_trial_id', currentSessionId);
+                    localStorage.setItem('zulu_trial_count', '0');
                     
                     // Update UI
                     updateTrialUI();
@@ -1131,16 +1133,19 @@
                     messageInput.focus();
                     
                     console.log(`🎁 Trial started with session ID: ${currentSessionId}`);
+                    return true;
                 } else {
                     alert('Failed to start trial. Please try again.');
+                    return false;
                 }
             } catch (error) {
                 console.error('Error starting trial:', error);
                 alert('Network error. Please try again.');
+                return false;
             }
         }
             
-        // Update trial UI - ADAPTED from your working reference
+        // Update trial UI
         function updateTrialUI() {
             messagesLeft = 10 - trialCount;
             messagesLeftSpan.textContent = messagesLeft;
@@ -1190,14 +1195,14 @@
             }
         }
             
-        // Show trial limit modal - EXACTLY as in your working reference
+        // Show trial limit modal
         function showTrialLimitModal() {
             trialLimitModal.classList.add('active');
             messageInput.disabled = true;
             sendBtn.disabled = true;
         }
             
-        // Hide trial limit modal - EXACTLY as in your working reference
+        // Hide trial limit modal
         function hideTrialLimitModal() {
             trialLimitModal.classList.remove('active');
             if (messagesLeft > 0) {
@@ -1206,7 +1211,7 @@
             }
         }
             
-        // Send OTP - EXACTLY as in your working reference
+        // Send OTP
         async function sendOtp() {
             const phone = phoneInput.value.trim();
             
@@ -1272,7 +1277,7 @@
             }
         }
             
-        // Verify OTP - EXACTLY as in your working reference
+        // Verify OTP
         async function verifyOtp() {
             const otp = otp1.value + otp2.value + otp3.value + otp4.value;
             const phone = otpPhoneNumber.textContent;
@@ -1317,9 +1322,11 @@
                     
                     // Store in localStorage for auto-login
                     localStorage.setItem('zulu_verified_phone', phone);
+                    localStorage.setItem('zulu_verified_trial_used', 'true'); // Mark trial as used
                     
                     // Clear trial session storage
-                    sessionStorage.removeItem('zulu_trial_id');
+                    localStorage.removeItem('zulu_trial_id');
+                    localStorage.removeItem('zulu_trial_count');
                     
                     // Update UI
                     updateTrialUI();
@@ -1358,7 +1365,7 @@
             }
         }
             
-        // Resend OTP - EXACTLY as in your working reference
+        // Resend OTP
         async function resendOtp() {
             resendOtpBtn.innerHTML = '<div class="spinner"></div>';
             resendOtpBtn.disabled = true;
@@ -1422,14 +1429,21 @@
             otp4.value = '';
         }
             
-        // Handle OTP input navigation - EXACTLY as in your working reference
+        // Handle OTP input navigation - FIXED: No auto-copy to next digit
         function handleOtpInput(e, current, next, prev) {
+            // Prevent default to avoid any browser auto-fill behavior
+            e.preventDefault();
+            
             if (e.key === 'Backspace' && !current.value && prev) {
                 prev.focus();
+            } else if (e.key === 'Backspace' && current.value) {
+                current.value = '';
             } else if (e.key.length === 1 && /^\d$/.test(e.key)) {
+                // Only set if empty or overwrite current value
                 current.value = e.key;
                 if (next) {
-                    next.focus();
+                    // Small timeout to ensure value is set
+                    setTimeout(() => next.focus(), 10);
                 }
             } else if (e.key === 'ArrowRight' && next) {
                 next.focus();
@@ -1438,7 +1452,7 @@
             }
         }
             
-        // Load welcome message - ADAPTED from your working reference
+        // Load welcome message
         function loadWelcomeMessage() {
             const welcomeText = `Welcome to Zulu Club${isTrial ? ' Free Trial!' : '!'}
 
@@ -1456,7 +1470,7 @@ Try asking: "Show me home decor items" or "Tell me about Zulu Club"`;
             displayMessage(welcomeText, 'assistant');
         }
             
-        // Send message - EXACTLY as in your working reference
+        // Send message
         async function sendMessage() {
             const message = messageInput.value.trim();
             if (!message || (!isTrial && !isVerified)) return;
@@ -1497,6 +1511,9 @@ Try asking: "Show me home decor items" or "Tell me about Zulu Club"`;
                         trialCount = data.trialCount;
                         messagesLeft = data.messagesLeft;
                         
+                        // Save trial count to localStorage for persistence
+                        localStorage.setItem('zulu_trial_count', trialCount.toString());
+                        
                         // Update UI
                         updateTrialUI();
                         
@@ -1527,7 +1544,7 @@ Try asking: "Show me home decor items" or "Tell me about Zulu Club"`;
             messageInput.focus();
         }
             
-        // Function to detect and convert URLs to clickable links - EXACTLY as in your working reference
+        // Function to detect and convert URLs to clickable links
         function convertLinksToClickable(text) {
             const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(app\.zulu\.club\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|[A-Za-z0-9.-]+\.[A-Za-z]{2,}\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]))/ig;
             
@@ -1543,7 +1560,7 @@ Try asking: "Show me home decor items" or "Tell me about Zulu Club"`;
             });
         }
             
-        // Display a message in the chat - ADAPTED from your working reference
+        // Display a message in the chat
         function displayMessage(text, sender) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}`;
@@ -1615,12 +1632,16 @@ Try asking: "Show me home decor items" or "Tell me about Zulu Club"`;
             textarea.style.height = newHeight + 'px';
         }
             
-        // Start OTP timer - EXACTLY as in your working reference
+        // Start OTP timer
         function startOtpTimer() {
             countdown = 60;
             countdownSpan.textContent = countdown;
             timer.classList.remove('hidden');
             resendOtpBtn.disabled = true;
+            
+            if (otpTimer) {
+                clearInterval(otpTimer);
+            }
             
             otpTimer = setInterval(() => {
                 countdown--;
@@ -1634,7 +1655,7 @@ Try asking: "Show me home decor items" or "Tell me about Zulu Club"`;
             }, 1000);
         }
             
-        // Check verification status on page load - EXACTLY as in your working reference
+        // Check verification status on page load
         async function checkVerification() {
             // Check if there's a stored phone number in localStorage
             const storedPhone = localStorage.getItem('zulu_verified_phone');
@@ -1676,17 +1697,29 @@ Try asking: "Show me home decor items" or "Tell me about Zulu Club"`;
                 }
             }
             
-            // Check if there's a trial session in sessionStorage
-            const trialId = sessionStorage.getItem('zulu_trial_id');
-            if (trialId) {
+            // Check if trial has already been used on this device (one-time per device)
+            const trialUsed = localStorage.getItem('zulu_verified_trial_used');
+            if (trialUsed === 'true') {
+                // Trial already used on this device, user must verify
+                displayMessage('This device has already used the free trial. Please verify your phone number to continue.', 'assistant');
+                showVerificationModal();
+                return;
+            }
+            
+            // Check if there's a trial session in localStorage
+            const trialId = localStorage.getItem('zulu_trial_id');
+            const savedTrialCount = localStorage.getItem('zulu_trial_count');
+            
+            if (trialId && savedTrialCount !== null) {
                 try {
                     const response = await fetch(`/chat/trial-info/${trialId}`);
                     const data = await response.json();
+                    
                     if (data.success) {
                         currentSessionId = trialId;
                         isTrial = true;
-                        trialCount = data.trialCount;
-                        messagesLeft = data.messagesLeft;
+                        trialCount = parseInt(savedTrialCount) || 0;
+                        messagesLeft = 10 - trialCount;
                         
                         // Update UI
                         updateTrialUI();
@@ -1707,7 +1740,7 @@ Try asking: "Show me home decor items" or "Tell me about Zulu Club"`;
             await startFreeTrial();
         }
             
-        // Load chat history - EXACTLY as in your working reference
+        // Load chat history
         async function loadChatHistory() {
             try {
                 const response = await fetch(`/chat/history/${currentSessionId}`);
@@ -1744,7 +1777,7 @@ Try asking: "Show me home decor items" or "Tell me about Zulu Club"`;
             }
         }
             
-        // Logout - ADAPTED from your working reference
+        // Logout - FIXED: Trial should not reset after verification
         async function logout() {
             try {
                 if (isVerified) {
@@ -1757,13 +1790,13 @@ Try asking: "Show me home decor items" or "Tell me about Zulu Club"`;
                             phoneNumber: currentSessionId
                         })
                     });
+                    
+                    // Clear verified user data but keep trial used flag
+                    localStorage.removeItem('zulu_verified_phone');
+                    // Don't remove zulu_verified_trial_used - trial is one-time per device
                 }
                 
-                // Clear storage
-                localStorage.removeItem('zulu_verified_phone');
-                sessionStorage.removeItem('zulu_trial_id');
-                
-                // Reset state
+                // Reset state for new session
                 currentSessionId = '';
                 isVerified = false;
                 isTrial = true;
@@ -1779,15 +1812,33 @@ Try asking: "Show me home decor items" or "Tell me about Zulu Club"`;
                 instructionsPanel.classList.remove('active');
                 trialLimitModal.classList.remove('active');
                 
-                // Start new trial
-                await startFreeTrial();
+                // Check if trial has been used on this device
+                const trialUsed = localStorage.getItem('zulu_verified_trial_used');
+                if (trialUsed === 'true') {
+                    // Trial already used, show verification modal
+                    displayMessage('This device has already used the free trial. Please verify your phone number to continue.', 'assistant');
+                    showVerificationModal();
+                } else {
+                    // Start new trial
+                    await startFreeTrial();
+                }
                 
             } catch (error) {
                 console.error('Error logging out:', error);
             }
         }
             
-        // Event Listeners - EXACTLY as in your working reference
+        // Show verification modal
+        function showVerificationModal() {
+            verificationModal.classList.add('active');
+            phoneInput.value = '';
+            phoneAlert.classList.add('hidden');
+            phoneStep.classList.remove('hidden');
+            otpStep.classList.add('hidden');
+            phoneInput.focus();
+        }
+            
+        // Event Listeners
         phoneInput.addEventListener('input', function(e) {
             let formatted = formatPhoneInput(this.value);
             this.value = formatted;
@@ -1836,7 +1887,7 @@ Try asking: "Show me home decor items" or "Tell me about Zulu Club"`;
             showVerificationModal();
         });
             
-        // OTP input navigation
+        // OTP input navigation - FIXED: No auto-copy issue
         otp1.addEventListener('keydown', (e) => handleOtpInput(e, otp1, otp2, null));
         otp2.addEventListener('keydown', (e) => handleOtpInput(e, otp2, otp3, otp1));
         otp3.addEventListener('keydown', (e) => handleOtpInput(e, otp3, otp4, otp2));
@@ -1897,10 +1948,9 @@ Try asking: "Show me home decor items" or "Tell me about Zulu Club"`;
             instructionsPanel.classList.remove('active');
         });
         
-        // Verify button
+        // Verify button - FIXED: Now opens verification modal
         verifyBtn.addEventListener('click', () => {
-            verificationModal.classList.add('active');
-            phoneInput.focus();
+            showVerificationModal();
         });
         
         // Logout button
