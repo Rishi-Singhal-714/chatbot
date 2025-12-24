@@ -415,6 +415,14 @@
             line-height: 1.5;
         }
         
+        /* Auth Options Container */
+        .auth-options {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+        
         /* Auth Form Container */
         #phoneFormContainer {
             display: none;
@@ -459,6 +467,83 @@
             margin-bottom: 20px;
             line-height: 1.5;
             font-size: 14px;
+        }
+        
+        /* Buttons */
+        .start-trial-btn {
+            background: var(--gradient-gold);
+            color: var(--bg-primary);
+            border: none;
+            padding: 18px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .start-trial-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+        }
+        
+        .verify-first-btn {
+            background: transparent;
+            color: var(--accent-gold);
+            border: 2px solid var(--border-gold);
+            padding: 18px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .verify-first-btn:hover {
+            background: rgba(255, 215, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .auth-btn {
+            background: var(--gradient-gold);
+            color: var(--bg-primary);
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-top: 20px;
+            height: 56px;
+        }
+        
+        .auth-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
+        }
+        
+        .auth-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
         }
         
         /* Input Groups */
@@ -544,60 +629,6 @@
             border-color: var(--accent-gold);
             background: rgba(255, 215, 0, 0.05);
             box-shadow: 0 0 20px rgba(255, 215, 0, 0.1);
-        }
-        
-        /* Auth Buttons */
-        .auth-btn {
-            background: var(--gradient-gold);
-            color: var(--bg-primary);
-            border: none;
-            padding: 16px;
-            border-radius: 12px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            width: 100%;
-            margin-top: 20px;
-            height: 56px;
-        }
-        
-        .auth-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
-        }
-        
-        .auth-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-        
-        .start-trial-btn {
-            background: var(--gradient-gold);
-            color: var(--bg-primary);
-            border: none;
-            padding: 18px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            width: 100%;
-            margin-top: 10px;
-        }
-        
-        .start-trial-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
         }
         
         /* Timer & Resend */
@@ -941,18 +972,26 @@
             <div class="auth-content">
                 <div class="auth-header">
                     <h1 class="auth-title">Zulu Club AI</h1>
-                    <p class="auth-subtitle">Experience premium AI assistance. Start with 10 free messages, then verify to continue.</p>
+                    <p class="auth-subtitle">Experience premium AI assistance. Choose your preferred way to get started:</p>
                 </div>
                 
-                <button class="start-trial-btn" id="startTrialBtn">
-                    <i class="fas fa-play-circle"></i> Start Free Trial
-                </button>
+                <div class="auth-options">
+                    <button class="start-trial-btn" id="startTrialBtn">
+                        <i class="fas fa-play-circle"></i> Start Free Trial (10 Messages)
+                    </button>
+                    
+                    <div style="text-align: center; margin: 16px 0; color: var(--text-tertiary); font-size: 14px;">OR</div>
+                    
+                    <button class="verify-first-btn" id="verifyFirstBtn">
+                        <i class="fas fa-shield-alt"></i> Verify Phone & Get Full Access
+                    </button>
+                </div>
                 
                 <div class="auth-form-container" id="phoneFormContainer">
                     <!-- Step 1: Phone Number Input -->
                     <div class="auth-step active" id="stepPhone">
                         <h3><i class="fas fa-mobile-alt"></i> Verify Phone</h3>
-                        <p>Enter your 10-digit phone number with optional A (Admin) or U (User) suffix.</p>
+                        <p>Enter your 10-digit phone number with optional A (Admin) or U (User) suffix. Once verified, you'll get full access.</p>
                         
                         <div class="input-group">
                             <label for="phoneInput">Phone Number</label>
@@ -1035,7 +1074,6 @@
         </div>
     </div>
 
-<!-- JavaScript remains exactly the same as your original -->
 <script>
 // Global state
 let currentSessionId = '';
@@ -1059,6 +1097,7 @@ const sendOtpBtn = document.getElementById('sendOtpBtn');
 const verifyOtpBtn = document.getElementById('verifyOtpBtn');
 const resendOtpBtn = document.getElementById('resendOtpBtn');
 const startTrialBtn = document.getElementById('startTrialBtn');
+const verifyFirstBtn = document.getElementById('verifyFirstBtn'); // NEW
 const otpPhoneNumber = document.getElementById('otpPhoneNumber');
 const phoneError = document.getElementById('phoneError');
 const otpError = document.getElementById('otpError');
@@ -1067,6 +1106,7 @@ const timer = document.getElementById('timer');
 const countdownSpan = document.getElementById('countdown');
 const debugInfo = document.getElementById('debugInfo');
 const phoneFormContainer = document.getElementById('phoneFormContainer');
+const authOptions = document.querySelector('.auth-options'); // NEW
     
 // Chat elements
 const chatMessages = document.getElementById('chatMessages');
@@ -1088,6 +1128,13 @@ const otp1 = document.getElementById('otp1');
 const otp2 = document.getElementById('otp2');
 const otp3 = document.getElementById('otp3');
 const otp4 = document.getElementById('otp4');
+    
+// NEW: Show verification form when "Verify First" button is clicked
+verifyFirstBtn.addEventListener('click', () => {
+    authOptions.style.display = 'none';
+    phoneFormContainer.style.display = 'block';
+    phoneInput.focus();
+});
     
 // Format phone number input
 function formatPhoneInput(value) {
@@ -1201,15 +1248,15 @@ function updateTrialUI() {
     messagesLeftSpan.textContent = messagesLeft;
     
     if (messagesLeft > 5) {
-        trialBanner.className = 'trial-banner';
+        trialBanner.className = 'trial-indicator';
         trialMessageSpan.innerHTML = `🎁 You have <strong>${messagesLeft}</strong> free trial messages left!`;
         trialBanner.style.display = 'flex';
     } else if (messagesLeft > 0) {
-        trialBanner.className = 'trial-banner warning';
+        trialBanner.className = 'trial-indicator warning';
         trialMessageSpan.innerHTML = `⚠️ Only <strong>${messagesLeft}</strong> trial messages left!`;
         trialBanner.style.display = 'flex';
     } else {
-        trialBanner.className = 'trial-banner warning';
+        trialBanner.className = 'trial-indicator warning';
         trialMessageSpan.innerHTML = '⛔ Trial ended. Please verify to continue.';
         trialBanner.style.display = 'flex';
     }
@@ -1314,7 +1361,7 @@ async function sendOtp() {
     }
 }
     
-// Verify OTP
+// Verify OTP - Updated for pre-trial verification
 async function verifyOtp() {
     const otp = otp1.value + otp2.value + otp3.value + otp4.value;
     const phone = otpPhoneNumber.textContent;
@@ -1360,13 +1407,13 @@ async function verifyOtp() {
             // Store in localStorage for auto-login
             localStorage.setItem('zulu_verified_phone', phone);
             
-            // Clear trial session storage
+            // Clear trial session storage if exists
             sessionStorage.removeItem('zulu_trial_id');
             
             // Update UI
             updateTrialUI();
             
-            // Show success message for 2 seconds then continue chat
+            // Show success message for 2 seconds then start chat
             setTimeout(async () => {
                 // Hide OTP form
                 stepOtp.classList.remove('active');
@@ -1374,29 +1421,17 @@ async function verifyOtp() {
                 phoneInput.value = '';
                 clearOtpInputs();
                 
-                // Hide auth section and phone form
-                phoneFormContainer.style.display = 'none';
-                startTrialBtn.style.display = 'block';
+                // Hide auth section and show chat
+                authSection.style.display = 'none';
+                chatSection.classList.add('active');
+                trialBanner.style.display = 'none';
                 
-                // If we were in chat, update it
-                if (chatSection.classList.contains('active')) {
-                    displayMessage('✅ Your phone has been verified! All trial messages have been saved. You can now continue chatting.', 'bot');
-                    
-                    // Enable chat input
-                    messageInput.disabled = false;
-                    sendBtn.disabled = false;
-                    messageInput.focus();
-                    
-                    console.log(`✅ User ${phone} verified successfully, continuing chat`);
-                } else {
-                    // Start chat with verified user
-                    authSection.style.display = 'none';
-                    chatSection.classList.add('active');
-                    trialBanner.style.display = 'none';
-                    loadWelcomeMessage();
-                    messageInput.disabled = false;
-                    messageInput.focus();
-                }
+                // Start chat with verified user
+                loadWelcomeMessage();
+                messageInput.disabled = false;
+                messageInput.focus();
+                
+                console.log(`✅ User ${phone} verified successfully, starting chat`);
                 
             }, 2000);
             
@@ -1504,7 +1539,7 @@ function handleOtpInput(e, current, next, prev) {
 function loadWelcomeMessage() {
     const welcomeText = `Welcome to Zulu Club${isTrial ? ' Free Trial!' : '!'}
 
-${isTrial ? `You have **10 free messages** to try our AI assistant.` : 'You are now a verified user!'}
+${isTrial ? `You have **10 free messages** to try our AI assistant.` : 'You are now a verified user with full access!'}
 
 I can help you with:
 • Product browsing and shopping recommendations
@@ -1868,6 +1903,7 @@ async function logout() {
         phoneInput.value = '';
         clearOtpInputs();
         phoneFormContainer.style.display = 'none';
+        authOptions.style.display = 'flex'; // Show options again
         startTrialBtn.style.display = 'block';
         
         // Clear any timers
@@ -1934,7 +1970,7 @@ verifyNowBtn.addEventListener('click', () => {
     chatSection.classList.remove('active');
     trialBanner.style.display = 'none';
     // Hide trial button and show phone form
-    startTrialBtn.style.display = 'none';
+    authOptions.style.display = 'none';
     phoneFormContainer.style.display = 'block';
     // Reset phone form to step 1
     stepOtp.classList.remove('active');
@@ -1988,7 +2024,7 @@ backBtn.addEventListener('click', () => {
             authSection.style.display = 'flex';
             chatSection.classList.remove('active');
             trialBanner.style.display = 'none';
-            startTrialBtn.style.display = 'none';
+            authOptions.style.display = 'none';
             phoneFormContainer.style.display = 'block';
             phoneInput.focus();
         } else {
@@ -2006,13 +2042,17 @@ backBtn.addEventListener('click', () => {
             clearInterval(otpTimer);
         }
     } else if (phoneFormContainer.style.display === 'block') {
-        // If phone form is shown, go back to chat (if chat was active)
-        if (trialCount > 0) {
+        // If phone form is shown, go back to options (if coming from auth)
+        if (!chatSection.classList.contains('active')) {
+            phoneFormContainer.style.display = 'none';
+            authOptions.style.display = 'flex';
+        } else if (trialCount > 0) {
+            // If in chat, go back to chat
             authSection.style.display = 'none';
             chatSection.classList.add('active');
             trialBanner.style.display = 'flex';
             phoneFormContainer.style.display = 'none';
-            startTrialBtn.style.display = 'block';
+            authOptions.style.display = 'flex';
         }
     }
 });
