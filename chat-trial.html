@@ -1101,19 +1101,17 @@
             return true;
         }
             
-// Modify startFreeTrial function
+// Update startFreeTrial to send device ID
 async function startFreeTrial() {
   try {
-    const deviceId = generateDeviceId();
+    const deviceId = localStorage.getItem('zulu_device_id') || generateDeviceId();
     
     const response = await fetch('/chat/create-trial', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        deviceId: deviceId
-      })
+        'x-device-id': deviceId
+      }
     });
     
     const data = await response.json();
@@ -1513,7 +1511,7 @@ Try asking: "Show me home decor items" or "Tell me about Zulu Club"`;
             displayMessage(welcomeText, 'assistant');
         }
             
- // Modify sendMessage function to include deviceId
+// Modify all fetch requests to include device ID in headers
 async function sendMessage() {
   const message = messageInput.value.trim();
   if (!message || (!isTrial && !isVerified)) return;
@@ -1536,11 +1534,11 @@ async function sendMessage() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-device-id': deviceId  // Send device ID in headers
       },
       body: JSON.stringify({
         sessionId: currentSessionId,
-        message: message,
-        deviceId: deviceId
+        message: message
       })
     });
     
@@ -1744,12 +1742,13 @@ function generateDeviceId() {
   return deviceId;
 }
 
-// Modify checkVerification function
+// Update checkVerification function to send device ID
 async function checkVerification() {
   // Generate or get device ID
   let deviceId = localStorage.getItem('zulu_device_id');
   if (!deviceId) {
     deviceId = generateDeviceId();
+    localStorage.setItem('zulu_device_id', deviceId);
   }
   
   // Check if device has already used trial
@@ -1779,7 +1778,7 @@ async function checkVerification() {
     console.error('Error checking device trial:', error);
   }
   
-  // Rest of the checkVerification function remains the same...
+  // Rest of checkVerification remains the same...
   const storedPhone = localStorage.getItem('zulu_verified_phone');
   if (storedPhone) {
     try {
@@ -1844,10 +1843,10 @@ async function checkVerification() {
     }
   }
   
-  // Create new trial session
+  // Create new trial session with device ID
   await startFreeTrial();
 }
-            
+         
         // Load chat history
         async function loadChatHistory() {
             try {
@@ -1885,7 +1884,7 @@ async function checkVerification() {
             }
         }
             
-// Add device ID to logout function
+// Updated logout function that preserves device ID
 async function logout() {
   try {
     if (isVerified) {
@@ -1900,13 +1899,18 @@ async function logout() {
       });
     }
     
-    // Clear user-specific localStorage
+    // Clear ONLY user-specific data, NOT device ID
+    const deviceId = localStorage.getItem('zulu_device_id');
+    
     localStorage.removeItem('zulu_trial_id');
     localStorage.removeItem('zulu_trial_count');
     localStorage.removeItem('zulu_verified_phone');
     localStorage.removeItem('zulu_trial_used');
     
-    // Keep device ID for tracking
+    // Preserve the device ID
+    if (deviceId) {
+      localStorage.setItem('zulu_device_id', deviceId);
+    }
     
     // Reset state
     currentSessionId = '';
@@ -1941,70 +1945,7 @@ async function logout() {
   } catch (error) {
     console.error('Error logging out:', error);
   }
-}
-            
-// Updated logout function
-async function logout() {
-    try {
-        if (isVerified) {
-            await fetch('/auth/logout', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    phoneNumber: currentSessionId
-                })
-            });
-        }
-        
-        // Clear ALL localStorage data
-        localStorage.clear();
-        
-        // Reset ALL state variables
-        currentSessionId = '';
-        isTrial = true;
-        isVerified = false;
-        isAdmin = false;
-        trialCount = 10; // Set to max to indicate trial used
-        messagesLeft = 0; // Set to 0
-        
-        // Clear chat messages
-        chatMessages.innerHTML = '';
-        
-        // Hide all modals
-        verificationModal.classList.remove('active');
-        instructionsPanel.classList.remove('active');
-        trialLimitModal.classList.remove('active');
-        
-        // Reset verification modal
-        phoneStep.classList.remove('hidden');
-        otpStep.classList.add('hidden');
-        phoneInput.value = '';
-        clearOtpInputs();
-        phoneAlert.classList.add('hidden');
-        otpAlert.classList.add('hidden');
-        
-        if (otpTimer) {
-            clearInterval(otpTimer);
-            timer.classList.add('hidden');
-        }
-        
-        // Show trial already used state
-        updateTrialUI();
-        displayMessage('This device has already used the free trial. Please verify your phone number to continue.', 'assistant');
-        
-        // Disable chat input until verification
-        messageInput.disabled = true;
-        messageInput.placeholder = 'Verify phone to continue...';
-        sendBtn.disabled = true;
-        
-        console.log('🔄 Logout completed - Trial marked as used on this device');
-        
-    } catch (error) {
-        console.error('Error logging out:', error);
-    }
-}
+}        
 
 // Updated updateTrialUI function to handle trial already used case
 function updateTrialUI() {
