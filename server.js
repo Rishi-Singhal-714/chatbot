@@ -6,7 +6,10 @@ const { Readable } = require('stream');
 const preIntentFilter = require('./preintentfilter'); 
 const { google } = require('googleapis'); 
 const app = express();
+const crypto = require('crypto');
 
+// Device ID storage (for trial tracking)
+let deviceTrials = {};
 // Load admin users (you'll need to create this file)
 let adminUsers = [];
 try {
@@ -386,9 +389,10 @@ function parsePhoneNumberWithSuffix(phoneNumberWithSuffix) {
   };
 }
 
-// Trial session middleware - no verification required for trial
+// Modified checkTrialOrVerification middleware
 const checkTrialOrVerification = (req, res, next) => {
   const sessionId = req.body.sessionId || req.body.phoneNumber;
+  const deviceId = req.body.deviceId || generateDeviceFingerprint(req);
   
   if (!sessionId) {
     return res.status(400).json({
@@ -424,7 +428,17 @@ const checkTrialOrVerification = (req, res, next) => {
       });
     }
     
-    // Check if trial messages exceeded
+    // Check if this device has already used its trial
+    if (deviceTrials[deviceId] && deviceTrials[deviceId].count >= 10) {
+      return res.status(403).json({
+        success: false,
+        error: 'This device has already used its free trial. Please verify your phone number to continue.',
+        trialEnded: true,
+        deviceLimitReached: true
+      });
+    }
+    
+    // Check if trial messages exceeded for this session
     if (session.trialCount >= 10) {
       return res.status(403).json({
         success: false,
@@ -434,11 +448,13 @@ const checkTrialOrVerification = (req, res, next) => {
     }
     
     req.sessionId = sessionId;
+    req.deviceId = deviceId;
     req.isTrial = true;
     req.trialCount = session.trialCount || 0;
     next();
   }
 };
+
 
 // -------------------------
 // Google Sheets config
@@ -885,6 +901,17 @@ async function createAgentTicket(mobileNumber, conversationHistory = []) {
 // [Keep all the matching helper functions exactly as they are...]
 // [findKeywordMatchesInCat1, matchSellersByStoreName, matchSellersByCategoryIds, etc.]
 // [These functions should remain exactly the same as in your original code]
+
+// Function to generate device fingerprint
+function generateDeviceFingerprint(req) {
+  const userAgent = req.headers['user-agent'] || '';
+  const acceptLanguage = req.headers['accept-language'] || '';
+  const acceptEncoding = req.headers['accept-encoding'] || '';
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+  
+  const fingerprintString = `${userAgent}:${acceptLanguage}:${acceptEncoding}:${ip}`;
+  return crypto.createHash('md5').update(fingerprintString).toString('hex');
+}
 
 function normalizeToken(t) {
   if (!t) return '';
@@ -1711,7 +1738,8 @@ const MAX_HISTORY_MESSAGES = 2000;
 
 function nowMs() { return Date.now(); }
 
-function createOrTouchSession(sessionId, isTrial = false) {
+// Modified createOrTouchSession to use device ID
+function createOrTouchSession(sessionId, isTrial = false, deviceId = null) {
   if (!conversations[sessionId]) {
     conversations[sessionId] = {
       history: [],
@@ -1720,6 +1748,7 @@ function createOrTouchSession(sessionId, isTrial = false) {
       lastDetectedIntentTs: 0,
       lastMedia: null,
       isTrial: isTrial,
+      deviceId: deviceId, // Store device ID
       trialMessages: [],
       trialCount: 0
     };
@@ -1982,7 +2011,8 @@ For more details, please contact our support team.`;
   }
 }
 
-async function handleMessage(sessionId, userMessage, isTrial = false) {
+// Modified handleMessage function - track device usage
+async function handleMessage(sessionId, userMessage, isTrial = false, deviceId = null) {
   try {
     // 1) Save incoming user message to session
     appendToSessionHistory(sessionId, 'user', userMessage);
@@ -1996,17 +2026,33 @@ async function handleMessage(sessionId, userMessage, isTrial = false) {
       }
     }
     
-    // 3) Debug print compact history
-    const fullHistory = getFullSessionHistory(sessionId);
-    console.log(`🔁 Session ${sessionId} history length: ${fullHistory.length}, Trial: ${isTrial}, Trial count: ${conversations[sessionId]?.trialCount || 0}`);
+    // 3) Track device trial count
+    if (isTrial && deviceId) {
+      if (!deviceTrials[deviceId]) {
+        deviceTrials[deviceId] = {
+          count: 0,
+          deviceFingerprint: deviceId,
+          firstUsed: Date.now(),
+          lastUsed: Date.now()
+        };
+      }
+      deviceTrials[deviceId].count++;
+      deviceTrials[deviceId].lastUsed = Date.now();
+      
+      console.log(`📱 Device ${deviceId} trial count: ${deviceTrials[deviceId].count}`);
+    }
     
-    // 4) Get response
+    // 4) Debug print compact history
+    const fullHistory = getFullSessionHistory(sessionId);
+    console.log(`🔁 Session ${sessionId} history length: ${fullHistory.length}, Trial: ${isTrial}, Trial count: ${conversations[sessionId]?.trialCount || 0}, Device count: ${deviceTrials[deviceId]?.count || 0}`);
+    
+    // 5) Get response
     const aiResponse = await getChatGPTResponse(sessionId, userMessage);
     
-    // 5) Save AI response back into session history
+    // 6) Save AI response back into session history
     appendToSessionHistory(sessionId, 'assistant', aiResponse);
     
-    // 6) Log assistant response (only for verified users)
+    // 7) Log assistant response (only for verified users)
     if (!isTrial) {
       try {
         await appendUnderColumn(sessionId, `ASSISTANT: ${aiResponse}`);
@@ -2015,10 +2061,10 @@ async function handleMessage(sessionId, userMessage, isTrial = false) {
       }
     }
     
-    // 7) update lastActive
+    // 8) update lastActive
     if (conversations[sessionId]) conversations[sessionId].lastActive = nowMs();
     
-    // 8) return the assistant reply
+    // 9) return the assistant reply
     return aiResponse;
   } catch (error) {
     console.error('❌ Error handling message:', error);
@@ -2274,25 +2320,62 @@ app.post('/chat/message', checkTrialOrVerification, async (req, res) => {
 });
 
 // Create trial session
+// Modified create trial endpoint
 app.post('/chat/create-trial', (req, res) => {
   try {
+    const deviceId = generateDeviceFingerprint(req);
+    
+    // Check if device has already used trial
+    if (deviceTrials[deviceId] && deviceTrials[deviceId].count >= 10) {
+      return res.status(403).json({
+        success: false,
+        error: 'This device has already used its free trial. Please verify your phone number to continue.',
+        deviceLimitReached: true
+      });
+    }
+    
     // Generate unique trial session ID
     const trialId = 'temp-' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
     
-    // Create trial session
-    createOrTouchSession(trialId, true);
+    // Create trial session with device ID
+    createOrTouchSession(trialId, true, deviceId);
     
-    console.log(`🎁 Created trial session: ${trialId}`);
+    console.log(`🎁 Created trial session: ${trialId} for device: ${deviceId}`);
     
     return res.json({
       success: true,
       sessionId: trialId,
+      deviceId: deviceId,
       message: 'Trial session created',
-      trialLimit: 10
+      trialLimit: 10,
+      deviceTrialUsed: deviceTrials[deviceId]?.count || 0
     });
     
   } catch (error) {
     console.error('Error creating trial session:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+// Add device trial info endpoint
+app.get('/chat/device-trial-info/:deviceId', (req, res) => {
+  try {
+    const { deviceId } = req.params;
+    const deviceTrial = deviceTrials[deviceId];
+    
+    return res.json({
+      success: true,
+      deviceId: deviceId,
+      trialUsed: deviceTrial?.count || 0,
+      messagesLeft: 10 - (deviceTrial?.count || 0),
+      firstUsed: deviceTrial?.firstUsed,
+      lastUsed: deviceTrial?.lastUsed
+    });
+    
+  } catch (error) {
+    console.error('Error getting device trial info:', error);
     return res.status(500).json({
       success: false,
       error: error.message
