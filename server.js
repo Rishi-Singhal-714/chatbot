@@ -389,10 +389,15 @@ function parsePhoneNumberWithSuffix(phoneNumberWithSuffix) {
   };
 }
 
-// Modified checkTrialOrVerification middleware
+// In checkTrialOrVerification middleware, get device ID from headers or body
 const checkTrialOrVerification = (req, res, next) => {
   const sessionId = req.body.sessionId || req.body.phoneNumber;
-  const deviceId = req.body.deviceId || generateDeviceFingerprint(req);
+  
+  // Get device ID from headers (sent by client) or body
+  const deviceId = req.headers['x-device-id'] || req.body.deviceId || generateDeviceFingerprint(req);
+  
+  // Store device ID in request for later use
+  req.deviceId = deviceId;
   
   if (!sessionId) {
     return res.status(400).json({
@@ -448,7 +453,6 @@ const checkTrialOrVerification = (req, res, next) => {
     }
     
     req.sessionId = sessionId;
-    req.deviceId = deviceId;
     req.isTrial = true;
     req.trialCount = session.trialCount || 0;
     next();
@@ -902,16 +906,30 @@ async function createAgentTicket(mobileNumber, conversationHistory = []) {
 // [findKeywordMatchesInCat1, matchSellersByStoreName, matchSellersByCategoryIds, etc.]
 // [These functions should remain exactly the same as in your original code]
 
-// Function to generate device fingerprint
+// Function to generate device fingerprint that matches client-side
 function generateDeviceFingerprint(req) {
   const userAgent = req.headers['user-agent'] || '';
-  const acceptLanguage = req.headers['accept-language'] || '';
-  const acceptEncoding = req.headers['accept-encoding'] || '';
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+  const language = req.headers['accept-language'] || '';
+  const platform = req.headers['sec-ch-ua-platform'] || '';
+  const hardwareConcurrency = req.headers['x-hardware-concurrency'] || '';
+  const deviceMemory = req.headers['x-device-memory'] || '';
+  const screen = req.headers['x-screen'] || '';
+  const timezone = req.headers['x-timezone'] || '';
   
-  const fingerprintString = `${userAgent}:${acceptLanguage}:${acceptEncoding}:${ip}`;
-  return crypto.createHash('md5').update(fingerprintString).toString('hex');
+  // Build fingerprint string similar to client
+  const fingerprint = `${userAgent}${language}${platform}${hardwareConcurrency}${deviceMemory}${screen}${timezone}`;
+  
+  // Generate hash
+  let hash = 0;
+  for (let i = 0; i < fingerprint.length; i++) {
+    const char = fingerprint.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  
+  return 'device-' + Math.abs(hash).toString(16);
 }
+
 
 function normalizeToken(t) {
   if (!t) return '';
