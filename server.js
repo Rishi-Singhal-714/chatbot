@@ -388,6 +388,8 @@ function parsePhoneNumberWithSuffix(phoneNumberWithSuffix) {
 const checkAuthentication = (req, res, next) => {
   const sessionId = req.body.sessionId || req.body.phoneNumber;
   
+  console.log(`🔍 checkAuthentication: sessionId=${sessionId}, body=`, req.body);
+  
   if (!sessionId) {
     return res.status(400).json({
       success: false,
@@ -401,10 +403,21 @@ const checkAuthentication = (req, res, next) => {
     
     if (!user || !user.verified) {
       // User is not verified, but they can still access basic features
+      // Create a session for them if it doesn't exist
+      if (!conversations[sessionId]) {
+        createOrTouchSession(sessionId, false);
+      }
+      
       req.isAuthenticated = false;
       req.sessionId = sessionId;
       next();
     } else {
+      // User is verified and authenticated
+      // Create a session for them if it doesn't exist
+      if (!conversations[sessionId]) {
+        createOrTouchSession(sessionId, true);
+      }
+      
       req.user = user;
       req.phoneNumber = sessionId;
       req.isAuthenticated = true;
@@ -416,6 +429,7 @@ const checkAuthentication = (req, res, next) => {
     const session = conversations[sessionId];
     
     if (!session) {
+      console.log(`❌ Session ${sessionId} not found in conversations`);
       return res.status(400).json({
         success: false,
         error: 'Invalid session'
@@ -433,7 +447,6 @@ const checkAuthentication = (req, res, next) => {
 // -------------------------
 const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID || 'History';
 const AGENT_TICKETS_SHEET = process.env.AGENT_TICKETS_SHEET || 'Tickets_History';
-const BILLING_SHEET_NAME = process.env.BILLING_SHEET_NAME || "Sheet3";
 const SA_JSON_B64 = process.env.GOOGLE_SERVICE_ACCOUNT_JSON_BASE64 || '';
 
 if (!GOOGLE_SHEET_ID) {
@@ -460,6 +473,7 @@ async function getSheets() {
     return null;
   }
 }
+
 
 function colLetter(n) {
   let s = '';
@@ -552,17 +566,10 @@ async function appendUnderColumn(headerName, text) {
     }
     
     // PREPEND the new message at the beginning (row 2)
-    // Step 1: Insert a new row at position 2
-    const startRow = 2;
-    
-    // We need to shift existing values down by 1 row
-    // To do this efficiently, we'll write all values at once
-    
-    // Create new array with new message first, then existing messages
     const newValues = [finalText, ...existingValues];
     
     // Write all values starting from row 2
-    const writeRange = `${colLetter(colNum)}${startRow}:${colLetter(colNum)}${startRow + newValues.length - 1}`;
+    const writeRange = `${colLetter(colNum)}${2}:${colLetter(colNum)}${2 + newValues.length - 1}`;
     
     await sheets.spreadsheets.values.update({
       spreadsheetId: GOOGLE_SHEET_ID,
@@ -650,7 +657,7 @@ placement in Zulu showrooms, homepage visibility, or popup features.
 `;
 
 // -------------------------
-// CSV loaders: galleries + sellers (keep as is)
+// CSV loaders: galleries + sellers
 // -------------------------
 async function loadGalleriesData() {
   try {
@@ -1693,13 +1700,15 @@ Join as partner 👉 https://forms.gle/tvkaKncQMs29dPrPA
 // -------------------------
 // Session/history helpers
 // -------------------------
-const SESSION_TTL_MS = 1000 * 60 * 60;
-const SESSION_CLEANUP_MS = 1000 * 60 * 5;
+const SESSION_TTL_MS = 1000 * 60 * 60 * 24; // 24 hours
+const SESSION_CLEANUP_MS = 1000 * 60 * 5; // 5 minutes
 const MAX_HISTORY_MESSAGES = 2000;
 
 function nowMs() { return Date.now(); }
 
 function createOrTouchSession(sessionId, isAuthenticated = false) {
+  console.log(`📝 createOrTouchSession: ${sessionId}, isAuthenticated: ${isAuthenticated}`);
+  
   if (!conversations[sessionId]) {
     conversations[sessionId] = {
       history: [],
@@ -1709,15 +1718,24 @@ function createOrTouchSession(sessionId, isAuthenticated = false) {
       lastMedia: null,
       isAuthenticated: isAuthenticated
     };
+    console.log(`✅ Created new session: ${sessionId}`);
   } else {
     conversations[sessionId].lastActive = nowMs();
+    conversations[sessionId].isAuthenticated = isAuthenticated || conversations[sessionId].isAuthenticated;
+    console.log(`✅ Updated existing session: ${sessionId}`);
   }
   
   return conversations[sessionId];
 }
 
 function appendToSessionHistory(sessionId, role, content) {
-  createOrTouchSession(sessionId);
+  console.log(`📝 appendToSessionHistory: ${sessionId}, role: ${role}, content length: ${content.length}`);
+  
+  // Ensure session exists
+  if (!conversations[sessionId]) {
+    createOrTouchSession(sessionId, false);
+  }
+  
   const entry = { role, content, ts: nowMs() };
   conversations[sessionId].history.push(entry);
   
@@ -1726,11 +1744,15 @@ function appendToSessionHistory(sessionId, role, content) {
   }
   
   conversations[sessionId].lastActive = nowMs();
+  console.log(`✅ History updated for ${sessionId}, total messages: ${conversations[sessionId].history.length}`);
 }
 
 function getFullSessionHistory(sessionId) {
   const s = conversations[sessionId];
-  if (!s || !s.history) return [];
+  if (!s || !s.history) {
+    console.log(`❌ No history found for session: ${sessionId}`);
+    return [];
+  }
   return s.history.slice();
 }
 
@@ -2058,9 +2080,6 @@ app.post('/auth/verify-otp', async (req, res) => {
     
     const result = await verifyOtp(phoneNumber, otp);
     
-    // Transfer conversation from temporary session to verified user
-    // (if there's an existing temporary session)
-    
     return res.json({
       success: true,
       message: 'OTP verified successfully',
@@ -2164,7 +2183,7 @@ app.get('/chat', (req, res) => {
 // API endpoint for sending messages
 app.post('/chat/message', checkAuthentication, async (req, res) => {
   try {
-    const sessionId = req.sessionId || req.phoneNumber;
+    const sessionId = req.sessionId;
     const isAuthenticated = req.isAuthenticated;
     const { message } = req.body;
     
@@ -2177,7 +2196,8 @@ app.post('/chat/message', checkAuthentication, async (req, res) => {
     
     console.log(`💬 Chat message from ${sessionId} (Authenticated: ${isAuthenticated}): ${message}`);
     
-    // Process the message
+    // Process the message using your existing handleMessage function
+    // Make sure handleMessage is defined
     const response = await handleMessage(sessionId, message, isAuthenticated);
     
     // Return the response with authentication info
@@ -2229,9 +2249,13 @@ app.post('/chat/create-session', (req, res) => {
 app.get('/chat/history/:sessionId', async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const history = getFullSessionHistory(sessionId);
+    console.log(`📜 Getting history for session: ${sessionId}`);
+    
     const session = conversations[sessionId];
     const isAuthenticated = session ? session.isAuthenticated : false;
+    const history = getFullSessionHistory(sessionId);
+    
+    console.log(`📜 Session ${sessionId} exists: ${!!session}, history length: ${history.length}`);
     
     return res.json({
       success: true,
