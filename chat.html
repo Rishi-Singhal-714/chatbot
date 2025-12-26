@@ -1010,6 +1010,7 @@
               
               // Update UI
               updateUI();
+              loadWelcomeMessage();
               
               // Enable chat input
               messageInput.disabled = false;
@@ -1296,6 +1297,23 @@
             }
         }
             
+        // Load welcome message
+        function loadWelcomeMessage() {
+            const welcomeText = `Welcome to Zulu Club${isAuthenticated ? ' (Verified)' : ''}!
+
+${isAuthenticated ? '✅ You have **full access** to all features!' : '🎉 You have **unlimited access** to company info and product browsing!'}
+
+I can help you with:
+• Company details and information
+• Product browsing and shopping recommendations
+${isAuthenticated ? '• Seller information and partnerships\n• Investor queries\n• Connecting with human agents\n• Voice AI features' : '• (Verify to unlock: seller info, investor queries, agent support)'}
+
+${isAuthenticated ? '' : 'Verify your phone to unlock all features including seller, investors, and agent support.'}
+
+Try asking: "Tell me about Zulu Club" or "Show me home decor items"`;
+
+            displayMessage(welcomeText, 'assistant');
+        }
             
         // Send message function
         async function sendMessage() {
@@ -1482,6 +1500,7 @@
                         
                         // Update UI
                         updateUI();
+                        loadWelcomeMessage();
                         messageInput.disabled = false;
                         messageInput.focus();
                         
@@ -1510,6 +1529,7 @@
                         
                         // Update UI
                         updateUI();
+                        loadWelcomeMessage();
                         messageInput.disabled = false;
                         messageInput.focus();
                         
@@ -1544,9 +1564,11 @@
                     });
                 } else {
                     // If no history, show welcome message
+                    loadWelcomeMessage();
                 }
             } catch (error) {
                 console.error('Error loading chat history:', error);
+                loadWelcomeMessage();
             }
         }
 
