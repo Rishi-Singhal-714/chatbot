@@ -1344,32 +1344,34 @@ Try asking: "Tell me about Zulu Club" or "Show me home decor items"`;
 
 // Update the sendMessage function to handle session errors:
 async function sendMessage() {
-    const message = messageInput.value.trim();
-    if (!message) return;
-    
-    // Display user message
-    displayMessage(message, 'user');
-    
-    // Clear input
-    messageInput.value = '';
-    messageInput.style.height = 'auto';
-    sendBtn.disabled = true;
-    
-    // Show typing indicator
-    showTyping();
-    
-    try {
-        console.log('Sending message:', message, 'Session ID:', currentSessionId, 'Authenticated:', isAuthenticated);
-        const response = await fetch('/chat/message', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                sessionId: currentSessionId,
-                message: message
-            })
-        });
+  const message = messageInput.value.trim();
+  if (!message) return;
+  
+  // Display user message
+  displayMessage(message, 'user');
+  
+  // Clear input
+  messageInput.value = '';
+  messageInput.style.height = 'auto';
+  sendBtn.disabled = true;
+  
+  // Show typing indicator
+  showTyping();
+  
+  try {
+    console.log('Sending message:', message, 'Session ID:', currentSessionId, 'Authenticated:', isAuthenticated);
+    const response = await fetch('/chat/message', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        sessionId: currentSessionId,
+        message: message,
+        // Also send phoneNumber for authenticated users
+        phoneNumber: isAuthenticated ? currentSessionId : null
+      })
+    });
         
         const data = await response.json();
         console.log('Response from server:', data);
