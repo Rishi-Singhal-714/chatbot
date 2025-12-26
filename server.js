@@ -405,6 +405,7 @@ const checkAuthentication = (req, res, next) => {
       // User is not verified, but they can still access basic features
       // Create a session for them if it doesn't exist
       if (!conversations[sessionId]) {
+        console.log(`🔄 Creating new session for unverified phone: ${sessionId}`);
         createOrTouchSession(sessionId, false);
       }
       
@@ -415,6 +416,7 @@ const checkAuthentication = (req, res, next) => {
       // User is verified and authenticated
       // Create a session for them if it doesn't exist
       if (!conversations[sessionId]) {
+        console.log(`🔄 Creating new session for verified phone: ${sessionId}`);
         createOrTouchSession(sessionId, true);
       }
       
@@ -424,34 +426,35 @@ const checkAuthentication = (req, res, next) => {
       next();
     }
   } 
-// Temporary session ID (unauthenticated user)
-else {
+  // Temporary session ID (unauthenticated user)
+  else {
     console.log(`🔍 Checking temporary session: ${sessionId}`);
     
     const session = conversations[sessionId];
     
     if (!session) {
-        // If it's a guest session and doesn't exist, create it
-        if (sessionId.startsWith('guest-')) {
-            console.log(`🔄 Guest session ${sessionId} not found, creating new one`);
-            createOrTouchSession(sessionId, false);
-            req.sessionId = sessionId;
-            req.isAuthenticated = false;
-            next();
-        } else {
-            console.log(`❌ Session ${sessionId} not found in conversations`);
-            return res.status(400).json({
-                success: false,
-                error: 'Invalid session'
-            });
-        }
-    } else {
-        console.log(`✅ Session ${sessionId} found, authenticated: ${session.isAuthenticated || false}`);
+      // If it's a guest session and doesn't exist, create it
+      if (sessionId.startsWith('guest-')) {
+        console.log(`🔄 Guest session ${sessionId} not found, creating new one`);
+        createOrTouchSession(sessionId, false);
         req.sessionId = sessionId;
-        req.isAuthenticated = session.isAuthenticated || false;
+        req.isAuthenticated = false;
         next();
+      } else {
+        console.log(`❌ Session ${sessionId} not found in conversations`);
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid session'
+        });
+      }
+    } else {
+      console.log(`✅ Session ${sessionId} found, authenticated: ${session.isAuthenticated || false}`);
+      req.sessionId = sessionId;
+      req.isAuthenticated = session.isAuthenticated || false;
+      next();
     }
-}
+  }
+};
 // -------------------------
 // Google Sheets config
 // -------------------------
@@ -1707,9 +1710,7 @@ Join as partner 👉 https://forms.gle/tvkaKncQMs29dPrPA
   return res.choices[0].message.content.trim();
 }
 
-// -------------------------
 // Session/history helpers
-// -------------------------
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24; // 24 hours
 const SESSION_CLEANUP_MS = 1000 * 60 * 5; // 5 minutes
 const MAX_HISTORY_MESSAGES = 2000;
@@ -1743,6 +1744,7 @@ function appendToSessionHistory(sessionId, role, content) {
   
   // Ensure session exists
   if (!conversations[sessionId]) {
+    console.log(`🔄 Session ${sessionId} not found, creating it...`);
     createOrTouchSession(sessionId, false);
   }
   
@@ -2256,47 +2258,61 @@ app.post('/chat/create-session', (req, res) => {
 });
 
 // Also update the /chat/history/:sessionId endpoint to handle missing sessions:
+// Get chat history for a session
+// Get chat history for a session
 app.get('/chat/history/:sessionId', async (req, res) => {
-    try {
-        const { sessionId } = req.params;
-        console.log(`📜 Getting history for session: ${sessionId}`);
-        
-        let session = conversations[sessionId];
-        let isAuthenticated = false;
-        
-        // If session doesn't exist but it's a guest session, create it
-        if (!session && sessionId.startsWith('guest-')) {
-            console.log(`🔄 Session ${sessionId} not found, creating new guest session`);
-            session = createOrTouchSession(sessionId, false);
-        }
-        
-        if (session) {
-            isAuthenticated = session.isAuthenticated;
-            const history = getFullSessionHistory(sessionId);
-            
-            console.log(`📜 Session ${sessionId} exists, history length: ${history.length}, authenticated: ${isAuthenticated}`);
-            
-            return res.json({
-                success: true,
-                history: history,
-                sessionActive: true,
-                isAuthenticated: isAuthenticated
-            });
-        } else {
-            console.log(`❌ Session ${sessionId} not found and is not a guest session`);
-            return res.status(400).json({
-                success: false,
-                error: 'Invalid session'
-            });
-        }
-        
-    } catch (error) {
-        console.error('💥 Chat history error:', error.message);
-        return res.status(500).json({
-            success: false,
-            error: error.message
-        });
+  try {
+    const { sessionId } = req.params;
+    console.log(`📜 Getting history for session: ${sessionId}`);
+    
+    let session = conversations[sessionId];
+    let isAuthenticated = false;
+    
+    // If session doesn't exist but it's a guest session, create it
+    if (!session && sessionId.startsWith('guest-')) {
+      console.log(`🔄 Session ${sessionId} not found, creating new guest session`);
+      session = createOrTouchSession(sessionId, false);
     }
+    
+    if (session) {
+      isAuthenticated = session.isAuthenticated;
+      const history = getFullSessionHistory(sessionId);
+      
+      console.log(`📜 Session ${sessionId} exists, history length: ${history.length}, authenticated: ${isAuthenticated}`);
+      
+      return res.json({
+        success: true,
+        history: history,
+        sessionActive: true,
+        isAuthenticated: isAuthenticated
+      });
+    } else if (sessionId.match(/^\d{10}[AU]?$/)) {
+      // If it's a phone number but not in conversations, create a session
+      console.log(`🔄 Phone session ${sessionId} not found, creating new one`);
+      session = createOrTouchSession(sessionId, false);
+      const history = getFullSessionHistory(sessionId);
+      
+      return res.json({
+        success: true,
+        history: history,
+        sessionActive: true,
+        isAuthenticated: false
+      });
+    } else {
+      console.log(`❌ Session ${sessionId} not found and is not a guest session or phone number`);
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid session'
+      });
+    }
+    
+  } catch (error) {
+    console.error('💥 Chat history error:', error.message);
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
 // -------------------------
