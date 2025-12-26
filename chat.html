@@ -3,2006 +3,1772 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Zulu Club Chat</title>
+    <title>Zulu Club AI Assistant</title>
     <style>
-        /* WhatsApp-like Design - FULL SCREEN */
+        /* Reset & Base */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
-        
-        html, body {
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-            background: #0c1317;
-        }
-        
-        /* WhatsApp Container - FULL SCREEN */
-        .whatsapp-container {
-            width: 100vw;
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a1014;
+            color: #fff;
             height: 100vh;
-            background: #0c1317;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Main Container */
+        .app-container {
+            width: 100%;
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            overflow: hidden;
+            position: relative;
+            background: linear-gradient(135deg, #0a1014 0%, #15202b 100%);
         }
-        
-        /* WhatsApp Background Pattern with Emojis */
-        .emoji-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0.03;
-            pointer-events: none;
-            z-index: 0;
-            background-image: 
-                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ctext x='50%25' y='50%25' font-size='30' text-anchor='middle' dy='.3em' fill='white'%3E😊%3C/text%3E%3C/svg%3E"),
-                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ctext x='50%25' y='50%25' font-size='35' text-anchor='middle' dy='.3em' fill='white'%3E👍%3C/text%3E%3C/svg%3E"),
-                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ctext x='50%25' y='50%25' font-size='28' text-anchor='middle' dy='.3em' fill='white'%3E💬%3C/text%3E%3C/svg%3E"),
-                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ctext x='50%25' y='50%25' font-size='32' text-anchor='middle' dy='.3em' fill='white'%3E❤️%3C/text%3E%3C/svg%3E"),
-                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ctext x='50%25' y='50%25' font-size='30' text-anchor='middle' dy='.3em' fill='white'%3E😎%3C/text%3E%3C/svg%3E"),
-                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ctext x='50%25' y='50%25' font-size='25' text-anchor='middle' dy='.3em' fill='white'%3E🛒%3C/text%3E%3C/svg%3E");
-            background-repeat: repeat;
-            background-size: 60px 60px, 70px 70px, 50px 50px, 65px 65px, 55px 55px, 45px 45px;
-        }
-        
-        /* Header - WhatsApp Green */
-        .whatsapp-header {
-            background: #202c33;
-            padding: 10px 15px;
+
+        /* Header */
+        .header {
+            background: #1a2733;
+            border-bottom: 1px solid #2d3746;
+            padding: 14px 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 1px solid #222e35;
-            position: relative;
-            z-index: 2;
             flex-shrink: 0;
-            min-height: 60px;
+            height: 70px;
         }
-        
+
         .header-left {
             display: flex;
             align-items: center;
-            gap: 12px;
-            flex: 1;
-            min-width: 0;
+            gap: 20px;
         }
-        
-        .back-arrow {
-            color: #aebac1;
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-btn {
+            background: transparent;
+            border: none;
+            color: #a0b3c5;
+            font-size: 16px;
             cursor: pointer;
-            font-size: 18px;
-            min-width: 24px;
+            padding: 8px 16px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s;
         }
-        
-        .profile-info {
+
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .header-btn.verify {
+            background: #0084ff;
+            color: white;
+        }
+
+        .header-btn.verify:hover {
+            background: #0073e6;
+        }
+
+        .header-btn.logout {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .header-btn.logout:hover {
+            background: #ff5252;
+        }
+
+        .profile {
             display: flex;
             align-items: center;
-            gap: 10px;
-            min-width: 0;
-            flex: 1;
+            gap: 12px;
+            cursor: pointer;
         }
-        
+
         .profile-avatar {
             width: 40px;
             height: 40px;
-            min-width: 40px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 16px;
-        }
-        
-        .profile-details {
-            min-width: 0;
-            flex: 1;
-        }
-        
-        .profile-details h3 {
-            color: #e9edef;
-            font-size: 16px;
-            font-weight: 500;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .profile-details p {
-            color: #8696a0;
-            font-size: 13px;
-            margin-top: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .header-right {
-            display: flex;
-            gap: 15px;
-            color: #aebac1;
-            font-size: 18px;
-            margin-left: auto;
-        }
-        
-        .header-right i {
-            min-width: 24px;
-            text-align: center;
-        }
-        
-        /* Setup Section */
-        .setup-section {
-            background: #111b21;
-            padding: 20px 15px;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            overflow-y: auto;
-            position: relative;
-            z-index: 1;
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        .setup-header {
-            text-align: center;
-            margin-bottom: 25px;
-            padding-top: 10px;
-        }
-        
-        .setup-header h2 {
-            color: #e9edef;
-            font-size: 22px;
-            margin-bottom: 8px;
-            line-height: 1.3;
-        }
-        
-        .setup-header p {
-            color: #8696a0;
-            font-size: 14px;
-            line-height: 1.4;
-        }
-        
-        /* Instructions */
-        .instructions {
-            background: #202c33;
-            border-radius: 10px;
-            padding: 18px;
-            margin-bottom: 25px;
-            border-left: 4px solid #00a884;
-        }
-        
-        .instructions h3 {
-            color: #e9edef;
-            font-size: 16px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .instructions ul {
-            padding-left: 20px;
-            color: #8696a0;
-        }
-        
-        .instructions li {
-            margin-bottom: 8px;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-        
-        .employee-list {
-            background: #202c33;
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 10px;
-            font-size: 12px;
-            border: 1px solid #2a3942;
-            line-height: 1.6;
-        }
-        
-        /* Phone Input */
-        .phone-input-container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            margin-top: auto;
-            padding-bottom: 20px;
-            padding-top: 10px;
-        }
-        
-        .phone-input {
-            display: flex;
-            gap: 10px;
-            width: 100%;
-        }
-        
-        .phone-input input {
-            flex: 1;
-            padding: 15px 20px;
-            background: #2a3942;
-            border: 1px solid #2a3942;
-            border-radius: 10px;
-            font-size: 16px;
-            color: #e9edef;
-            transition: all 0.3s;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            height: 54px;
-        }
-        
-        .phone-input input:focus {
-            outline: none;
-            border-color: #00a884;
-            background: #2a3942;
-        }
-        
-        .phone-input input::placeholder {
-            color: #8696a0;
-        }
-        
-        /* Custom input for phone number with A/U suffix */
-        .phone-input-wrapper {
-            display: flex;
-            flex: 1;
-            position: relative;
-        }
-        
-        .phone-input-wrapper input {
-            width: 100%;
-            padding-right: 40px;
-        }
-        
-        .suffix-badge {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: #00a884;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            pointer-events: none;
-            display: none;
-        }
-        
-        .start-chat-btn {
-            background: #00a884;
-            color: white;
-            border: none;
-            padding: 15px 20px;
-            border-radius: 10px;
-            font-size: 16px;
             font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            white-space: nowrap;
-            flex-shrink: 0;
-            min-width: 120px;
-            height: 54px;
+            font-size: 16px;
+            color: white;
         }
-        
-        .start-chat-btn:hover {
-            background: #06cf9c;
+
+        .profile-name {
+            font-size: 14px;
+            color: #a0b3c5;
         }
-        
-        .start-chat-btn:disabled {
-            background: #2a3942;
-            color: #8696a0;
-            cursor: not-allowed;
-        }
-        
-        /* Chat Section */
-        .chat-section {
+
+        /* Chat Container */
+        .chat-container {
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: transparent;
-            position: relative;
-            z-index: 1;
             overflow: hidden;
+            position: relative;
+            max-height: calc(100vh - 70px);
         }
-        
-        /* Chat Messages Area */
+
+        /* Status Banner */
+        .status-banner {
+            background: #1a2733;
+            padding: 12px 20px;
+            text-align: center;
+            color: #a0b3c5;
+            font-size: 14px;
+            flex-shrink: 0;
+            border-bottom: 1px solid #2d3746;
+        }
+
+        .status-banner.verified {
+            background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+            color: white;
+        }
+
+        /* Chat Messages */
         .chat-messages {
             flex: 1;
-            padding: 15px 10px;
             overflow-y: auto;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            position: relative;
-            z-index: 1;
-            -webkit-overflow-scrolling: touch;
-            padding-bottom: 80px; /* Space for input area */
+            gap: 16px;
+            background: rgba(10, 16, 20, 0.95);
         }
-        
-        /* WhatsApp Message Bubbles */
+
+        /* Hide scrollbar but keep functionality */
+        .chat-messages {
+            scrollbar-width: thin;
+            scrollbar-color: #2d3746 transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #2d3746;
+            border-radius: 3px;
+        }
+
+        /* Message Bubbles */
         .message {
             display: flex;
-            max-width: 85%;
+            max-width: 80%;
             animation: fadeIn 0.3s ease;
         }
-        
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .message.user {
             align-self: flex-end;
             margin-left: auto;
         }
-        
-        .message.bot {
+
+        .message.assistant {
             align-self: flex-start;
             margin-right: auto;
         }
-        
+
         .message-content {
-            padding: 10px 14px;
-            border-radius: 7.5px;
-            font-size: 14.2px;
-            line-height: 1.4;
+            padding: 14px 18px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.5;
             position: relative;
             word-wrap: break-word;
-            overflow-wrap: break-word;
         }
-        
+
         .message.user .message-content {
-            background: #005c4b;
-            color: #e9edef;
-            border-top-right-radius: 0;
-            border-bottom-left-radius: 7.5px;
-        }
-        
-        .message.bot .message-content {
-            background: #202c33;
-            color: #e9edef;
-            border-top-left-radius: 0;
-            border-bottom-right-radius: 7.5px;
-        }
-        
-        /* Message info container */
-        .message-wrapper {
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            max-width: 100%;
-        }
-        
-        .message-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 3px;
-            font-size: 11px;
-            color: #ffffff99;
-            gap: 5px;
-            padding: 0 2px;
-        }
-        
-        .message.user .message-info {
-            justify-content: flex-end;
-            margin-left: auto;
-            max-width: 85%;
-        }
-        
-        .message.bot .message-info {
-            justify-content: flex-start;
-            margin-right: auto;
-            max-width: 85%;
-        }
-        
-        .message-time {
-            order: 1;
-        }
-        
-        .message-status {
-            order: 2;
-        }
-        
-        .message.user .message-time {
-            margin-left: auto;
-            
-        }
-        
-        /* Link styling */
-        .message-content a {
-            color: #53bdeb;
-            text-decoration: none;
-            word-break: break-all;
-        }
-        
-        .message-content a:hover {
-            text-decoration: underline;
-        }
-        
-        .message.user .message-content a {
-            color: #a3d9e8;
-        }
-        
-        /* Message Input Area */
-        .message-input-area {
-            background: #202c33;
-            padding: 10px 12px;
-            display: flex;
-            gap: 8px;
-            align-items: flex-end;
-            border-top: 1px solid #222e35;
-            position: absolute;
-            bottom: 30px;
-            left: 0;
-            right: 0;
-            z-index: 2;
-            flex-shrink: 0;
-            min-height: 70px;
-        }
-        
-        .emoji-btn, .attach-btn {
-            color: #8696a0;
-            font-size: 22px;
-            cursor: pointer;
-            transition: color 0.3s;
-            flex-shrink: 0;
-            padding: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .emoji-btn:hover, .attach-btn:hover {
-            color: #e9edef;
-        }
-        
-        .message-input-wrapper {
-            flex: 1;
-            display: flex;
-            background: #2a3942;
-            border-radius: 25px;
-            padding: 8px 16px;
-            min-height: 44px;
-            align-items: center;
-        }
-        
-        .message-input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            font-size: 15px;
-            color: #e9edef;
-            outline: none;
-            min-height: 28px;
-            max-height: 100px;
-            resize: none;
-            font-family: inherit;
-            line-height: 1.4;
-            padding: 0;
-            margin: 0;
-        }
-        
-        .message-input::placeholder {
-            color: #8696a0;
-        }
-        
-        .send-btn {
-            background: #00a884;
+            background: #0084ff;
             color: white;
-            border: none;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background 0.3s;
-            flex-shrink: 0;
-            margin-left: 4px;
+            border-bottom-right-radius: 4px;
         }
-        
-        .send-btn:hover {
-            background: #06cf9c;
+
+        .message.assistant .message-content {
+            background: #1a2733;
+            color: #e1e8ed;
+            border-bottom-left-radius: 4px;
+            border: 1px solid #2d3746;
         }
-        
-        .send-btn:disabled {
-            background: #2a3942;
-            color: #8696a0;
-            cursor: not-allowed;
+
+        .message-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 4px;
+            display: block;
         }
-        
-        /* Status Bar */
-        .status-bar {
-            background: #111b21;
-            padding: 10px 15px;
-            text-align: center;
-            color: #8696a0;
-            font-size: 12px;
-            border-top: 1px solid #222e35;
-            position: relative;
-            z-index: 2;
-            flex-shrink: 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
+
         /* Typing Indicator */
         .typing-indicator {
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            padding: 10px 14px;
-            background: #202c33;
-            border-radius: 7.5px;
-            border-top-left-radius: 0;
+            padding: 14px 18px;
+            background: #1a2733;
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
         }
-        
+
         .typing-dot {
-            width: 6px;
-            height: 6px;
-            background: #8696a0;
+            width: 8px;
+            height: 8px;
+            background: #a0b3c5;
             border-radius: 50%;
-            animation: typing 1.4s infinite;
+            animation: bounce 1.4s infinite;
         }
-        
+
         .typing-dot:nth-child(2) { animation-delay: 0.2s; }
         .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-        
-        @keyframes typing {
+
+        @keyframes bounce {
             0%, 60%, 100% { transform: translateY(0); }
             30% { transform: translateY(-4px); }
         }
-        
+
         /* Welcome Message */
         .welcome-message {
-            background: rgba(32, 44, 51, 0.95);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 15px;
-            border-left: 4px solid #00a884;
+            background: #1a2733;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+            border-left: 4px solid #0084ff;
+            animation: fadeIn 0.5s ease;
         }
-        
-        .welcome-message h3 {
-            color: #e9edef;
-            margin-bottom: 12px;
-            font-size: 16px;
+
+        .welcome-header {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
+            margin-bottom: 16px;
         }
-        
-        .welcome-message p {
-            color: #8696a0;
-            margin-bottom: 8px;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-        
-        .welcome-message strong {
-            color: #e9edef;
-        }
-        
-        .welcome-message em {
-            color: #00a884;
-            font-style: normal;
-        }
-        
-        /* Hidden Class */
-        .hidden {
-            display: none !important;
-        }
-        
-        /* Scrollbar Styling */
-        .chat-messages::-webkit-scrollbar,
-        .setup-section::-webkit-scrollbar {
-            width: 4px;
-        }
-        
-        .chat-messages::-webkit-scrollbar-track,
-        .setup-section::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        
-        .chat-messages::-webkit-scrollbar-thumb,
-        .setup-section::-webkit-scrollbar-thumb {
-            background: #374045;
-            border-radius: 2px;
-        }
-        
-        .chat-messages::-webkit-scrollbar-thumb:hover,
-        .setup-section::-webkit-scrollbar-thumb:hover {
-            background: #455056;
-        }
-        
-        /* Load More Button */
-        .load-more-container {
-            text-align: center;
-            margin: 10px 0 20px;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .load-more-btn {
-            background: #2a3942;
-            color: #00a884;
-            border: 1px solid #00a884;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: inline-flex;
+
+        .welcome-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            font-size: 20px;
         }
-        
-        .load-more-btn:hover {
-            background: #00a884;
+
+        .welcome-text h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .welcome-text p {
+            color: #a0b3c5;
+            font-size: 14px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            font-size: 13px;
+            color: #a0b3c5;
+        }
+
+        .feature-icon {
+            width: 24px;
+            height: 24px;
+            background: #0084ff;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
             color: white;
         }
-        
-        .load-more-btn:disabled {
-            opacity: 0.5;
+
+        /* Chat Input */
+        .chat-input {
+            padding: 16px 20px;
+            background: #1a2733;
+            border-top: 1px solid #2d3746;
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            flex-shrink: 0;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            display: flex;
+            background: #2d3746;
+            border-radius: 24px;
+            padding: 8px 16px;
+            align-items: center;
+        }
+
+        .message-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 15px;
+            resize: none;
+            max-height: 100px;
+            padding: 8px 0;
+            font-family: inherit;
+            line-height: 1.4;
+        }
+
+        .message-input:focus {
+            outline: none;
+        }
+
+        .message-input::placeholder {
+            color: #a0b3c5;
+        }
+
+        .send-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #0084ff;
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover {
+            background: #0073e6;
+        }
+
+        .send-btn:disabled {
+            background: #2d3746;
             cursor: not-allowed;
         }
-        
-        .load-more-btn.loading {
-            opacity: 0.7;
-            cursor: wait;
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
         }
-        
-        .load-more-btn.loading i {
-            animation: spin 1s linear infinite;
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
         }
-        
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+
+        /* Verification Modal */
+        .verification-modal {
+            background: #1a2733;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 400px;
+            border: 1px solid #2d3746;
+            animation: modalSlideUp 0.3s ease;
         }
-        
-        /* History loading indicator */
-        .history-loading {
-            text-align: center;
-            padding: 20px;
-            color: #8696a0;
+
+        @keyframes modalSlideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid #2d3746;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: #a0b3c5;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-content {
+            padding: 24px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
             font-size: 14px;
+            color: #a0b3c5;
+            margin-bottom: 8px;
+        }
+
+        .phone-input {
+            width: 100%;
+            padding: 16px;
+            background: #2d3746;
+            border: 2px solid #2d3746;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+
+        .phone-input:focus {
+            outline: none;
+            border-color: #0084ff;
+        }
+
+        .phone-input.valid {
+            border-color: #00b894;
+        }
+
+        .phone-input.invalid {
+            border-color: #ff6b6b;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #a0b3c5;
+            margin-top: 6px;
+        }
+
+        /* OTP Input */
+        .otp-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 24px 0;
+        }
+
+        .otp-input {
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            font-size: 20px;
+            background: #2d3746;
+            border: 2px solid #2d3746;
+            border-radius: 8px;
+            color: white;
+            transition: border 0.3s;
+        }
+
+        .otp-input:focus {
+            border-color: #0084ff;
+            outline: none;
+        }
+
+        /* Buttons */
+        .action-btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
         }
-        
+
+        .action-btn.primary {
+            background: #0084ff;
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            background: #0073e6;
+            transform: translateY(-2px);
+        }
+
+        .action-btn:disabled {
+            background: #2d3746;
+            color: #a0b3c5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .resend-btn {
+            background: transparent;
+            border: 1px solid #0084ff;
+            color: #0084ff;
+            padding: 10px;
+            width: 100%;
+            border-radius: 8px;
+            margin-top: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .resend-btn:hover:not(:disabled) {
+            background: rgba(0, 132, 255, 0.1);
+        }
+
+        .resend-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .timer {
+            text-align: center;
+            color: #a0b3c5;
+            font-size: 13px;
+            margin-top: 12px;
+        }
+
+        /* Error/Success Messages */
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin: 12px 0;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .alert.error {
+            background: rgba(255, 107, 107, 0.1);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 107, 107, 0.2);
+        }
+
+        .alert.success {
+            background: rgba(0, 184, 148, 0.1);
+            color: #00b894;
+            border: 1px solid rgba(0, 184, 148, 0.2);
+        }
+
+        /* Instructions Panel */
+        .instructions-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 450px;
+            height: 100vh;
+            background: #1a2733;
+            border-left: 1px solid #2d3746;
+            transform: translateX(100%);
+            transition: transform 0.5s ease;
+            z-index: 1001;
+            overflow-y: auto;
+        }
+
+        .instructions-panel.active {
+            transform: translateX(0);
+        }
+
+        .panel-header {
+            padding: 20px;
+            border-bottom: 1px solid #2d3746;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .panel-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-content {
+            padding: 20px;
+        }
+
+        .instructions-list {
+            list-style: none;
+        }
+
+        .instructions-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #a0b3c5;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .instructions-list li:last-child {
+            border-bottom: none;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Verified Badge */
+        .verified-badge {
+            display: inline-block;
+            background: #00b894;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+
+        /* Link Styling */
+        a {
+            color: #0084ff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-2 { margin-top: 16px; }
+        .mb-2 { margin-bottom: 16px; }
+
         /* Responsive Design */
         @media (max-width: 768px) {
-            .whatsapp-container {
-                height: 100vh;
-                height: -webkit-fill-available;
+            .header {
+                padding: 12px 16px;
+                height: 60px;
             }
-            
+
+            .header-btn span {
+                display: none;
+            }
+
+            .header-btn {
+                padding: 8px;
+            }
+
+            .profile-name {
+                display: none;
+            }
+
+            .welcome-message {
+                padding: 20px;
+                margin: 0 16px 16px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chat-messages {
+                padding: 16px;
+            }
+
             .message {
                 max-width: 90%;
             }
-            
-            .header-right {
-                gap: 12px;
-            }
-            
-            .setup-section {
-                padding: 15px 12px;
-            }
-            
-            .message-input-area {
-                padding: 10px;
-                gap: 6px;
-            }
-            
-            .phone-input {
-                flex-direction: column;
-                gap: 12px;
-            }
-            
-            .start-chat-btn {
+
+            .instructions-panel {
                 width: 100%;
-                min-width: 100%;
             }
-            
-            .phone-input input,
-            .start-chat-btn {
-                height: 52px;
-            }
-            
-            .emoji-btn, .attach-btn {
-                font-size: 20px;
-                padding: 6px;
-            }
-            
-            .send-btn {
-                width: 40px;
-                height: 40px;
-            }
-            
-            .emoji-background {
-                opacity: 0.02;
-                background-size: 50px 50px, 60px 60px, 40px 40px, 55px 55px, 45px 45px, 35px 35px;
-            }
-            
-            .whatsapp-header {
-                padding: 8px 12px;
-                min-height: 56px;
-            }
-            
-            .profile-avatar {
-                width: 36px;
-                height: 36px;
-                min-width: 36px;
-                font-size: 14px;
-            }
-            
-            .header-left {
-                gap: 10px;
-            }
-            
-            .message-content {
-                padding: 8px 12px;
-                font-size: 14px;
+
+            .otp-input {
+                width: 44px;
+                height: 44px;
+                font-size: 18px;
             }
         }
-        
-        @media (max-width: 480px) {
-            .message {
-                max-width: 95%;
-            }
-            
-            .setup-header h2 {
-                font-size: 20px;
-            }
-            
-            .setup-header p {
-                font-size: 13px;
-            }
-            
-            .instructions {
-                padding: 15px;
-            }
-            
-            .instructions h3 {
-                font-size: 15px;
-            }
-            
-            .instructions li {
-                font-size: 13px;
-            }
-            
-            .message-input-area {
-                padding: 8px 10px;
-            }
-            
-            .message-input {
-                font-size: 14px;
-            }
-            
-            .status-bar {
-                font-size: 11px;
-                padding: 8px 12px;
-            }
-            
-            .welcome-message {
-                padding: 15px;
-            }
-            
-            .welcome-message h3 {
-                font-size: 15px;
-            }
-            
-            .welcome-message p {
-                font-size: 13px;
-            }
-            
-            .emoji-background {
-                opacity: 0.01;
-            }
-            
-            .load-more-btn {
-                padding: 8px 16px;
-                font-size: 13px;
-            }
-        }
-        
-        /* For very small screens */
-        @media (max-height: 600px) {
-            .setup-header {
-                margin-bottom: 15px;
-            }
-            
-            .instructions {
-                margin-bottom: 15px;
-            }
-            
-            .phone-input-container {
-                gap: 15px;
-            }
-            
-            .message-input-area {
-                min-height: 60px;
-            }
-            
-            .message-input-wrapper {
-                min-height: 40px;
-            }
-        }
-        
-        /* Animation */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        /* Input validation styles */
-        .phone-input input.valid {
-            border-color: #00a884;
-        }
-        
-        .phone-input input.invalid {
-            border-color: #ff6b6b;
-        }
-        
-        .error-message {
-            color: #ff6b6b;
-            font-size: 12px;
-            margin-top: 5px;
-            display: none;
-            text-align: center;
-        }
-        
-        /* Full screen specific */
-        @supports (-webkit-touch-callout: none) {
-            .whatsapp-container {
-                height: -webkit-fill-available;
-            }
-            
-            .chat-messages {
-                padding-bottom: 90px; /* Extra space for iOS input */
-            }
-        }
-        
-        /* Prevent text selection on mobile */
-        .noselect {
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -khtml-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-        
-        /* Message link styling */
-        .message-link {
-            color: #53bdeb;
-            text-decoration: none;
-            word-break: break-all;
-        }
-        
-        .message-link:hover {
-            text-decoration: underline;
-        }
-        
-        .message.user .message-link {
-            color: #a3d9e8;
-        }
-        
-        /* Message bubble links */
-        .message-content .link {
-            color: #53bdeb;
-            text-decoration: none;
-            word-break: break-all;
-        }
-        
-        .message-content .link:hover {
-            text-decoration: underline;
-        }
-        
-        .message.user .message-content .link {
-            color: #a3d9e8;
-        }
-        
-        /* For iPhone X and newer */
-        @supports (padding: max(0px)) {
-            .whatsapp-header,
-            .message-input-area,
-            .status-bar {
-                padding-left: max(15px, env(safe-area-inset-left));
-                padding-right: max(15px, env(safe-area-inset-right));
-            }
-            
-            .whatsapp-header {
-                padding-top: max(10px, env(safe-area-inset-top));
-            }
-            
-            .message-input-area {
-                padding-bottom: max(10px, env(safe-area-inset-bottom));
-            }
-            
-            .setup-section,
-            .chat-messages {
-                padding-left: max(10px, env(safe-area-inset-left));
-                padding-right: max(10px, env(safe-area-inset-right));
-            }
+
+        /* Auto-resize textarea */
+        .message-input {
+            min-height: 24px;
+            max-height: 120px;
         }
     </style>
-    <!-- WhatsApp Icons -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="noselect">
-    <div class="emoji-background"></div>
-    
-    <div class="whatsapp-container">
+<body>
+    <div class="app-container">
         <!-- Header -->
-        <div class="whatsapp-header">
+        <header class="header">
             <div class="header-left">
-                <div class="back-arrow" id="backBtn">
-                    <i class="fas fa-arrow-left"></i>
-                </div>
-                <div class="profile-info">
+                <button class="header-btn logout hidden" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </button>
+                <div class="profile" id="profileBtn">
                     <div class="profile-avatar" id="profileAvatar">ZC</div>
-                    <div class="profile-details">
-                        <h3 id="chatTitle">Zulu Club Assistant</h3>
-                        <p id="chatStatus">Online</p>
-                    </div>
+                    <div class="profile-name" id="profileName">Guest User</div>
                 </div>
             </div>
             <div class="header-right">
-                <i class="fas fa-video"></i>
-                <i class="fas fa-phone"></i>
-                <i class="fas fa-ellipsis-v"></i>
+                <button class="header-btn verify" id="verifyBtn">
+                    <i class="fas fa-mobile-alt"></i>
+                    <span>Verify</span>
+                </button>
+                <button class="header-btn" id="infoBtn">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Info</span>
+                </button>
             </div>
+        </header>
+
+        <!-- Status Banner -->
+        <div class="status-banner" id="statusBanner">
+            <span id="statusMessage">🎉 Unlimited access to Company & Product features</span>
         </div>
-        
-        <!-- Setup Section -->
-        <div class="setup-section" id="setupSection">
-            <div class="setup-header">
-                <h2>Welcome to Zulu Club Chat</h2>
-                <p>Enter your phone number to start chatting</p>
-            </div>
-            
-            <div class="instructions">
-                <h3><i class="fas fa-info-circle"></i> Phone Number Modes</h3>
-                <ul>
-                    <li><strong>Regular User:</strong> Enter any 10-digit number</li>
-                    <li><strong>Employee Mode:</strong> Add A/U suffix to employee numbers</li>
-                    <div class="employee-list">
-                        <div>8368127760<span style="color:#00a884">A</span> (Admin mode)</div>
-                        <div>8368127760<span style="color:#00a884">U</span> (User mode)</div>
-                        <div>9717350080<span style="color:#00a884">A</span>/<span style="color:#00a884">U</span></div>
-                        <div>8860924190<span style="color:#00a884">A</span>/<span style="color:#00a884">U</span></div>
-                        <div>7483654620<span style="color:#00a884">A</span>/<span style="color:#00a884">U</span></div>
-                    </div>
-                </ul>
-            </div>
-            
-            <div class="phone-input-container">
-                <div class="phone-input">
-                    <div class="phone-input-wrapper">
-                        <input type="text" id="phoneInput" 
-                               placeholder="Enter 10 digits + optional A/U (e.g., 8368127760A)" 
-                               maxlength="11"
-                               inputmode="text"
-                               autocapitalize="characters">
-                        <div class="suffix-badge" id="suffixBadge"></div>
-                    </div>
-                    <button class="start-chat-btn" id="startChatBtn">
-                        <i class="fas fa-comments"></i> Start Chat
-                    </button>
-                </div>
-                <div class="error-message" id="errorMessage">
-                    Please enter a valid 10-digit number with optional A/U suffix
-                </div>
-            </div>
-        </div>
-        
-        <!-- Chat Section -->
-        <div class="chat-section hidden" id="chatSection">
+
+        <!-- Chat Container -->
+        <div class="chat-container">
             <!-- Chat Messages -->
             <div class="chat-messages" id="chatMessages">
-                <!-- Messages will appear here -->
+                <!-- Welcome message will be inserted here -->
             </div>
-            
-            <!-- Message Input Area -->
-            <div class="message-input-area">
-                <div class="emoji-btn" id="emojiBtn">
-                    <i class="far fa-smile"></i>
-                </div>
-                <div class="attach-btn" id="attachBtn">
-                    <i class="fas fa-paperclip"></i>
-                </div>
-                <div class="message-input-wrapper">
+
+            <!-- Chat Input -->
+            <div class="chat-input">
+                <div class="input-wrapper">
                     <textarea class="message-input" id="messageInput" 
-                           placeholder="Type a message..." 
-                           rows="1"
-                           disabled></textarea>
+                              placeholder="Type your message..."
+                              rows="1"></textarea>
                 </div>
-                <button class="send-btn" id="sendBtn" disabled>
+                <button class="send-btn" id="sendBtn">
                     <i class="fas fa-paper-plane"></i>
                 </button>
             </div>
-            
-            <!-- Status Bar -->
-            <div class="status-bar" id="statusBar">
-                Connected as: <span id="currentPhone"></span>
+        </div>
+
+        <!-- Verification Modal -->
+        <div class="modal-overlay" id="verificationModal">
+            <div class="verification-modal">
+                <div class="modal-header">
+                    <h3><i class="fas fa-mobile-alt"></i> Verify Phone</h3>
+                    <button class="close-btn" id="closeVerifyModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-content">
+                    <!-- Phone Input Step -->
+                    <div id="phoneStep">
+                        <div class="form-group">
+                            <label class="form-label">Phone Number (10 digits)</label>
+                            <input type="text" class="phone-input" id="phoneInput" 
+                                   placeholder="" maxlength="11">
+                            <div id="phoneAlert" class="alert hidden"></div>
+                        </div>
+                        <button class="action-btn primary" id="sendOtpBtn">
+                            <i class="fas fa-paper-plane"></i>
+                            Send Verification Code
+                        </button>
+                    </div>
+
+                    <!-- OTP Input Step -->
+                    <div id="otpStep" class="hidden">
+                        <div class="text-center mb-2">
+                            <p>Enter the 4-digit code sent to <strong id="otpPhoneNumber"></strong></p>
+                        </div>
+                        <div class="otp-container">
+                            <input type="text" class="otp-input" id="otp1" maxlength="1" inputmode="numeric">
+                            <input type="text" class="otp-input" id="otp2" maxlength="1" inputmode="numeric">
+                            <input type="text" class="otp-input" id="otp3" maxlength="1" inputmode="numeric">
+                            <input type="text" class="otp-input" id="otp4" maxlength="1" inputmode="numeric">
+                        </div>
+                        <div id="otpAlert" class="alert hidden"></div>
+                        <button class="action-btn primary" id="verifyOtpBtn">
+                            <i class="fas fa-check"></i>
+                            Verify Code
+                        </button>
+                        <div class="timer" id="timer">
+                            Resend code in <span id="countdown">60</span> seconds
+                        </div>
+                        <button class="resend-btn" id="resendOtpBtn" disabled>
+                            Resend Code
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions Panel -->
+        <div class="instructions-panel" id="instructionsPanel">
+            <div class="panel-header">
+                <h3><i class="fas fa-info-circle"></i> How It Works</h3>
+                <button class="close-btn" id="closeInstructionsBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="panel-content">
+                <ul class="instructions-list">
+                    <li><strong>Unlimited Basic Access</strong> - All users can ask about company info and browse products without limits</li>
+                    <li><strong>Free Features</strong> - Company information and product browsing are available to everyone</li>
+                    <li><strong>Premium Features</strong> - Seller inquiries, investor info, agent requests require verification</li>
+                    <li><strong>Phone Verification</strong> - Simple OTP-based verification for full access</li>
+                    <li><strong>Admin/User Support</strong> - Add A/U suffix for different access levels (A=Admin, U=User)</li>
+                    <li><strong>All Messages Saved</strong> - Verified users get conversation history saved</li>
+                    <li><strong>Full Access</strong> - After verification, access all features: seller, investors, agent, voice_ai</li>
+                </ul>
+                <div class="alert success mt-2">
+                    <i class="fas fa-lightbulb"></i>
+                    <strong>Tip:</strong> You can verify anytime to unlock all features
+                </div>
             </div>
         </div>
     </div>
 
-<script>
-    let currentPhone = '';
-    let isConnected = false;
-    let historyPage = 0;
-    let hasMoreHistory = true;
-    let isLoadingHistory = false;
-    
-    // DOM Elements
-    const chatMessages = document.getElementById('chatMessages');
-    const messageInput = document.getElementById('messageInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const setupSection = document.getElementById('setupSection');
-    const chatSection = document.getElementById('chatSection');
-    const phoneInput = document.getElementById('phoneInput');
-    const startChatBtn = document.getElementById('startChatBtn');
-    const currentPhoneSpan = document.getElementById('currentPhone');
-    const backBtn = document.getElementById('backBtn');
-    const profileAvatar = document.getElementById('profileAvatar');
-    const chatTitle = document.getElementById('chatTitle');
-    const statusBar = document.getElementById('statusBar');
-    const chatStatus = document.getElementById('chatStatus');
-    const suffixBadge = document.getElementById('suffixBadge');
-    const errorMessage = document.getElementById('errorMessage');
-    const emojiBtn = document.getElementById('emojiBtn');
-    const attachBtn = document.getElementById('attachBtn');
-    
-    // Employee numbers for reference
-    const EMPLOYEE_NUMBERS = [
-        "8368127760",
-        "9717350080", 
-        "8860924190",
-        "7483654620"
-    ];
-    
-    // Format phone number input
-    function formatPhoneInput(value) {
-        // Remove all non-digits and letters A/U
-        let cleaned = value.replace(/[^0-9auAU]/g, '');
-        
-        // Get first 10 digits
-        let digits = cleaned.replace(/[^0-9]/g, '').substring(0, 10);
-        
-        // Get suffix if present (A or U)
-        let suffix = '';
-        if (cleaned.length > 10) {
-            let lastChar = cleaned.charAt(cleaned.length - 1).toUpperCase();
-            if (lastChar === 'A' || lastChar === 'U') {
-                suffix = lastChar;
-                digits = digits.substring(0, 10); // Ensure only 10 digits
-            }
-        }
-        
-        return digits + suffix;
-    }
-    
-    // Validate phone number
-    function validatePhoneNumber(phone) {
-        // Check if it's exactly 10 digits or 10 digits + A/U
-        const regex = /^[0-9]{10}[AU]?$/i;
-        if (!regex.test(phone)) {
-            return false;
-        }
-        
-        const digits = phone.replace(/[^0-9]/g, '');
-        const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
-        
-        // If suffix is present, it must be A or U
-        if (suffix && !['A', 'U'].includes(suffix)) {
-            return false;
-        }
-        
-        return true;
-    }
-    
-    // Update suffix badge display
-    function updateSuffixBadge(phone) {
-        const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
-        if (suffix) {
-            suffixBadge.textContent = suffix;
-            suffixBadge.style.display = 'block';
-        } else {
-            suffixBadge.style.display = 'none';
-        }
-    }
-    
-    // Handle phone input
-    phoneInput.addEventListener('input', function(e) {
-        let formatted = formatPhoneInput(this.value);
-        this.value = formatted;
-        
-        // Update suffix badge
-        updateSuffixBadge(formatted);
-        
-        // Validate and update UI
-        if (validatePhoneNumber(formatted)) {
-            this.classList.remove('invalid');
-            this.classList.add('valid');
-            errorMessage.style.display = 'none';
-            startChatBtn.disabled = false;
-        } else {
-            this.classList.remove('valid');
-            this.classList.add('invalid');
-            errorMessage.style.display = formatted.length > 0 ? 'block' : 'none';
-            startChatBtn.disabled = true;
-        }
-    });
-    
-    // Handle phone input focus
-    phoneInput.addEventListener('focus', function() {
-        if (this.value) {
-            updateSuffixBadge(this.value);
-        }
-    });
-    
-    // Handle phone input blur
-    phoneInput.addEventListener('blur', function() {
-        suffixBadge.style.display = 'none';
-    });
-    
-    // Function to detect and convert URLs to clickable links
-    function convertLinksToClickable(text) {
-        // Improved regular expression to match various URL formats
-        const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(app\.zulu\.club\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|[A-Za-z0-9.-]+\.[A-Za-z]{2,}\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]))/ig;
-        
-        // Replace URLs with anchor tags
-        return text.replace(urlRegex, function(url) {
-            // Add https:// if it's a www link or domain without protocol
-            let finalUrl = url;
-            if (!url.match(/^(https?|ftp|file):\/\//i)) {
-                if (url.startsWith('www.') || url.includes('app.zulu.club') || url.includes('.club/')) {
-                    finalUrl = 'https://' + url;
+    <script>
+        // Global state
+        let currentSessionId = '';
+        let isAuthenticated = false;
+        let isAdmin = false;
+        let otpTimer = null;
+        let countdown = 60;
+            
+        // DOM Elements
+        const statusBanner = document.getElementById('statusBanner');
+        const phoneInput = document.getElementById('phoneInput');
+        const sendOtpBtn = document.getElementById('sendOtpBtn');
+        const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+        const resendOtpBtn = document.getElementById('resendOtpBtn');
+        const otpPhoneNumber = document.getElementById('otpPhoneNumber');
+        const phoneAlert = document.getElementById('phoneAlert');
+        const otpAlert = document.getElementById('otpAlert');
+        const timer = document.getElementById('timer');
+        const countdownSpan = document.getElementById('countdown');
+            
+        // Chat elements
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const profileAvatar = document.getElementById('profileAvatar');
+        const profileName = document.getElementById('profileName');
+        const statusMessage = document.getElementById('statusMessage');
+            
+        // Header buttons
+        const logoutBtn = document.getElementById('logoutBtn');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const infoBtn = document.getElementById('infoBtn');
+            
+        // Modals
+        const verificationModal = document.getElementById('verificationModal');
+        const instructionsPanel = document.getElementById('instructionsPanel');
+            
+        // Steps
+        const phoneStep = document.getElementById('phoneStep');
+        const otpStep = document.getElementById('otpStep');
+            
+        // Close buttons
+        const closeVerifyModal = document.getElementById('closeVerifyModal');
+        const closeInstructionsBtn = document.getElementById('closeInstructionsBtn');
+            
+        // OTP input elements
+        const otp1 = document.getElementById('otp1');
+        const otp2 = document.getElementById('otp2');
+        const otp3 = document.getElementById('otp3');
+        const otp4 = document.getElementById('otp4');
+            
+        // Format phone number input
+        function formatPhoneInput(value) {
+            // Remove all non-digits and letters A/U
+            let cleaned = value.replace(/[^0-9auAU]/g, '');
+            
+            // Get first 10 digits
+            let digits = cleaned.replace(/[^0-9]/g, '').substring(0, 10);
+            
+            // Get suffix if present (A or U)
+            let suffix = '';
+            if (cleaned.length > 10) {
+                let lastChar = cleaned.charAt(cleaned.length - 1).toUpperCase();
+                if (lastChar === 'A' || lastChar === 'U') {
+                    suffix = lastChar;
+                    digits = digits.substring(0, 10); // Ensure only 10 digits
                 }
             }
             
-            return `<a href="${finalUrl}" target="_blank" rel="noopener noreferrer" class="link">${url}</a>`;
-        });
-    }
-    
-    // Parse custom timestamp format (DD-MM-YYYY HH:mm:ss)
-    function parseCustomTimestamp(timestampStr) {
-        // Format: "18-12-2025 17:53:25"
-        try {
-            const parts = timestampStr.split(' ');
-            if (parts.length !== 2) return new Date();
-            
-            const datePart = parts[0]; // "18-12-2025"
-            const timePart = parts[1]; // "17:53:25"
-            
-            const dateParts = datePart.split('-');
-            if (dateParts.length !== 3) return new Date();
-            
-            const day = parseInt(dateParts[0], 10);
-            const month = parseInt(dateParts[1], 10) - 1; // JavaScript months are 0-indexed
-            const year = parseInt(dateParts[2], 10);
-            
-            const timeParts = timePart.split(':');
-            if (timeParts.length !== 3) return new Date();
-            
-            const hours = parseInt(timeParts[0], 10);
-            const minutes = parseInt(timeParts[1], 10);
-            const seconds = parseInt(timeParts[2], 10);
-            
-            return new Date(year, month, day, hours, minutes, seconds);
-        } catch (error) {
-            console.error('Error parsing timestamp:', timestampStr, error);
-            return new Date();
+            return digits + suffix;
         }
-    }
-    
-    // Format timestamp for display
-    function formatTimestampForDisplay(timestampStr) {
-        try {
-            const date = parseCustomTimestamp(timestampStr);
-            return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        } catch (error) {
-            console.error('Error formatting timestamp:', timestampStr, error);
-            return new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        }
-    }
-    
-    // Display a message in the chat
-    function displayMessage(text, sender, displayTime = null, isoTime = null, originalTimestamp = null) {
-        const messageWrapper = document.createElement('div');
-        messageWrapper.className = `message ${sender}`;
-        
-        // Store ISO time for sorting
-        let messageIsoTime = isoTime;
-        let messageDisplayTime = displayTime;
-        
-        // If we have original timestamp (DD-MM-YYYY HH:mm:ss), parse it
-        if (originalTimestamp && typeof originalTimestamp === 'string') {
-            try {
-                const date = parseCustomTimestamp(originalTimestamp);
-                messageIsoTime = date.toISOString();
-                messageDisplayTime = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            } catch (error) {
-                console.error('Error processing original timestamp:', originalTimestamp, error);
+            
+        // Validate phone number
+        function validatePhoneNumber(phone) {
+            // Check if it's exactly 10 digits or 10 digits + A/U
+            const regex = /^[0-9]{10}[AU]?$/i;
+            if (!regex.test(phone)) {
+                return false;
             }
-        }
-        
-        // If no ISO time, use current time
-        if (!messageIsoTime) {
-            const now = new Date();
-            messageIsoTime = now.toISOString();
-            messageDisplayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        }
-        
-        // Store ISO time in data attribute for sorting
-        messageWrapper.dataset.isoTime = messageIsoTime;
-        
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'message-wrapper';
-        
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content';
-        
-        // Convert URLs to clickable links
-        const processedText = convertLinksToClickable(text);
-        // Format text with line breaks and preserve links
-        const formattedText = processedText.replace(/\n/g, '<br>');
-        contentDiv.innerHTML = formattedText;
-        
-        messageDiv.appendChild(contentDiv);
-        
-        const infoDiv = document.createElement('div');
-        infoDiv.className = 'message-info';
-        
-        const timeSpan = document.createElement('span');
-        timeSpan.className = 'message-time';
-        timeSpan.textContent = messageDisplayTime || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        
-        if (sender === 'user') {
-            const tickIcon = document.createElement('span');
-            tickIcon.className = 'message-status';
-            tickIcon.innerHTML = '✓✓';
-            tickIcon.style.color = '#53bdeb';
-            infoDiv.appendChild(timeSpan);
-            infoDiv.appendChild(tickIcon);
-        } else {
-            infoDiv.appendChild(timeSpan);
-        }
-        
-        messageDiv.appendChild(infoDiv);
-        messageWrapper.appendChild(messageDiv);
-        
-        // Add click handler to links after they're added to DOM
-        setTimeout(() => {
-            const links = contentDiv.querySelectorAll('a.link');
-            links.forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    // Link will open in new tab by default due to target="_blank"
-                    console.log('Link clicked:', link.href);
-                });
-                
-                // Also handle touch events for mobile
-                link.addEventListener('touchstart', (e) => {
-                    e.stopPropagation();
-                });
-            });
-        }, 100);
-        
-        return messageWrapper;
-    }
-    
-    // Insert message at correct position based on timestamp
-    function insertMessageInOrder(messageElement) {
-        const messages = Array.from(chatMessages.querySelectorAll('.message[data-iso-time]'));
-        const newTime = new Date(messageElement.dataset.isoTime).getTime();
-        
-        // Find the right position to insert
-        let insertBeforeElement = null;
-        for (let i = 0; i < messages.length; i++) {
-            const msg = messages[i];
-            const msgTime = new Date(msg.dataset.isoTime).getTime();
             
-            if (newTime < msgTime) {
-                insertBeforeElement = msg;
-                break;
+            const digits = phone.replace(/[^0-9]/g, '');
+            const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
+            
+            // If suffix is present, it must be A or U
+            if (suffix && !['A', 'U'].includes(suffix)) {
+                return false;
             }
+            
+            return true;
         }
-        
-        if (insertBeforeElement) {
-            chatMessages.insertBefore(messageElement, insertBeforeElement);
-        } else {
-            chatMessages.appendChild(messageElement);
-        }
-        
-        // Scroll to show the new message
-        setTimeout(() => {
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }, 50);
-    }
-    
-    // Create load more button
-    function createLoadMoreButton() {
-        const container = document.createElement('div');
-        container.className = 'load-more-container';
-        container.id = 'loadMoreContainer';
-        
-        const button = document.createElement('button');
-        button.className = 'load-more-btn';
-        button.innerHTML = '<i class="fas fa-history"></i> Load More Messages';
-        button.onclick = loadMoreHistory;
-        
-        container.appendChild(button);
-        return container;
-    }
-    
-    // Fetch chat history from server
-    async function fetchChatHistory(page = 0, pageSize = 10) {
-        try {
-            const response = await fetch('/chat/history', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    phoneNumber: currentPhone,
-                    page: page,
-                    pageSize: pageSize
-                })
+
+        // Create session
+        async function createSession() {
+          try {
+            const response = await fetch('/chat/create-session', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              }
             });
             
             const data = await response.json();
             
             if (data.success) {
-                console.log(`📜 Server returned ${data.messages?.length || 0} messages, hasMore: ${data.hasMore}, total: ${data.totalMessages}`);
-                
-                // Process messages to ensure proper timestamps
-                const processedMessages = (data.messages || []).map(msg => {
-                    // If server returns ISO timestamp, use it
-                    // Otherwise parse the original timestamp
-                    let isoTime = msg.timestamp;
-                    let displayTime = msg.displayTime;
-                    let originalTimestamp = msg.originalTimestamp || msg.timestamp;
-                    
-                    // If we don't have a valid ISO timestamp, parse from original
-                    if (!isoTime || isoTime === 'Invalid Date' || new Date(isoTime).toString() === 'Invalid Date') {
-                        try {
-                            const date = parseCustomTimestamp(originalTimestamp);
-                            isoTime = date.toISOString();
-                            displayTime = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        } catch (error) {
-                            // If parsing fails, use current time
-                            const now = new Date();
-                            isoTime = now.toISOString();
-                            displayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        }
-                    }
-                    
-                    return {
-                        ...msg,
-                        isoTime: isoTime,
-                        displayTime: displayTime,
-                        originalTimestamp: originalTimestamp
-                    };
-                });
-                
-                // Sort by ISO timestamp (oldest first)
-                processedMessages.sort((a, b) => {
-                    const timeA = new Date(a.isoTime).getTime();
-                    const timeB = new Date(b.isoTime).getTime();
-                    return timeA - timeB;
-                });
-                
-                return {
-                    messages: processedMessages,
-                    hasMore: data.hasMore || false
-                };
-            }
-            
-            return { messages: [], hasMore: false };
-        } catch (error) {
-            console.error('Error fetching history:', error);
-            return { messages: [], hasMore: false };
-        }
-    }
-    
-    // Load more history
-    async function loadMoreHistory() {
-        if (isLoadingHistory || !hasMoreHistory) return;
-        
-        const loadMoreBtn = document.querySelector('.load-more-btn');
-        if (loadMoreBtn) {
-            loadMoreBtn.classList.add('loading');
-            loadMoreBtn.disabled = true;
-            loadMoreBtn.innerHTML = '<i class="fas fa-spinner"></i> Loading...';
-        }
-        
-        isLoadingHistory = true;
-        
-        try {
-            const result = await fetchChatHistory(historyPage, 10);
-            console.log(`📜 Loading page ${historyPage}, got ${result.messages.length} messages`);
-            
-            if (result.messages.length > 0) {
-                // Store scroll position BEFORE adding new messages
-                const oldScrollHeight = chatMessages.scrollHeight;
-                const oldScrollTop = chatMessages.scrollTop;
-                
-                // Remove load more button temporarily
-                const loadMoreContainer = document.getElementById('loadMoreContainer');
-                if (loadMoreContainer) {
-                    loadMoreContainer.remove();
-                }
-                
-                // Create fragment for new messages (older messages)
-                const fragment = document.createDocumentFragment();
-                
-                // Add messages in chronological order (oldest first)
-                result.messages.forEach(msg => {
-                    const messageElement = displayMessage(
-                        msg.text, 
-                        msg.sender, 
-                        msg.displayTime, 
-                        msg.isoTime, 
-                        msg.originalTimestamp
-                    );
-                    fragment.appendChild(messageElement);
-                });
-                
-                // Insert all new messages at the top (after welcome message)
-                const welcomeMessage = document.querySelector('.welcome-message');
-                if (welcomeMessage) {
-                    chatMessages.insertBefore(fragment, welcomeMessage.nextSibling);
-                } else {
-                    chatMessages.insertBefore(fragment, chatMessages.firstChild);
-                }
-                
-                // Add load more button again if needed
-                if (result.hasMore) {
-                    const newLoadMoreBtn = createLoadMoreButton();
-                    const welcomeMessage = document.querySelector('.welcome-message');
-                    if (welcomeMessage) {
-                        chatMessages.insertBefore(newLoadMoreBtn, welcomeMessage.nextSibling);
-                    } else {
-                        chatMessages.insertBefore(newLoadMoreBtn, chatMessages.firstChild);
-                    }
-                } else {
-                    // No more messages to load
-                    hasMoreHistory = false;
-                }
-                
-                // Restore scroll position to maintain user's view
-                const newScrollHeight = chatMessages.scrollHeight;
-                const scrollDiff = newScrollHeight - oldScrollHeight;
-                chatMessages.scrollTop = oldScrollTop + scrollDiff;
-                
-                // Update state
-                historyPage++;
-                hasMoreHistory = result.hasMore;
-                
+              currentSessionId = data.sessionId;
+              isAuthenticated = false;
+              
+              // Store session ID in localStorage
+              localStorage.setItem('zulu_session_id', currentSessionId);
+              
+              // Update UI
+              updateUI();
+              loadWelcomeMessage();
+              
+              // Enable chat input
+              messageInput.disabled = false;
+              messageInput.focus();
+              
+              console.log(`🎁 Session created: ${currentSessionId}`);
+              return true;
             } else {
-                // No more messages
-                hasMoreHistory = false;
+              alert('Failed to create session. Please try again.');
+              return false;
             }
-        } catch (error) {
-            console.error('Error loading more history:', error);
-        } finally {
-            isLoadingHistory = false;
-            
-            // Reset load more button if it exists
-            const loadMoreBtn = document.querySelector('.load-more-btn');
-            if (loadMoreBtn) {
-                loadMoreBtn.classList.remove('loading');
-                loadMoreBtn.disabled = false;
-                loadMoreBtn.innerHTML = '<i class="fas fa-history"></i> Load More Messages';
-            }
+          } catch (error) {
+            console.error('Error creating session:', error);
+            alert('Network error. Please try again.');
+            return false;
+          }
         }
-    }
-    
-    // Load chat history with pagination
-    async function loadChatHistory(phone) {
-        // Show loading indicator
-        const loadingDiv = document.createElement('div');
-        loadingDiv.className = 'history-loading';
-        loadingDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading history...';
-        chatMessages.appendChild(loadingDiv);
-        
-        try {
-            const result = await fetchChatHistory(0, 10);
-            console.log(`📜 Initial load: ${result.messages.length} messages`);
             
-            // Remove loading indicator
-            loadingDiv.remove();
-            
-            if (result.messages.length > 0) {
-                // Display messages in chronological order
-                result.messages.forEach(msg => {
-                    const messageElement = displayMessage(
-                        msg.text, 
-                        msg.sender, 
-                        msg.displayTime, 
-                        msg.isoTime, 
-                        msg.originalTimestamp
-                    );
-                    insertMessageInOrder(messageElement);
-                });
-                
-                // Add load more button at top if there are more messages
-                if (result.hasMore) {
-                    const loadMoreBtn = createLoadMoreButton();
-                    const welcomeMessage = document.querySelector('.welcome-message');
-                    if (welcomeMessage) {
-                        chatMessages.insertBefore(loadMoreBtn, welcomeMessage.nextSibling);
-                    } else {
-                        chatMessages.insertBefore(loadMoreBtn, chatMessages.firstChild);
-                    }
-                    
-                    historyPage = 1;
-                    hasMoreHistory = true;
-                }
+        // Update UI based on authentication status
+        function updateUI() {
+            if (isAuthenticated) {
+                statusBanner.className = 'status-banner verified';
+                statusMessage.innerHTML = '✅ Verified • Full Access to All Features';
+                profileName.innerHTML = 'Verified User <span class="verified-badge">Verified</span>';
+                profileAvatar.textContent = '✓';
+                profileAvatar.style.background = 'linear-gradient(135deg, #00b894 0%, #00cec9 100%)';
+                verifyBtn.style.display = 'none';
+                logoutBtn.classList.remove('hidden');
             } else {
-                // No history found
-                const noHistoryDiv = document.createElement('div');
-                noHistoryDiv.className = 'history-loading';
-                noHistoryDiv.textContent = 'No previous messages found';
-                
-                const welcomeMessage = document.querySelector('.welcome-message');
-                if (welcomeMessage) {
-                    chatMessages.insertBefore(noHistoryDiv, welcomeMessage.nextSibling);
-                }
+                statusBanner.className = 'status-banner';
+                statusMessage.innerHTML = '🎉 Unlimited access to Company & Product features';
+                profileName.textContent = 'Guest User';
+                profileAvatar.textContent = 'ZC';
+                profileAvatar.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                verifyBtn.style.display = 'flex';
+                logoutBtn.classList.add('hidden');
             }
             
-            // Scroll to bottom to see latest messages
-            setTimeout(() => {
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }, 100);
-            
-        } catch (error) {
-            console.error('Error loading chat history:', error);
-            loadingDiv.remove();
-            
-            // Show error message
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'history-loading';
-            errorDiv.textContent = 'Error loading history from server';
-            
-            const welcomeMessage = document.querySelector('.welcome-message');
-            if (welcomeMessage) {
-                chatMessages.insertBefore(errorDiv, welcomeMessage.nextSibling);
-            }
+            // Always enable chat input (unlimited messages)
+            messageInput.disabled = false;
+            messageInput.placeholder = 'Type your message...';
+            sendBtn.disabled = !messageInput.value.trim();
         }
-    }
-    
-    // Auto-resize textarea
-    function autoResizeTextarea(textarea) {
-        textarea.style.height = 'auto';
-        const newHeight = Math.min(textarea.scrollHeight, 100);
-        textarea.style.height = newHeight + 'px';
-        
-        // Adjust wrapper height
-        const wrapper = textarea.closest('.message-input-wrapper');
-        if (wrapper) {
-            wrapper.style.minHeight = Math.max(44, newHeight + 16) + 'px';
-        }
-    }
-    
-    // Show typing indicator
-    function showTyping() {
-        const typingDiv = document.createElement('div');
-        typingDiv.className = 'message bot';
-        typingDiv.id = 'typingIndicator';
-        
-        const wrapperDiv = document.createElement('div');
-        wrapperDiv.className = 'message-wrapper';
-        
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content typing-indicator';
-        contentDiv.innerHTML = `
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-        `;
-        
-        wrapperDiv.appendChild(contentDiv);
-        typingDiv.appendChild(wrapperDiv);
-        
-        // Insert typing indicator at bottom
-        chatMessages.appendChild(typingDiv);
-        
-        // Scroll to show typing indicator
-        setTimeout(() => {
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }, 50);
-    }
-    
-    // Hide typing indicator
-    function hideTyping() {
-        const typing = document.getElementById('typingIndicator');
-        if (typing) {
-            typing.remove();
-        }
-    }
-    
-    // Send message to server
-    async function sendMessage() {
-        const message = messageInput.value.trim();
-        if (!message || !isConnected) return;
-        
-        // Clear and reset input
-        messageInput.value = '';
-        autoResizeTextarea(messageInput);
-        sendBtn.disabled = true;
-        
-        // Display user message immediately with current timestamp
-        const now = new Date();
-        const isoTime = now.toISOString();
-        const displayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        const messageElement = displayMessage(message, 'user', displayTime, isoTime);
-        
-        // Insert at correct position based on timestamp
-        insertMessageInOrder(messageElement);
-        
-        // Show typing indicator
-        showTyping();
-        
-        try {
-            const response = await fetch('/chat/message', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    phoneNumber: currentPhone,
-                    message: message
-                })
-            });
             
-            const data = await response.json();
-            hideTyping();
-            
-            if (data.success) {
-                // Bot response with current timestamp
-                const botNow = new Date();
-                const botIsoTime = botNow.toISOString();
-                const botDisplayTime = botNow.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                const botMessageElement = displayMessage(data.response, 'bot', botDisplayTime, botIsoTime);
-                
-                // Insert at correct position based on timestamp
-                insertMessageInOrder(botMessageElement);
-            } else {
-                const errorNow = new Date();
-                const errorIsoTime = errorNow.toISOString();
-                const errorDisplayTime = errorNow.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                const errorMessageElement = displayMessage('Sorry, there was an error processing your message.', 'bot', errorDisplayTime, errorIsoTime);
-                
-                // Insert at correct position based on timestamp
-                insertMessageInOrder(errorMessageElement);
-            }
-            
-        } catch (error) {
-            hideTyping();
-            const errorNow = new Date();
-            const errorIsoTime = errorNow.toISOString();
-            const errorDisplayTime = errorNow.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            const errorMessageElement = displayMessage('Network error. Please check your connection.', 'bot', errorDisplayTime, errorIsoTime);
-            
-            // Insert at correct position based on timestamp
-            insertMessageInOrder(errorMessageElement);
-            
-            console.error('Error:', error);
-        }
-        
-        sendBtn.disabled = false;
-        messageInput.focus();
-    }
-    
-    // Initialize chat
-    function initChat(phone) {
-        currentPhone = phone;
-        currentPhoneSpan.textContent = phone;
-        
-        // Update profile based on phone number
-        const digits = phone.replace(/[^0-9]/g, '');
-        const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
-        const isEmployee = EMPLOYEE_NUMBERS.includes(digits);
-        
-        // Set profile avatar
-        profileAvatar.textContent = digits.substring(0, 2) || 'ZC';
-        
-        // Set chat title
-        if (isEmployee) {
-            if (suffix === 'A') {
-                chatTitle.textContent = 'Employee (Admin)';
-                chatStatus.textContent = 'Online • Admin Mode';
-                profileAvatar.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)';
-            } else if (suffix === 'U') {
-                chatTitle.textContent = 'Employee (User)';
-                chatStatus.textContent = 'Online • User Mode';
-                profileAvatar.style.background = 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)';
-            } else {
-                chatTitle.textContent = 'Employee Mode';
-                chatStatus.textContent = 'Online • Employee';
-                profileAvatar.style.background = 'linear-gradient(135deg, #00b09b 0%, #96c93d 100%)';
-            }
-        } else {
-            chatTitle.textContent = 'Zulu Club Assistant';
-            chatStatus.textContent = 'Online';
-            profileAvatar.style.background = 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)';
-        }
-        
-        // Reset pagination
-        historyPage = 0;
-        hasMoreHistory = true;
-        isLoadingHistory = false;
-        
-        // Hide setup, show chat
-        setupSection.classList.add('hidden');
-        chatSection.classList.remove('hidden');
-        
-        // Clear chat messages
-        chatMessages.innerHTML = '';
-        
-        // Enable input
-        messageInput.disabled = false;
-        messageInput.focus();
-        
-        // Show welcome message
-        let welcomeHtml = '';
-        
-        if (isEmployee) {
-            if (suffix === 'A') {
-                welcomeHtml = `
-                    <div class="welcome-message">
-                        <h3><i class="fas fa-user-tie"></i> Employee Admin Mode</h3>
-                        <p>You're in <strong>Admin Mode</strong> (suffix: A)</p>
-                        <p>You can log:</p>
-                        <p>• <strong>Operation:</strong> ops message</p>
-                        <p>• <strong>Logistics:</strong> logistics message</p>
-                        <p>• <strong>Inventory:</strong> inventory message</p>
-                        <p>• <strong>Market:</strong> market message</p>
-                        <p>• <strong>Fixed:</strong> fixed message</p>
-                        <p>• <strong>Sales:</strong> sales message</p>
-                        <p>• <strong>Lead:</strong> lead message</p>
-                        <p><br>Try: <em>"Operation: Need more staff tomorrow"</em></p>
-                    </div>
-                `;
-            } else if (suffix === 'U') {
-                welcomeHtml = `
-                    <div class="welcome-message">
-                        <h3><i class="fas fa-user"></i> Employee User Mode</h3>
-                        <p>You're in <strong>User Mode</strong> (suffix: U)</p>
-                        <p>You'll chat as a regular user.</p>
-                        <p><br>Try asking: <em>"Show me t-shirts"</em> or <em>"Tell me about Zulu Club"</em></p>
-                    </div>
-                `;
-            } else {
-                welcomeHtml = `
-                    <div class="welcome-message">
-                        <h3><i class="fas fa-user-tie"></i> Employee Mode</h3>
-                        <p>You're logged in as an employee (no suffix).</p>
-                        <p>Add 'U' to your number for user mode: <strong>${digits}U</strong></p>
-                        <p>You can log billing/sales/lead messages.</p>
-                        <p><br>Try: <em>"Sales: Made 5 sales today"</em></p>
-                    </div>
-                `;
-            }
-        } else {
-            welcomeHtml = `
-                <div class="welcome-message">
-                    <h3><i class="fas fa-shopping-bag"></i> Welcome to Zulu Club!</h3>
-                    <p>I'm your personal shopping assistant. I can help you with:</p>
-                    <p>• Product browsing and shopping</p>
-                    <p>• Seller information and partnerships</p>
-                    <p>• Company details and investor queries</p>
-                    <p>• Connecting with human agents</p>
-                    <p><br>Try asking: <em>"Show me t-shirts"</em> or <em>"Tell me about Zulu Club"</em></p>
-                </div>
-            `;
-        }
-        
-        chatMessages.innerHTML = welcomeHtml;
-        
-        // Load history from server only
-        loadChatHistory(phone);
-        
-        isConnected = true;
-        
-        // Update status bar
-        statusBar.innerHTML = `Connected as: <span style="color:#00a884">${phone}</span>`;
-    }
-    
-    // Go back to setup
-    function goBackToSetup() {
-        setupSection.classList.remove('hidden');
-        chatSection.classList.add('hidden');
-        chatMessages.innerHTML = '';
-        currentPhone = '';
-        isConnected = false;
-        historyPage = 0;
-        hasMoreHistory = true;
-        isLoadingHistory = false;
-        phoneInput.focus();
-        phoneInput.value = '';
-        phoneInput.classList.remove('valid', 'invalid');
-        errorMessage.style.display = 'none';
-        startChatBtn.disabled = false;
-    }
-    
-    // Event Listeners
-    startChatBtn.addEventListener('click', () => {
-        const phone = phoneInput.value.trim();
-        if (phone && validatePhoneNumber(phone)) {
-            initChat(phone);
-        } else {
-            errorMessage.style.display = 'block';
-            phoneInput.classList.add('invalid');
+        // Show verification modal
+        function showVerificationModal() {
+            verificationModal.classList.add('active');
+            phoneInput.value = '';
+            phoneAlert.classList.add('hidden');
+            phoneStep.classList.remove('hidden');
+            otpStep.classList.add('hidden');
             phoneInput.focus();
         }
-    });
-    
-    backBtn.addEventListener('click', goBackToSetup);
-    
-    phoneInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            startChatBtn.click();
-        }
-    });
-    
-    sendBtn.addEventListener('click', sendMessage);
-    
-    messageInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            if (messageInput.value.trim()) {
-                sendMessage();
+            
+        // Send OTP
+        async function sendOtp() {
+            const phone = phoneInput.value.trim();
+            
+            if (!validatePhoneNumber(phone)) {
+                phoneAlert.className = 'alert error';
+                phoneAlert.textContent = 'Please enter a valid phone number (10 digits + optional A/U)';
+                phoneAlert.classList.remove('hidden');
+                return;
+            }
+            
+            sendOtpBtn.innerHTML = '<div class="spinner"></div>';
+            sendOtpBtn.disabled = true;
+            phoneAlert.classList.add('hidden');
+            
+            try {
+                const response = await fetch('/auth/send-otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        phoneNumber: phone
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Store phone number for OTP verification
+                    otpPhoneNumber.textContent = phone;
+                    
+                    // Show OTP step
+                    phoneStep.classList.add('hidden');
+                    otpStep.classList.remove('hidden');
+                    
+                    // Show debug info if available
+                    if (data.debugOtp) {
+                        phoneAlert.className = 'alert success';
+                        phoneAlert.innerHTML = `<strong>Development Mode:</strong> OTP is: <strong>${data.debugOtp}</strong>`;
+                        phoneAlert.classList.remove('hidden');
+                        console.log(`📱 DEVELOPMENT OTP for ${phone}: ${data.debugOtp}`);
+                    }
+                    
+                    // Start OTP timer
+                    startOtpTimer();
+                    
+                    // Focus first OTP input
+                    otp1.focus();
+                } else {
+                    phoneAlert.className = 'alert error';
+                    phoneAlert.textContent = data.error || 'Failed to send OTP';
+                    phoneAlert.classList.remove('hidden');
+                    sendOtpBtn.disabled = false;
+                    sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Verification Code';
+                }
+            } catch (error) {
+                phoneAlert.className = 'alert error';
+                phoneAlert.textContent = 'Network error. Please try again.';
+                phoneAlert.classList.remove('hidden');
+                sendOtpBtn.disabled = false;
+                sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Verification Code';
+                console.error('Error sending OTP:', error);
             }
         }
-    });
-    
-    messageInput.addEventListener('input', function() {
-        autoResizeTextarea(this);
-        sendBtn.disabled = !this.value.trim();
-    });
-    
-    // Emoji button click
-    emojiBtn.addEventListener('click', () => {
-        messageInput.focus();
-        // Simple emoji picker
-        const emojis = ['😊', '👍', '❤️', '😎', '🔥', '💯', '✨', '🚀', '🛒', '💬', '📱', '💻'];
-        const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-        
-        const start = messageInput.selectionStart;
-        const end = messageInput.selectionEnd;
-        const text = messageInput.value;
-        
-        messageInput.value = text.substring(0, start) + randomEmoji + text.substring(end);
-        messageInput.selectionStart = messageInput.selectionEnd = start + randomEmoji.length;
-        
-        autoResizeTextarea(messageInput);
-        sendBtn.disabled = !messageInput.value.trim();
-        
-        // Trigger input event for proper resize
-        const event = new Event('input', { bubbles: true });
-        messageInput.dispatchEvent(event);
-    });
-    
-    // Attach button click
-    attachBtn.addEventListener('click', () => {
-        // Simple file picker simulation
-        messageInput.focus();
-        const now = new Date();
-        const isoTime = now.toISOString();
-        const displayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        const messageElement = displayMessage('[File attachment would open here]', 'bot', displayTime, isoTime);
-        
-        // Insert at correct position based on timestamp
-        insertMessageInOrder(messageElement);
-    });
-    
-    // Auto-focus phone input on load
-    window.addEventListener('load', () => {
-        phoneInput.focus();
-        
-        // Handle mobile keyboard
-        if ('visualViewport' in window) {
-            const visualViewport = window.visualViewport;
+                  
+        // Verify OTP
+        async function verifyOtp() {
+            const otp = otp1.value + otp2.value + otp3.value + otp4.value;
+            const phone = otpPhoneNumber.textContent;
             
-            visualViewport.addEventListener('resize', () => {
-                if (isConnected) {
+            if (otp.length !== 4 || !/^\d{4}$/.test(otp)) {
+                otpAlert.className = 'alert error';
+                otpAlert.textContent = 'Please enter a valid 4-digit OTP';
+                otpAlert.classList.remove('hidden');
+                return;
+            }
+            
+            verifyOtpBtn.innerHTML = '<div class="spinner"></div>';
+            verifyOtpBtn.disabled = true;
+            otpAlert.classList.add('hidden');
+            
+            try {
+                const response = await fetch('/auth/verify-otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        phoneNumber: phone,
+                        otp: otp
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    otpAlert.className = 'alert success';
+                    otpAlert.textContent = '✓ Phone verified successfully!';
+                    otpAlert.classList.remove('hidden');
+                    
+                    // Update state
+                    isAuthenticated = true;
+                    isAdmin = data.isAdmin || false;
+                    const oldSessionId = currentSessionId;
+                    currentSessionId = phone; // Switch to phone number as session ID
+                    
+                    // Store in localStorage for auto-login
+                    localStorage.setItem('zulu_verified_phone', phone);
+                    localStorage.removeItem('zulu_session_id');
+                    
+                    // Update UI
+                    updateUI();
+                    
+                    // Show success message for 2 seconds then continue chat
                     setTimeout(() => {
-                        chatMessages.scrollTop = chatMessages.scrollHeight;
-                    }, 150);
+                        verificationModal.classList.remove('active');
+                        displayMessage('✅ Your phone has been verified! You now have full access to all features.', 'assistant');
+                        
+                        // Enable chat input
+                        messageInput.disabled = false;
+                        sendBtn.disabled = false;
+                        messageInput.focus();
+                        
+                        console.log(`✅ User ${phone} verified successfully, full access granted`);
+                    }, 2000);
+                    
+                } else {
+                    otpAlert.className = 'alert error';
+                    otpAlert.textContent = data.error || 'Invalid OTP. Please check and try again.';
+                    otpAlert.classList.remove('hidden');
+                    verifyOtpBtn.disabled = false;
+                    verifyOtpBtn.innerHTML = '<i class="fas fa-check"></i> Verify Code';
+                    
+                    // Clear OTP inputs on error
+                    clearOtpInputs();
+                    otp1.focus();
                 }
+            } catch (error) {
+                otpAlert.className = 'alert error';
+                otpAlert.textContent = 'Network error. Please try again.';
+                otpAlert.classList.remove('hidden');
+                verifyOtpBtn.disabled = false;
+                verifyOtpBtn.innerHTML = '<i class="fas fa-check"></i> Verify Code';
+                console.error('Error verifying OTP:', error);
+            }
+        }
+            
+        // Resend OTP
+        async function resendOtp() {
+            resendOtpBtn.innerHTML = '<div class="spinner"></div>';
+            resendOtpBtn.disabled = true;
+            
+            try {
+                const phone = otpPhoneNumber.textContent;
+                const response = await fetch('/auth/send-otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        phoneNumber: phone
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Restart timer
+                    clearInterval(otpTimer);
+                    startOtpTimer();
+                    
+                    // Clear previous OTP inputs
+                    clearOtpInputs();
+                    otp1.focus();
+                    
+                    // Show debug info if available
+                    if (data.debugOtp) {
+                        otpAlert.className = 'alert success';
+                        otpAlert.innerHTML = `<strong>Development Mode:</strong> New OTP is: <strong>${data.debugOtp}</strong>`;
+                        otpAlert.classList.remove('hidden');
+                        console.log(`📱 New OTP for ${phone}: ${data.debugOtp}`);
+                    }
+                    
+                    setTimeout(() => {
+                        otpAlert.classList.add('hidden');
+                    }, 3000);
+                    
+                } else {
+                    otpAlert.className = 'alert error';
+                    otpAlert.textContent = data.error || 'Failed to resend OTP';
+                    otpAlert.classList.remove('hidden');
+                }
+            } catch (error) {
+                otpAlert.className = 'alert error';
+                otpAlert.textContent = 'Network error. Please try again.';
+                otpAlert.classList.remove('hidden');
+                console.error('Error resending OTP:', error);
+            } finally {
+                resendOtpBtn.disabled = false;
+                resendOtpBtn.innerHTML = 'Resend Code';
+            }
+        }
+            
+        // Clear OTP inputs
+        function clearOtpInputs() {
+            otp1.value = '';
+            otp2.value = '';
+            otp3.value = '';
+            otp4.value = '';
+        }
+            
+        // Handle OTP input navigation
+        function handleOtpInput(e, current, next, prev) {
+            e.preventDefault();
+            
+            if (e.key === 'Backspace' && !current.value && prev) {
+                prev.focus();
+            } else if (e.key === 'Backspace' && current.value) {
+                current.value = '';
+            } else if (e.key.length === 1 && /^\d$/.test(e.key)) {
+                current.value = e.key;
+                if (next) {
+                    setTimeout(() => next.focus(), 10);
+                }
+            } else if (e.key === 'ArrowRight' && next) {
+                next.focus();
+            } else if (e.key === 'ArrowLeft' && prev) {
+                prev.focus();
+            }
+        }
+            
+        // Load welcome message
+        function loadWelcomeMessage() {
+            const welcomeText = `Welcome to Zulu Club${isAuthenticated ? ' (Verified)' : ''}!
+
+${isAuthenticated ? '✅ You have **full access** to all features!' : '🎉 You have **unlimited access** to company info and product browsing!'}
+
+I can help you with:
+• Company details and information
+• Product browsing and shopping recommendations
+${isAuthenticated ? '• Seller information and partnerships\n• Investor queries\n• Connecting with human agents\n• Voice AI features' : '• (Verify to unlock: seller info, investor queries, agent support)'}
+
+${isAuthenticated ? '' : 'Verify your phone to unlock all features including seller, investors, and agent support.'}
+
+Try asking: "Tell me about Zulu Club" or "Show me home decor items"`;
+
+            displayMessage(welcomeText, 'assistant');
+        }
+            
+        // Send message function
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            // Display user message
+            displayMessage(message, 'user');
+            
+            // Clear input
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            sendBtn.disabled = true;
+            
+            // Show typing indicator
+            showTyping();
+            
+            try {
+                const response = await fetch('/chat/message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sessionId: currentSessionId,
+                        message: message
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // Hide typing indicator
+                hideTyping();
+                
+                if (data.success) {
+                    displayMessage(data.response, 'assistant');
+                } else {
+                    displayMessage('Sorry, there was an error. Please try again.', 'assistant');
+                }
+            } catch (error) {
+                hideTyping();
+                displayMessage('Network error. Please check your connection.', 'assistant');
+                console.error('Error sending message:', error);
+            }
+            
+            sendBtn.disabled = !messageInput.value.trim();
+            messageInput.focus();
+        }
+            
+        // Function to detect and convert URLs to clickable links
+        function convertLinksToClickable(text) {
+            const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(app\.zulu\.club\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|[A-Za-z0-9.-]+\.[A-Za-z]{2,}\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]))/ig;
+            
+            return text.replace(urlRegex, function(url) {
+                let finalUrl = url;
+                if (!url.match(/^(https?|ftp|file):\/\//i)) {
+                    if (url.startsWith('www.') || url.includes('app.zulu.club') || url.includes('.club/')) {
+                        finalUrl = 'https://' + url;
+                    }
+                }
+                
+                return `<a href="${finalUrl}" target="_blank" rel="noopener noreferrer" style="color: #0084ff; text-decoration: underline;">${url}</a>`;
             });
         }
-        
-        // Handle iOS input scroll
-        let focusedElement;
-        let initialViewportHeight = window.innerHeight;
-        
-        messageInput.addEventListener('focus', () => {
-            focusedElement = messageInput;
+            
+        // Display a message in the chat
+        function displayMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            const now = new Date();
+            const messageDisplayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            const processedText = convertLinksToClickable(text);
+            const formattedText = processedText.replace(/\n/g, '<br>');
+            contentDiv.innerHTML = `
+                ${formattedText}
+                <span class="message-time">${messageDisplayTime}</span>
+            `;
+            
+            messageDiv.appendChild(contentDiv);
+            
+            // Add click handlers for links
             setTimeout(() => {
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }, 300);
-        });
-        
-        messageInput.addEventListener('blur', () => {
-            focusedElement = null;
-        });
-    });
-    
-    // Handle window resize
-    window.addEventListener('resize', () => {
-        if (isConnected) {
-            setTimeout(() => {
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+                const links = contentDiv.querySelectorAll('a');
+                links.forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                    });
+                    
+                    link.addEventListener('touchstart', (e) => {
+                        e.stopPropagation();
+                    });
+                });
             }, 100);
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            return messageDiv;
         }
-    });
-    
-    // Handle touch events for better mobile UX
-    document.addEventListener('touchstart', function(e) {
-        // Prevent double-tap zoom
-        if (e.touches.length > 1) {
-            e.preventDefault();
+            
+        // Show typing indicator
+        function showTyping() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message assistant';
+            typingDiv.id = 'typingIndicator';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content typing-indicator';
+            contentDiv.innerHTML = `
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            `;
+            
+            typingDiv.appendChild(contentDiv);
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
-    }, { passive: false });
-    
-    // Prevent zoom on mobile
-    document.addEventListener('gesturestart', function(e) {
-        e.preventDefault();
-    });
-    
-    // Handle back button on mobile (for Cordova/PhoneGap)
-    document.addEventListener('backbutton', goBackToSetup, false);
-    
-    // Improve mobile input handling
-    messageInput.addEventListener('focus', function() {
-        setTimeout(() => {
-            this.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 300);
-    });
-    
-    // Handle paste events to preserve formatting
-    messageInput.addEventListener('paste', function(e) {
-        e.preventDefault();
-        const text = (e.clipboardData || window.clipboardData).getData('text');
-        document.execCommand('insertText', false, text);
-    });
-    
-    // Handle scroll for infinite loading
-    chatMessages.addEventListener('scroll', function() {
-        if (this.scrollTop === 0 && hasMoreHistory && !isLoadingHistory) {
-            loadMoreHistory();
+            
+        // Hide typing indicator
+        function hideTyping() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
         }
-    });
-</script>
+            
+        // Auto-resize textarea
+        function autoResizeTextarea(textarea) {
+            textarea.style.height = 'auto';
+            const newHeight = Math.min(textarea.scrollHeight, 100);
+            textarea.style.height = newHeight + 'px';
+        }
+            
+        // Start OTP timer
+        function startOtpTimer() {
+            countdown = 60;
+            countdownSpan.textContent = countdown;
+            timer.classList.remove('hidden');
+            resendOtpBtn.disabled = true;
+            
+            if (otpTimer) {
+                clearInterval(otpTimer);
+            }
+            
+            otpTimer = setInterval(() => {
+                countdown--;
+                countdownSpan.textContent = countdown;
+                
+                if (countdown <= 0) {
+                    clearInterval(otpTimer);
+                    timer.classList.add('hidden');
+                    resendOtpBtn.disabled = false;
+                }
+            }, 1000);
+        }
+
+        // Check authentication status
+        async function checkAuthentication() {
+            // Check if there's a stored phone number in localStorage
+            const storedPhone = localStorage.getItem('zulu_verified_phone');
+            if (storedPhone) {
+                try {
+                    const response = await fetch('/auth/check-status', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            phoneNumber: storedPhone
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.verified) {
+                        // Auto-login verified user
+                        currentSessionId = storedPhone;
+                        isAuthenticated = true;
+                        isAdmin = data.isAdmin || false;
+                        
+                        // Update UI
+                        updateUI();
+                        loadWelcomeMessage();
+                        messageInput.disabled = false;
+                        messageInput.focus();
+                        
+                        // Load chat history
+                        await loadChatHistory();
+                        return;
+                    } else {
+                        localStorage.removeItem('zulu_verified_phone');
+                    }
+                } catch (error) {
+                    console.error('Error checking verification:', error);
+                }
+            }
+            
+            // Check if there's a session in localStorage
+            const sessionId = localStorage.getItem('zulu_session_id');
+            
+            if (sessionId) {
+                try {
+                    const response = await fetch(`/chat/history/${sessionId}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        currentSessionId = sessionId;
+                        isAuthenticated = data.isAuthenticated || false;
+                        
+                        // Update UI
+                        updateUI();
+                        loadWelcomeMessage();
+                        messageInput.disabled = false;
+                        messageInput.focus();
+                        
+                        // Load existing chat history
+                        await loadChatHistory();
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Error checking session:', error);
+                }
+            }
+            
+            // If no existing session, create a new one
+            await createSession();
+        }
+         
+        // Load chat history
+        async function loadChatHistory() {
+            try {
+                const response = await fetch(`/chat/history/${currentSessionId}`);
+                const data = await response.json();
+                
+                if (data.success && data.history && data.history.length > 0) {
+                    // Clear current messages
+                    chatMessages.innerHTML = '';
+                    
+                    // Display all messages from history
+                    data.history.forEach(msg => {
+                        if (msg.role === 'user' || msg.role === 'assistant') {
+                            displayMessage(msg.content, msg.role === 'user' ? 'user' : 'assistant');
+                        }
+                    });
+                } else {
+                    // If no history, show welcome message
+                    loadWelcomeMessage();
+                }
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+                loadWelcomeMessage();
+            }
+        }
+
+        // Logout function
+        async function logout() {
+            try {
+                if (isAuthenticated) {
+                    await fetch('/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            phoneNumber: currentSessionId
+                        })
+                    });
+                }
+                
+                // Clear localStorage
+                localStorage.removeItem('zulu_session_id');
+                localStorage.removeItem('zulu_verified_phone');
+                
+                // Reset state
+                currentSessionId = '';
+                isAuthenticated = false;
+                isAdmin = false;
+                
+                // Clear chat messages
+                chatMessages.innerHTML = '';
+                
+                // Hide modals
+                verificationModal.classList.remove('active');
+                instructionsPanel.classList.remove('active');
+                
+                // Reset verification modal
+                phoneStep.classList.remove('hidden');
+                otpStep.classList.add('hidden');
+                phoneInput.value = '';
+                clearOtpInputs();
+                phoneAlert.classList.add('hidden');
+                otpAlert.classList.add('hidden');
+                
+                if (otpTimer) {
+                    clearInterval(otpTimer);
+                    timer.classList.add('hidden');
+                }
+                
+                // Create new session
+                await checkAuthentication();
+                
+            } catch (error) {
+                console.error('Error logging out:', error);
+            }
+        }        
+            
+        // Event Listeners
+        phoneInput.addEventListener('input', function(e) {
+            let formatted = formatPhoneInput(this.value);
+            this.value = formatted;
+            
+            if (validatePhoneNumber(formatted)) {
+                this.classList.remove('invalid');
+                this.classList.add('valid');
+                phoneAlert.classList.add('hidden');
+                sendOtpBtn.disabled = false;
+            } else {
+                this.classList.remove('valid');
+                this.classList.add('invalid');
+                phoneAlert.classList.remove('hidden');
+                
+                if (formatted.length === 11) {
+                    const suffix = formatted.slice(-1).toUpperCase();
+                    if (!['A', 'U'].includes(suffix)) {
+                        phoneAlert.textContent = 'Invalid suffix. Only A (Admin) or U (User) allowed.';
+                    } else if (formatted.slice(0, 10).length !== 10 || !/^\d{10}$/.test(formatted.slice(0, 10))) {
+                        phoneAlert.textContent = 'First 10 characters must be digits.';
+                    }
+                } else if (formatted.length > 0 && formatted.length < 10) {
+                    phoneAlert.textContent = 'Phone number must be 10 digits.';
+                } else if (formatted.length > 11) {
+                    phoneAlert.textContent = 'Maximum 11 characters (10 digits + A/U).';
+                } else {
+                    phoneAlert.textContent = 'Please enter a valid 10-digit number with optional A/U suffix';
+                }
+                
+                sendOtpBtn.disabled = true;
+            }
+        });
+            
+        sendOtpBtn.addEventListener('click', sendOtp);
+        verifyOtpBtn.addEventListener('click', verifyOtp);
+        resendOtpBtn.addEventListener('click', resendOtp);
+        sendBtn.addEventListener('click', sendMessage);
+            
+        // OTP input navigation
+        otp1.addEventListener('keydown', (e) => handleOtpInput(e, otp1, otp2, null));
+        otp2.addEventListener('keydown', (e) => handleOtpInput(e, otp2, otp3, otp1));
+        otp3.addEventListener('keydown', (e) => handleOtpInput(e, otp3, otp4, otp2));
+        otp4.addEventListener('keydown', (e) => handleOtpInput(e, otp4, null, otp3));
+            
+        // Enter key in OTP inputs
+        [otp1, otp2, otp3, otp4].forEach(input => {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    verifyOtp();
+                }
+            });
+        });
+            
+        // Enter key in phone input
+        phoneInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                sendOtp();
+            }
+        });
+            
+        // Enter key in message input (with shift for new line)
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+            
+        // Auto-resize message input
+        messageInput.addEventListener('input', function() {
+            autoResizeTextarea(this);
+            sendBtn.disabled = !this.value.trim();
+        });
+            
+        // Info button
+        infoBtn.addEventListener('click', () => {
+            instructionsPanel.classList.add('active');
+        });
+        
+        // Close buttons
+        closeVerifyModal.addEventListener('click', () => {
+            verificationModal.classList.remove('active');
+            phoneStep.classList.remove('hidden');
+            otpStep.classList.add('hidden');
+            phoneInput.value = '';
+            clearOtpInputs();
+            phoneAlert.classList.add('hidden');
+            otpAlert.classList.add('hidden');
+            
+            if (otpTimer) {
+                clearInterval(otpTimer);
+                timer.classList.add('hidden');
+            }
+        });
+        
+        closeInstructionsBtn.addEventListener('click', () => {
+            instructionsPanel.classList.remove('active');
+        });
+        
+        // Verify button
+        verifyBtn.addEventListener('click', () => {
+            showVerificationModal();
+        });
+        
+        // Logout button
+        logoutBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to logout?')) {
+                logout();
+            }
+        });
+        
+        // Close modals on outside click
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-overlay')) {
+                e.target.classList.remove('active');
+                
+                if (e.target.id === 'verificationModal') {
+                    phoneStep.classList.remove('hidden');
+                    otpStep.classList.add('hidden');
+                    phoneInput.value = '';
+                    clearOtpInputs();
+                    phoneAlert.classList.add('hidden');
+                    otpAlert.classList.add('hidden');
+                    
+                    if (otpTimer) {
+                        clearInterval(otpTimer);
+                        timer.classList.add('hidden');
+                    }
+                }
+            }
+        });
+        
+        // Close modals on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                verificationModal.classList.remove('active');
+                instructionsPanel.classList.remove('active');
+            }
+        });
+            
+        // Initialize
+        window.addEventListener('load', () => {
+            checkAuthentication();
+        });
+    </script>
 </body>
 </html>
