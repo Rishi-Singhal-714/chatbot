@@ -1065,6 +1065,19 @@ function showVerificationModal() {
     phoneAlert.classList.add('hidden');
     phoneStep.classList.remove('hidden');
     otpStep.classList.add('hidden');
+    
+    // Reset OTP step state
+    clearOtpInputs();
+    otpAlert.classList.add('hidden');
+    
+    // Reset timer and resend button
+    if (otpTimer) {
+        clearInterval(otpTimer);
+    }
+    timer.classList.add('hidden');
+    resendOtpBtn.disabled = false;
+    resendOtpBtn.innerHTML = 'Resend Code';
+    
     phoneInput.focus();
 }
 
@@ -1259,18 +1272,23 @@ async function resendOtp() {
             }, 3000);
             
         } else {
+            // Only enable button on error
+            resendOtpBtn.disabled = false;
+            resendOtpBtn.innerHTML = 'Resend Code';
+            
             otpAlert.className = 'alert error';
             otpAlert.textContent = data.error || 'Failed to resend OTP';
             otpAlert.classList.remove('hidden');
         }
     } catch (error) {
+        // Only enable button on error
+        resendOtpBtn.disabled = false;
+        resendOtpBtn.innerHTML = 'Resend Code';
+        
         otpAlert.className = 'alert error';
         otpAlert.textContent = 'Network error. Please try again.';
         otpAlert.classList.remove('hidden');
         console.error('Error resending OTP:', error);
-    } finally {
-        resendOtpBtn.disabled = false;
-        resendOtpBtn.innerHTML = 'Resend Code';
     }
 }
 
@@ -1511,7 +1529,10 @@ function startOtpTimer() {
     countdown = 60;
     countdownSpan.textContent = countdown;
     timer.classList.remove('hidden');
+    
+    // Ensure button is disabled when timer starts
     resendOtpBtn.disabled = true;
+    resendOtpBtn.innerHTML = 'Resend Code'; // Reset text from spinner
     
     if (otpTimer) {
         clearInterval(otpTimer);
@@ -1528,7 +1549,7 @@ function startOtpTimer() {
         }
     }, 1000);
 }
-
+        
 // Update the checkAuthentication function to handle session errors:
 async function checkAuthentication() {
     console.log('Checking authentication...');
