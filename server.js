@@ -386,17 +386,21 @@ function parsePhoneNumberWithSuffix(phoneNumberWithSuffix) {
 
 // Middleware to check if user is authenticated
 const checkAuthentication = (req, res, next) => {
-  const sessionId = req.body.sessionId || req.body.phoneNumber;
+  // First check body for sessionId or phoneNumber
+  const sessionIdFromBody = req.body.sessionId || req.body.phoneNumber;
   
-  console.log(`🔍 checkAuthentication: sessionId=${sessionId}, body=`, req.body);
+  console.log(`🔍 checkAuthentication: sessionIdFromBody=${sessionIdFromBody}, body=`, req.body);
   
-  if (!sessionId) {
+  if (!sessionIdFromBody) {
     return res.status(400).json({
       success: false,
       error: 'Session ID or phone number is required'
     });
   }
 
+  // Clean and validate the sessionId
+  const sessionId = String(sessionIdFromBody).trim();
+  
   // If session ID is a phone number (verified user)
   if (sessionId.match(/^\d{10}[AU]?$/)) {
     const user = verifiedUsers[sessionId];
@@ -423,6 +427,7 @@ const checkAuthentication = (req, res, next) => {
       req.user = user;
       req.phoneNumber = sessionId;
       req.isAuthenticated = true;
+      req.sessionId = sessionId; // Make sure to set sessionId
       next();
     }
   } 
@@ -1993,6 +1998,14 @@ For more details, please contact our support team.`;
 // Modified handleMessage function
 async function handleMessage(sessionId, userMessage, isAuthenticated = false) {
   try {
+    // Add validation for sessionId
+    if (!sessionId) {
+      console.error('❌ handleMessage called with undefined sessionId');
+      throw new Error('Session ID is required');
+    }
+    
+    console.log(`🔵 handleMessage called with sessionId: ${sessionId}, isAuthenticated: ${isAuthenticated}`);
+    
     // 1) Save incoming user message to session
     appendToSessionHistory(sessionId, 'user', userMessage);
     
@@ -2195,9 +2208,20 @@ app.get('/chat', (req, res) => {
 // API endpoint for sending messages
 app.post('/chat/message', checkAuthentication, async (req, res) => {
   try {
-    const sessionId = req.sessionId;
+    // Use the sessionId from the middleware
+    const sessionId = req.sessionId; // This should be set by checkAuthentication middleware
     const isAuthenticated = req.isAuthenticated;
     const { message } = req.body;
+    
+    console.log(`💬 Chat message from ${sessionId} (Authenticated: ${isAuthenticated}): ${message}`);
+    
+    if (!sessionId) {
+      console.error('❌ sessionId is undefined in /chat/message endpoint');
+      return res.status(400).json({
+        success: false,
+        error: 'Session ID is required'
+      });
+    }
     
     if (!message) {
       return res.status(400).json({
@@ -2206,10 +2230,7 @@ app.post('/chat/message', checkAuthentication, async (req, res) => {
       });
     }
     
-    console.log(`💬 Chat message from ${sessionId} (Authenticated: ${isAuthenticated}): ${message}`);
-    
-    // Process the message using your existing handleMessage function
-    // Make sure handleMessage is defined
+    // Process the message
     const response = await handleMessage(sessionId, message, isAuthenticated);
     
     // Return the response with authentication info
