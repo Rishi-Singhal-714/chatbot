@@ -8,8 +8,6 @@ const { google } = require('googleapis');
 const app = express();
 const crypto = require('crypto');
 
-// Device ID storage (for trial tracking)
-let deviceTrials = {};
 // Load admin users (you'll need to create this file)
 let adminUsers = [];
 try {
@@ -31,9 +29,6 @@ const EMPLOYEE_NUMBERS = [
 // OTP Store - store OTPs temporarily
 const otpStore = new Map();
 
-// Trial messages store - track free trial usage per session
-const trialStore = new Map(); // sessionId -> { count: number, messages: [] }
-
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -47,7 +42,7 @@ const openai = new OpenAI({
 // -------------------------
 // PERSISTED DATA: conversations, csvs
 // -------------------------
-let conversations = {}; // sessionId -> { history: [{role, content, ts}], lastActive, isTrial: boolean, trialMessages: [] }
+let conversations = {}; // sessionId -> { history: [{role, content, ts}], lastActive, isAuthenticated: boolean }
 let verifiedUsers = {}; // phoneNumber -> { verified: boolean, isAdmin: boolean, verifiedAt: timestamp }
 let galleriesData = [];
 let sellersData = []; // sellers CSV data
@@ -389,15 +384,9 @@ function parsePhoneNumberWithSuffix(phoneNumberWithSuffix) {
   };
 }
 
-// In checkTrialOrVerification middleware, get device ID from headers or body
-const checkTrialOrVerification = (req, res, next) => {
+// Middleware to check if user is authenticated
+const checkAuthentication = (req, res, next) => {
   const sessionId = req.body.sessionId || req.body.phoneNumber;
-  
-  // Get device ID from headers (sent by client) or body
-  const deviceId = req.headers['x-device-id'] || req.body.deviceId || generateDeviceFingerprint(req);
-  
-  // Store device ID in request for later use
-  req.deviceId = deviceId;
   
   if (!sessionId) {
     return res.status(400).json({
@@ -411,20 +400,20 @@ const checkTrialOrVerification = (req, res, next) => {
     const user = verifiedUsers[sessionId];
     
     if (!user || !user.verified) {
-      return res.status(401).json({
-        success: false,
-        error: 'User not verified. Please complete OTP verification first.'
-      });
+      // User is not verified, but they can still access basic features
+      req.isAuthenticated = false;
+      req.sessionId = sessionId;
+      next();
+    } else {
+      req.user = user;
+      req.phoneNumber = sessionId;
+      req.isAuthenticated = true;
+      next();
     }
-
-    req.user = user;
-    req.phoneNumber = sessionId;
-    req.isTrial = false;
-    next();
   } 
-  // Trial session (temporary ID)
+  // Temporary session ID (unauthenticated user)
   else {
-    const session = trialStore.get(sessionId) || conversations[sessionId];
+    const session = conversations[sessionId];
     
     if (!session) {
       return res.status(400).json({
@@ -433,32 +422,11 @@ const checkTrialOrVerification = (req, res, next) => {
       });
     }
     
-    // Check if this device has already used its trial
-    if (deviceTrials[deviceId] && deviceTrials[deviceId].count >= 10) {
-      return res.status(403).json({
-        success: false,
-        error: 'This device has already used its free trial. Please verify your phone number to continue.',
-        trialEnded: true,
-        deviceLimitReached: true
-      });
-    }
-    
-    // Check if trial messages exceeded for this session
-    if (session.trialCount >= 10) {
-      return res.status(403).json({
-        success: false,
-        error: 'Free trial limit reached. Please verify your phone number to continue.',
-        trialEnded: true
-      });
-    }
-    
     req.sessionId = sessionId;
-    req.isTrial = true;
-    req.trialCount = session.trialCount || 0;
+    req.isAuthenticated = session.isAuthenticated || false;
     next();
   }
 };
-
 
 // -------------------------
 // Google Sheets config
@@ -905,31 +873,6 @@ async function createAgentTicket(mobileNumber, conversationHistory = []) {
 // [Keep all the matching helper functions exactly as they are...]
 // [findKeywordMatchesInCat1, matchSellersByStoreName, matchSellersByCategoryIds, etc.]
 // [These functions should remain exactly the same as in your original code]
-
-// Function to generate device fingerprint that matches client-side
-function generateDeviceFingerprint(req) {
-  const userAgent = req.headers['user-agent'] || '';
-  const language = req.headers['accept-language'] || '';
-  const platform = req.headers['sec-ch-ua-platform'] || '';
-  const hardwareConcurrency = req.headers['x-hardware-concurrency'] || '';
-  const deviceMemory = req.headers['x-device-memory'] || '';
-  const screen = req.headers['x-screen'] || '';
-  const timezone = req.headers['x-timezone'] || '';
-  
-  // Build fingerprint string similar to client
-  const fingerprint = `${userAgent}${language}${platform}${hardwareConcurrency}${deviceMemory}${screen}${timezone}`;
-  
-  // Generate hash
-  let hash = 0;
-  for (let i = 0; i < fingerprint.length; i++) {
-    const char = fingerprint.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  
-  return 'device-' + Math.abs(hash).toString(16);
-}
-
 
 function normalizeToken(t) {
   if (!t) return '';
@@ -1756,8 +1699,7 @@ const MAX_HISTORY_MESSAGES = 2000;
 
 function nowMs() { return Date.now(); }
 
-// Modified createOrTouchSession to use device ID
-function createOrTouchSession(sessionId, isTrial = false, deviceId = null) {
+function createOrTouchSession(sessionId, isAuthenticated = false) {
   if (!conversations[sessionId]) {
     conversations[sessionId] = {
       history: [],
@@ -1765,37 +1707,19 @@ function createOrTouchSession(sessionId, isTrial = false, deviceId = null) {
       lastDetectedIntent: null,
       lastDetectedIntentTs: 0,
       lastMedia: null,
-      isTrial: isTrial,
-      deviceId: deviceId, // Store device ID
-      trialMessages: [],
-      trialCount: 0
+      isAuthenticated: isAuthenticated
     };
-    
-    // Also store in trial store for quick lookup
-    if (isTrial) {
-      trialStore.set(sessionId, conversations[sessionId]);
-    }
   } else {
     conversations[sessionId].lastActive = nowMs();
-    if (isTrial && !trialStore.has(sessionId)) {
-      trialStore.set(sessionId, conversations[sessionId]);
-    }
   }
   
   return conversations[sessionId];
 }
 
 function appendToSessionHistory(sessionId, role, content) {
-  createOrTouchSession(sessionId, sessionId.startsWith('temp-'));
+  createOrTouchSession(sessionId);
   const entry = { role, content, ts: nowMs() };
   conversations[sessionId].history.push(entry);
-  
-  // Track trial messages
-  if (sessionId.startsWith('temp-')) {
-    conversations[sessionId].trialMessages.push(entry);
-    conversations[sessionId].trialCount = conversations[sessionId].history.filter(m => m.role === 'user').length;
-    trialStore.set(sessionId, conversations[sessionId]);
-  }
   
   if (conversations[sessionId].history.length > MAX_HISTORY_MESSAGES) {
     conversations[sessionId].history = conversations[sessionId].history.slice(-MAX_HISTORY_MESSAGES);
@@ -1817,7 +1741,6 @@ function purgeExpiredSessions() {
   for (const id of Object.keys(conversations)) {
     if (!conversations[id].lastActive || conversations[id].lastActive < cutoff) {
       delete conversations[id];
-      trialStore.delete(id);
     }
   }
   
@@ -1842,19 +1765,18 @@ function recentHistoryContainsProductSignal(conversationHistory = []) {
   return false;
 }
 
-async function getChatGPTResponse(sessionId, userMessage, companyInfo = ZULU_CLUB_INFO) {
+async function getChatGPTResponse(sessionId, userMessage, isAuthenticated = false) {
   if (!process.env.OPENAI_API_KEY) {
     return "Hello! I'm here to help you with Zulu Club. Currently, I'm experiencing technical difficulties. Please visit zulu.club for assistance.";
   }
   
   try {
     // ensure session exists
-    const isTrial = sessionId.startsWith('temp-');
-    createOrTouchSession(sessionId, isTrial);
+    createOrTouchSession(sessionId, isAuthenticated);
     const session = conversations[sessionId];
     
-    // Check employee mode with suffix logic (only for verified users)
-    if (!isTrial) {
+    // Check employee mode with suffix logic (only for authenticated users)
+    if (isAuthenticated && sessionId.match(/^\d{10}[AU]?$/)) {
       const basePhone = sessionId.replace(/[A-Za-z]$/, '');
       const isEmployee = EMPLOYEE_NUMBERS.includes(basePhone);
       const suffix = /[A-Za-z]$/.test(sessionId) ? sessionId.slice(-1).toUpperCase() : '';
@@ -1903,13 +1825,18 @@ async function getChatGPTResponse(sessionId, userMessage, companyInfo = ZULU_CLU
     
     console.log('🧠 GPT classification:', { intent, confidence, reason: classification.reason });
     
-    // 2) Set session intent
+    // 2) Check if unauthenticated user is trying to access restricted intents
+    if (!isAuthenticated && !['company', 'product'].includes(intent)) {
+      return `To use this feature, please verify your phone number. Click the 'Verify' button to get started.`;
+    }
+    
+    // 3) Set session intent
     if (intent === 'product') {
       session.lastDetectedIntent = 'product';
       session.lastDetectedIntentTs = nowMs();
     }
     
-    // 3) Handle agent intent
+    // 4) Handle agent intent (only for authenticated users)
     if (intent === 'agent') {
       session.lastDetectedIntent = 'agent';
       session.lastDetectedIntentTs = nowMs();
@@ -1925,8 +1852,8 @@ async function getChatGPTResponse(sessionId, userMessage, companyInfo = ZULU_CLU
       }
       
       try {
-        // Only log to Google Sheets for verified users
-        if (!isTrial) {
+        // Only log to Google Sheets for authenticated users
+        if (isAuthenticated) {
           await appendUnderColumn(sessionId, `AGENT_TICKET_CREATED: ${ticketId}`);
         }
       } catch (e) {
@@ -1951,7 +1878,7 @@ For every gift above ₹1,000:
 For more details, please contact our support team.`;
     }
     
-    // 4) Handle other intents
+    // 5) Handle other intents (only for authenticated users)
     if (intent === 'seller') {
       session.lastDetectedIntent = 'seller';
       session.lastDetectedIntentTs = nowMs();
@@ -2029,14 +1956,14 @@ For more details, please contact our support team.`;
   }
 }
 
-// Modified handleMessage function - track device usage
-async function handleMessage(sessionId, userMessage, isTrial = false, deviceId = null) {
+// Modified handleMessage function
+async function handleMessage(sessionId, userMessage, isAuthenticated = false) {
   try {
     // 1) Save incoming user message to session
     appendToSessionHistory(sessionId, 'user', userMessage);
     
-    // 2) Log user message to Google Sheets (only for verified users)
-    if (!isTrial) {
+    // 2) Log user message to Google Sheets (only for authenticated users)
+    if (isAuthenticated && sessionId.match(/^\d{10}[AU]?$/)) {
       try {
         await appendUnderColumn(sessionId, `USER: ${userMessage}`);
       } catch (e) {
@@ -2044,34 +1971,18 @@ async function handleMessage(sessionId, userMessage, isTrial = false, deviceId =
       }
     }
     
-    // 3) Track device trial count
-    if (isTrial && deviceId) {
-      if (!deviceTrials[deviceId]) {
-        deviceTrials[deviceId] = {
-          count: 0,
-          deviceFingerprint: deviceId,
-          firstUsed: Date.now(),
-          lastUsed: Date.now()
-        };
-      }
-      deviceTrials[deviceId].count++;
-      deviceTrials[deviceId].lastUsed = Date.now();
-      
-      console.log(`📱 Device ${deviceId} trial count: ${deviceTrials[deviceId].count}`);
-    }
-    
-    // 4) Debug print compact history
+    // 3) Debug print compact history
     const fullHistory = getFullSessionHistory(sessionId);
-    console.log(`🔁 Session ${sessionId} history length: ${fullHistory.length}, Trial: ${isTrial}, Trial count: ${conversations[sessionId]?.trialCount || 0}, Device count: ${deviceTrials[deviceId]?.count || 0}`);
+    console.log(`🔁 Session ${sessionId} history length: ${fullHistory.length}, Authenticated: ${isAuthenticated}`);
     
-    // 5) Get response
-    const aiResponse = await getChatGPTResponse(sessionId, userMessage);
+    // 4) Get response
+    const aiResponse = await getChatGPTResponse(sessionId, userMessage, isAuthenticated);
     
-    // 6) Save AI response back into session history
+    // 5) Save AI response back into session history
     appendToSessionHistory(sessionId, 'assistant', aiResponse);
     
-    // 7) Log assistant response (only for verified users)
-    if (!isTrial) {
+    // 6) Log assistant response (only for authenticated users)
+    if (isAuthenticated && sessionId.match(/^\d{10}[AU]?$/)) {
       try {
         await appendUnderColumn(sessionId, `ASSISTANT: ${aiResponse}`);
       } catch (e) {
@@ -2079,56 +1990,14 @@ async function handleMessage(sessionId, userMessage, isTrial = false, deviceId =
       }
     }
     
-    // 8) update lastActive
+    // 7) update lastActive
     if (conversations[sessionId]) conversations[sessionId].lastActive = nowMs();
     
-    // 9) return the assistant reply
+    // 8) return the assistant reply
     return aiResponse;
   } catch (error) {
     console.error('❌ Error handling message:', error);
     return `⚠️ Sorry, I encountered an error. Please try again.`;
-  }
-}
-
-// -------------------------
-// Transfer trial messages to verified user
-// -------------------------
-async function transferTrialMessages(tempSessionId, phoneNumber) {
-  try {
-    const session = conversations[tempSessionId];
-    if (!session) {
-      console.log(`No trial session found for ${tempSessionId}`);
-      return;
-    }
-    
-    const trialMessages = session.history || [];
-    
-    // Log all trial messages to Google Sheets for the verified user
-    for (const msg of trialMessages) {
-      const prefix = msg.role === 'user' ? 'USER' : 'ASSISTANT';
-      try {
-        await appendUnderColumn(phoneNumber, `${prefix}: ${msg.content}`);
-      } catch (e) {
-        console.error(`Failed to log trial message: ${e.message}`);
-      }
-    }
-    
-    // Move conversation to verified user
-    conversations[phoneNumber] = {
-      ...session,
-      history: [...trialMessages],
-      lastActive: nowMs(),
-      isTrial: false
-    };
-    
-    // Remove trial session
-    delete conversations[tempSessionId];
-    trialStore.delete(tempSessionId);
-    
-    console.log(`✅ Transferred ${trialMessages.length} trial messages from ${tempSessionId} to ${phoneNumber}`);
-    
-  } catch (error) {
-    console.error('Error transferring trial messages:', error);
   }
 }
 
@@ -2176,7 +2045,7 @@ app.post('/auth/send-otp', async (req, res) => {
  */
 app.post('/auth/verify-otp', async (req, res) => {
   try {
-    const { phoneNumber, otp, tempSessionId } = req.body;
+    const { phoneNumber, otp } = req.body;
     
     if (!phoneNumber || !otp) {
       return res.status(400).json({
@@ -2189,10 +2058,8 @@ app.post('/auth/verify-otp', async (req, res) => {
     
     const result = await verifyOtp(phoneNumber, otp);
     
-    // Transfer trial messages if tempSessionId provided
-    if (tempSessionId && tempSessionId.startsWith('temp-')) {
-      await transferTrialMessages(tempSessionId, phoneNumber);
-    }
+    // Transfer conversation from temporary session to verified user
+    // (if there's an existing temporary session)
     
     return res.json({
       success: true,
@@ -2286,19 +2153,19 @@ app.post('/auth/logout', async (req, res) => {
 });
 
 // -------------------------
-// Chat API Endpoints (with trial/verification middleware)
+// Chat API Endpoints
 // -------------------------
 
-// Serve chat interface (with trial support)
+// Serve chat interface
 app.get('/chat', (req, res) => {
-  res.sendFile(__dirname + '/chat-trial.html');
+  res.sendFile(__dirname + '/chat.html');
 });
 
-// API endpoint for sending messages (supports trial)
-app.post('/chat/message', checkTrialOrVerification, async (req, res) => {
+// API endpoint for sending messages
+app.post('/chat/message', checkAuthentication, async (req, res) => {
   try {
     const sessionId = req.sessionId || req.phoneNumber;
-    const isTrial = req.isTrial;
+    const isAuthenticated = req.isAuthenticated;
     const { message } = req.body;
     
     if (!message) {
@@ -2308,24 +2175,18 @@ app.post('/chat/message', checkTrialOrVerification, async (req, res) => {
       });
     }
     
-    console.log(`💬 Chat message from ${sessionId} (Trial: ${isTrial}): ${message}`);
+    console.log(`💬 Chat message from ${sessionId} (Authenticated: ${isAuthenticated}): ${message}`);
     
     // Process the message
-    const response = await handleMessage(sessionId, message, isTrial);
+    const response = await handleMessage(sessionId, message, isAuthenticated);
     
-    // Get updated trial count
-    const trialCount = conversations[sessionId]?.trialCount || 0;
-    const messagesLeft = 10 - trialCount;
-    
-    // Return the response with trial info
+    // Return the response with authentication info
     return res.json({
       success: true,
       response: response,
       timestamp: new Date().toISOString(),
-      isTrial: isTrial,
-      trialCount: trialCount,
-      messagesLeft: messagesLeft,
-      trialEnded: trialCount >= 10
+      isAuthenticated: isAuthenticated,
+      sessionId: sessionId
     });
     
   } catch (error) {
@@ -2337,130 +2198,50 @@ app.post('/chat/message', checkTrialOrVerification, async (req, res) => {
   }
 });
 
-// Create trial session
-// Modified create trial endpoint
-app.post('/chat/create-trial', (req, res) => {
+// Create unauthenticated session
+app.post('/chat/create-session', (req, res) => {
   try {
-    const deviceId = generateDeviceFingerprint(req);
+    // Generate unique session ID for unauthenticated user
+    const sessionId = 'guest-' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
     
-    // Check if device has already used trial
-    if (deviceTrials[deviceId] && deviceTrials[deviceId].count >= 10) {
-      return res.status(403).json({
-        success: false,
-        error: 'This device has already used its free trial. Please verify your phone number to continue.',
-        deviceLimitReached: true
-      });
-    }
+    // Create session
+    createOrTouchSession(sessionId, false);
     
-    // Generate unique trial session ID
-    const trialId = 'temp-' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
-    
-    // Create trial session with device ID
-    createOrTouchSession(trialId, true, deviceId);
-    
-    console.log(`🎁 Created trial session: ${trialId} for device: ${deviceId}`);
-    
-    return res.json({
-      success: true,
-      sessionId: trialId,
-      deviceId: deviceId,
-      message: 'Trial session created',
-      trialLimit: 10,
-      deviceTrialUsed: deviceTrials[deviceId]?.count || 0
-    });
-    
-  } catch (error) {
-    console.error('Error creating trial session:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-// Add device trial info endpoint
-app.get('/chat/device-trial-info/:deviceId', (req, res) => {
-  try {
-    const { deviceId } = req.params;
-    const deviceTrial = deviceTrials[deviceId];
-    
-    return res.json({
-      success: true,
-      deviceId: deviceId,
-      trialUsed: deviceTrial?.count || 0,
-      messagesLeft: 10 - (deviceTrial?.count || 0),
-      firstUsed: deviceTrial?.firstUsed,
-      lastUsed: deviceTrial?.lastUsed
-    });
-    
-  } catch (error) {
-    console.error('Error getting device trial info:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-// Get chat history for a session (supports trial)
-app.get('/chat/history/:sessionId', async (req, res) => {
-  try {
-    const { sessionId } = req.params;
-    const history = getFullSessionHistory(sessionId);
-    const isTrial = sessionId.startsWith('temp-');
-    const trialCount = conversations[sessionId]?.trialCount || 0;
-    
-    return res.json({
-      success: true,
-      history: history,
-      sessionActive: !!conversations[sessionId],
-      isTrial: isTrial,
-      trialCount: trialCount,
-      messagesLeft: 10 - trialCount
-    });
-    
-  } catch (error) {
-    console.error('💥 Chat history error:', error.message);
-    return res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-// Get trial session info
-app.get('/chat/trial-info/:sessionId', (req, res) => {
-  try {
-    const { sessionId } = req.params;
-    
-    if (!sessionId.startsWith('temp-')) {
-      return res.json({
-        success: false,
-        error: 'Not a trial session'
-      });
-    }
-    
-    const session = conversations[sessionId];
-    if (!session) {
-      return res.json({
-        success: false,
-        error: 'Session not found'
-      });
-    }
-    
-    const trialCount = session.trialCount || 0;
-    const messagesLeft = 10 - trialCount;
+    console.log(`🎁 Created unauthenticated session: ${sessionId}`);
     
     return res.json({
       success: true,
       sessionId: sessionId,
-      trialCount: trialCount,
-      messagesLeft: messagesLeft,
-      trialEnded: trialCount >= 10,
-      lastActive: session.lastActive
+      message: 'Session created',
+      isAuthenticated: false
     });
     
   } catch (error) {
-    console.error('Error getting trial info:', error);
+    console.error('Error creating session:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get chat history for a session
+app.get('/chat/history/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const history = getFullSessionHistory(sessionId);
+    const session = conversations[sessionId];
+    const isAuthenticated = session ? session.isAuthenticated : false;
+    
+    return res.json({
+      success: true,
+      history: history,
+      sessionActive: !!session,
+      isAuthenticated: isAuthenticated
+    });
+    
+  } catch (error) {
+    console.error('💥 Chat history error:', error.message);
     return res.status(500).json({
       success: false,
       error: error.message
@@ -2473,27 +2254,30 @@ app.get('/chat/trial-info/:sessionId', (req, res) => {
 // -------------------------
 app.get('/', (req, res) => {
   res.json({ 
-    status: 'Zulu Club Chat Server with Trial & OTP Authentication is running', 
+    status: 'Zulu Club Chat Server with Authentication is running', 
     service: 'Zulu Club Chat AI Assistant',
-    version: '9.0 - 10-Message Free Trial',
+    version: '1.0 - Unlimited Basic Access',
     employee_numbers: EMPLOYEE_NUMBERS,
     endpoints: {
       chat_interface: '/chat',
-      create_trial: 'POST /chat/create-trial',
+      create_session: 'POST /chat/create-session',
       send_otp: 'POST /auth/send-otp',
       verify_otp: 'POST /auth/verify-otp',
       check_status: 'POST /auth/check-status',
       logout: 'POST /auth/logout',
-      send_message: 'POST /chat/message (trial or verified)',
-      get_history: 'GET /chat/history/:sessionId',
-      get_trial_info: 'GET /chat/trial-info/:sessionId'
+      send_message: 'POST /chat/message',
+      get_history: 'GET /chat/history/:sessionId'
     },
     stats: {
       product_categories_loaded: galleriesData.length,
       sellers_loaded: sellersData.length,
       active_conversations: Object.keys(conversations).length,
-      trial_sessions: Array.from(trialStore.keys()).length,
       verified_users: Object.keys(verifiedUsers).length
+    },
+    access_model: {
+      unauthenticated: 'Company & Product intents only (unlimited)',
+      authenticated: 'All intents (seller, investors, agent, voice_ai)',
+      authentication_required: 'For seller, investors, agent, and voice_ai features'
     },
     timestamp: new Date().toISOString()
   });
@@ -2514,7 +2298,7 @@ app.get('/refresh-csv', async (req, res) => {
   }
 });
 
-// Get chat history from Google Sheets (for verified users only)
+// Get chat history from Google Sheets (for authenticated users only)
 app.post('/chat/history-sheets', async (req, res) => {
     try {
         const { phoneNumber, page = 0, pageSize = 10 } = req.body;
@@ -2526,12 +2310,12 @@ app.post('/chat/history-sheets', async (req, res) => {
             });
         }
         
-        // Check if user is verified
+        // Check if user is authenticated
         const user = verifiedUsers[phoneNumber];
         if (!user || !user.verified) {
             return res.status(401).json({
                 success: false,
-                error: 'User not verified'
+                error: 'User not authenticated'
             });
         }
         
