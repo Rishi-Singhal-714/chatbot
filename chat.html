@@ -1324,7 +1324,7 @@ Try asking: "Tell me about Zulu Club" or "Show me home decor items"`;
     welcomeMessageShown = true;
 }
 
-// Send message function
+// Update the sendMessage function to handle session errors:
 async function sendMessage() {
     const message = messageInput.value.trim();
     if (!message) return;
@@ -1362,7 +1362,15 @@ async function sendMessage() {
         if (data.success) {
             displayMessage(data.response, 'assistant');
         } else {
-            displayMessage('Error: ' + (data.error || 'Unknown error'), 'assistant');
+            if (data.error === 'Invalid session') {
+                console.log('Session invalid during message send, creating new session...');
+                // Create new session and retry
+                await createSession();
+                // After creating new session, send the message again
+                sendMessageWithRetry(message);
+            } else {
+                displayMessage('Error: ' + (data.error || 'Unknown error'), 'assistant');
+            }
         }
     } catch (error) {
         hideTyping();
@@ -1372,6 +1380,42 @@ async function sendMessage() {
     
     sendBtn.disabled = !messageInput.value.trim();
     messageInput.focus();
+}
+
+// Add a helper function to retry sending message after session recreation
+async function sendMessageWithRetry(message) {
+    // Show typing indicator
+    showTyping();
+    
+    try {
+        console.log('Retrying message:', message, 'Session ID:', currentSessionId);
+        const response = await fetch('/chat/message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                sessionId: currentSessionId,
+                message: message
+            })
+        });
+        
+        const data = await response.json();
+        console.log('Retry response from server:', data);
+        
+        // Hide typing indicator
+        hideTyping();
+        
+        if (data.success) {
+            displayMessage(data.response, 'assistant');
+        } else {
+            displayMessage('Error: ' + (data.error || 'Unknown error'), 'assistant');
+        }
+    } catch (error) {
+        hideTyping();
+        console.error('Error retrying message:', error);
+        displayMessage('Network error. Please check your connection.', 'assistant');
+    }
 }
 
 // Function to detect and convert URLs to clickable links
@@ -1485,7 +1529,7 @@ function startOtpTimer() {
     }, 1000);
 }
 
-// Check authentication status
+// Update the checkAuthentication function to handle session errors:
 async function checkAuthentication() {
     console.log('Checking authentication...');
     
@@ -1553,7 +1597,7 @@ async function checkAuthentication() {
                 await loadChatHistory();
                 return;
             } else {
-                console.log('Session invalid, creating new session');
+                console.log('Session invalid, removing from localStorage and creating new one:', data.error);
                 localStorage.removeItem('zulu_session_id');
             }
         } catch (error) {
@@ -1567,7 +1611,7 @@ async function checkAuthentication() {
     await createSession();
 }
 
-// Load chat history
+// Update the loadChatHistory function to handle invalid sessions:
 async function loadChatHistory() {
     try {
         console.log('Loading chat history for session:', currentSessionId);
@@ -1595,8 +1639,17 @@ async function loadChatHistory() {
             }
         } else {
             console.error('Failed to load chat history:', data.error);
-            // If no history and welcome message hasn't been shown, show it
-            if (!welcomeMessageShown) {
+            
+            // If session is invalid, clear localStorage and create a new session
+            if (data.error === 'Invalid session') {
+                console.log('Session invalid, clearing localStorage and creating new session...');
+                localStorage.removeItem('zulu_session_id');
+                localStorage.removeItem('zulu_verified_phone');
+                
+                // Create new session
+                await createSession();
+            } else if (!welcomeMessageShown) {
+                // If no history and welcome message hasn't been shown, show it
                 loadWelcomeMessage();
             }
         }
