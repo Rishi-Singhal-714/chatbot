@@ -424,24 +424,34 @@ const checkAuthentication = (req, res, next) => {
       next();
     }
   } 
-  // Temporary session ID (unauthenticated user)
-  else {
+// Temporary session ID (unauthenticated user)
+else {
+    console.log(`🔍 Checking temporary session: ${sessionId}`);
+    
     const session = conversations[sessionId];
     
     if (!session) {
-      console.log(`❌ Session ${sessionId} not found in conversations`);
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid session'
-      });
+        // If it's a guest session and doesn't exist, create it
+        if (sessionId.startsWith('guest-')) {
+            console.log(`🔄 Guest session ${sessionId} not found, creating new one`);
+            createOrTouchSession(sessionId, false);
+            req.sessionId = sessionId;
+            req.isAuthenticated = false;
+            next();
+        } else {
+            console.log(`❌ Session ${sessionId} not found in conversations`);
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid session'
+            });
+        }
+    } else {
+        console.log(`✅ Session ${sessionId} found, authenticated: ${session.isAuthenticated || false}`);
+        req.sessionId = sessionId;
+        req.isAuthenticated = session.isAuthenticated || false;
+        next();
     }
-    
-    req.sessionId = sessionId;
-    req.isAuthenticated = session.isAuthenticated || false;
-    next();
-  }
-};
-
+}
 // -------------------------
 // Google Sheets config
 // -------------------------
@@ -2245,32 +2255,48 @@ app.post('/chat/create-session', (req, res) => {
   }
 });
 
-// Get chat history for a session
+// Also update the /chat/history/:sessionId endpoint to handle missing sessions:
 app.get('/chat/history/:sessionId', async (req, res) => {
-  try {
-    const { sessionId } = req.params;
-    console.log(`📜 Getting history for session: ${sessionId}`);
-    
-    const session = conversations[sessionId];
-    const isAuthenticated = session ? session.isAuthenticated : false;
-    const history = getFullSessionHistory(sessionId);
-    
-    console.log(`📜 Session ${sessionId} exists: ${!!session}, history length: ${history.length}`);
-    
-    return res.json({
-      success: true,
-      history: history,
-      sessionActive: !!session,
-      isAuthenticated: isAuthenticated
-    });
-    
-  } catch (error) {
-    console.error('💥 Chat history error:', error.message);
-    return res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
+    try {
+        const { sessionId } = req.params;
+        console.log(`📜 Getting history for session: ${sessionId}`);
+        
+        let session = conversations[sessionId];
+        let isAuthenticated = false;
+        
+        // If session doesn't exist but it's a guest session, create it
+        if (!session && sessionId.startsWith('guest-')) {
+            console.log(`🔄 Session ${sessionId} not found, creating new guest session`);
+            session = createOrTouchSession(sessionId, false);
+        }
+        
+        if (session) {
+            isAuthenticated = session.isAuthenticated;
+            const history = getFullSessionHistory(sessionId);
+            
+            console.log(`📜 Session ${sessionId} exists, history length: ${history.length}, authenticated: ${isAuthenticated}`);
+            
+            return res.json({
+                success: true,
+                history: history,
+                sessionActive: true,
+                isAuthenticated: isAuthenticated
+            });
+        } else {
+            console.log(`❌ Session ${sessionId} not found and is not a guest session`);
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid session'
+            });
+        }
+        
+    } catch (error) {
+        console.error('💥 Chat history error:', error.message);
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
 });
 
 // -------------------------
