@@ -905,7 +905,8 @@
         let isAdmin = false;
         let otpTimer = null;
         let countdown = 60;
-            
+        let welcomeMessageShown = false;
+
         // DOM Elements
         const statusBanner = document.getElementById('statusBanner');
         const phoneInput = document.getElementById('phoneInput');
@@ -990,44 +991,46 @@
         }
 
         // Create session
-        async function createSession() {
-          try {
-            const response = await fetch('/chat/create-session', {
-              method: 'POST',
-              headers: {
+      // Update createSession function to not call loadWelcomeMessage
+async function createSession() {
+    try {
+        const response = await fetch('/chat/create-session', {
+            method: 'POST',
+            headers: {
                 'Content-Type': 'application/json'
-              }
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-              currentSessionId = data.sessionId;
-              isAuthenticated = false;
-              
-              // Store session ID in localStorage
-              localStorage.setItem('zulu_session_id', currentSessionId);
-              
-              // Update UI
-              updateUI();
-              loadWelcomeMessage();
-              
-              // Enable chat input
-              messageInput.disabled = false;
-              messageInput.focus();
-              
-              console.log(`🎁 Session created: ${currentSessionId}`);
-              return true;
-            } else {
-              alert('Failed to create session. Please try again.');
-              return false;
             }
-          } catch (error) {
-            console.error('Error creating session:', error);
-            alert('Network error. Please try again.');
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            currentSessionId = data.sessionId;
+            isAuthenticated = false;
+            
+            // Store session ID in localStorage
+            localStorage.setItem('zulu_session_id', currentSessionId);
+            
+            // Update UI
+            updateUI();
+            // Don't call loadWelcomeMessage here
+            messageInput.disabled = false;
+            messageInput.focus();
+            
+            console.log(`🎁 Session created: ${currentSessionId}`);
+            
+            // Now load chat history (which will show welcome message if needed)
+            await loadChatHistory();
+            return true;
+        } else {
+            alert('Failed to create session. Please try again.');
             return false;
-          }
         }
+    } catch (error) {
+        console.error('Error creating session:', error);
+        alert('Network error. Please try again.');
+        return false;
+    }
+}
             
         // Update UI based on authentication status
         function updateUI() {
@@ -1298,8 +1301,12 @@
         }
             
         // Load welcome message
-        function loadWelcomeMessage() {
-            const welcomeText = `Welcome to Zulu Club${isAuthenticated ? ' (Verified)' : ''}!
+// Update loadWelcomeMessage function
+function loadWelcomeMessage() {
+    // Check if welcome message has already been shown
+    if (welcomeMessageShown) return;
+    
+    const welcomeText = `Welcome to Zulu Club${isAuthenticated ? ' (Verified)' : ''}!
 
 ${isAuthenticated ? '✅ You have **full access** to all features!' : '🎉 You have **unlimited access** to company info and product browsing!'}
 
@@ -1312,8 +1319,10 @@ ${isAuthenticated ? '' : 'Verify your phone to unlock all features including sel
 
 Try asking: "Tell me about Zulu Club" or "Show me home decor items"`;
 
-            displayMessage(welcomeText, 'assistant');
-        }
+    displayMessage(welcomeText, 'assistant');
+    welcomeMessageShown = true;
+}
+
             
         // Send message function
         async function sendMessage() {
@@ -1475,154 +1484,164 @@ Try asking: "Tell me about Zulu Club" or "Show me home decor items"`;
         }
 
         // Check authentication status
-        async function checkAuthentication() {
-            // Check if there's a stored phone number in localStorage
-            const storedPhone = localStorage.getItem('zulu_verified_phone');
-            if (storedPhone) {
-                try {
-                    const response = await fetch('/auth/check-status', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            phoneNumber: storedPhone
-                        })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.success && data.verified) {
-                        // Auto-login verified user
-                        currentSessionId = storedPhone;
-                        isAuthenticated = true;
-                        isAdmin = data.isAdmin || false;
-                        
-                        // Update UI
-                        updateUI();
-                        loadWelcomeMessage();
-                        messageInput.disabled = false;
-                        messageInput.focus();
-                        
-                        // Load chat history
-                        await loadChatHistory();
-                        return;
-                    } else {
-                        localStorage.removeItem('zulu_verified_phone');
-                    }
-                } catch (error) {
-                    console.error('Error checking verification:', error);
-                }
-            }
+     // Update checkAuthentication function to reset the flag
+async function checkAuthentication() {
+    // Reset welcome message flag
+    welcomeMessageShown = false;
+    
+    // Check if there's a stored phone number in localStorage
+    const storedPhone = localStorage.getItem('zulu_verified_phone');
+    if (storedPhone) {
+        try {
+            const response = await fetch('/auth/check-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phoneNumber: storedPhone
+                })
+            });
             
-            // Check if there's a session in localStorage
-            const sessionId = localStorage.getItem('zulu_session_id');
+            const data = await response.json();
             
-            if (sessionId) {
-                try {
-                    const response = await fetch(`/chat/history/${sessionId}`);
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        currentSessionId = sessionId;
-                        isAuthenticated = data.isAuthenticated || false;
-                        
-                        // Update UI
-                        updateUI();
-                        loadWelcomeMessage();
-                        messageInput.disabled = false;
-                        messageInput.focus();
-                        
-                        // Load existing chat history
-                        await loadChatHistory();
-                        return;
-                    }
-                } catch (error) {
-                    console.error('Error checking session:', error);
-                }
-            }
-            
-            // If no existing session, create a new one
-            await createSession();
-        }
-         
-        // Load chat history
-        async function loadChatHistory() {
-            try {
-                const response = await fetch(`/chat/history/${currentSessionId}`);
-                const data = await response.json();
+            if (data.success && data.verified) {
+                // Auto-login verified user
+                currentSessionId = storedPhone;
+                isAuthenticated = true;
+                isAdmin = data.isAdmin || false;
                 
-                if (data.success && data.history && data.history.length > 0) {
-                    // Clear current messages
-                    chatMessages.innerHTML = '';
-                    
-                    // Display all messages from history
-                    data.history.forEach(msg => {
-                        if (msg.role === 'user' || msg.role === 'assistant') {
-                            displayMessage(msg.content, msg.role === 'user' ? 'user' : 'assistant');
-                        }
-                    });
-                } else {
-                    // If no history, show welcome message
-                    loadWelcomeMessage();
+                // Update UI
+                updateUI();
+                // Don't call loadWelcomeMessage here - let loadChatHistory handle it
+                messageInput.disabled = false;
+                messageInput.focus();
+                
+                // Load chat history (which will handle welcome message if needed)
+                await loadChatHistory();
+                return;
+            } else {
+                localStorage.removeItem('zulu_verified_phone');
+            }
+        } catch (error) {
+            console.error('Error checking verification:', error);
+        }
+    }
+    
+    // Check if there's a session in localStorage
+    const sessionId = localStorage.getItem('zulu_session_id');
+    
+    if (sessionId) {
+        try {
+            const response = await fetch(`/chat/history/${sessionId}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                currentSessionId = sessionId;
+                isAuthenticated = data.isAuthenticated || false;
+                
+                // Update UI
+                updateUI();
+                // Don't call loadWelcomeMessage here - let loadChatHistory handle it
+                messageInput.disabled = false;
+                messageInput.focus();
+                
+                // Load existing chat history (which will handle welcome message if needed)
+                await loadChatHistory();
+                return;
+            }
+        } catch (error) {
+            console.error('Error checking session:', error);
+        }
+    }
+    
+    // If no existing session, create a new one
+    await createSession();
+}
+         
+    // Update loadChatHistory function
+async function loadChatHistory() {
+    try {
+        const response = await fetch(`/chat/history/${currentSessionId}`);
+        const data = await response.json();
+        
+        if (data.success && data.history && data.history.length > 0) {
+            // Clear current messages
+            chatMessages.innerHTML = '';
+            
+            // Display all messages from history
+            data.history.forEach(msg => {
+                if (msg.role === 'user' || msg.role === 'assistant') {
+                    displayMessage(msg.content, msg.role === 'user' ? 'user' : 'assistant');
                 }
-            } catch (error) {
-                console.error('Error loading chat history:', error);
+            });
+        } else {
+            // If no history and welcome message hasn't been shown, show it
+            if (!welcomeMessageShown) {
                 loadWelcomeMessage();
             }
         }
+    } catch (error) {
+        console.error('Error loading chat history:', error);
+        // If error and welcome message hasn't been shown, show it
+        if (!welcomeMessageShown) {
+            loadWelcomeMessage();
+        }
+    }
+}
 
-        // Logout function
-        async function logout() {
-            try {
-                if (isAuthenticated) {
-                    await fetch('/auth/logout', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            phoneNumber: currentSessionId
-                        })
-                    });
-                }
-                
-                // Clear localStorage
-                localStorage.removeItem('zulu_session_id');
-                localStorage.removeItem('zulu_verified_phone');
-                
-                // Reset state
-                currentSessionId = '';
-                isAuthenticated = false;
-                isAdmin = false;
-                
-                // Clear chat messages
-                chatMessages.innerHTML = '';
-                
-                // Hide modals
-                verificationModal.classList.remove('active');
-                instructionsPanel.classList.remove('active');
-                
-                // Reset verification modal
-                phoneStep.classList.remove('hidden');
-                otpStep.classList.add('hidden');
-                phoneInput.value = '';
-                clearOtpInputs();
-                phoneAlert.classList.add('hidden');
-                otpAlert.classList.add('hidden');
-                
-                if (otpTimer) {
-                    clearInterval(otpTimer);
-                    timer.classList.add('hidden');
-                }
-                
-                // Create new session
-                await checkAuthentication();
-                
-            } catch (error) {
-                console.error('Error logging out:', error);
-            }
-        }        
+      // Update logout function to reset the flag
+async function logout() {
+    try {
+        if (isAuthenticated) {
+            await fetch('/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phoneNumber: currentSessionId
+                })
+            });
+        }
+        
+        // Clear localStorage
+        localStorage.removeItem('zulu_session_id');
+        localStorage.removeItem('zulu_verified_phone');
+        
+        // Reset state
+        currentSessionId = '';
+        isAuthenticated = false;
+        isAdmin = false;
+        welcomeMessageShown = false; // Reset the flag
+        
+        // Clear chat messages
+        chatMessages.innerHTML = '';
+        
+        // Hide modals
+        verificationModal.classList.remove('active');
+        instructionsPanel.classList.remove('active');
+        
+        // Reset verification modal
+        phoneStep.classList.remove('hidden');
+        otpStep.classList.add('hidden');
+        phoneInput.value = '';
+        clearOtpInputs();
+        phoneAlert.classList.add('hidden');
+        otpAlert.classList.add('hidden');
+        
+        if (otpTimer) {
+            clearInterval(otpTimer);
+            timer.classList.add('hidden');
+        }
+        
+        // Create new session
+        await checkAuthentication();
+        
+    } catch (error) {
+        console.error('Error logging out:', error);
+    }
+}
             
         // Event Listeners
         phoneInput.addEventListener('input', function(e) {
