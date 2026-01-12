@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sellers - Zulu Club</title>
+</head>
+<body>
+    <h1>🏪 Sellers Data</h1>
+    <button onclick="location.href='/'">← Back to Dashboard</button>
+    <button onclick="loadData()">🔄 Refresh Data</button>
+    <button onclick="clearCache()">🗑️ Clear Cache</button>
+    
+    <div id="message"></div>
+    <div id="loading">Loading sellers data...</div>
+    <div id="error" style="color: red; display: none;"></div>
+    
+    <div id="dataContainer" style="margin-top: 20px;"></div>
+
+    <script>
+        async function loadData() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('dataContainer').innerHTML = '';
+            
+            try {
+                const response = await fetch('/api/sellers');
+                const data = await response.json();
+                
+                if (data.success && data.data.length > 0) {
+                    displayData(data.data);
+                    showMessage(`✅ Loaded ${data.data.length} sellers`);
+                } else {
+                    document.getElementById('dataContainer').innerHTML = 'No sellers found';
+                }
+            } catch (error) {
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = 'Error: ' + error.message;
+                showMessage(`❌ Error loading data: ${error.message}`, 'error');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+        
+        function displayData(data) {
+            const container = document.getElementById('dataContainer');
+            
+            // Create table
+            let html = '<table border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse;">';
+            
+            // Header row
+            const headers = Object.keys(data[0]);
+            html += '<tr style="background: #f0f0f0;">';
+            headers.forEach(header => {
+                html += `<th>${header}</th>`;
+            });
+            html += '</tr>';
+            
+            // Data rows
+            data.forEach(row => {
+                html += '<tr>';
+                headers.forEach(header => {
+                    let value = row[header];
+                    if (value === null || value === undefined) value = '';
+                    if (typeof value === 'object') value = JSON.stringify(value);
+                    html += `<td title="${value}">${String(value).substring(0, 100)}${String(value).length > 100 ? '...' : ''}</td>`;
+                });
+                html += '</tr>';
+            });
+            
+            html += '</table>';
+            container.innerHTML = html;
+        }
+        
+        async function clearCache() {
+            try {
+                const response = await fetch('/api/clear-cache/sellers', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage(`✅ ${data.message}`);
+                    loadData(); // Reload data after clearing cache
+                } else {
+                    showMessage(`❌ Error: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ Network error: ${error.message}`, 'error');
+            }
+        }
+        
+        function showMessage(text, type = 'success') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.style.color = type === 'error' ? 'red' : 'green';
+            messageDiv.style.margin = '10px 0';
+            messageDiv.style.padding = '10px';
+            
+            setTimeout(() => {
+                messageDiv.textContent = '';
+            }, 5000);
+        }
+        
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>
