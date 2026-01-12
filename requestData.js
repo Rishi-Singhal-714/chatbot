@@ -19,10 +19,10 @@ const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
 // In-memory cache (2 hours = 7200000 ms)
 const cache = {
-  products: { data: null, timestamp: 0, query: 'SELECT * FROM u130660877_zulu.products LIMIT 1000' },
-  sellers: { data: null, timestamp: 0, query: 'SELECT * FROM u130660877_zulu.seller_data LIMIT 1000' },
-  videos: { data: null, timestamp: 0, query: 'SELECT * FROM u130660877_zulu.shop_able_videos LIMIT 1000' },
-  users: { data: null, timestamp: 0, query: 'SELECT * FROM u130660877_zulu.users LIMIT 1000' }
+  products: { data: null, timestamp: 0, query: 'SELECT * FROM u130660877_zulu.products' },
+  sellers: { data: null, timestamp: 0, query: 'SELECT * FROM u130660877_zulu.seller_data' },
+  videos: { data: null, timestamp: 0, query: 'SELECT * FROM u130660877_zulu.shop_able_videos' },
+  users: { data: null, timestamp: 0, query: 'SELECT * FROM u130660877_zulu.users' }
 };
 
 const CACHE_TTL = 7200000; // 2 hours
