@@ -2504,19 +2504,19 @@ app.get('/', (req, res) => {
 });
 
 app.get('/products', (req, res) => {
-  res.sendFile(__dirname + '/public/products.html');
+  res.sendFile(__dirname + '/products.html');
 });
 
 app.get('/sellers', (req, res) => {
-  res.sendFile(__dirname + '/public/sellers.html');
+  res.sendFile(__dirname + '/sellers.html');
 });
 
 app.get('/videos', (req, res) => {
-  res.sendFile(__dirname + '/public/videos.html');
+  res.sendFile(__dirname + '/videos.html');
 });
 
 app.get('/users', (req, res) => {
-  res.sendFile(__dirname + '/public/users.html');
+  res.sendFile(__dirname + '/users.html');
 });
 
 
