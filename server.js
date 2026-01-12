@@ -2499,8 +2499,8 @@ app.post('/api/refresh/:type', async (req, res) => {
 // -------------------------
 // HTML Pages
 // -------------------------
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
+app.get('/home', (req, res) => {
+  res.sendFile(__dirname + '/index.html');
 });
 
 app.get('/products', (req, res) => {
@@ -2524,7 +2524,36 @@ app.get('/users', (req, res) => {
 // Root and other endpoints
 // -------------------------
 
-
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'Zulu Club Chat Server with Authentication is running', 
+    service: 'Zulu Club Chat AI Assistant',
+    version: '1.0 - Unlimited Basic Access',
+    employee_numbers: EMPLOYEE_NUMBERS,
+    endpoints: {
+      chat_interface: '/chat',
+      create_session: 'POST /chat/create-session',
+      send_otp: 'POST /auth/send-otp',
+      verify_otp: 'POST /auth/verify-otp',
+      check_status: 'POST /auth/check-status',
+      logout: 'POST /auth/logout',
+      send_message: 'POST /chat/message',
+      get_history: 'GET /chat/history/:sessionId'
+    },
+    stats: {
+      product_categories_loaded: galleriesData.length,
+      sellers_loaded: sellersData.length,
+      active_conversations: Object.keys(conversations).length,
+      verified_users: Object.keys(verifiedUsers).length
+    },
+    access_model: {
+      unauthenticated: 'Company & Product intents only (unlimited)',
+      authenticated: 'All intents (seller, investors, agent, voice_ai)',
+      authentication_required: 'For seller, investors, agent, and voice_ai features'
+    },
+    timestamp: new Date().toISOString()
+  });
+});
 app.get('/refresh-csv', async (req, res) => {
   try {
     galleriesData = await loadGalleriesData();
