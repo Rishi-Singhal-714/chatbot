@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Zulu Club Dashboard</title>
+</head>
+<body>
+    <h1>Zulu Club Dashboard</h1>
+    
+    <div>
+        <button onclick="location.href='/products'">📦 Products</button>
+        <button onclick="location.href='/sellers'">🏪 Sellers</button>
+        <button onclick="location.href='/videos'">🎬 Videos</button>
+        <button onclick="location.href='/users'">👤 Users</button>
+        <button onclick="location.href='/chatbot'">🤖 Chatbot</button>
+    </div>
+    
+    <hr>
+    
+    <div>
+        <h3>Cache Controls</h3>
+        
+        <div>
+            <button onclick="refreshData('products')">🔄 Refresh Products</button>
+            <button onclick="clearCache('products')">🗑️ Clear Products Cache</button>
+        </div>
+        
+        <div>
+            <button onclick="refreshData('sellers')">🔄 Refresh Sellers</button>
+            <button onclick="clearCache('sellers')">🗑️ Clear Sellers Cache</button>
+        </div>
+        
+        <div>
+            <button onclick="refreshData('videos')">🔄 Refresh Videos</button>
+            <button onclick="clearCache('videos')">🗑️ Clear Videos Cache</button>
+        </div>
+        
+        <div>
+            <button onclick="refreshData('users')">🔄 Refresh Users</button>
+            <button onclick="clearCache('users')">🗑️ Clear Users Cache</button>
+        </div>
+        
+        <div>
+            <button onclick="clearAllCache()">🔥 Clear All Caches</button>
+            <button onclick="checkCacheStatus()">🔍 Check Cache Status</button>
+        </div>
+    </div>
+    
+    <div id="message"></div>
+    <div id="cacheStatus" style="margin-top: 20px;"></div>
+
+    <script>
+        async function refreshData(type) {
+            try {
+                const response = await fetch(`/api/refresh/${type}`, { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage(`✅ ${data.message} (${data.count} records)`);
+                } else {
+                    showMessage(`❌ Error: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ Network error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function clearCache(type) {
+            try {
+                const response = await fetch(`/api/clear-cache/${type}`, { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage(`✅ ${data.message}`);
+                } else {
+                    showMessage(`❌ Error: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ Network error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function clearAllCache() {
+            try {
+                const response = await fetch('/api/clear-cache/all', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage(`✅ ${data.message}`);
+                } else {
+                    showMessage(`❌ Error: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ Network error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function checkCacheStatus() {
+            try {
+                const response = await fetch('/api/cache-status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    let html = '<h4>Cache Status (2 hours TTL):</h4><ul>';
+                    
+                    Object.keys(data.cacheStatus).forEach(key => {
+                        const status = data.cacheStatus[key];
+                        const cacheType = key.charAt(0).toUpperCase() + key.slice(1);
+                        
+                        html += `<li>${cacheType}: `;
+                        if (status.cached) {
+                            html += `✅ Cached (${status.dataCount} records, ${Math.floor(status.age/60)} min old)`;
+                        } else {
+                            html += `❌ Not cached`;
+                        }
+                        html += `</li>`;
+                    });
+                    
+                    html += '</ul>';
+                    document.getElementById('cacheStatus').innerHTML = html;
+                }
+            } catch (error) {
+                showMessage(`❌ Error checking cache: ${error.message}`, 'error');
+            }
+        }
+        
+        function showMessage(text, type = 'success') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.style.color = type === 'error' ? 'red' : 'green';
+            messageDiv.style.margin = '10px 0';
+            messageDiv.style.padding = '10px';
+            messageDiv.style.border = '1px solid ' + (type === 'error' ? 'red' : 'green');
+            
+            setTimeout(() => {
+                messageDiv.textContent = '';
+                messageDiv.style.border = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
