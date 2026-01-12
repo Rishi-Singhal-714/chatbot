@@ -7,15 +7,32 @@ const preIntentFilter = require('./preintentfilter');
 const { google } = require('googleapis'); 
 const app = express();
 const crypto = require('crypto');
-// Import database functions - with connection management
-const { 
-  getCachedData, 
-  clearCache, 
-  getAllCacheStatus, 
-  refreshConnection,
-  closeConnectionPool,
-  createConnectionPool 
-} = require('./requestData');
+const path = require('path');
+
+
+// Import database functions
+let dbFunctions;
+try {
+  dbFunctions = require('./requestData');
+} catch (error) {
+  console.error('❌ Failed to load requestData.js:', error);
+  dbFunctions = {
+    getCachedData: async (type) => {
+      console.log(`Fallback: getCachedData for ${type}`);
+      return [];
+    },
+    clearCache: (type) => {
+      console.log(`Fallback: clearCache for ${type}`);
+    },
+    clearAllCaches: () => {
+      console.log(`Fallback: clearAllCaches`);
+    },
+    getAllCacheStatus: () => {
+      return {};
+    }
+  };
+}
+
 // Load admin users (you'll need to create this file)
 let adminUsers = [];
 try {
@@ -2421,9 +2438,7 @@ app.post('/api/create-connection', (req, res) => {
 // Get products data
 app.get('/api/products', async (req, res) => {
   try {
-    const data = await getCachedData('products', 
-      'SELECT * FROM u130660877_zulu.products'
-    );
+    const data = await dbFunctions.getCachedData('products');
     
     res.json({
       success: true,
@@ -2442,9 +2457,7 @@ app.get('/api/products', async (req, res) => {
 // Get sellers data
 app.get('/api/sellers', async (req, res) => {
   try {
-    const data = await getCachedData('sellers',
-      'SELECT * FROM u130660877_zulu.seller_data'
-    );
+    const data = await dbFunctions.getCachedData('sellers');
     
     res.json({
       success: true,
@@ -2463,9 +2476,7 @@ app.get('/api/sellers', async (req, res) => {
 // Get videos data
 app.get('/api/videos', async (req, res) => {
   try {
-    const data = await getCachedData('videos',
-      'SELECT * FROM u130660877_zulu.shop_able_videos'
-    );
+    const data = await dbFunctions.getCachedData('videos');
     
     res.json({
       success: true,
@@ -2484,9 +2495,7 @@ app.get('/api/videos', async (req, res) => {
 // Get users data
 app.get('/api/users', async (req, res) => {
   try {
-    const data = await getCachedData('users',
-      'SELECT * FROM u130660877_zulu.users'
-    );
+    const data = await dbFunctions.getCachedData('users');
     
     res.json({
       success: true,
@@ -2502,18 +2511,15 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
-// Clear cache endpoint
+// Clear specific cache
 app.post('/api/clear-cache/:type', (req, res) => {
   const { type } = req.params;
   
   if (type === 'all') {
-    clearCache('products');
-    clearCache('sellers');
-    clearCache('videos');
-    clearCache('users');
+    dbFunctions.clearAllCaches();
     res.json({ success: true, message: 'All caches cleared' });
   } else if (['products', 'sellers', 'videos', 'users'].includes(type)) {
-    clearCache(type);
+    dbFunctions.clearCache(type);
     res.json({ success: true, message: `Cache cleared for ${type}` });
   } else {
     res.status(400).json({ success: false, error: 'Invalid cache type' });
@@ -2522,55 +2528,11 @@ app.post('/api/clear-cache/:type', (req, res) => {
 
 // Get cache status
 app.get('/api/cache-status', (req, res) => {
-  const status = getAllCacheStatus();
+  const status = dbFunctions.getAllCacheStatus();
   res.json({
     success: true,
     cacheStatus: status
   });
-});
-
-// Refresh data (clear and refetch)
-app.post('/api/refresh/:type', async (req, res) => {
-  const { type } = req.params;
-  
-  let query;
-  switch(type) {
-    case 'products':
-      query = 'SELECT * FROM u130660877_zulu.products';
-      break;
-    case 'sellers':
-      query = 'SELECT * FROM u130660877_zulu.seller_data';
-      break;
-    case 'videos':
-      query = 'SELECT * FROM u130660877_zulu.shop_able_videos';
-      break;
-    case 'users':
-      query = 'SELECT * FROM u130660877_zulu.users';
-      break;
-    default:
-      return res.status(400).json({ success: false, error: 'Invalid type' });
-  }
-  
-  try {
-    // Clear cache
-    clearCache(type);
-    
-    // Fetch fresh data (connection will be established automatically)
-    const data = await getCachedData(type, query);
-    
-    res.json({
-      success: true,
-      data: data,
-      count: data.length,
-      message: `${type} data refreshed successfully`
-    });
-  } catch (error) {
-    console.error(`❌ Error refreshing ${type}:`, error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
 });
 
 // -------------------------
@@ -2600,7 +2562,37 @@ app.get('/users', (req, res) => {
 // -------------------------
 // Root and other endpoints
 // -------------------------
-
+app.get('/status', (req, res) => {
+  res.json({ 
+    status: 'Zulu Club Chat Server with Authentication is running', 
+    service: 'Zulu Club Chat AI Assistant',
+    version: '1.0 - Unlimited Basic Access',
+    database: {
+      connected: dbFunctions ? true : false,
+      cache_ttl: '2 hours',
+      connection_timeout: '5 minutes'
+    },
+    endpoints: {
+      dashboard: '/',
+      products: '/products',
+      sellers: '/sellers',
+      videos: '/videos',
+      users: '/users',
+      chatbot: '/chatbot',
+      api_products: '/api/products',
+      api_sellers: '/api/sellers',
+      api_videos: '/api/videos',
+      api_users: '/api/users',
+      clear_cache: 'POST /api/clear-cache/:type',
+      cache_status: 'GET /api/cache-status'
+    },
+    cache_info: {
+      products: galleriesData.length,
+      sellers: sellersData.length
+    },
+    timestamp: new Date().toISOString()
+  });
+});
 app.get('/', (req, res) => {
   res.json({ 
     status: 'Zulu Club Chat Server with Authentication is running', 
