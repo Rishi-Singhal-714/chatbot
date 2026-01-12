@@ -2,46 +2,155 @@
 <html>
 <head>
     <title>Zulu Club Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        h3 {
+            color: #444;
+            margin: 20px 0 10px 0;
+        }
+        .main-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .main-buttons button {
+            padding: 15px 25px;
+            font-size: 16px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .main-buttons button:hover {
+            background: #45a049;
+        }
+        .cache-controls {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        .cache-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .cache-buttons button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .clear-btn {
+            background: #f44336;
+            color: white;
+        }
+        .control-panel {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        .control-panel button {
+            padding: 12px 25px;
+            font-size: 16px;
+        }
+        .clear-all {
+            background: #ff9800;
+            color: white;
+        }
+        .check-status {
+            background: #9C27B0;
+            color: white;
+        }
+        #message {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+        #cacheStatus {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        #cacheStatus ul {
+            list-style: none;
+            padding: 0;
+        }
+        #cacheStatus li {
+            padding: 8px;
+            margin: 5px 0;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        hr {
+            margin: 30px 0;
+            border: none;
+            border-top: 2px solid #ddd;
+        }
+        @media (max-width: 768px) {
+            body {
+                margin: 20px;
+            }
+            .main-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            .main-buttons button {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
 </head>
 <body>
     <h1>Zulu Club Dashboard</h1>
     
-    <div>
+    <div class="main-buttons">
         <button onclick="location.href='/products'">📦 Products</button>
         <button onclick="location.href='/sellers'">🏪 Sellers</button>
         <button onclick="location.href='/videos'">🎬 Videos</button>
         <button onclick="location.href='/users'">👤 Users</button>
-        <button onclick="location.href='/chatbot'">🤖 Chatbot</button>
+        <button onclick="location.href='/chat'">🤖 Chatbot</button>
     </div>
     
     <hr>
     
-    <div>
+    <div class="cache-controls">
         <h3>Cache Controls</h3>
+        <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
+            Data is cached for 2 hours. Clear cache to force fresh data from database.<br>
+            Database connection automatically closes after 5 minutes of inactivity.
+        </p>
         
-        <div>
-            <button onclick="refreshData('products')">🔄 Refresh Products</button>
-            <button onclick="clearCache('products')">🗑️ Clear Products Cache</button>
+        <div class="cache-buttons">
+            <button class="clear-btn" onclick="clearCache('products')">🗑️ Clear Products Cache</button>
+            <button class="clear-btn" onclick="clearCache('sellers')">🗑️ Clear Sellers Cache</button>
+            <button class="clear-btn" onclick="clearCache('videos')">🗑️ Clear Videos Cache</button>
+            <button class="clear-btn" onclick="clearCache('users')">🗑️ Clear Users Cache</button>
         </div>
         
-        <div>
-            <button onclick="refreshData('sellers')">🔄 Refresh Sellers</button>
-            <button onclick="clearCache('sellers')">🗑️ Clear Sellers Cache</button>
-        </div>
-        
-        <div>
-            <button onclick="refreshData('videos')">🔄 Refresh Videos</button>
-            <button onclick="clearCache('videos')">🗑️ Clear Videos Cache</button>
-        </div>
-        
-        <div>
-            <button onclick="refreshData('users')">🔄 Refresh Users</button>
-            <button onclick="clearCache('users')">🗑️ Clear Users Cache</button>
-        </div>
-        
-        <div>
-            <button onclick="clearAllCache()">🔥 Clear All Caches</button>
-            <button onclick="checkCacheStatus()">🔍 Check Cache Status</button>
+        <div class="control-panel">
+            <button class="clear-all" onclick="clearAllCache()">🔥 Clear All Caches</button>
+            <button class="check-status" onclick="checkCacheStatus()">🔍 Check Cache Status</button>
         </div>
     </div>
     
@@ -49,28 +158,13 @@
     <div id="cacheStatus" style="margin-top: 20px;"></div>
 
     <script>
-        async function refreshData(type) {
-            try {
-                const response = await fetch(`/api/refresh/${type}`, { method: 'POST' });
-                const data = await response.json();
-                
-                if (data.success) {
-                    showMessage(`✅ ${data.message} (${data.count} records)`);
-                } else {
-                    showMessage(`❌ Error: ${data.error}`, 'error');
-                }
-            } catch (error) {
-                showMessage(`❌ Network error: ${error.message}`, 'error');
-            }
-        }
-        
         async function clearCache(type) {
             try {
                 const response = await fetch(`/api/clear-cache/${type}`, { method: 'POST' });
                 const data = await response.json();
                 
                 if (data.success) {
-                    showMessage(`✅ ${data.message}`);
+                    showMessage(`✅ ${data.message}`, 'success');
                 } else {
                     showMessage(`❌ Error: ${data.error}`, 'error');
                 }
@@ -85,7 +179,7 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    showMessage(`✅ ${data.message}`);
+                    showMessage(`✅ ${data.message}`, 'success');
                 } else {
                     showMessage(`❌ Error: ${data.error}`, 'error');
                 }
@@ -103,17 +197,29 @@
                     let html = '<h4>Cache Status (2 hours TTL):</h4><ul>';
                     
                     Object.keys(data.cacheStatus).forEach(key => {
-                        const status = data.cacheStatus[key];
-                        const cacheType = key.charAt(0).toUpperCase() + key.slice(1);
-                        
-                        html += `<li>${cacheType}: `;
-                        if (status.cached) {
-                            html += `✅ Cached (${status.dataCount} records, ${Math.floor(status.age/60)} min old)`;
-                        } else {
-                            html += `❌ Not cached`;
+                        if (key !== 'connection') {
+                            const status = data.cacheStatus[key];
+                            const cacheType = key.charAt(0).toUpperCase() + key.slice(1);
+                            
+                            html += `<li>${cacheType}: `;
+                            if (status.cached) {
+                                html += `✅ Cached (${status.dataCount} records, ${Math.floor(status.age/60)} min old)`;
+                            } else {
+                                html += `❌ Not cached`;
+                            }
+                            html += `</li>`;
                         }
-                        html += `</li>`;
                     });
+                    
+                    // Add connection status
+                    const conn = data.cacheStatus.connection;
+                    html += '<hr style="margin: 15px 0;">';
+                    html += '<h4>Database Connection:</h4>';
+                    html += `<li>Status: ${conn.active ? '✅ Active' : '❌ Closed'}</li>`;
+                    if (conn.active) {
+                        html += `<li>Idle for: ${conn.idleTime} seconds</li>`;
+                    }
+                    html += `<li>Auto-close: After 5 minutes idle</li>`;
                     
                     html += '</ul>';
                     document.getElementById('cacheStatus').innerHTML = html;
@@ -126,13 +232,13 @@
         function showMessage(text, type = 'success') {
             const messageDiv = document.getElementById('message');
             messageDiv.textContent = text;
-            messageDiv.style.color = type === 'error' ? 'red' : 'green';
-            messageDiv.style.margin = '10px 0';
-            messageDiv.style.padding = '10px';
-            messageDiv.style.border = '1px solid ' + (type === 'error' ? 'red' : 'green');
+            messageDiv.style.color = type === 'error' ? '#721c24' : '#155724';
+            messageDiv.style.background = type === 'error' ? '#f8d7da' : '#d4edda';
+            messageDiv.style.border = `1px solid ${type === 'error' ? '#f5c6cb' : '#c3e6cb'}`;
             
             setTimeout(() => {
                 messageDiv.textContent = '';
+                messageDiv.style.background = '';
                 messageDiv.style.border = 'none';
             }, 5000);
         }
