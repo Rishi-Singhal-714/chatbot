@@ -6,8 +6,8 @@ const dbConfig = {
   user: process.env.DB_USER || '',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_DATABASE || 'u130660877_zulu',
-  waitForConnections: false, // Changed to false to control connections manually
-  connectionLimit: 3, // Only 1 connection at a time
+  waitForConnections: false, // Don't auto-create connections
+  connectionLimit: 3, // Only 1 connection
   queueLimit: 0
 };
 
@@ -15,14 +15,14 @@ const dbConfig = {
 let pool = null;
 let isConnectionActive = false;
 let lastQueryTime = 0;
-const CONNECTION_TIMEOUT = 10000; // Kill connection after 10 seconds of inactivity
+const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
 // In-memory cache (2 hours = 7200000 ms)
 const cache = {
-  products: { data: null, timestamp: 0 },
-  sellers: { data: null, timestamp: 0 },
-  videos: { data: null, timestamp: 0 },
-  users: { data: null, timestamp: 0 }
+  products: { data: null, timestamp: 0, query: 'SELECT * FROM u130660877_zulu.products LIMIT 1000' },
+  sellers: { data: null, timestamp: 0, query: 'SELECT * FROM u130660877_zulu.seller_data LIMIT 1000' },
+  videos: { data: null, timestamp: 0, query: 'SELECT * FROM u130660877_zulu.shop_able_videos LIMIT 1000' },
+  users: { data: null, timestamp: 0, query: 'SELECT * FROM u130660877_zulu.users LIMIT 1000' }
 };
 
 const CACHE_TTL = 7200000; // 2 hours
@@ -61,13 +61,13 @@ function closeConnectionPool() {
   }
 }
 
-// Schedule connection cleanup
+// Schedule connection cleanup every 5 minutes
 function scheduleConnectionCleanup() {
   // Check every minute for inactive connections
   setInterval(() => {
     const now = Date.now();
-    if (isConnectionActive && pool && (now - lastQueryTime) > CONNECTION_TIMEOUT) {
-      console.log('🕐 Closing inactive database connection (10 seconds idle)');
+    if (isConnectionActive && pool && (now - lastQueryTime) > INACTIVITY_TIMEOUT) {
+      console.log('🕐 Closing inactive database connection (5 minutes idle)');
       closeConnectionPool();
     }
   }, 60000); // Check every minute
@@ -87,7 +87,7 @@ function ensureConnection() {
   }
   
   // If connection has been idle for too long, close and recreate
-  if ((now - lastQueryTime) > CONNECTION_TIMEOUT) {
+  if ((now - lastQueryTime) > INACTIVITY_TIMEOUT) {
     console.log('🕐 Connection idle for too long, recreating...');
     closeConnectionPool();
     createConnectionPool();
@@ -114,15 +114,6 @@ function executeQuery(query) {
     pool.getConnection((err, connection) => {
       if (err) {
         console.error('❌ Database connection error:', err);
-        
-        // Try to recreate connection on error
-        try {
-          closeConnectionPool();
-          createConnectionPool();
-        } catch (e) {
-          console.error('❌ Failed to recreate connection:', e);
-        }
-        
         reject(err);
         return;
       }
@@ -139,13 +130,11 @@ function executeQuery(query) {
         
         console.log(`✅ Query successful, ${results.length} rows returned`);
         
-        // Schedule connection cleanup after query (but keep it open for a bit)
+        // Close connection after successful query (delayed)
         setTimeout(() => {
-          const now = Date.now();
-          if ((now - lastQueryTime) > CONNECTION_TIMEOUT) {
-            closeConnectionPool();
-          }
-        }, CONNECTION_TIMEOUT);
+          console.log('🔌 Closing connection after query execution');
+          closeConnectionPool();
+        }, 3000); // Wait 3 seconds before closing
         
         resolve(results);
       });
@@ -153,36 +142,24 @@ function executeQuery(query) {
   });
 }
 
-// Force connection refresh (for manual button clicks)
-function refreshConnection() {
-  console.log('🔄 Manually refreshing database connection...');
-  closeConnectionPool();
-  createConnectionPool();
-  return true;
-}
-
 // Get cached data or fetch from database
-async function getCachedData(type, query, forceRefresh = false) {
+async function getCachedData(type) {
   const now = Date.now();
   
-  // Check cache if not forcing refresh
-  if (!forceRefresh && cache[type].data && (now - cache[type].timestamp) < CACHE_TTL) {
+  // Check cache
+  if (cache[type].data && (now - cache[type].timestamp) < CACHE_TTL) {
     console.log(`📦 Returning cached ${type} data (no DB connection needed)`);
     return cache[type].data;
   }
   
   // Fetch from database (connection will be established automatically)
   console.log(`🔄 Fetching ${type} from database...`);
+  const query = cache[type].query;
   const data = await executeQuery(query);
   
   // Update cache
   cache[type].data = data;
   cache[type].timestamp = now;
-  
-  // Close connection after successful query (delayed)
-  setTimeout(() => {
-    closeConnectionPool();
-  }, 5000); // Wait 5 seconds before closing in case more queries come
   
   return data;
 }
@@ -194,6 +171,15 @@ function clearCache(type) {
     cache[type].timestamp = 0;
     console.log(`🧹 Cleared cache for ${type}`);
   }
+}
+
+// Clear all caches
+function clearAllCaches() {
+  Object.keys(cache).forEach(key => {
+    cache[key].data = null;
+    cache[key].timestamp = 0;
+  });
+  console.log('🧹 Cleared all caches');
 }
 
 // Get cache status for all types
@@ -209,7 +195,8 @@ function getAllCacheStatus() {
       cached: isCached,
       timestamp: item.timestamp,
       age: isCached ? Math.floor((now - item.timestamp) / 1000) : null,
-      dataCount: item.data ? item.data.length : 0
+      dataCount: item.data ? item.data.length : 0,
+      query: item.query
     };
   });
   
@@ -224,20 +211,12 @@ function getAllCacheStatus() {
   return status;
 }
 
-// Initialize connection on module load (optional)
-// Don't create connection immediately, wait for first query
-console.log('📊 Database module loaded. Connection will be created on demand.');
+// Initialize without connection
+console.log('📊 Database module loaded. Connection will be created on first query.');
 
 module.exports = {
-  executeQuery,
   getCachedData,
-  updateCache: (type, data) => {
-    cache[type].data = data;
-    cache[type].timestamp = Date.now();
-  },
   clearCache,
-  getAllCacheStatus,
-  refreshConnection, // Export the refresh function
-  closeConnectionPool, // Export for manual control
-  createConnectionPool // Export for manual control
+  clearAllCaches,
+  getAllCacheStatus
 };
