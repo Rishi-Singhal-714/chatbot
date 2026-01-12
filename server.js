@@ -7,7 +7,8 @@ const preIntentFilter = require('./preintentfilter');
 const { google } = require('googleapis'); 
 const app = express();
 const crypto = require('crypto');
-
+// Import database functions
+const { executeQuery, getCachedData, updateCache, clearCache, getAllCacheStatus } = require('./requestData');
 // Load admin users (you'll need to create this file)
 let adminUsers = [];
 try {
@@ -2337,38 +2338,192 @@ app.get('/chat/history/:sessionId', async (req, res) => {
 });
 
 // -------------------------
-// Root and other endpoints
+// New Database Endpoints
 // -------------------------
-app.get('/', (req, res) => {
-  res.json({ 
-    status: 'Zulu Club Chat Server with Authentication is running', 
-    service: 'Zulu Club Chat AI Assistant',
-    version: '1.0 - Unlimited Basic Access',
-    employee_numbers: EMPLOYEE_NUMBERS,
-    endpoints: {
-      chat_interface: '/chat',
-      create_session: 'POST /chat/create-session',
-      send_otp: 'POST /auth/send-otp',
-      verify_otp: 'POST /auth/verify-otp',
-      check_status: 'POST /auth/check-status',
-      logout: 'POST /auth/logout',
-      send_message: 'POST /chat/message',
-      get_history: 'GET /chat/history/:sessionId'
-    },
-    stats: {
-      product_categories_loaded: galleriesData.length,
-      sellers_loaded: sellersData.length,
-      active_conversations: Object.keys(conversations).length,
-      verified_users: Object.keys(verifiedUsers).length
-    },
-    access_model: {
-      unauthenticated: 'Company & Product intents only (unlimited)',
-      authenticated: 'All intents (seller, investors, agent, voice_ai)',
-      authentication_required: 'For seller, investors, agent, and voice_ai features'
-    },
-    timestamp: new Date().toISOString()
+
+// Get products data
+app.get('/api/products', async (req, res) => {
+  try {
+    const data = await getCachedData('products', 
+      'SELECT * FROM u130660877_zulu.products'
+    );
+    
+    res.json({
+      success: true,
+      data: data,
+      count: data.length
+    });
+  } catch (error) {
+    console.error('❌ Error fetching products:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get sellers data
+app.get('/api/sellers', async (req, res) => {
+  try {
+    const data = await getCachedData('sellers',
+      'SELECT * FROM u130660877_zulu.seller_data'
+    );
+    
+    res.json({
+      success: true,
+      data: data,
+      count: data.length
+    });
+  } catch (error) {
+    console.error('❌ Error fetching sellers:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get videos data
+app.get('/api/videos', async (req, res) => {
+  try {
+    const data = await getCachedData('videos',
+      'SELECT * FROM u130660877_zulu.shop_able_videos'
+    );
+    
+    res.json({
+      success: true,
+      data: data,
+      count: data.length
+    });
+  } catch (error) {
+    console.error('❌ Error fetching videos:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get users data
+app.get('/api/users', async (req, res) => {
+  try {
+    const data = await getCachedData('users',
+      'SELECT * FROM u130660877_zulu.users'
+    );
+    
+    res.json({
+      success: true,
+      data: data,
+      count: data.length
+    });
+  } catch (error) {
+    console.error('❌ Error fetching users:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Clear cache endpoint
+app.post('/api/clear-cache/:type', (req, res) => {
+  const { type } = req.params;
+  
+  if (type === 'all') {
+    clearCache('products');
+    clearCache('sellers');
+    clearCache('videos');
+    clearCache('users');
+    res.json({ success: true, message: 'All caches cleared' });
+  } else if (['products', 'sellers', 'videos', 'users'].includes(type)) {
+    clearCache(type);
+    res.json({ success: true, message: `Cache cleared for ${type}` });
+  } else {
+    res.status(400).json({ success: false, error: 'Invalid cache type' });
+  }
+});
+
+// Get cache status
+app.get('/api/cache-status', (req, res) => {
+  const status = getAllCacheStatus();
+  res.json({
+    success: true,
+    cacheStatus: status
   });
 });
+
+// Refresh data (clear and refetch)
+app.post('/api/refresh/:type', async (req, res) => {
+  const { type } = req.params;
+  
+  let query;
+  switch(type) {
+    case 'products':
+      query = 'SELECT * FROM u130660877_zulu.products';
+      break;
+    case 'sellers':
+      query = 'SELECT * FROM u130660877_zulu.seller_data';
+      break;
+    case 'videos':
+      query = 'SELECT * FROM u130660877_zulu.shop_able_videos';
+      break;
+    case 'users':
+      query = 'SELECT * FROM u130660877_zulu.users';
+      break;
+    default:
+      return res.status(400).json({ success: false, error: 'Invalid type' });
+  }
+  
+  try {
+    // Clear cache
+    clearCache(type);
+    
+    // Fetch fresh data
+    const data = await getCachedData(type, query, true);
+    
+    res.json({
+      success: true,
+      data: data,
+      count: data.length,
+      message: `${type} data refreshed successfully`
+    });
+  } catch (error) {
+    console.error(`❌ Error refreshing ${type}:`, error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// -------------------------
+// HTML Pages
+// -------------------------
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
+});
+
+app.get('/products', (req, res) => {
+  res.sendFile(__dirname + '/public/products.html');
+});
+
+app.get('/sellers', (req, res) => {
+  res.sendFile(__dirname + '/public/sellers.html');
+});
+
+app.get('/videos', (req, res) => {
+  res.sendFile(__dirname + '/public/videos.html');
+});
+
+app.get('/users', (req, res) => {
+  res.sendFile(__dirname + '/public/users.html');
+});
+
+
+// -------------------------
+// Root and other endpoints
+// -------------------------
+
 
 app.get('/refresh-csv', async (req, res) => {
   try {
