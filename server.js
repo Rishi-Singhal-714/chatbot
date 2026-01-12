@@ -7,8 +7,15 @@ const preIntentFilter = require('./preintentfilter');
 const { google } = require('googleapis'); 
 const app = express();
 const crypto = require('crypto');
-// Import database functions
-const { executeQuery, getCachedData, updateCache, clearCache, getAllCacheStatus } = require('./requestData');
+// Import database functions - with connection management
+const { 
+  getCachedData, 
+  clearCache, 
+  getAllCacheStatus, 
+  refreshConnection,
+  closeConnectionPool,
+  createConnectionPool 
+} = require('./requestData');
 // Load admin users (you'll need to create this file)
 let adminUsers = [];
 try {
@@ -2340,7 +2347,77 @@ app.get('/chat/history/:sessionId', async (req, res) => {
 // -------------------------
 // New Database Endpoints
 // -------------------------
+// Refresh database connection
+app.post('/api/refresh-connection', (req, res) => {
+  try {
+    if (refreshConnection) {
+      refreshConnection();
+      res.json({ 
+        success: true, 
+        message: 'Database connection refreshed successfully' 
+      });
+    } else {
+      res.json({ 
+        success: true, 
+        message: 'Connection refresh function not available' 
+      });
+    }
+  } catch (error) {
+    console.error('❌ Error refreshing connection:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 
+// Close database connection
+app.post('/api/close-connection', (req, res) => {
+  try {
+    if (closeConnectionPool) {
+      closeConnectionPool();
+      res.json({ 
+        success: true, 
+        message: 'Database connection closed successfully' 
+      });
+    } else {
+      res.json({ 
+        success: true, 
+        message: 'Connection close function not available' 
+      });
+    }
+  } catch (error) {
+    console.error('❌ Error closing connection:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Create database connection
+app.post('/api/create-connection', (req, res) => {
+  try {
+    if (createConnectionPool) {
+      createConnectionPool();
+      res.json({ 
+        success: true, 
+        message: 'Database connection created successfully' 
+      });
+    } else {
+      res.json({ 
+        success: true, 
+        message: 'Connection create function not available' 
+      });
+    }
+  } catch (error) {
+    console.error('❌ Error creating connection:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 // Get products data
 app.get('/api/products', async (req, res) => {
   try {
@@ -2478,8 +2555,8 @@ app.post('/api/refresh/:type', async (req, res) => {
     // Clear cache
     clearCache(type);
     
-    // Fetch fresh data
-    const data = await getCachedData(type, query, true);
+    // Fetch fresh data (connection will be established automatically)
+    const data = await getCachedData(type, query);
     
     res.json({
       success: true,
