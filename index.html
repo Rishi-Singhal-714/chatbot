@@ -124,13 +124,14 @@
 <body>
     <h1>Zulu Club Dashboard</h1>
     
-    <div class="main-buttons">
-        <button onclick="location.href='/products'">📦 Products</button>
-        <button onclick="location.href='/sellers'">🏪 Sellers</button>
-        <button onclick="location.href='/videos'">🎬 Videos</button>
-        <button onclick="location.href='/users'">👤 Users</button>
-        <button onclick="location.href='/chat'">🤖 Chatbot</button>
-    </div>
+<div class="main-buttons">
+    <button onclick="location.href='/products'">📦 Products</button>
+    <button onclick="location.href='/sellers'">🏪 Sellers</button>
+    <button onclick="location.href='/videos'">🎬 Videos</button>
+    <button onclick="location.href='/users'">👤 Users</button>
+    <button onclick="location.href='/galleries'">🖼️ Galleries</button>
+    <button onclick="location.href='/chat'">🤖 Chatbot</button>
+</div>
     
     <hr>
     
@@ -141,12 +142,13 @@
             Database connection automatically closes after 5 minutes of inactivity.
         </p>
         
-        <div class="cache-buttons">
-            <button class="clear-btn" onclick="clearCache('products')">🗑️ Clear Products Cache</button>
-            <button class="clear-btn" onclick="clearCache('sellers')">🗑️ Clear Sellers Cache</button>
-            <button class="clear-btn" onclick="clearCache('videos')">🗑️ Clear Videos Cache</button>
-            <button class="clear-btn" onclick="clearCache('users')">🗑️ Clear Users Cache</button>
-        </div>
+<div class="cache-buttons">
+    <button class="clear-btn" onclick="clearCache('products')">🗑️ Clear Products Cache</button>
+    <button class="clear-btn" onclick="clearCache('sellers')">🗑️ Clear Sellers Cache</button>
+    <button class="clear-btn" onclick="clearCache('videos')">🗑️ Clear Videos Cache</button>
+    <button class="clear-btn" onclick="clearCache('users')">🗑️ Clear Users Cache</button>
+    <button class="clear-btn" onclick="clearCache('galleries')">🗑️ Clear Galleries Cache</button>
+</div>
         
         <div class="control-panel">
             <button class="clear-all" onclick="clearAllCache()">🔥 Clear All Caches</button>
@@ -189,45 +191,45 @@
         }
         
         async function checkCacheStatus() {
-            try {
-                const response = await fetch('/api/cache-status');
-                const data = await response.json();
-                
-                if (data.success) {
-                    let html = '<h4>Cache Status (2 hours TTL):</h4><ul>';
+    try {
+        const response = await fetch('/api/cache-status');
+        const data = await response.json();
+        
+        if (data.success) {
+            let html = '<h4>Cache Status (2 hours TTL):</h4><ul>';
+            
+            Object.keys(data.cacheStatus).forEach(key => {
+                if (key !== 'connection') {
+                    const status = data.cacheStatus[key];
+                    const cacheType = key.charAt(0).toUpperCase() + key.slice(1);
                     
-                    Object.keys(data.cacheStatus).forEach(key => {
-                        if (key !== 'connection') {
-                            const status = data.cacheStatus[key];
-                            const cacheType = key.charAt(0).toUpperCase() + key.slice(1);
-                            
-                            html += `<li>${cacheType}: `;
-                            if (status.cached) {
-                                html += `✅ Cached (${status.dataCount} records, ${Math.floor(status.age/60)} min old)`;
-                            } else {
-                                html += `❌ Not cached`;
-                            }
-                            html += `</li>`;
-                        }
-                    });
-                    
-                    // Add connection status
-                    const conn = data.cacheStatus.connection;
-                    html += '<hr style="margin: 15px 0;">';
-                    html += '<h4>Database Connection:</h4>';
-                    html += `<li>Status: ${conn.active ? '✅ Active' : '❌ Closed'}</li>`;
-                    if (conn.active) {
-                        html += `<li>Idle for: ${conn.idleTime} seconds</li>`;
+                    html += `<li>${cacheType}: `;
+                    if (status.cached) {
+                        html += `✅ Cached (${status.dataCount} records, ${Math.floor(status.age/60)} min old)`;
+                    } else {
+                        html += `❌ Not cached`;
                     }
-                    html += `<li>Auto-close: After 5 minutes idle</li>`;
-                    
-                    html += '</ul>';
-                    document.getElementById('cacheStatus').innerHTML = html;
+                    html += `</li>`;
                 }
-            } catch (error) {
-                showMessage(`❌ Error checking cache: ${error.message}`, 'error');
+            });
+            
+            // Add connection status
+            const conn = data.cacheStatus.connection;
+            html += '<hr style="margin: 15px 0;">';
+            html += '<h4>Database Connection:</h4>';
+            html += `<li>Status: ${conn.active ? '✅ Active' : '❌ Closed'}</li>`;
+            if (conn.active) {
+                html += `<li>Idle for: ${conn.idleTime} seconds</li>`;
             }
+            html += `<li>Auto-close: After 5 minutes idle</li>`;
+            
+            html += '</ul>';
+            document.getElementById('cacheStatus').innerHTML = html;
         }
+    } catch (error) {
+        showMessage(`❌ Error checking cache: ${error.message}`, 'error');
+    }
+}
         
         function showMessage(text, type = 'success') {
             const messageDiv = document.getElementById('message');
