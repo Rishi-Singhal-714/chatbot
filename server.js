@@ -2453,7 +2453,24 @@ app.get('/api/products', async (req, res) => {
     });
   }
 });
-
+// Get galleries data
+app.get('/api/galleries', async (req, res) => {
+  try {
+    const data = await dbFunctions.getCachedData('galleries');
+    
+    res.json({
+      success: true,
+      data: data,
+      count: data.length
+    });
+  } catch (error) {
+    console.error('❌ Error fetching galleries:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 // Get sellers data
 app.get('/api/sellers', async (req, res) => {
   try {
@@ -2518,7 +2535,7 @@ app.post('/api/clear-cache/:type', (req, res) => {
   if (type === 'all') {
     dbFunctions.clearAllCaches();
     res.json({ success: true, message: 'All caches cleared' });
-  } else if (['products', 'sellers', 'videos', 'users'].includes(type)) {
+  } else if (['products', 'sellers', 'videos', 'users', 'galleries'].includes(type)) {
     dbFunctions.clearCache(type);
     res.json({ success: true, message: `Cache cleared for ${type}` });
   } else {
@@ -2556,6 +2573,11 @@ app.get('/videos', (req, res) => {
 
 app.get('/users', (req, res) => {
   res.sendFile(__dirname + '/users.html');
+});
+
+// Galleries route
+app.get('/galleries', (req, res) => {
+res.sendFile(__dirname + '/galleries.html');
 });
 
 
