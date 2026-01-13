@@ -125,7 +125,45 @@ galleries: {
 	data: null, 
 	timestamp: 0, 
 	query: 
-		'SELECT * FROM u130660877_zulu.galleries' 
+		'SELECT
+    id,
+    type1,
+    type2,
+    heading,
+    description,
+    name,
+    cat_id,
+    seller_id,
+    status,
+    display,
+    componentiIds,
+    cat1,
+    image1,
+    image2,
+    image3,
+    image4,
+    aspect_ratio,
+    type,
+    bottom_bar,
+    subtitle,
+    title,
+    tags,
+    bottom_slider,
+    created_at,
+    updated_at,
+    cat1_names,
+    shopable_video_ids,
+    business_id,
+    priority,
+    version,
+    tracking_bar,
+    show_title,
+    show_subtitle,
+    showBanner,
+    showVideos,
+    showProducts
+FROM u130660877_zulu.galleries;
+' 
 }
 };
 
