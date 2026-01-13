@@ -2372,6 +2372,27 @@ app.get('/chat/history/:sessionId', async (req, res) => {
 // -------------------------
 // New Database Endpoints
 // -------------------------
+// Main server file - Add this endpoint
+
+// Get product stats by updater
+app.get('/api/product-stats-by-updater', async (req, res) => {
+  try {
+    const data = await db.getProductStatsByUpdater();
+    
+    res.json({
+      success: true,
+      data: data,
+      count: data.length,
+      lastUpdated: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Error fetching product stats by updater:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 // Refresh database connection
 app.post('/api/refresh-connection', (req, res) => {
   try {
