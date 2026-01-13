@@ -119,6 +119,36 @@
                 max-width: 300px;
             }
         }
+        table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background: white;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+th {
+  background: #4CAF50;
+  color: white;
+  padding: 12px 15px;
+  text-align: left;
+  font-weight: bold;
+}
+
+td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #eee;
+}
+
+tr:hover {
+  background-color: #f5f5f5;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
     </style>
 </head>
 <body>
@@ -148,6 +178,7 @@
     <button class="clear-btn" onclick="clearCache('videos')">🗑️ Clear Videos Cache</button>
     <button class="clear-btn" onclick="clearCache('users')">🗑️ Clear Users Cache</button>
     <button class="clear-btn" onclick="clearCache('galleries')">🗑️ Clear Galleries Cache</button>
+    <button class="clear-btn" onclick="getProductStats()">📊 Product Stats by Updater</button>
 </div>
         
         <div class="control-panel">
@@ -244,6 +275,49 @@
                 messageDiv.style.border = 'none';
             }, 5000);
         }
+        // In index.html, add this function to the script section:
+async function getProductStats() {
+  try {
+    const response = await fetch('/api/product-stats-by-updater');
+    const data = await response.json();
+    
+    if (data.success) {
+      // Format the data as a table
+      let html = '<h4>Product Stats by Updater:</h4>';
+      html += '<p>Showing who updated products and how many:</p>';
+      
+      if (data.data.length === 0) {
+        html += '<p>No data available.</p>';
+      } else {
+        html += '<table style="width:100%; border-collapse:collapse; margin-top:20px;">';
+        html += '<thead><tr style="background:#4CAF50; color:white;">';
+        html += '<th style="padding:10px; text-align:left;">Updater</th>';
+        html += '<th style="padding:10px; text-align:left;">Total Products</th>';
+        html += '</tr></thead>';
+        html += '<tbody>';
+        
+        data.data.forEach(item => {
+          html += '<tr style="border-bottom:1px solid #ddd;">';
+          html += `<td style="padding:10px;">${item.Updated_by || 'Unknown'}</td>`;
+          html += `<td style="padding:10px;">${item.total_products}</td>`;
+          html += '</tr>';
+        });
+        
+        html += '</tbody>';
+        html += '</table>';
+        html += `<p style="margin-top:10px; color:#666;">Total updaters: ${data.count}</p>`;
+      }
+      
+      // Display in the cacheStatus div
+      document.getElementById('cacheStatus').innerHTML = html;
+      showMessage('✅ Product stats loaded successfully', 'success');
+    } else {
+      showMessage(`❌ Error: ${data.error}`, 'error');
+    }
+  } catch (error) {
+    showMessage(`❌ Network error: ${error.message}`, 'error');
+  }
+}
     </script>
 </body>
 </html>
