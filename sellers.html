@@ -281,15 +281,11 @@
         
         function applyFilter() {
             if (showOnlyLiveOutlets && allData.length > 0) {
-                // Filter to show only live outlets
+                // Filter to show only live outlets (string "on")
                 currentData = allData.filter(seller => {
                     const outletLive = seller.outlet_live;
-                    // Check if outlet_live is true (could be 1, '1', 'true', true, etc.)
-                    return outletLive === true || 
-                           outletLive === 1 || 
-                           outletLive === '1' || 
-                           String(outletLive).toLowerCase() === 'true' ||
-                           String(outletLive).toLowerCase() === 'yes';
+                    // Check if outlet_live is string "on" (case-insensitive)
+                    return String(outletLive).toLowerCase() === 'on';
                 });
             } else {
                 // Show all sellers
@@ -300,7 +296,7 @@
                 displayData(currentData);
             } else {
                 document.getElementById('dataContainer').innerHTML = 
-                    '<div style="padding: 40px; text-align: center; color: #666;">No data to display</div>';
+                    '<div style="padding: 40px; text-align: center; color: #666;">No live outlets found</div>';
             }
             updateFilterButton();
         }
@@ -341,14 +337,18 @@
             
             const liveCount = allData.filter(seller => {
                 const outletLive = seller.outlet_live;
-                return outletLive === true || 
-                       outletLive === 1 || 
-                       outletLive === '1' || 
-                       String(outletLive).toLowerCase() === 'true' ||
-                       String(outletLive).toLowerCase() === 'yes';
+                // Count only "on" (string, case-insensitive)
+                return String(outletLive).toLowerCase() === 'on';
             }).length;
             
-            const inactiveCount = allData.length - liveCount;
+            const inactiveCount = allData.filter(seller => {
+                const outletLive = seller.outlet_live;
+                // Count "off" or any other value
+                return String(outletLive).toLowerCase() === 'off' || 
+                       outletLive === null || 
+                       outletLive === undefined || 
+                       outletLive === '';
+            }).length;
             
             document.getElementById('liveCount').textContent = liveCount;
             document.getElementById('inactiveCount').textContent = inactiveCount;
@@ -386,18 +386,15 @@
             // Create header row
             html += '<tr>';
             headers.forEach(header => {
-                html += `<th>${header}</th>`;
+                const displayHeader = header.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                html += `<th>${displayHeader}</th>`;
             });
             html += '</tr>';
             
             // Create data rows
             data.forEach(row => {
                 const outletLive = row.outlet_live;
-                const isLive = outletLive === true || 
-                               outletLive === 1 || 
-                               outletLive === '1' || 
-                               String(outletLive).toLowerCase() === 'true' ||
-                               String(outletLive).toLowerCase() === 'yes';
+                const isLive = String(outletLive).toLowerCase() === 'on';
                 
                 html += '<tr>';
                 headers.forEach(header => {
@@ -414,14 +411,19 @@
                     // Add special styling for outlet_live column
                     let cellStyle = '';
                     if (header === 'outlet_live') {
-                        cellStyle = isLive ? 'color: #4CAF50; font-weight: bold;' : 'color: #f44336;';
+                        if (isLive) {
+                            cellStyle = 'color: #4CAF50; font-weight: bold; background-color: #e8f5e9;';
+                        } else {
+                            cellStyle = 'color: #f44336; background-color: #ffebee;';
+                        }
                     }
                     
                     const displayValue = String(value);
                     const truncatedValue = displayValue.substring(0, 50);
                     const isTruncated = displayValue.length > 50;
+                    const titleText = displayValue.length > 50 ? displayValue : '';
                     
-                    html += `<td title="${value}" style="${cellStyle}">${truncatedValue}${isTruncated ? '...' : ''}</td>`;
+                    html += `<td title="${titleText}" style="${cellStyle}">${truncatedValue}${isTruncated ? '...' : ''}</td>`;
                 });
                 html += '</tr>';
             });
