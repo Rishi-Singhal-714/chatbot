@@ -35,6 +35,13 @@
             background: #2196F3;
             color: white;
         }
+        .filter-btn {
+            background: #4CAF50;
+            color: white;
+        }
+        .filter-btn.inactive {
+            background: #f44336;
+        }
         #message {
             padding: 15px;
             border-radius: 5px;
@@ -101,6 +108,68 @@
             font-size: 14px;
             color: #ef6c00;
         }
+        .filter-controls {
+            background: #e8f5e9;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 30px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .toggle-slider {
+            background-color: #4CAF50;
+        }
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+        .stats-info {
+            font-size: 14px;
+            color: #333;
+        }
+        .stats-info span {
+            margin-right: 15px;
+        }
+        .stats-info .live {
+            color: #4CAF50;
+        }
+        .stats-info .inactive {
+            color: #f44336;
+        }
         @media (max-width: 768px) {
             body {
                 margin: 15px;
@@ -126,6 +195,22 @@
     <div class="controls">
         <button class="back-btn" onclick="location.href='/'">← Back to Dashboard</button>
         <button class="refresh-btn" onclick="loadData()">🔄 Refresh Data</button>
+        <button class="filter-btn" id="toggleFilterBtn" onclick="toggleFilter()">🟢 Live Outlets Only</button>
+    </div>
+    
+    <div class="filter-controls">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <label class="toggle-switch">
+                <input type="checkbox" id="outletLiveFilter" checked onchange="toggleOutletLiveFilter()">
+                <span class="toggle-slider"></span>
+            </label>
+            <span style="font-weight: bold;">Show Only Live Outlets</span>
+        </div>
+        <div class="stats-info">
+            <span class="live">🟢 Live: <span id="liveCount">0</span></span>
+            <span class="inactive">🔴 Inactive: <span id="inactiveCount">0</span></span>
+            <span>📊 Total: <span id="totalCount">0</span></span>
+        </div>
     </div>
     
     <div id="message"></div>
@@ -135,6 +220,11 @@
     <div id="dataContainer"></div>
 
     <script>
+        // Global variables
+        let currentData = [];
+        let allData = []; // Store all data for filtering
+        let showOnlyLiveOutlets = true; // Default filter is ON
+
         async function loadData() {
             document.getElementById('loading').style.display = 'block';
             document.getElementById('error').style.display = 'none';
@@ -145,8 +235,10 @@
                 const data = await response.json();
                 
                 if (data.success && data.data.length > 0) {
-                    displayData(data.data);
-                    showMessage(`✅ Loaded ${data.data.length} sellers`, 'success');
+                    allData = data.data;
+                    applyFilter();
+                    showMessage(`✅ Loaded ${allData.length} sellers`, 'success');
+                    updateStats();
                     
                     // Show cache info
                     const cacheDiv = document.createElement('div');
@@ -170,6 +262,78 @@
             }
         }
         
+        function applyFilter() {
+            if (showOnlyLiveOutlets) {
+                // Filter to show only live outlets
+                currentData = allData.filter(seller => {
+                    const outletLive = seller.outlet_live;
+                    // Check if outlet_live is true (could be 1, '1', 'true', true, etc.)
+                    return outletLive === true || 
+                           outletLive === 1 || 
+                           outletLive === '1' || 
+                           String(outletLive).toLowerCase() === 'true' ||
+                           String(outletLive).toLowerCase() === 'yes';
+                });
+            } else {
+                // Show all sellers
+                currentData = [...allData];
+            }
+            
+            displayData(currentData);
+            updateFilterButton();
+        }
+        
+        function toggleOutletLiveFilter() {
+            showOnlyLiveOutlets = document.getElementById('outletLiveFilter').checked;
+            applyFilter();
+            updateStats();
+            updateFilterMessage();
+        }
+        
+        function toggleFilter() {
+            showOnlyLiveOutlets = !showOnlyLiveOutlets;
+            document.getElementById('outletLiveFilter').checked = showOnlyLiveOutlets;
+            applyFilter();
+            updateStats();
+            updateFilterMessage();
+        }
+        
+        function updateFilterButton() {
+            const button = document.getElementById('toggleFilterBtn');
+            if (showOnlyLiveOutlets) {
+                button.textContent = '🟢 Live Outlets Only';
+                button.className = 'filter-btn';
+            } else {
+                button.textContent = '🔴 Show All Sellers';
+                button.className = 'filter-btn inactive';
+            }
+        }
+        
+        function updateStats() {
+            const liveCount = allData.filter(seller => {
+                const outletLive = seller.outlet_live;
+                return outletLive === true || 
+                       outletLive === 1 || 
+                       outletLive === '1' || 
+                       String(outletLive).toLowerCase() === 'true' ||
+                       String(outletLive).toLowerCase() === 'yes';
+            }).length;
+            
+            const inactiveCount = allData.length - liveCount;
+            
+            document.getElementById('liveCount').textContent = liveCount;
+            document.getElementById('inactiveCount').textContent = inactiveCount;
+            document.getElementById('totalCount').textContent = allData.length;
+        }
+        
+        function updateFilterMessage() {
+            if (showOnlyLiveOutlets) {
+                showMessage(`🟢 Showing ${currentData.length} live outlets (filtered from ${allData.length} total sellers)`, 'info');
+            } else {
+                showMessage(`📊 Showing all ${currentData.length} sellers`, 'info');
+            }
+        }
+        
         function displayData(data) {
             const container = document.getElementById('dataContainer');
             
@@ -183,12 +347,26 @@
             html += '</tr>';
             
             data.forEach(row => {
+                const outletLive = row.outlet_live;
+                const isLive = outletLive === true || 
+                               outletLive === 1 || 
+                               outletLive === '1' || 
+                               String(outletLive).toLowerCase() === 'true' ||
+                               String(outletLive).toLowerCase() === 'yes';
+                
                 html += '<tr>';
                 headers.forEach(header => {
                     let value = row[header];
                     if (value === null || value === undefined) value = '';
                     if (typeof value === 'object') value = JSON.stringify(value);
-                    html += `<td title="${value}">${String(value).substring(0, 50)}${String(value).length > 50 ? '...' : ''}</td>`;
+                    
+                    // Add special styling for outlet_live column
+                    let cellStyle = '';
+                    if (header === 'outlet_live') {
+                        cellStyle = isLive ? 'color: #4CAF50; font-weight: bold;' : 'color: #f44336;';
+                    }
+                    
+                    html += `<td title="${value}" style="${cellStyle}">${String(value).substring(0, 50)}${String(value).length > 50 ? '...' : ''}</td>`;
                 });
                 html += '</tr>';
             });
@@ -208,9 +386,12 @@
         function showMessage(text, type = 'success') {
             const messageDiv = document.getElementById('message');
             messageDiv.textContent = text;
-            messageDiv.style.color = type === 'error' ? '#721c24' : '#155724';
-            messageDiv.style.background = type === 'error' ? '#f8d7da' : '#d4edda';
-            messageDiv.style.border = `1px solid ${type === 'error' ? '#f5c6cb' : '#c3e6cb'}`;
+            messageDiv.style.color = type === 'error' ? '#721c24' : 
+                                   type === 'info' ? '#0c5460' : '#155724';
+            messageDiv.style.background = type === 'error' ? '#f8d7da' : 
+                                        type === 'info' ? '#d1ecf1' : '#d4edda';
+            messageDiv.style.border = `1px solid ${type === 'error' ? '#f5c6cb' : 
+                                      type === 'info' ? '#bee5eb' : '#c3e6cb'}`;
             
             setTimeout(() => {
                 messageDiv.textContent = '';
@@ -219,7 +400,12 @@
             }, 5000);
         }
         
-        document.addEventListener('DOMContentLoaded', loadData);
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default filter state
+            document.getElementById('outletLiveFilter').checked = showOnlyLiveOutlets;
+            updateFilterButton();
+            loadData();
+        });
     </script>
 </body>
 </html>
