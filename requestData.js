@@ -19,11 +19,108 @@ const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
 // In-memory cache (2 hours = 7200000 ms)
 const cache = {
-  products: { data: null, timestamp: 0, query: 'SELECT * FROM u130660877_zulu.products' },
-  sellers: { data: null, timestamp: 0, query: 'SELECT * FROM u130660877_zulu.seller_data' },
-  videos: { data: null, timestamp: 0, query: 'SELECT * FROM u130660877_zulu.shop_able_videos' },
-  users: { data: null, timestamp: 0, query: 'SELECT * FROM u130660877_zulu.users' }
+  products: {
+    data: null,
+    timestamp: 0,
+    query: `
+      SELECT
+        id,
+        status,
+        buy_now,
+        fabric1,
+        fabric2,
+        category_id,
+        seller_id,
+        tax,
+        row_order,
+        type,
+        stock_type,
+        name,
+        image,
+        other_images,
+        hsn_code,
+        brand,
+        sku,
+        stock,
+        availability,
+        description,
+        business_id,
+        whatsapp_toggle,
+        location,
+        priority,
+        retail_simple_price,
+        retail_simple_special_price,
+        short_description
+      FROM u130660877_zulu.products
+    `
+  },
+
+  sellers: {
+    data: null,
+    timestamp: 0,
+    query: `
+      SELECT
+        id,
+        user_id,
+        slug,
+        store_name,
+        store_description,
+        business,
+        category_ids,
+        categories_1,
+        market_place,
+        outlet_live,
+        buy_now,
+        accepting_orders,
+        call_outlet,
+        whatsapp_toggle,
+        outlet_type,
+        public_phone,
+        whatsapp,
+        instagram,
+        Address_Market
+      FROM u130660877_zulu.seller_data
+    `
+  },
+
+  users: {
+    data: null,
+    timestamp: 0,
+    query: `
+      SELECT
+        Id,
+        Name,
+        Phone,
+        \`E Mail\`,
+        preffered_outlets,
+        preffred_price_range,
+        trial_route,
+        frequency_of_mall_visit,
+        are_you_interested,
+        cohort1,
+        cohort2,
+        owner
+      FROM u130660877_zulu.users
+    `
+  },
+
+  videos: {
+    data: null,
+    timestamp: 0,
+    query: `
+      SELECT
+        id,
+        seller_id,
+        product_id,
+        video_url,
+        thumbnail,
+        status,
+        created_at
+      FROM u130660877_zulu.shop_able_videos
+    `
+  }
 };
+
 
 const CACHE_TTL = 7200000; // 2 hours
 
