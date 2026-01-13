@@ -481,5 +481,8 @@ module.exports = {
   // For debugging
   _getCache: () => cache,
   _getPool: () => pool,
-  _getConnectionStatus: () => ({ isConnectionActive, lastQueryTime })
+  _getConnectionStatus: () => ({ isConnectionActive, lastQueryTime }),
+  createConnectionPool: () => createConnectionPool(),
+  closeConnectionPool: () => closeConnectionPool(),
+  ensureConnection: () => ensureConnection()
 };
