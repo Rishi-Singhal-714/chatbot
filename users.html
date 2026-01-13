@@ -26,10 +26,11 @@
             border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
-            transition: opacity 0.3s;
+            transition: all 0.3s;
         }
         button:hover {
             opacity: 0.9;
+            transform: translateY(-2px);
         }
         button:disabled {
             opacity: 0.5;
@@ -42,25 +43,6 @@
         .refresh-btn {
             background: #2196F3;
             color: white;
-        }
-        .edit-btn {
-            background: #ffc107;
-            color: black;
-            padding: 5px 10px;
-            font-size: 12px;
-        }
-        .save-btn {
-            background: #28a745;
-            color: white;
-            padding: 5px 10px;
-            font-size: 12px;
-            margin-right: 5px;
-        }
-        .cancel-btn {
-            background: #dc3545;
-            color: white;
-            padding: 5px 10px;
-            font-size: 12px;
         }
         #message {
             padding: 15px;
@@ -107,6 +89,11 @@
             text-align: left;
             position: sticky;
             top: 0;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        th:hover {
+            background: #0b7dda;
         }
         td {
             padding: 10px 15px;
@@ -115,18 +102,34 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
         }
-        tr:hover {
+        td.editable:hover {
+            background: #f0f8ff;
+            transform: scale(1.02);
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);
+            z-index: 1;
+        }
+        td.editable::after {
+            content: '✏️';
+            position: absolute;
+            top: 50%;
+            right: 5px;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 10px;
+        }
+        td.editable:hover::after {
+            opacity: 1;
+        }
+        tr:hover td {
             background: #f9f9f9;
         }
         tr:nth-child(even) {
             background: #f8f9fa;
-        }
-        tr.editing {
-            background: #fff3cd !important;
-        }
-        tr.editing td {
-            padding: 5px 15px;
         }
         .cache-info {
             background: #e3f2fd;
@@ -135,23 +138,6 @@
             margin: 10px 0;
             font-size: 14px;
             color: #1565c0;
-        }
-        .edit-input {
-            width: 100%;
-            padding: 8px 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-        .edit-input:focus {
-            outline: none;
-            border-color: #2196F3;
-            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
-        }
-        .actions-cell {
-            text-align: center;
-            min-width: 120px;
         }
         .modal {
             display: none;
@@ -175,45 +161,116 @@
             width: 90%;
             max-height: 80vh;
             overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         }
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
         }
         .modal-header h2 {
             margin: 0;
             color: #333;
+            font-size: 1.5rem;
         }
         .close-modal {
             background: none;
             border: none;
-            font-size: 24px;
+            font-size: 28px;
             cursor: pointer;
             color: #666;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+        .close-modal:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+        .field-info {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196F3;
+        }
+        .field-info h3 {
+            margin: 0 0 5px 0;
+            color: #333;
+            font-size: 16px;
+        }
+        .field-info p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
         }
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         .form-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-weight: bold;
             color: #555;
+            font-size: 14px;
         }
         .form-control {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
             font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.3s;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #2196F3;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+            font-family: inherit;
         }
         .modal-actions {
             display: flex;
             gap: 10px;
             justify-content: flex-end;
-            margin-top: 20px;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+        .save-btn {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+        .save-btn:hover {
+            background: #218838;
+        }
+        .cancel-btn {
+            background: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+        .cancel-btn:hover {
+            background: #5a6268;
         }
         @media (max-width: 768px) {
             body {
@@ -235,6 +292,9 @@
                 width: 95%;
                 padding: 20px;
             }
+            .modal-actions {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -252,15 +312,25 @@
     
     <div id="dataContainer"></div>
 
-    <!-- Edit Modal -->
+    <!-- Edit Modal for Single Field -->
     <div id="editModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Edit User</h2>
+                <h2>Edit Field</h2>
                 <button class="close-modal" onclick="closeModal()">&times;</button>
             </div>
+            
+            <div class="field-info">
+                <h3 id="fieldName"></h3>
+                <p id="fieldInfo">Editing single field value</p>
+            </div>
+            
             <form id="editForm">
-                <div id="formFields"></div>
+                <div class="form-group">
+                    <label id="fieldLabel"></label>
+                    <div id="fieldInput"></div>
+                </div>
+                
                 <div class="modal-actions">
                     <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
                     <button type="submit" class="save-btn">Save Changes</button>
@@ -272,8 +342,11 @@
     <script>
         // Global variables
         let currentData = [];
-        let currentTable = 'users'; // Change this for each page
-        
+        let currentTable = 'users';
+        let currentEditId = null;
+        let currentEditField = null;
+        let originalValue = null;
+
         async function loadData() {
             document.getElementById('loading').style.display = 'block';
             document.getElementById('error').style.display = 'none';
@@ -286,7 +359,7 @@
                 if (data.success && data.data.length > 0) {
                     currentData = data.data;
                     displayData(currentData);
-                    showMessage(`✅ Loaded ${data.data.length} ${currentTable}`, 'success');
+                    showMessage(`✅ Loaded ${data.data.length} users`, 'success');
                     
                     // Show cache info
                     const cacheDiv = document.createElement('div');
@@ -299,7 +372,7 @@
                     document.getElementById('dataContainer').prepend(cacheDiv);
                 } else {
                     document.getElementById('dataContainer').innerHTML = 
-                        '<div style="padding: 40px; text-align: center; color: #666;">No data found</div>';
+                        '<div style="padding: 40px; text-align: center; color: #666;">No users found</div>';
                 }
             } catch (error) {
                 document.getElementById('error').style.display = 'block';
@@ -313,143 +386,220 @@
         function displayData(data) {
             const container = document.getElementById('dataContainer');
             
+            if (data.length === 0) {
+                container.innerHTML = 
+                    '<div style="padding: 40px; text-align: center; color: #666;">No users found</div>';
+                return;
+            }
+            
             let html = '<table>';
             
+            // Get all keys from the first record
             const headers = Object.keys(data[0]);
+            
+            // Create header row - all columns are clickable
             html += '<tr>';
             headers.forEach(header => {
-                html += `<th>${header}</th>`;
+                const displayHeader = header.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                html += `<th title="Click to edit ${displayHeader} column">${displayHeader}</th>`;
             });
-            html += `<th class="actions-cell">Actions</th>`;
             html += '</tr>';
             
+            // Create data rows - all cells are editable
             data.forEach((row, index) => {
                 html += '<tr>';
                 headers.forEach(header => {
                     let value = row[header];
                     if (value === null || value === undefined) value = '';
-                    if (typeof value === 'object') value = JSON.stringify(value);
-                    html += `<td title="${value}" data-field="${header}" data-index="${index}">${String(value).substring(0, 50)}${String(value).length > 50 ? '...' : ''}</td>`;
+                    if (typeof value === 'object') {
+                        try {
+                            value = JSON.stringify(value);
+                        } catch (e) {
+                            value = String(value);
+                        }
+                    }
+                    
+                    const displayValue = String(value).substring(0, 50);
+                    const isTruncated = String(value).length > 50;
+                    const fullValue = isTruncated ? value : displayValue;
+                    
+                    html += `<td class="editable" 
+                             title="${fullValue}\n\nClick to edit ${header}" 
+                             data-id="${row.id}" 
+                             data-field="${header}" 
+                             data-value="${encodeURIComponent(value)}"
+                             onclick="openFieldEditModal(this)">
+                        ${displayValue}${isTruncated ? '...' : ''}
+                    </td>`;
                 });
-                html += `<td class="actions-cell">
-                    <button class="edit-btn" onclick="openEditModal(${row.id})">✏️ Edit</button>
-                </td>`;
                 html += '</tr>';
             });
             
             html += '</table>';
             
-            // Append to existing content (keeping cache info at top)
-            if (container.innerHTML.includes('Cache Info')) {
-                const tableDiv = document.createElement('div');
-                tableDiv.innerHTML = html;
-                container.appendChild(tableDiv);
-            } else {
-                container.innerHTML = html;
-            }
+            container.innerHTML += html;
         }
         
-        let currentEditId = null;
-        
-        async function openEditModal(id) {
-            currentEditId = id;
+        function openFieldEditModal(cell) {
+            const id = cell.getAttribute('data-id');
+            const field = cell.getAttribute('data-field');
+            const value = decodeURIComponent(cell.getAttribute('data-value') || '');
             
-            try {
-                // Fetch the specific record
-                const response = await fetch(`/api/${currentTable}/${id}`);
-                const result = await response.json();
-                
-                if (result.success) {
-                    const record = result.data;
-                    const formFields = document.getElementById('formFields');
-                    
-                    // Clear existing fields
-                    formFields.innerHTML = '';
-                    
-                    // Create form fields for each property (except id)
-                    Object.keys(record).forEach(key => {
-                        if (key !== 'id') {
-                            const value = record[key] || '';
-                            const div = document.createElement('div');
-                            div.className = 'form-group';
-                            
-                            // Handle different types of fields
-                            if (key.toLowerCase().includes('description') || 
-                                key.toLowerCase().includes('content')) {
-                                // Textarea for descriptions
-                                div.innerHTML = `
-                                    <label for="${key}">${key.replace(/_/g, ' ')}:</label>
-                                    <textarea id="${key}" name="${key}" class="form-control" rows="3">${value}</textarea>
-                                `;
-                            } else if (typeof value === 'boolean' || 
-                                     key.toLowerCase().includes('toggle') ||
-                                     key.toLowerCase().includes('status')) {
-                                // Checkbox for boolean values
-                                div.innerHTML = `
-                                    <label for="${key}">${key.replace(/_/g, ' ')}:</label>
-                                    <input type="checkbox" id="${key}" name="${key}" ${value ? 'checked' : ''} class="form-control">
-                                `;
-                            } else if (key.toLowerCase().includes('image') || 
-                                     key.toLowerCase().includes('url') ||
-                                     key.toLowerCase().includes('video')) {
-                                // URL fields
-                                div.innerHTML = `
-                                    <label for="${key}">${key.replace(/_/g, ' ')}:</label>
-                                    <input type="url" id="${key}" name="${key}" value="${value}" class="form-control">
-                                `;
-                            } else if (key.toLowerCase().includes('email')) {
-                                // Email fields
-                                div.innerHTML = `
-                                    <label for="${key}">${key.replace(/_/g, ' ')}:</label>
-                                    <input type="email" id="${key}" name="${key}" value="${value}" class="form-control">
-                                `;
-                            } else {
-                                // Default text input
-                                div.innerHTML = `
-                                    <label for="${key}">${key.replace(/_/g, ' ')}:</label>
-                                    <input type="text" id="${key}" name="${key}" value="${value}" class="form-control">
-                                `;
-                            }
-                            
-                            formFields.appendChild(div);
-                        }
-                    });
-                    
-                    // Show modal
-                    document.getElementById('editModal').style.display = 'block';
-                } else {
-                    showMessage(`❌ Error: ${result.error}`, 'error');
-                }
-            } catch (error) {
-                showMessage(`❌ Error loading record: ${error.message}`, 'error');
+            currentEditId = id;
+            currentEditField = field;
+            originalValue = value;
+            
+            // Set field name and info
+            const displayField = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            document.getElementById('fieldName').textContent = `Editing ${displayField}`;
+            document.getElementById('fieldLabel').textContent = displayField;
+            document.getElementById('fieldInfo').textContent = `User ID: ${id}`;
+            
+            // Create appropriate input based on field type
+            const fieldInput = document.getElementById('fieldInput');
+            fieldInput.innerHTML = '';
+            
+            let inputHtml = '';
+            
+            // Determine input type based on field name and value
+            if (field.toLowerCase().includes('description') || 
+                field.toLowerCase().includes('bio') ||
+                field.toLowerCase().includes('content') ||
+                (String(value).length > 100 && !field.toLowerCase().includes('image'))) {
+                // Textarea for long text
+                inputHtml = `
+                    <textarea id="editValue" name="${field}" class="form-control" rows="4" 
+                              placeholder="Enter ${displayField.toLowerCase()}...">${value}</textarea>
+                `;
+            } else if (field.toLowerCase().includes('toggle') ||
+                      field.toLowerCase().includes('status') ||
+                      field.toLowerCase().includes('active') ||
+                      field.toLowerCase().includes('enabled') ||
+                      field.toLowerCase().includes('verified')) {
+                // Checkbox for boolean fields
+                const isChecked = value === true || value === 1 || value === '1' || 
+                                 String(value).toLowerCase() === 'true' || 
+                                 String(value).toLowerCase() === 'yes' ||
+                                 String(value).toLowerCase() === 'active';
+                inputHtml = `
+                    <div style="display: flex; align-items: center; gap: 15px; padding: 12px; background: #f8f9fa; border-radius: 5px;">
+                        <input type="checkbox" id="editValue" name="${field}" ${isChecked ? 'checked' : ''} 
+                               class="form-control" style="width: auto; transform: scale(1.3);">
+                        <span style="color: #666; font-size: 14px;">
+                            ${isChecked ? 'Currently: ON' : 'Currently: OFF'}
+                        </span>
+                    </div>
+                `;
+            } else if (field.toLowerCase().includes('image') || 
+                      field.toLowerCase().includes('url') ||
+                      field.toLowerCase().includes('avatar') ||
+                      field.toLowerCase().includes('photo') ||
+                      field.toLowerCase().includes('thumbnail') ||
+                      field.toLowerCase().includes('link')) {
+                // URL input with preview
+                inputHtml = `
+                    <input type="url" id="editValue" name="${field}" value="${value}" 
+                           class="form-control" placeholder="https://example.com/image.jpg">
+                    ${value ? `<div style="margin-top: 10px; font-size: 12px; color: #666;">
+                        <a href="${value}" target="_blank" style="color: #2196F3;">🔗 Open Link</a>
+                    </div>` : ''}
+                `;
+            } else if (field.toLowerCase().includes('email')) {
+                // Email input
+                inputHtml = `
+                    <input type="email" id="editValue" name="${field}" value="${value}" 
+                           class="form-control" placeholder="user@example.com">
+                `;
+            } else if (field.toLowerCase().includes('phone') ||
+                      field.toLowerCase().includes('mobile') ||
+                      field.toLowerCase().includes('contact')) {
+                // Phone input
+                inputHtml = `
+                    <input type="tel" id="editValue" name="${field}" value="${value}" 
+                           class="form-control" placeholder="+91 9876543210">
+                `;
+            } else if (field.toLowerCase().includes('price') ||
+                      field.toLowerCase().includes('cost') ||
+                      field.toLowerCase().includes('amount') ||
+                      field.toLowerCase().includes('balance') ||
+                      field.toLowerCase().includes('quantity')) {
+                // Number input for prices and quantities
+                inputHtml = `
+                    <input type="number" id="editValue" name="${field}" value="${value}" 
+                           class="form-control" step="0.01" placeholder="0.00">
+                `;
+            } else if (field.toLowerCase().includes('date') ||
+                      field.toLowerCase().includes('created') ||
+                      field.toLowerCase().includes('updated') ||
+                      field.toLowerCase().includes('joined')) {
+                // Date input
+                inputHtml = `
+                    <input type="datetime-local" id="editValue" name="${field}" value="${value}" 
+                           class="form-control">
+                `;
+            } else if (field.toLowerCase().includes('password') ||
+                      field.toLowerCase().includes('token')) {
+                // Password input for sensitive fields
+                inputHtml = `
+                    <input type="password" id="editValue" name="${field}" value="${value}" 
+                           class="form-control" placeholder="Enter ${displayField.toLowerCase()}...">
+                `;
+            } else {
+                // Default text input
+                inputHtml = `
+                    <input type="text" id="editValue" name="${field}" value="${value}" 
+                           class="form-control" placeholder="Enter ${displayField.toLowerCase()}...">
+                `;
             }
+            
+            fieldInput.innerHTML = inputHtml;
+            
+            // Focus on the input
+            setTimeout(() => {
+                const input = document.getElementById('editValue');
+                if (input) input.focus();
+            }, 100);
+            
+            // Show modal
+            document.getElementById('editModal').style.display = 'block';
         }
         
         function closeModal() {
             document.getElementById('editModal').style.display = 'none';
             currentEditId = null;
-            document.getElementById('editForm').reset();
+            currentEditField = null;
+            originalValue = null;
         }
         
-        // Handle form submission
         document.getElementById('editForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const formData = new FormData(this);
-            const updateData = {};
+            const input = document.getElementById('editValue');
+            let newValue;
             
-            // Collect form data
-            formData.forEach((value, key) => {
-                // Handle checkbox values
-                if (this.elements[key].type === 'checkbox') {
-                    updateData[key] = this.elements[key].checked;
-                } else {
-                    updateData[key] = value.trim();
+            if (input.type === 'checkbox') {
+                newValue = input.checked ? 1 : 0;
+            } else {
+                newValue = input.value.trim();
+                
+                // Convert empty string to null for database
+                if (newValue === '') {
+                    newValue = null;
                 }
-            });
+            }
+            
+            // Check if value actually changed
+            if (JSON.stringify(newValue) === JSON.stringify(originalValue)) {
+                showMessage('ℹ️ No changes detected', 'info');
+                closeModal();
+                return;
+            }
             
             try {
                 showMessage('🔄 Saving changes...', 'info');
+                
+                const updateData = {};
+                updateData[currentEditField] = newValue;
                 
                 const response = await fetch(`/api/${currentTable}/${currentEditId}`, {
                     method: 'PUT',
@@ -462,12 +612,13 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    showMessage('✅ Changes saved successfully!', 'success');
-                    closeModal();
+                    showMessage('✅ Field updated successfully!', 'success');
                     
-                    // Reload data to reflect changes
+                    // Update the specific cell in the table
+                    updateTableCell(currentEditId, currentEditField, newValue);
+                    
                     setTimeout(() => {
-                        loadData();
+                        closeModal();
                     }, 1000);
                 } else {
                     showMessage(`❌ Error: ${result.error}`, 'error');
@@ -476,6 +627,67 @@
                 showMessage(`❌ Network error: ${error.message}`, 'error');
             }
         });
+        
+        function updateTableCell(id, field, newValue) {
+            // Find and update the specific cell
+            const cells = document.querySelectorAll(`td[data-id="${id}"][data-field="${field}"]`);
+            cells.forEach(cell => {
+                let displayValue = newValue;
+                if (displayValue === null || displayValue === undefined) displayValue = '';
+                if (typeof displayValue === 'object') {
+                    try {
+                        displayValue = JSON.stringify(displayValue);
+                    } catch (e) {
+                        displayValue = String(displayValue);
+                    }
+                }
+                
+                const truncatedValue = String(displayValue).substring(0, 50);
+                const isTruncated = String(displayValue).length > 50;
+                
+                cell.textContent = truncatedValue + (isTruncated ? '...' : '');
+                cell.setAttribute('data-value', encodeURIComponent(displayValue));
+                cell.setAttribute('title', `${displayValue}\n\nClick to edit ${field}`);
+                
+                // Add visual feedback
+                cell.style.background = '#d4edda';
+                cell.style.transition = 'background 0.5s';
+                
+                setTimeout(() => {
+                    cell.style.background = '';
+                }, 1000);
+            });
+            
+            // Update currentData array
+            const rowIndex = currentData.findIndex(row => row.id == id);
+            if (rowIndex !== -1) {
+                currentData[rowIndex][field] = newValue;
+            }
+        }
+        
+        function showMessage(text, type = 'success') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            
+            const colors = {
+                success: { bg: '#d4edda', text: '#155724', border: '#c3e6cb' },
+                error: { bg: '#f8d7da', text: '#721c24', border: '#f5c6cb' },
+                info: { bg: '#d1ecf1', text: '#0c5460', border: '#bee5eb' }
+            };
+            
+            const color = colors[type] || colors.success;
+            messageDiv.style.background = color.bg;
+            messageDiv.style.color = color.text;
+            messageDiv.style.border = `1px solid ${color.border}`;
+            messageDiv.style.opacity = '1';
+            
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+                setTimeout(() => {
+                    messageDiv.textContent = '';
+                }, 300);
+            }, 3000);
+        }
         
         // Close modal when clicking outside
         window.onclick = function(event) {
@@ -492,27 +704,7 @@
             }
         });
         
-        function showMessage(text, type = 'success') {
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = text;
-            messageDiv.style.color = type === 'error' ? '#721c24' : 
-                                   type === 'info' ? '#0c5460' : '#155724';
-            messageDiv.style.background = type === 'error' ? '#f8d7da' : 
-                                        type === 'info' ? '#d1ecf1' : '#d4edda';
-            messageDiv.style.border = `1px solid ${type === 'error' ? '#f5c6cb' : 
-                                      type === 'info' ? '#bee5eb' : '#c3e6cb'}`;
-            messageDiv.style.opacity = '1';
-            
-            setTimeout(() => {
-                messageDiv.style.opacity = '0';
-                setTimeout(() => {
-                    messageDiv.textContent = '';
-                    messageDiv.style.background = '';
-                    messageDiv.style.border = 'none';
-                }, 300);
-            }, 3000);
-        }
-        
+        // Load data on page load
         document.addEventListener('DOMContentLoaded', loadData);
     </script>
 </body>
