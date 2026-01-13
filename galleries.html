@@ -328,14 +328,14 @@
     </style>
 </head>
 <body>
-    <h1>Galleries Data</h1>
+    <h1>🖼️ Galleries Data</h1>
     
     <div class="controls">
         <button class="back-btn" onclick="location.href='/home'">← Back to Dashboard</button>
         <button class="filter-btn" id="toggleStatusFilterBtn" onclick="toggleStatusFilter()">Active Galleries Only</button>
         <button class="sort-btn" id="toggleSortBtn" onclick="toggleSort()">Sort by Priority</button>
         <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Search galleries..." onkeyup="handleSearch()">
+            <input type="text" id="searchInput" placeholder="🔍 Search galleries..." onkeyup="handleSearch()">
         </div>
     </div>
     
@@ -466,33 +466,27 @@
                         // Process priority values (1-10 normal, others outliers)
                         if (allData.length > 0) {
                             allData = allData.map((gallery, index) => {
-                                // Process status (string 'on'/'off' or 1/0)
+                                // Handle status - could be string or number
                                 let status = gallery.status;
                                 if (typeof status === 'string') {
-                                    if (status.toLowerCase() === 'on' || status === '1' || status === 'true') {
+                                    // Handle various string formats
+                                    const statusStr = status.toLowerCase().trim();
+                                    if (statusStr === 'on' || statusStr === 'active' || statusStr === 'true' || statusStr === '1' || statusStr === 'yes') {
                                         status = 1;
-                                    } else if (status.toLowerCase() === 'off' || status === '0' || status === 'false') {
+                                    } else if (statusStr === 'off' || statusStr === 'inactive' || statusStr === 'false' || statusStr === '0' || statusStr === 'no') {
                                         status = 0;
+                                    } else {
+                                        status = 0; // Default to inactive for unknown values
                                     }
                                 }
                                 
                                 // Get priority value and classify (1-10 normal, others outliers)
-                                // Note: Galleries might have priority from 1-100, but we normalize to 1-10
                                 let priority = Number(gallery.priority) || 1;
-                                let isOutlier = false;
+                                let isOutlier = priority < 1 || priority > 10;
                                 
-                                // Convert 1-100 scale to 1-10 scale
-                                if (priority >= 1 && priority <= 100) {
-                                    // Scale: 1-100 -> 1-10 (with 1 highest, 10 lowest)
-                                    priority = Math.ceil((priority / 100) * 10);
-                                    if (priority === 0) priority = 1;
-                                    isOutlier = false;
-                                } else {
-                                    // Outside 1-100 is outlier
-                                    isOutlier = true;
-                                    if (priority < 1) priority = 1;
-                                    if (priority > 10) priority = 10;
-                                }
+                                // Normalize priority for display (1-10)
+                                if (priority < 1) priority = 1;
+                                if (priority > 10) priority = 10;
                                 
                                 return {
                                     ...gallery,
@@ -748,7 +742,7 @@
             
             for (let i = startPage; i <= endPage; i++) {
                 if (i === currentPage) {
-                    pageNumbersHTML += `<button style="background: #5D4037; padding: 5px 10px; border-radius: 4px; color: white; border: none; margin: 0 2px;">${i}</button>`;
+                    pageNumbersHTML += `<button style="background: #4E342E; padding: 5px 10px; border-radius: 4px; color: white; border: none; margin: 0 2px;">${i}</button>`;
                 } else {
                     pageNumbersHTML += `<button onclick="goToPage(${i})" style="padding: 5px 10px; border-radius: 4px; background: #795548; color: white; border: none; margin: 0 2px;">${i}</button>`;
                 }
@@ -992,7 +986,7 @@
             headers.forEach(header => {
                 const displayHeader = header.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                 const isSortable = header === 'priority' || header === 'id' || header === 'status' || 
-                                  header === 'name' || header === 'title' || header === 'gallery_name';
+                                  header === 'name' || header === 'title' || header === 'description';
                 const sortClass = isSortable ? 'sortable' : '';
                 html += `<th class="${sortClass}" onclick="sortByColumn('${header}')" title="${isSortable ? 'Click to sort' : ''}">${displayHeader}</th>`;
             });
@@ -1006,7 +1000,7 @@
                 const isOutlier = row.isOutlier;
                 const originalPriority = row.original_priority;
                 
-                // Determine priority class
+                // Determine priority class (same as products: 1-3 high, 4-6 medium, 7-9 low, 10 lowest)
                 let priorityClass = 'priority-outlier';
                 if (!isOutlier) {
                     if (priority >= 1 && priority <= 3) {
@@ -1046,13 +1040,13 @@
                     if (header === 'status') {
                         if (isActive) {
                             cellStyle = 'color: #4CAF50; font-weight: bold;';
-                            displayValue = 'Active';
+                            displayValue = `${value}`;
                         } else {
                             cellStyle = 'color: #f44336; font-weight: bold;';
-                            displayValue = 'Inactive';
+                            displayValue = `${value}`;
                         }
                     } else if (header === 'priority') {
-                        // Show original priority if it's an outlier or scaled value
+                        // Show original priority if it's an outlier
                         if (isOutlier) {
                             cellStyle = 'color: #9E9E9E; font-weight: bold;';
                             displayValue = `${originalPriority || value}`;
@@ -1149,7 +1143,7 @@
             errorDiv.style.display = 'block';
             errorDiv.innerHTML = `
                 <div style="display: flex; align-items: center; justify-content: center; gap: 15px;">
-                    <span style="font-size: 24px;"></span>
+                    <span style="font-size: 24px;">⚠️</span>
                     <div>${message}</div>
                 </div>
             `;
