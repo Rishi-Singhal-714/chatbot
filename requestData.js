@@ -6,8 +6,8 @@ const dbConfig = {
   user: process.env.DB_USER || '',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_DATABASE || 'u130660877_zulu',
-  waitForConnections: false, // Don't auto-create connections
-  connectionLimit: 3, // Only 1 connection
+  waitForConnections: false,
+  connectionLimit: 3,
   queueLimit: 0
 };
 
@@ -15,7 +15,16 @@ const dbConfig = {
 let pool = null;
 let isConnectionActive = false;
 let lastQueryTime = 0;
-const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+const INACTIVITY_TIMEOUT = 5 * 60 * 1000;
+
+// Table name mapping (cache key to actual table name)
+const tableMapping = {
+  'products': 'products',
+  'sellers': 'seller_data',
+  'users': 'users',
+  'videos': 'shop_able_videos',
+  'galleries': 'galleries'
+};
 
 // In-memory cache (2 hours = 7200000 ms)
 const cache = {
@@ -87,7 +96,7 @@ const cache = {
     data: null,
     timestamp: 0,
     query: `
-	SELECT
+      SELECT
         id,
         username,
         mobile,
@@ -99,8 +108,8 @@ const cache = {
         are_you_interested,
         cohort1,
         cohort2,
-		cohort_status,
-		cac,
+        cohort_status,
+        cac,
         owner
       FROM u130660877_zulu.users
     `
@@ -126,50 +135,49 @@ const cache = {
     data: null,
     timestamp: 0,
     query: `
-SELECT
-    id,
-    type1,
-    type2,
-    heading,
-    description,
-    name,
-    cat_id,
-    seller_id,
-    status,
-    display,
-    componentiIds,
-    cat1,
-    image1,
-    image2,
-    image3,
-    image4,
-    aspect_ratio,
-    type,
-    bottom_bar,
-    subtitle,
-    title,
-    tags,
-    bottom_slider,
-    created_at,
-    updated_at,
-    cat1_names,
-    shopable_video_ids,
-    business_id,
-    priority,
-    version,
-    tracking_bar,
-    show_title,
-    show_subtitle,
-    showBanner,
-    showVideos,
-    showProducts
-FROM u130660877_zulu.galleries
+      SELECT
+        id,
+        type1,
+        type2,
+        heading,
+        description,
+        name,
+        cat_id,
+        seller_id,
+        status,
+        display,
+        componentiIds,
+        cat1,
+        image1,
+        image2,
+        image3,
+        image4,
+        aspect_ratio,
+        type,
+        bottom_bar,
+        subtitle,
+        title,
+        tags,
+        bottom_slider,
+        created_at,
+        updated_at,
+        cat1_names,
+        shopable_video_ids,
+        business_id,
+        priority,
+        version,
+        tracking_bar,
+        show_title,
+        show_subtitle,
+        showBanner,
+        showVideos,
+        showProducts
+      FROM u130660877_zulu.galleries
     `
   }
 };
 
-
-const CACHE_TTL = 7200000; // 2 hours
+const CACHE_TTL = 7200000;
 
 // Create new connection pool
 function createConnectionPool() {
@@ -207,17 +215,15 @@ function closeConnectionPool() {
 
 // Schedule connection cleanup every 5 minutes
 function scheduleConnectionCleanup() {
-  // Check every minute for inactive connections
   setInterval(() => {
     const now = Date.now();
     if (isConnectionActive && pool && (now - lastQueryTime) > INACTIVITY_TIMEOUT) {
       console.log('🕐 Closing inactive database connection (5 minutes idle)');
       closeConnectionPool();
     }
-  }, 60000); // Check every minute
+  }, 60000);
 }
 
-// Initialize connection cleanup scheduler
 scheduleConnectionCleanup();
 
 // Ensure connection is active
@@ -230,7 +236,6 @@ function ensureConnection() {
     return true;
   }
   
-  // If connection has been idle for too long, close and recreate
   if ((now - lastQueryTime) > INACTIVITY_TIMEOUT) {
     console.log('🕐 Connection idle for too long, recreating...');
     closeConnectionPool();
@@ -243,7 +248,6 @@ function ensureConnection() {
 // Execute query with connection management
 function executeQuery(query) {
   return new Promise((resolve, reject) => {
-    // Ensure we have an active connection
     ensureConnection();
     
     if (!pool) {
@@ -263,7 +267,6 @@ function executeQuery(query) {
       }
       
       connection.query(query, (error, results) => {
-        // Always release connection back to pool
         connection.release();
         
         if (error) {
@@ -274,18 +277,16 @@ function executeQuery(query) {
         
         console.log(`✅ Query successful, ${results.length} rows returned`);
         
-        // Close connection after successful query (delayed)
         setTimeout(() => {
           console.log('🔌 Closing connection after query execution');
           closeConnectionPool();
-        }, 3000); // Wait 3 seconds before closing
+        }, 3000);
         
         resolve(results);
       });
     });
   });
 }
-// Add these functions to your database module
 
 // Execute update query
 function executeUpdate(table, id, updateData) {
@@ -298,17 +299,24 @@ function executeUpdate(table, id, updateData) {
       return;
     }
     
+    // Get actual table name from mapping
+    const tableName = tableMapping[table];
+    if (!tableName) {
+      reject(new Error(`Invalid table: ${table}`));
+      return;
+    }
+    
     // Build SET clause
     const setClause = Object.keys(updateData)
-      .map(key => `${key} = ?`)
+      .map(key => `\`${key}\` = ?`)
       .join(', ');
     
     const values = Object.values(updateData);
     values.push(id);
     
-    const query = `UPDATE ${table} SET ${setClause} WHERE id = ?`;
+    const query = `UPDATE \`${tableName}\` SET ${setClause} WHERE id = ?`;
     
-    console.log(`📝 Executing update query: ${query.substring(0, 100)}...`);
+    console.log(`📝 Executing update query for ${tableName}:`, updateData);
     lastQueryTime = Date.now();
     
     pool.getConnection((err, connection) => {
@@ -332,7 +340,6 @@ function executeUpdate(table, id, updateData) {
         // Clear cache for this table after update
         clearCache(table);
         
-        // Close connection after successful update (delayed)
         setTimeout(() => {
           console.log('🔌 Closing connection after update');
           closeConnectionPool();
@@ -345,16 +352,27 @@ function executeUpdate(table, id, updateData) {
 }
 
 // Get single record by ID
-async function getRecordById(table, id) {
-  ensureConnection();
-  
-  if (!pool) {
-    throw new Error('Database connection not available');
-  }
-  
-  const query = `SELECT * FROM ${table} WHERE id = ?`;
-  
+function getRecordById(table, id) {
   return new Promise((resolve, reject) => {
+    ensureConnection();
+    
+    if (!pool) {
+      reject(new Error('Database connection not available'));
+      return;
+    }
+    
+    // Get actual table name from mapping
+    const tableName = tableMapping[table];
+    if (!tableName) {
+      reject(new Error(`Invalid table: ${table}`));
+      return;
+    }
+    
+    const query = `SELECT * FROM \`${tableName}\` WHERE id = ?`;
+    
+    console.log(`🔍 Fetching record from ${tableName} with id: ${id}`);
+    lastQueryTime = Date.now();
+    
     pool.getConnection((err, connection) => {
       if (err) {
         reject(err);
@@ -369,11 +387,19 @@ async function getRecordById(table, id) {
           return;
         }
         
+        console.log(`✅ Record fetched successfully`);
+        
+        setTimeout(() => {
+          console.log('🔌 Closing connection after fetching record');
+          closeConnectionPool();
+        }, 3000);
+        
         resolve(results[0] || null);
       });
     });
   });
 }
+
 // Get cached data or fetch from database
 async function getCachedData(type) {
   const now = Date.now();
@@ -384,7 +410,7 @@ async function getCachedData(type) {
     return cache[type].data;
   }
   
-  // Fetch from database (connection will be established automatically)
+  // Fetch from database
   console.log(`🔄 Fetching ${type} from database...`);
   const query = cache[type].query;
   const data = await executeQuery(query);
@@ -432,7 +458,6 @@ function getAllCacheStatus() {
     };
   });
   
-  // Add connection status
   status.connection = {
     active: isConnectionActive,
     lastQueryTime: lastQueryTime,
@@ -443,12 +468,18 @@ function getAllCacheStatus() {
   return status;
 }
 
-// Initialize without connection
 console.log('📊 Database module loaded. Connection will be created on first query.');
 
+// Export all functions
 module.exports = {
   getCachedData,
+  executeUpdate,
+  getRecordById,
   clearCache,
   clearAllCaches,
-  getAllCacheStatus
+  getAllCacheStatus,
+  // For debugging
+  _getCache: () => cache,
+  _getPool: () => pool,
+  _getConnectionStatus: () => ({ isConnectionActive, lastQueryTime })
 };
