@@ -120,7 +120,13 @@ const cache = {
         created_at
       FROM u130660877_zulu.shop_able_videos
     `
-  }
+  },
+galleries: { 
+	data: null, 
+	timestamp: 0, 
+	query: 
+		'SELECT * FROM u130660877_zulu.galleries' 
+}
 };
 
 
