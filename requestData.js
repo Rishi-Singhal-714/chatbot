@@ -4,7 +4,7 @@ const mysql = require('mysql2');
 const dbConfig = {
   host: process.env.DB_HOST || '',
   user: process.env.DB_USER || '',
-  password: process.env.DB_PASSWORD || '',
+  password: process.env.DB_USER || '',
   database: process.env.DB_DATABASE || 'u130660877_zulu',
   waitForConnections: false,
   connectionLimit: 3,
@@ -15,7 +15,7 @@ const dbConfig = {
 let pool = null;
 let isConnectionActive = false;
 let lastQueryTime = 0;
-const INACTIVITY_TIMEOUT = 5 * 60 * 1000;
+const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
 // Table name mapping (cache key to actual table name)
 const tableMapping = {
@@ -26,6 +26,41 @@ const tableMapping = {
   'galleries': 'galleries'
 };
 
+// Column mapping for each table - ONLY the columns we want to fetch and edit
+const columnMapping = {
+  'products': [
+    'id', 'status', 'buy_now', 'fabric1', 'fabric2', 'category_id', 
+    'seller_id', 'tax', 'row_order', 'type', 'stock_type', 'name', 
+    'image', 'other_images', 'hsn_code', 'brand', 'sku', 'stock', 
+    'availability', 'description', 'business_id', 'whatsapp_toggle', 
+    'location', 'priority', 'retail_simple_price', 'retail_simple_special_price', 
+    'short_description'
+  ],
+  'sellers': [
+    'id', 'user_id', 'slug', 'store_name', 'store_description', 'business', 
+    'category_ids', 'categories_1', 'market_place', 'outlet_live', 'buy_now', 
+    'accepting_orders', 'call_outlet', 'whatsapp_toggle', 'outlet_type', 
+    'public_phone', 'whatsapp', 'instagram', 'public_address'
+  ],
+  'users': [
+    'id', 'username', 'mobile', 'email', 'preffered_outlets', 
+    'preffred_price_range', 'trial_route', 'frequency_of_mall_visit', 
+    'are_you_interested', 'cohort1', 'cohort2', 'cohort_status', 'cac', 'owner'
+  ],
+  'videos': [
+    'id', 'seller_id', 'product_id', 'video', 'thumbnail', 'status', 'created_at'
+  ],
+  'galleries': [
+    'id', 'type1', 'type2', 'heading', 'description', 'name', 'cat_id', 
+    'seller_id', 'status', 'display', 'componentiIds', 'cat1', 'image1', 
+    'image2', 'image3', 'image4', 'aspect_ratio', 'type', 'bottom_bar', 
+    'subtitle', 'title', 'tags', 'bottom_slider', 'created_at', 'updated_at', 
+    'cat1_names', 'shopable_video_ids', 'business_id', 'priority', 'version', 
+    'tracking_bar', 'show_title', 'show_subtitle', 'showBanner', 'showVideos', 
+    'showProducts'
+  ]
+};
+
 // In-memory cache (2 hours = 7200000 ms)
 const cache = {
   products: {
@@ -33,33 +68,7 @@ const cache = {
     timestamp: 0,
     query: `
       SELECT
-        id,
-        status,
-        buy_now,
-        fabric1,
-        fabric2,
-        category_id,
-        seller_id,
-        tax,
-        row_order,
-        type,
-        stock_type,
-        name,
-        image,
-        other_images,
-        hsn_code,
-        brand,
-        sku,
-        stock,
-        availability,
-        description,
-        business_id,
-        whatsapp_toggle,
-        location,
-        priority,
-        retail_simple_price,
-        retail_simple_special_price,
-        short_description
+        ${columnMapping.products.join(',\n        ')}
       FROM u130660877_zulu.products
     `
   },
@@ -69,25 +78,7 @@ const cache = {
     timestamp: 0,
     query: `
       SELECT
-        id,
-        user_id,
-        slug,
-        store_name,
-        store_description,
-        business,
-        category_ids,
-        categories_1,
-        market_place,
-        outlet_live,
-        buy_now,
-        accepting_orders,
-        call_outlet,
-        whatsapp_toggle,
-        outlet_type,
-        public_phone,
-        whatsapp,
-        instagram,
-        public_address
+        ${columnMapping.sellers.join(',\n        ')}
       FROM u130660877_zulu.seller_data
     `
   },
@@ -97,20 +88,7 @@ const cache = {
     timestamp: 0,
     query: `
       SELECT
-        id,
-        username,
-        mobile,
-        email,
-        preffered_outlets,
-        preffred_price_range,
-        trial_route,
-        frequency_of_mall_visit,
-        are_you_interested,
-        cohort1,
-        cohort2,
-        cohort_status,
-        cac,
-        owner
+        ${columnMapping.users.join(',\n        ')}
       FROM u130660877_zulu.users
     `
   },
@@ -120,13 +98,7 @@ const cache = {
     timestamp: 0,
     query: `
       SELECT
-        id,
-        seller_id,
-        product_id,
-        video,
-        thumbnail,
-        status,
-        created_at
+        ${columnMapping.videos.join(',\n        ')}
       FROM u130660877_zulu.shop_able_videos
     `
   },
@@ -136,42 +108,7 @@ const cache = {
     timestamp: 0,
     query: `
       SELECT
-        id,
-        type1,
-        type2,
-        heading,
-        description,
-        name,
-        cat_id,
-        seller_id,
-        status,
-        display,
-        componentiIds,
-        cat1,
-        image1,
-        image2,
-        image3,
-        image4,
-        aspect_ratio,
-        type,
-        bottom_bar,
-        subtitle,
-        title,
-        tags,
-        bottom_slider,
-        created_at,
-        updated_at,
-        cat1_names,
-        shopable_video_ids,
-        business_id,
-        priority,
-        version,
-        tracking_bar,
-        show_title,
-        show_subtitle,
-        showBanner,
-        showVideos,
-        showProducts
+        ${columnMapping.galleries.join(',\n        ')}
       FROM u130660877_zulu.galleries
     `
   }
@@ -288,7 +225,7 @@ function executeQuery(query) {
   });
 }
 
-// Execute update query
+// Execute update query - only updates the specific field
 function executeUpdate(table, id, updateData) {
   return new Promise((resolve, reject) => {
     ensureConnection();
@@ -306,17 +243,39 @@ function executeUpdate(table, id, updateData) {
       return;
     }
     
-    // Build SET clause
-    const setClause = Object.keys(updateData)
+    // Get valid columns for this table
+    const validColumns = columnMapping[table];
+    if (!validColumns) {
+      reject(new Error(`No column mapping found for table: ${table}`));
+      return;
+    }
+    
+    // Validate that we're only trying to update allowed columns
+    const updateKeys = Object.keys(updateData);
+    if (updateKeys.length === 0) {
+      reject(new Error('No fields to update'));
+      return;
+    }
+    
+    // Check if all update fields are in valid columns
+    for (const key of updateKeys) {
+      if (!validColumns.includes(key)) {
+        reject(new Error(`Column ${key} is not allowed for table ${table}`));
+        return;
+      }
+    }
+    
+    // Build SET clause - only update provided fields
+    const setClause = updateKeys
       .map(key => `\`${key}\` = ?`)
       .join(', ');
     
-    const values = Object.values(updateData);
+    const values = updateKeys.map(key => updateData[key]);
     values.push(id);
     
     const query = `UPDATE \`${tableName}\` SET ${setClause} WHERE id = ?`;
     
-    console.log(`📝 Executing update query for ${tableName}:`, updateData);
+    console.log(`📝 Updating ${tableName} #${id}:`, updateData);
     lastQueryTime = Date.now();
     
     pool.getConnection((err, connection) => {
@@ -351,7 +310,7 @@ function executeUpdate(table, id, updateData) {
   });
 }
 
-// Get single record by ID
+// Get single record by ID - only returns allowed columns
 function getRecordById(table, id) {
   return new Promise((resolve, reject) => {
     ensureConnection();
@@ -368,7 +327,15 @@ function getRecordById(table, id) {
       return;
     }
     
-    const query = `SELECT * FROM \`${tableName}\` WHERE id = ?`;
+    // Get valid columns for this table
+    const validColumns = columnMapping[table];
+    if (!validColumns) {
+      reject(new Error(`No column mapping found for table: ${table}`));
+      return;
+    }
+    
+    const columns = validColumns.join(', ');
+    const query = `SELECT ${columns} FROM \`${tableName}\` WHERE id = ?`;
     
     console.log(`🔍 Fetching record from ${tableName} with id: ${id}`);
     lastQueryTime = Date.now();
@@ -468,6 +435,11 @@ function getAllCacheStatus() {
   return status;
 }
 
+// Get column mapping for a specific table
+function getTableColumns(table) {
+  return columnMapping[table] || [];
+}
+
 console.log('📊 Database module loaded. Connection will be created on first query.');
 
 // Export all functions
@@ -478,11 +450,13 @@ module.exports = {
   clearCache,
   clearAllCaches,
   getAllCacheStatus,
+  getTableColumns,
+  // Connection management
+  createConnectionPool: () => createConnectionPool(),
+  closeConnectionPool: () => closeConnectionPool(),
+  ensureConnection: () => ensureConnection(),
   // For debugging
   _getCache: () => cache,
   _getPool: () => pool,
-  _getConnectionStatus: () => ({ isConnectionActive, lastQueryTime }),
-  createConnectionPool: () => createConnectionPool(),
-  closeConnectionPool: () => closeConnectionPool(),
-  ensureConnection: () => ensureConnection()
+  _getConnectionStatus: () => ({ isConnectionActive, lastQueryTime })
 };
