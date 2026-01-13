@@ -48,7 +48,7 @@ const columnMapping = {
     'are_you_interested', 'cohort1', 'cohort2', 'cohort_status', 'cac', 'owner'
   ],
   'videos': [
-    'id', 'seller_id', 'product_id', 'video', 'thumbnail', 'status', 'created_at'
+    'id', 'seller_id', 'product_id', 'video', 'thumbnail', 'status', 'created_at', 'priority'
   ],
   'galleries': [
     'id', 'type1', 'type2', 'heading', 'description', 'name', 'cat_id', 
