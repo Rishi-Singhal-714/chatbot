@@ -441,10 +441,64 @@ function getTableColumns(table) {
 }
 
 console.log('📊 Database module loaded. Connection will be created on first query.');
+// requestData.js - Add this function before module.exports
+
+async function getProductStatsByUpdater() {
+  return new Promise((resolve, reject) => {
+    ensureConnection();
+    
+    if (!pool) {
+      reject(new Error('Database connection not available'));
+      return;
+    }
+    
+    const query = `
+      SELECT 
+        Updated_by,
+        COUNT(*) AS total_products
+      FROM u130660877_zulu.products
+      WHERE Updated_by IS NOT NULL
+        AND Updated_by <> ''
+      GROUP BY Updated_by
+      ORDER BY total_products DESC
+    `;
+    
+    console.log('📊 Executing product stats by updater query...');
+    lastQueryTime = Date.now();
+    
+    pool.getConnection((err, connection) => {
+      if (err) {
+        console.error('❌ Database connection error:', err);
+        reject(err);
+        return;
+      }
+      
+      connection.query(query, (error, results) => {
+        connection.release();
+        
+        if (error) {
+          console.error('❌ Query execution error:', error);
+          reject(error);
+          return;
+        }
+        
+        console.log(`✅ Product stats query successful, ${results.length} rows returned`);
+        
+        setTimeout(() => {
+          console.log('🔌 Closing connection after query execution');
+          closeConnectionPool();
+        }, 3000);
+        
+        resolve(results);
+      });
+    });
+  });
+}
 
 // Export all functions
 module.exports = {
   getCachedData,
+  getProductStatsByUpdater,
   executeUpdate,
   getRecordById,
   clearCache,
