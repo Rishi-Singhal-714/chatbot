@@ -10,7 +10,7 @@
         }
         h1 {
             color: #333;
-            border-bottom: 3px solid #4CAF50;
+            border-bottom: 3px solid #2196F3;
             padding-bottom: 10px;
         }
         .controls {
@@ -26,6 +26,10 @@
             border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
+            transition: opacity 0.3s;
+        }
+        button:hover {
+            opacity: 0.9;
         }
         .back-btn {
             background: #6c757d;
@@ -35,12 +39,33 @@
             background: #2196F3;
             color: white;
         }
+        .edit-btn {
+            background: #ffc107;
+            color: black;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .save-btn {
+            background: #28a745;
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+        .cancel-btn {
+            background: #dc3545;
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
         #message {
             padding: 15px;
             border-radius: 5px;
             margin: 15px 0;
             font-weight: bold;
             text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
         }
         #loading {
             padding: 20px;
@@ -72,7 +97,7 @@
             border-collapse: collapse;
         }
         th {
-            background: #4CAF50;
+            background: #2196F3;
             color: white;
             padding: 12px 15px;
             text-align: left;
@@ -94,12 +119,78 @@
             background: #f8f9fa;
         }
         .cache-info {
-            background: #e8f5e9;
+            background: #e3f2fd;
             padding: 10px;
             border-radius: 5px;
             margin: 10px 0;
             font-size: 14px;
-            color: #2e7d32;
+            color: #1565c0;
+        }
+        .actions-cell {
+            text-align: center;
+            min-width: 120px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h2 {
+            margin: 0;
+            color: #333;
+        }
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
         }
         @media (max-width: 768px) {
             body {
@@ -108,7 +199,7 @@
             .controls {
                 flex-direction: column;
             }
-            button {
+            .controls button {
                 width: 100%;
             }
             table {
@@ -117,6 +208,10 @@
             th, td {
                 padding: 8px 10px;
             }
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
         }
     </style>
 </head>
@@ -124,7 +219,8 @@
     <h1>📦 Products Data</h1>
     
     <div class="controls">
-        <button class="back-btn" onclick="location.href='/home'">← Back to Dashboard</button>
+        <button class="back-btn" onclick="location.href='/'">← Back to Dashboard</button>
+        <button class="refresh-btn" onclick="loadData()">🔄 Refresh Data</button>
     </div>
     
     <div id="message"></div>
@@ -133,19 +229,41 @@
     
     <div id="dataContainer"></div>
 
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Product</h2>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="editForm">
+                <div id="formFields"></div>
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="save-btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
+        // Global variables
+        let currentData = [];
+        let currentTable = 'products'; // Change this for each page
+        
         async function loadData() {
             document.getElementById('loading').style.display = 'block';
             document.getElementById('error').style.display = 'none';
             document.getElementById('dataContainer').innerHTML = '';
             
             try {
-                const response = await fetch('/api/products');
+                const response = await fetch(`/api/${currentTable}`);
                 const data = await response.json();
                 
                 if (data.success && data.data.length > 0) {
-                    displayData(data.data);
-                    showMessage(`✅ Loaded ${data.data.length} products`, 'success');
+                    currentData = data.data;
+                    displayData(currentData);
+                    showMessage(`✅ Loaded ${data.data.length} ${currentTable}`, 'success');
                     
                     // Show cache info
                     const cacheDiv = document.createElement('div');
@@ -158,7 +276,7 @@
                     document.getElementById('dataContainer').prepend(cacheDiv);
                 } else {
                     document.getElementById('dataContainer').innerHTML = 
-                        '<div style="padding: 40px; text-align: center; color: #666;">No products found</div>';
+                        '<div style="padding: 40px; text-align: center; color: #666;">No data found</div>';
                 }
             } catch (error) {
                 document.getElementById('error').style.display = 'block';
@@ -179,22 +297,25 @@
             headers.forEach(header => {
                 html += `<th>${header}</th>`;
             });
+            html += `<th class="actions-cell">Actions</th>`;
             html += '</tr>';
             
-            data.forEach(row => {
+            data.forEach((row, index) => {
                 html += '<tr>';
                 headers.forEach(header => {
                     let value = row[header];
                     if (value === null || value === undefined) value = '';
                     if (typeof value === 'object') value = JSON.stringify(value);
-                    html += `<td title="${value}">${String(value).substring(0, 50)}${String(value).length > 50 ? '...' : ''}</td>`;
+                    html += `<td title="${value}" data-field="${header}" data-index="${index}">${String(value).substring(0, 50)}${String(value).length > 50 ? '...' : ''}</td>`;
                 });
+                html += `<td class="actions-cell">
+                    <button class="edit-btn" onclick="openEditModal(${row.id})">✏️ Edit</button>
+                </td>`;
                 html += '</tr>';
             });
             
             html += '</table>';
             
-            // Append to existing content (keeping cache info at top)
             if (container.innerHTML.includes('Cache Info')) {
                 const tableDiv = document.createElement('div');
                 tableDiv.innerHTML = html;
@@ -204,18 +325,152 @@
             }
         }
         
+        let currentEditId = null;
+        
+        async function openEditModal(id) {
+            currentEditId = id;
+            
+            try {
+                const response = await fetch(`/api/${currentTable}/${id}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const record = result.data;
+                    const formFields = document.getElementById('formFields');
+                    
+                    formFields.innerHTML = '';
+                    
+                    Object.keys(record).forEach(key => {
+                        if (key !== 'id') {
+                            const value = record[key] || '';
+                            const div = document.createElement('div');
+                            div.className = 'form-group';
+                            
+                            if (key.toLowerCase().includes('description') || 
+                                key.toLowerCase().includes('content')) {
+                                div.innerHTML = `
+                                    <label for="${key}">${key.replace(/_/g, ' ')}:</label>
+                                    <textarea id="${key}" name="${key}" class="form-control" rows="3">${value}</textarea>
+                                `;
+                            } else if (typeof value === 'boolean' || 
+                                     key.toLowerCase().includes('toggle') ||
+                                     key.toLowerCase().includes('status')) {
+                                div.innerHTML = `
+                                    <label for="${key}">${key.replace(/_/g, ' ')}:</label>
+                                    <input type="checkbox" id="${key}" name="${key}" ${value ? 'checked' : ''} class="form-control">
+                                `;
+                            } else if (key.toLowerCase().includes('image') || 
+                                     key.toLowerCase().includes('url') ||
+                                     key.toLowerCase().includes('video')) {
+                                div.innerHTML = `
+                                    <label for="${key}">${key.replace(/_/g, ' ')}:</label>
+                                    <input type="url" id="${key}" name="${key}" value="${value}" class="form-control">
+                                `;
+                            } else if (key.toLowerCase().includes('email')) {
+                                div.innerHTML = `
+                                    <label for="${key}">${key.replace(/_/g, ' ')}:</label>
+                                    <input type="email" id="${key}" name="${key}" value="${value}" class="form-control">
+                                `;
+                            } else {
+                                div.innerHTML = `
+                                    <label for="${key}">${key.replace(/_/g, ' ')}:</label>
+                                    <input type="text" id="${key}" name="${key}" value="${value}" class="form-control">
+                                `;
+                            }
+                            
+                            formFields.appendChild(div);
+                        }
+                    });
+                    
+                    document.getElementById('editModal').style.display = 'block';
+                } else {
+                    showMessage(`❌ Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ Error loading record: ${error.message}`, 'error');
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('editModal').style.display = 'none';
+            currentEditId = null;
+            document.getElementById('editForm').reset();
+        }
+        
+        document.getElementById('editForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const updateData = {};
+            
+            formData.forEach((value, key) => {
+                if (this.elements[key].type === 'checkbox') {
+                    updateData[key] = this.elements[key].checked;
+                } else {
+                    updateData[key] = value.trim();
+                }
+            });
+            
+            try {
+                showMessage('🔄 Saving changes...', 'info');
+                
+                const response = await fetch(`/api/${currentTable}/${currentEditId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('✅ Changes saved successfully!', 'success');
+                    closeModal();
+                    
+                    setTimeout(() => {
+                        loadData();
+                    }, 1000);
+                } else {
+                    showMessage(`❌ Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ Network error: ${error.message}`, 'error');
+            }
+        });
+        
+        window.onclick = function(event) {
+            const modal = document.getElementById('editModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        };
+        
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+        
         function showMessage(text, type = 'success') {
             const messageDiv = document.getElementById('message');
             messageDiv.textContent = text;
-            messageDiv.style.color = type === 'error' ? '#721c24' : '#155724';
-            messageDiv.style.background = type === 'error' ? '#f8d7da' : '#d4edda';
-            messageDiv.style.border = `1px solid ${type === 'error' ? '#f5c6cb' : '#c3e6cb'}`;
+            messageDiv.style.color = type === 'error' ? '#721c24' : 
+                                   type === 'info' ? '#0c5460' : '#155724';
+            messageDiv.style.background = type === 'error' ? '#f8d7da' : 
+                                        type === 'info' ? '#d1ecf1' : '#d4edda';
+            messageDiv.style.border = `1px solid ${type === 'error' ? '#f5c6cb' : 
+                                      type === 'info' ? '#bee5eb' : '#c3e6cb'}`;
+            messageDiv.style.opacity = '1';
             
             setTimeout(() => {
-                messageDiv.textContent = '';
-                messageDiv.style.background = '';
-                messageDiv.style.border = 'none';
-            }, 5000);
+                messageDiv.style.opacity = '0';
+                setTimeout(() => {
+                    messageDiv.textContent = '';
+                    messageDiv.style.background = '';
+                    messageDiv.style.border = 'none';
+                }, 300);
+            }, 3000);
         }
         
         document.addEventListener('DOMContentLoaded', loadData);
