@@ -162,7 +162,7 @@ galleries: {
     showBanner,
     showVideos,
     showProducts
-FROM u130660877_zulu.galleries;
+FROM u130660877_zulu.galleries
 ' 
 }
 };
