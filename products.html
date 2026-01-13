@@ -4,132 +4,283 @@
     <title>Products - Zulu Club</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 30px;
-            background: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
         }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+        
         h1 {
-            color: #333;
-            border-bottom: 3px solid #2196F3;
-            padding-bottom: 10px;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #3498db;
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
+        
+        h1::before {
+            content: '📦';
+            font-size: 2rem;
+        }
+        
         .controls {
             display: flex;
-            gap: 10px;
-            margin: 20px 0;
+            gap: 12px;
+            margin: 25px 0;
             flex-wrap: wrap;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
+        
         button {
-            padding: 10px 20px;
-            font-size: 14px;
+            padding: 12px 25px;
+            font-size: 15px;
             border: none;
-            border-radius: 5px;
+            border-radius: 10px;
             cursor: pointer;
-            font-weight: bold;
-            transition: opacity 0.3s;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
+        
         button:hover {
-            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
         }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
         .back-btn {
-            background: #6c757d;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
             color: white;
         }
+        
+        .back-btn:hover {
+            background: linear-gradient(135deg, #2575fc 0%, #6a11cb 100%);
+        }
+        
         .refresh-btn {
-            background: #2196F3;
+            background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
             color: white;
         }
-        .edit-btn {
-            background: #ffc107;
-            color: black;
-            padding: 5px 10px;
-            font-size: 12px;
+        
+        .refresh-btn:hover {
+            background: linear-gradient(135deg, #96c93d 0%, #00b09b 100%);
         }
-        .save-btn {
-            background: #28a745;
-            color: white;
-            padding: 5px 10px;
-            font-size: 12px;
-            margin-right: 5px;
-        }
-        .cancel-btn {
-            background: #dc3545;
-            color: white;
-            padding: 5px 10px;
-            font-size: 12px;
-        }
+        
         #message {
-            padding: 15px;
-            border-radius: 5px;
-            margin: 15px 0;
-            font-weight: bold;
+            padding: 15px 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+            font-weight: 600;
             text-align: center;
             opacity: 0;
-            transition: opacity 0.3s;
+            transition: all 0.4s ease;
+            animation: fadeIn 0.4s ease forwards;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
         }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
         #loading {
-            padding: 20px;
+            padding: 40px;
             text-align: center;
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 5px;
-            margin: 20px 0;
+            background: linear-gradient(135deg, #fff8e1 0%, #ffeaa7 100%);
+            border: 2px solid #ffd166;
+            border-radius: 15px;
+            margin: 25px 0;
             color: #856404;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 10px 30px rgba(255, 214, 102, 0.3);
         }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         #error {
-            padding: 20px;
+            padding: 25px;
             text-align: center;
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            border-radius: 5px;
-            margin: 20px 0;
-            color: #721c24;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            border-radius: 15px;
+            margin: 25px 0;
+            color: white;
+            font-size: 16px;
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+            animation: shake 0.5s ease;
         }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
         #dataContainer {
             overflow-x: auto;
-            margin-top: 20px;
+            margin-top: 25px;
             background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            border: 1px solid #e0e6ff;
+            position: relative;
         }
+        
         table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 14px;
+            position: relative;
         }
+        
         th {
-            background: #2196F3;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 12px 15px;
+            padding: 18px 20px;
             text-align: left;
+            font-weight: 600;
             position: sticky;
             top: 0;
+            white-space: nowrap;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+            border-right: 1px solid rgba(255,255,255,0.2);
         }
+        
+        th:first-child {
+            border-top-left-radius: 20px;
+        }
+        
+        th:last-child {
+            border-top-right-radius: 20px;
+            border-right: none;
+        }
+        
+        th.editable {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        th.editable:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+        }
+        
         td {
-            padding: 10px 15px;
-            border-bottom: 1px solid #ddd;
+            padding: 16px 20px;
+            border-bottom: 1px solid #eef1f5;
             max-width: 200px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            background: white;
+            transition: all 0.3s;
+            font-size: 14px;
+            color: #2c3e50;
         }
-        tr:hover {
-            background: #f9f9f9;
+        
+        td.editable {
+            cursor: pointer;
+            position: relative;
         }
-        tr:nth-child(even) {
-            background: #f8f9fa;
+        
+        td.editable:hover {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e6f0ff 100%);
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+            z-index: 1;
         }
+        
+        td.editable::after {
+            content: '✏️';
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+        }
+        
+        td.editable:hover::after {
+            opacity: 1;
+        }
+        
+        tr:hover td {
+            background: linear-gradient(135deg, #f8faff 0%, #f0f5ff 100%);
+        }
+        
+        tr:nth-child(even) td {
+            background: #fafbff;
+        }
+        
+        tr:nth-child(even):hover td {
+            background: linear-gradient(135deg, #f5f9ff 0%, #edf2ff 100%);
+        }
+        
         .cache-info {
-            background: #e3f2fd;
-            padding: 10px;
-            border-radius: 5px;
-            margin: 10px 0;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
             font-size: 14px;
             color: #1565c0;
+            border-left: 5px solid #2196f3;
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.1);
         }
-        .actions-cell {
-            text-align: center;
-            min-width: 120px;
-        }
+        
         .modal {
             display: none;
             position: fixed;
@@ -137,122 +288,326 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            backdrop-filter: blur(5px);
+            animation: modalFadeIn 0.3s ease;
         }
+        
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
         .modal-content {
             position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%) scale(0.95);
             background: white;
             padding: 30px;
-            border-radius: 10px;
-            max-width: 500px;
+            border-radius: 20px;
+            max-width: 400px;
             width: 90%;
-            max-height: 80vh;
+            max-height: 85vh;
             overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
+        
+        @keyframes modalSlideIn {
+            to {
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+        
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eef1f5;
         }
+        
         .modal-header h2 {
             margin: 0;
-            color: #333;
+            color: #2c3e50;
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
+        
         .close-modal {
             background: none;
             border: none;
-            font-size: 24px;
+            font-size: 32px;
             cursor: pointer;
+            color: #667eea;
+            line-height: 1;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .close-modal:hover {
+            background: rgba(102, 126, 234, 0.2);
+            transform: rotate(90deg);
+            color: #764ba2;
+        }
+        
+        .field-info {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e6f0ff 100%);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .field-info h3 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+        
+        .field-info p {
+            margin: 0;
             color: #666;
+            font-size: 14px;
+            opacity: 0.8;
         }
+        
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 25px;
         }
+        
         .form-group label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
+            margin-bottom: 12px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
+        
+        .form-group label::before {
+            content: '📝';
+            font-size: 16px;
+        }
+        
         .form-control {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
+            padding: 15px;
+            border: 2px solid #e0e6ff;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s;
+            box-sizing: border-box;
+            background: #fafbff;
         }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+            background: white;
+        }
+        
+        .form-control[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+            transform: scale(1.3);
+        }
+        
         .modal-actions {
             display: flex;
-            gap: 10px;
+            gap: 15px;
             justify-content: flex-end;
-            margin-top: 20px;
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 2px solid #eef1f5;
         }
+        
+        .save-btn {
+            background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+            color: white;
+            padding: 15px 30px;
+            font-size: 15px;
+            border-radius: 12px;
+            flex: 1;
+        }
+        
+        .save-btn:hover {
+            background: linear-gradient(135deg, #96c93d 0%, #00b09b 100%);
+        }
+        
+        .cancel-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            padding: 15px 30px;
+            font-size: 15px;
+            border-radius: 12px;
+            flex: 1;
+        }
+        
+        .cancel-btn:hover {
+            background: linear-gradient(135deg, #ee5a52 0%, #ff6b6b 100%);
+        }
+        
         @media (max-width: 768px) {
             body {
-                margin: 15px;
+                padding: 10px;
             }
+            
+            .container {
+                padding: 20px;
+                border-radius: 15px;
+            }
+            
             .controls {
                 flex-direction: column;
             }
+            
             .controls button {
                 width: 100%;
+                justify-content: center;
             }
+            
             table {
                 font-size: 12px;
             }
+            
             th, td {
-                padding: 8px 10px;
+                padding: 12px 15px;
             }
+            
             .modal-content {
                 width: 95%;
                 padding: 20px;
             }
+            
+            .modal-actions {
+                flex-direction: column;
+            }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        
+        .empty-state h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+        
+        .empty-state p {
+            color: #666;
+            font-size: 16px;
+            max-width: 500px;
+            margin: 0 auto 30px;
+        }
+        
+        .empty-state .emoji {
+            font-size: 50px;
+            margin-bottom: 20px;
+            display: block;
+        }
+        
+        /* Scrollbar styling */
+        #dataContainer::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        
+        #dataContainer::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        #dataContainer::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+        }
+        
+        #dataContainer::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
         }
     </style>
 </head>
 <body>
-    <h1>📦 Products Data</h1>
-    
-    <div class="controls">
-        <button class="back-btn" onclick="location.href='/'">← Back to Dashboard</button>
-        <button class="refresh-btn" onclick="loadData()">🔄 Refresh Data</button>
-    </div>
-    
-    <div id="message"></div>
-    <div id="loading">Loading products data...</div>
-    <div id="error" style="display: none;"></div>
-    
-    <div id="dataContainer"></div>
+    <div class="container">
+        <h1>Products Data</h1>
+        
+        <div class="controls">
+            <button class="back-btn" onclick="location.href='/'">
+                ← Back to Dashboard
+            </button>
+            <button class="refresh-btn" onclick="loadData()">
+                🔄 Refresh Data
+            </button>
+        </div>
+        
+        <div id="message"></div>
+        
+        <div id="loading">
+            <div class="spinner"></div>
+            Loading products data...
+        </div>
+        
+        <div id="error" style="display: none;"></div>
+        
+        <div id="dataContainer"></div>
 
-    <!-- Edit Modal -->
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Edit Product</h2>
-                <button class="close-modal" onclick="closeModal()">&times;</button>
-            </div>
-            <form id="editForm">
-                <div id="formFields"></div>
-                <div class="modal-actions">
-                    <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
-                    <button type="submit" class="save-btn">Save Changes</button>
+        <!-- Edit Modal for Single Field -->
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Edit Field</h2>
+                    <button class="close-modal" onclick="closeModal()">&times;</button>
                 </div>
-            </form>
+                
+                <div class="field-info">
+                    <h3 id="fieldName"></h3>
+                    <p id="fieldInfo">Editing single field value</p>
+                </div>
+                
+                <form id="editForm">
+                    <div class="form-group">
+                        <label id="fieldLabel"></label>
+                        <div id="fieldInput"></div>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
+                        <button type="submit" class="save-btn">Save Changes</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
     <script>
         // Global variables
         let currentData = [];
-        let currentTable = 'products'; // Change this for each page
-        
+        let currentTable = 'products';
+        let currentEditId = null;
+        let currentEditField = null;
+        let originalValue = null;
+
         async function loadData() {
-            document.getElementById('loading').style.display = 'block';
+            document.getElementById('loading').style.display = 'flex';
             document.getElementById('error').style.display = 'none';
             document.getElementById('dataContainer').innerHTML = '';
             
@@ -263,24 +618,12 @@
                 if (data.success && data.data.length > 0) {
                     currentData = data.data;
                     displayData(currentData);
-                    showMessage(`✅ Loaded ${data.data.length} ${currentTable}`, 'success');
-                    
-                    // Show cache info
-                    const cacheDiv = document.createElement('div');
-                    cacheDiv.className = 'cache-info';
-                    cacheDiv.innerHTML = `
-                        <strong>Cache Info:</strong> Data is cached for 2 hours. 
-                        To force fresh data, clear cache from Dashboard.
-                        Database connection closes after 5 minutes of inactivity.
-                    `;
-                    document.getElementById('dataContainer').prepend(cacheDiv);
+                    showMessage(`✅ Loaded ${data.data.length} products`, 'success');
                 } else {
-                    document.getElementById('dataContainer').innerHTML = 
-                        '<div style="padding: 40px; text-align: center; color: #666;">No data found</div>';
+                    showEmptyState();
                 }
             } catch (error) {
-                document.getElementById('error').style.display = 'block';
-                document.getElementById('error').textContent = 'Error: ' + error.message;
+                showError(`❌ Error loading data: ${error.message}`);
                 showMessage(`❌ Error loading data: ${error.message}`, 'error');
             } finally {
                 document.getElementById('loading').style.display = 'none';
@@ -290,129 +633,208 @@
         function displayData(data) {
             const container = document.getElementById('dataContainer');
             
+            if (data.length === 0) {
+                showEmptyState();
+                return;
+            }
+            
             let html = '<table>';
             
+            // Get all keys from the first record
             const headers = Object.keys(data[0]);
+            
+            // Create header row - all columns are editable
             html += '<tr>';
             headers.forEach(header => {
-                html += `<th>${header}</th>`;
+                const displayHeader = header.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                html += `<th class="editable" title="Click to edit ${displayHeader} column">${displayHeader}</th>`;
             });
-            html += `<th class="actions-cell">Actions</th>`;
             html += '</tr>';
             
+            // Create data rows - all cells are editable
             data.forEach((row, index) => {
                 html += '<tr>';
                 headers.forEach(header => {
                     let value = row[header];
                     if (value === null || value === undefined) value = '';
-                    if (typeof value === 'object') value = JSON.stringify(value);
-                    html += `<td title="${value}" data-field="${header}" data-index="${index}">${String(value).substring(0, 50)}${String(value).length > 50 ? '...' : ''}</td>`;
+                    if (typeof value === 'object') {
+                        try {
+                            value = JSON.stringify(value);
+                        } catch (e) {
+                            value = String(value);
+                        }
+                    }
+                    
+                    const displayValue = String(value).substring(0, 50);
+                    const isTruncated = String(value).length > 50;
+                    const fullValue = isTruncated ? value : displayValue;
+                    
+                    html += `<td class="editable" 
+                             title="${fullValue}\n\nClick to edit ${header}" 
+                             data-id="${row.id}" 
+                             data-field="${header}" 
+                             data-value="${encodeURIComponent(value)}"
+                             onclick="openFieldEditModal(this)">
+                        ${displayValue}${isTruncated ? '...' : ''}
+                    </td>`;
                 });
-                html += `<td class="actions-cell">
-                    <button class="edit-btn" onclick="openEditModal(${row.id})">✏️ Edit</button>
-                </td>`;
                 html += '</tr>';
             });
             
             html += '</table>';
             
-            if (container.innerHTML.includes('Cache Info')) {
-                const tableDiv = document.createElement('div');
-                tableDiv.innerHTML = html;
-                container.appendChild(tableDiv);
-            } else {
-                container.innerHTML = html;
-            }
+            container.innerHTML = html;
         }
         
-        let currentEditId = null;
-        
-        async function openEditModal(id) {
-            currentEditId = id;
+        function openFieldEditModal(cell) {
+            const id = cell.getAttribute('data-id');
+            const field = cell.getAttribute('data-field');
+            const value = decodeURIComponent(cell.getAttribute('data-value') || '');
             
-            try {
-                const response = await fetch(`/api/${currentTable}/${id}`);
-                const result = await response.json();
-                
-                if (result.success) {
-                    const record = result.data;
-                    const formFields = document.getElementById('formFields');
-                    
-                    formFields.innerHTML = '';
-                    
-                    Object.keys(record).forEach(key => {
-                        if (key !== 'id') {
-                            const value = record[key] || '';
-                            const div = document.createElement('div');
-                            div.className = 'form-group';
-                            
-                            if (key.toLowerCase().includes('description') || 
-                                key.toLowerCase().includes('content')) {
-                                div.innerHTML = `
-                                    <label for="${key}">${key.replace(/_/g, ' ')}:</label>
-                                    <textarea id="${key}" name="${key}" class="form-control" rows="3">${value}</textarea>
-                                `;
-                            } else if (typeof value === 'boolean' || 
-                                     key.toLowerCase().includes('toggle') ||
-                                     key.toLowerCase().includes('status')) {
-                                div.innerHTML = `
-                                    <label for="${key}">${key.replace(/_/g, ' ')}:</label>
-                                    <input type="checkbox" id="${key}" name="${key}" ${value ? 'checked' : ''} class="form-control">
-                                `;
-                            } else if (key.toLowerCase().includes('image') || 
-                                     key.toLowerCase().includes('url') ||
-                                     key.toLowerCase().includes('video')) {
-                                div.innerHTML = `
-                                    <label for="${key}">${key.replace(/_/g, ' ')}:</label>
-                                    <input type="url" id="${key}" name="${key}" value="${value}" class="form-control">
-                                `;
-                            } else if (key.toLowerCase().includes('email')) {
-                                div.innerHTML = `
-                                    <label for="${key}">${key.replace(/_/g, ' ')}:</label>
-                                    <input type="email" id="${key}" name="${key}" value="${value}" class="form-control">
-                                `;
-                            } else {
-                                div.innerHTML = `
-                                    <label for="${key}">${key.replace(/_/g, ' ')}:</label>
-                                    <input type="text" id="${key}" name="${key}" value="${value}" class="form-control">
-                                `;
-                            }
-                            
-                            formFields.appendChild(div);
-                        }
-                    });
-                    
-                    document.getElementById('editModal').style.display = 'block';
-                } else {
-                    showMessage(`❌ Error: ${result.error}`, 'error');
-                }
-            } catch (error) {
-                showMessage(`❌ Error loading record: ${error.message}`, 'error');
+            currentEditId = id;
+            currentEditField = field;
+            originalValue = value;
+            
+            // Set field name and info
+            const displayField = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            document.getElementById('fieldName').textContent = `Editing ${displayField}`;
+            document.getElementById('fieldLabel').textContent = displayField;
+            document.getElementById('fieldInfo').textContent = `Product ID: ${id}`;
+            
+            // Create appropriate input based on field type
+            const fieldInput = document.getElementById('fieldInput');
+            fieldInput.innerHTML = '';
+            
+            let inputHtml = '';
+            
+            // Determine input type based on field name and value
+            if (field.toLowerCase().includes('description') || 
+                field.toLowerCase().includes('content') ||
+                (String(value).length > 100 && !field.toLowerCase().includes('image'))) {
+                // Textarea for long text
+                inputHtml = `
+                    <textarea id="editValue" name="${field}" class="form-control" rows="4" 
+                              placeholder="Enter ${displayField.toLowerCase()}...">${value}</textarea>
+                `;
+            } else if (field.toLowerCase().includes('toggle') ||
+                      field.toLowerCase().includes('status') ||
+                      field.toLowerCase().includes('active') ||
+                      field.toLowerCase().includes('enabled')) {
+                // Checkbox for boolean fields
+                const isChecked = value === true || value === 1 || value === '1' || 
+                                 String(value).toLowerCase() === 'true' || 
+                                 String(value).toLowerCase() === 'yes';
+                inputHtml = `
+                    <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f8f9ff; border-radius: 10px;">
+                        <input type="checkbox" id="editValue" name="${field}" ${isChecked ? 'checked' : ''} 
+                               class="form-control" style="transform: scale(1.5);">
+                        <span style="color: #666; font-size: 14px;">
+                            ${isChecked ? 'Currently: ON' : 'Currently: OFF'}
+                        </span>
+                    </div>
+                `;
+            } else if (field.toLowerCase().includes('image') || 
+                      field.toLowerCase().includes('url') ||
+                      field.toLowerCase().includes('video') ||
+                      field.toLowerCase().includes('thumbnail') ||
+                      field.toLowerCase().includes('link')) {
+                // URL input with preview
+                inputHtml = `
+                    <input type="url" id="editValue" name="${field}" value="${value}" 
+                           class="form-control" placeholder="https://example.com/image.jpg">
+                    ${value ? `<div style="margin-top: 10px; font-size: 12px; color: #666;">
+                        <a href="${value}" target="_blank" style="color: #667eea;">🔗 Open Link</a>
+                    </div>` : ''}
+                `;
+            } else if (field.toLowerCase().includes('email')) {
+                // Email input
+                inputHtml = `
+                    <input type="email" id="editValue" name="${field}" value="${value}" 
+                           class="form-control" placeholder="user@example.com">
+                `;
+            } else if (field.toLowerCase().includes('phone') ||
+                      field.toLowerCase().includes('mobile') ||
+                      field.toLowerCase().includes('whatsapp')) {
+                // Phone input
+                inputHtml = `
+                    <input type="tel" id="editValue" name="${field}" value="${value}" 
+                           class="form-control" placeholder="+91 9876543210">
+                `;
+            } else if (field.toLowerCase().includes('price') ||
+                      field.toLowerCase().includes('cost') ||
+                      field.toLowerCase().includes('amount') ||
+                      field.toLowerCase().includes('stock') ||
+                      field.toLowerCase().includes('quantity') ||
+                      field.toLowerCase().includes('tax')) {
+                // Number input for prices and quantities
+                inputHtml = `
+                    <input type="number" id="editValue" name="${field}" value="${value}" 
+                           class="form-control" step="0.01" placeholder="0.00">
+                `;
+            } else if (field.toLowerCase().includes('date') ||
+                      field.toLowerCase().includes('created') ||
+                      field.toLowerCase().includes('updated')) {
+                // Date input
+                inputHtml = `
+                    <input type="datetime-local" id="editValue" name="${field}" value="${value}" 
+                           class="form-control">
+                `;
+            } else {
+                // Default text input
+                inputHtml = `
+                    <input type="text" id="editValue" name="${field}" value="${value}" 
+                           class="form-control" placeholder="Enter ${displayField.toLowerCase()}...">
+                `;
             }
+            
+            fieldInput.innerHTML = inputHtml;
+            
+            // Focus on the input
+            setTimeout(() => {
+                const input = document.getElementById('editValue');
+                if (input) input.focus();
+            }, 100);
+            
+            // Show modal
+            document.getElementById('editModal').style.display = 'block';
         }
         
         function closeModal() {
             document.getElementById('editModal').style.display = 'none';
             currentEditId = null;
-            document.getElementById('editForm').reset();
+            currentEditField = null;
+            originalValue = null;
         }
         
         document.getElementById('editForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const formData = new FormData(this);
-            const updateData = {};
+            const input = document.getElementById('editValue');
+            let newValue;
             
-            formData.forEach((value, key) => {
-                if (this.elements[key].type === 'checkbox') {
-                    updateData[key] = this.elements[key].checked;
-                } else {
-                    updateData[key] = value.trim();
+            if (input.type === 'checkbox') {
+                newValue = input.checked ? 1 : 0;
+            } else {
+                newValue = input.value.trim();
+                
+                // Convert empty string to null for database
+                if (newValue === '') {
+                    newValue = null;
                 }
-            });
+            }
+            
+            // Check if value actually changed
+            if (JSON.stringify(newValue) === JSON.stringify(originalValue)) {
+                showMessage('ℹ️ No changes detected', 'info');
+                closeModal();
+                return;
+            }
             
             try {
                 showMessage('🔄 Saving changes...', 'info');
+                
+                const updateData = {};
+                updateData[currentEditField] = newValue;
                 
                 const response = await fetch(`/api/${currentTable}/${currentEditId}`, {
                     method: 'PUT',
@@ -425,11 +847,13 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    showMessage('✅ Changes saved successfully!', 'success');
-                    closeModal();
+                    showMessage('✅ Field updated successfully!', 'success');
+                    
+                    // Update the specific cell in the table
+                    updateTableCell(currentEditId, currentEditField, newValue);
                     
                     setTimeout(() => {
-                        loadData();
+                        closeModal();
                     }, 1000);
                 } else {
                     showMessage(`❌ Error: ${result.error}`, 'error');
@@ -439,6 +863,94 @@
             }
         });
         
+        function updateTableCell(id, field, newValue) {
+            // Find and update the specific cell
+            const cells = document.querySelectorAll(`td[data-id="${id}"][data-field="${field}"]`);
+            cells.forEach(cell => {
+                let displayValue = newValue;
+                if (displayValue === null || displayValue === undefined) displayValue = '';
+                if (typeof displayValue === 'object') {
+                    try {
+                        displayValue = JSON.stringify(displayValue);
+                    } catch (e) {
+                        displayValue = String(displayValue);
+                    }
+                }
+                
+                const truncatedValue = String(displayValue).substring(0, 50);
+                const isTruncated = String(displayValue).length > 50;
+                
+                cell.textContent = truncatedValue + (isTruncated ? '...' : '');
+                cell.setAttribute('data-value', encodeURIComponent(displayValue));
+                cell.setAttribute('title', `${displayValue}\n\nClick to edit ${field}`);
+                
+                // Add visual feedback
+                cell.style.background = 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)';
+                cell.style.transition = 'background 0.5s';
+                
+                setTimeout(() => {
+                    cell.style.background = '';
+                }, 1000);
+            });
+            
+            // Update currentData array
+            const rowIndex = currentData.findIndex(row => row.id == id);
+            if (rowIndex !== -1) {
+                currentData[rowIndex][field] = newValue;
+            }
+        }
+        
+        function showEmptyState() {
+            const container = document.getElementById('dataContainer');
+            container.innerHTML = `
+                <div class="empty-state">
+                    <span class="emoji">📭</span>
+                    <h3>No Products Found</h3>
+                    <p>There are no products in the database. Products will appear here once they are added.</p>
+                    <button class="refresh-btn" onclick="loadData()" style="padding: 12px 30px;">
+                        🔄 Try Again
+                    </button>
+                </div>
+            `;
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = message;
+            errorDiv.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; gap: 15px;">
+                    <span style="font-size: 24px;">⚠️</span>
+                    <div>${message}</div>
+                </div>
+            `;
+        }
+        
+        function showMessage(text, type = 'success') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            
+            const colors = {
+                success: { bg: 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)', text: '#155724', border: '#c3e6cb' },
+                error: { bg: 'linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%)', text: '#721c24', border: '#f5c6cb' },
+                info: { bg: 'linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%)', text: '#0c5460', border: '#bee5eb' }
+            };
+            
+            const color = colors[type] || colors.success;
+            messageDiv.style.background = color.bg;
+            messageDiv.style.color = color.text;
+            messageDiv.style.borderColor = color.border;
+            messageDiv.style.opacity = '1';
+            
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+                setTimeout(() => {
+                    messageDiv.textContent = '';
+                }, 400);
+            }, 3000);
+        }
+        
+        // Close modal when clicking outside
         window.onclick = function(event) {
             const modal = document.getElementById('editModal');
             if (event.target === modal) {
@@ -446,33 +958,14 @@
             }
         };
         
+        // Close modal with Escape key
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeModal();
             }
         });
         
-        function showMessage(text, type = 'success') {
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = text;
-            messageDiv.style.color = type === 'error' ? '#721c24' : 
-                                   type === 'info' ? '#0c5460' : '#155724';
-            messageDiv.style.background = type === 'error' ? '#f8d7da' : 
-                                        type === 'info' ? '#d1ecf1' : '#d4edda';
-            messageDiv.style.border = `1px solid ${type === 'error' ? '#f5c6cb' : 
-                                      type === 'info' ? '#bee5eb' : '#c3e6cb'}`;
-            messageDiv.style.opacity = '1';
-            
-            setTimeout(() => {
-                messageDiv.style.opacity = '0';
-                setTimeout(() => {
-                    messageDiv.textContent = '';
-                    messageDiv.style.background = '';
-                    messageDiv.style.border = 'none';
-                }, 300);
-            }, 3000);
-        }
-        
+        // Load data on page load
         document.addEventListener('DOMContentLoaded', loadData);
     </script>
 </body>
