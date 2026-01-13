@@ -11,15 +11,24 @@ const path = require('path');
 
 
 // Import database functions
-let dbFunctions;
+let db;
 try {
-  dbFunctions = require('./requestData');
+  db = require('./requestData');
+  console.log('✅ Database module loaded successfully');
 } catch (error) {
   console.error('❌ Failed to load requestData.js:', error);
-  dbFunctions = {
+  db = {
     getCachedData: async (type) => {
       console.log(`Fallback: getCachedData for ${type}`);
       return [];
+    },
+    executeUpdate: async (table, id, updateData) => {
+      console.log(`Fallback: executeUpdate for ${table}, id: ${id}`);
+      return { affectedRows: 0 };
+    },
+    getRecordById: async (table, id) => {
+      console.log(`Fallback: getRecordById for ${table}, id: ${id}`);
+      return null;
     },
     clearCache: (type) => {
       console.log(`Fallback: clearCache for ${type}`);
@@ -32,7 +41,6 @@ try {
     }
   };
 }
-
 // Load admin users (you'll need to create this file)
 let adminUsers = [];
 try {
@@ -2438,7 +2446,7 @@ app.post('/api/create-connection', (req, res) => {
 // Get products data
 app.get('/api/products', async (req, res) => {
   try {
-    const data = await dbFunctions.getCachedData('products');
+    const data = await db.getCachedData('products'); 
     
     res.json({
       success: true,
@@ -2456,7 +2464,7 @@ app.get('/api/products', async (req, res) => {
 // Get galleries data
 app.get('/api/galleries', async (req, res) => {
   try {
-    const data = await dbFunctions.getCachedData('galleries');
+    const data = await db.getCachedData('galleries');
     
     res.json({
       success: true,
@@ -2474,7 +2482,7 @@ app.get('/api/galleries', async (req, res) => {
 // Get sellers data
 app.get('/api/sellers', async (req, res) => {
   try {
-    const data = await dbFunctions.getCachedData('sellers');
+    const data = await db.getCachedData('sellers');
     
     res.json({
       success: true,
@@ -2493,7 +2501,7 @@ app.get('/api/sellers', async (req, res) => {
 // Get videos data
 app.get('/api/videos', async (req, res) => {
   try {
-    const data = await dbFunctions.getCachedData('videos');
+    const data = await db.getCachedData('videos');
     
     res.json({
       success: true,
@@ -2512,7 +2520,7 @@ app.get('/api/videos', async (req, res) => {
 // Get users data
 app.get('/api/users', async (req, res) => {
   try {
-    const data = await dbFunctions.getCachedData('users');
+    const data = await db.getCachedData('users');
     
     res.json({
       success: true,
@@ -2533,10 +2541,10 @@ app.post('/api/clear-cache/:type', (req, res) => {
   const { type } = req.params;
   
   if (type === 'all') {
-    dbFunctions.clearAllCaches();
+    db.clearAllCaches();  // Changed from dbFunctions
     res.json({ success: true, message: 'All caches cleared' });
   } else if (['products', 'sellers', 'videos', 'users', 'galleries'].includes(type)) {
-    dbFunctions.clearCache(type);
+    db.clearCache(type);  // Changed from dbFunctions
     res.json({ success: true, message: `Cache cleared for ${type}` });
   } else {
     res.status(400).json({ success: false, error: 'Invalid cache type' });
@@ -2545,13 +2553,12 @@ app.post('/api/clear-cache/:type', (req, res) => {
 
 // Get cache status
 app.get('/api/cache-status', (req, res) => {
-  const status = dbFunctions.getAllCacheStatus();
+  const status = db.getAllCacheStatus();  // Changed from dbFunctions
   res.json({
     success: true,
     cacheStatus: status
   });
 });
-
 // -------------------------
 // HTML Pages
 // -------------------------
@@ -2580,8 +2587,6 @@ app.get('/galleries', (req, res) => {
 res.sendFile(__dirname + '/galleries.html');
 });
 
-// Add these routes to your Express app
-
 // Update record endpoint
 app.put('/api/:table/:id', async (req, res) => {
   try {
@@ -2600,7 +2605,8 @@ app.put('/api/:table/:id', async (req, res) => {
     // Remove id from update data if present
     delete updateData.id;
     
-    const result = await executeUpdate(table, id, updateData);
+    // Use the db object
+    const result = await db.executeUpdate(table, id, updateData);  // Changed
     
     res.json({
       success: true,
@@ -2630,7 +2636,8 @@ app.get('/api/:table/:id', async (req, res) => {
       });
     }
     
-    const record = await getRecordById(table, id);
+    // Use the db object
+    const record = await db.getRecordById(table, id);  // Changed
     
     if (!record) {
       return res.status(404).json({
@@ -2651,6 +2658,7 @@ app.get('/api/:table/:id', async (req, res) => {
     });
   }
 });
+
 // -------------------------
 // Root and other endpoints
 // -------------------------
