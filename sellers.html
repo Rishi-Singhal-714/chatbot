@@ -114,27 +114,23 @@
         tr:nth-child(even) {
             background: #f8f9fa;
         }
-        .priority-4 {
+        .priority-high {
             background: #e8f5e9 !important;
-            border-left: 4px solid #4CAF50;
+            border-left: 4px solid #2E7D32;
         }
-        .priority-3 {
+        .priority-medium {
             background: #e3f2fd !important;
             border-left: 4px solid #2196F3;
         }
-        .priority-2 {
+        .priority-low {
             background: #fff3e0 !important;
-            border-left: 4px solid #ff9800;
+            border-left: 4px solid #FF9800;
         }
-        .priority-1 {
-            background: #fce4ec !important;
-            border-left: 4px solid #e91e63;
-        }
-        .priority-other {
+        .priority-outlier {
             background: #f5f5f5 !important;
-            border-left: 4px solid #9e9e9e;
+            border-left: 4px solid #9E9E9E;
         }
-        .status-live {
+        .status-active {
             background: #e8f5e9 !important;
         }
         .status-inactive {
@@ -214,11 +210,17 @@
         .stats-info span {
             margin-right: 15px;
         }
-        .stats-info .live {
+        .stats-info .active {
             color: #4CAF50;
         }
         .stats-info .inactive {
             color: #f44336;
+        }
+        .priority-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
         }
         .status-controls {
             display: flex;
@@ -232,7 +234,7 @@
             font-size: 12px;
             font-weight: bold;
         }
-        .status-btn.live {
+        .status-btn.active {
             background: #4CAF50;
             color: white;
         }
@@ -333,7 +335,7 @@
         <button class="filter-btn" id="toggleStatusFilterBtn" onclick="toggleStatusFilter()">Live Outlets Only</button>
         <button class="sort-btn" id="toggleSortBtn" onclick="toggleSort()">Sort by Priority</button>
         <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Search sellers..." onkeyup="handleSearch()">
+            <input type="text" id="searchInput" placeholder="🔍 Search sellers..." onkeyup="handleSearch()">
         </div>
     </div>
     
@@ -346,12 +348,12 @@
                 </label>
                 <span style="font-weight: bold;">Status Filter:</span>
             </div>
-            <button class="status-btn live" onclick="setStatusFilter('live')">Live Only</button>
+            <button class="status-btn active" onclick="setStatusFilter('active')">Live Only</button>
             <button class="status-btn inactive" onclick="setStatusFilter('inactive')">Inactive Only</button>
             <button class="status-btn all" onclick="setStatusFilter('all')">Show All</button>
         </div>
         <div class="stats-info">
-            <span class="live">Live: <span id="liveCount">0</span></span>
+            <span class="active">Live: <span id="activeCount">0</span></span>
             <span class="inactive">Inactive: <span id="inactiveCount">0</span></span>
             <span>Total: <span id="totalCount">0</span></span>
             <span>Showing: <span id="showingCount">0</span></span>
@@ -362,25 +364,36 @@
         <div style="display: flex; align-items: center; gap: 10px;">
             <span style="font-weight: bold;">Sort Order:</span>
             <select id="priorityOrder" onchange="applySorting()" style="padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
-                <option value="desc">Highest First (4→1)</option>
-                <option value="asc">Lowest First (1→4)</option>
+                <option value="asc">Highest First (1→10)</option>
+                <option value="desc">Lowest First (10→1)</option>
+                <option value="outliers">Outliers First</option>
             </select>
         </div>
         <div class="priority-controls">
             <span style="font-weight: bold;">Priority Filter:</span>
+            <label>
+                <input type="checkbox" id="showOutliers" checked onchange="toggleOutliers()"> Show Outliers
+            </label>
             <select id="priorityFilter" onchange="applyPriorityFilter()" style="padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
-                <option value="all">All Priorities (1-4)</option>
-                <option value="4">Priority 4 (Highest)</option>
-                <option value="3">Priority 3</option>
+                <option value="all">All Priorities (1-10)</option>
+                <option value="1">Priority 1 (Highest)</option>
                 <option value="2">Priority 2</option>
-                <option value="1">Priority 1 (Lowest)</option>
+                <option value="3">Priority 3</option>
+                <option value="4">Priority 4</option>
+                <option value="5">Priority 5</option>
+                <option value="6">Priority 6</option>
+                <option value="7">Priority 7</option>
+                <option value="8">Priority 8</option>
+                <option value="9">Priority 9</option>
+                <option value="10">Priority 10 (Lowest)</option>
             </select>
         </div>
         <div class="stats-info">
-            <span>Priority 4: <span id="priority4Count">0</span></span>
-            <span>Priority 3: <span id="priority3Count">0</span></span>
-            <span>Priority 2: <span id="priority2Count">0</span></span>
-            <span>Priority 1: <span id="priority1Count">0</span></span>
+            <span>P1-3: <span id="priorityHighCount">0</span></span>
+            <span>P4-6: <span id="priorityMediumCount">0</span></span>
+            <span>P7-9: <span id="priorityLowCount">0</span></span>
+            <span>P10: <span id="priorityLowestCount">0</span></span>
+            <span>Outliers: <span id="outlierCount">0</span></span>
         </div>
     </div>
     
@@ -421,9 +434,10 @@
         let allData = [];          // All data from API
         let filteredData = [];     // Data after filters
         let currentData = [];      // Data for current page
-        let statusFilter = 'live'; // 'live', 'inactive', 'all'
+        let statusFilter = 'active'; // 'active', 'inactive', 'all'
         let sortByPriority = true;
-        let priorityOrder = 'desc'; // Highest first (4→1)
+        let priorityOrder = 'asc'; // Changed to asc for highest first (1→10)
+        let showOutliers = true;
         let priorityFilter = 'all';
         let searchTerm = '';
         let searchTimeout = null;
@@ -449,30 +463,33 @@
                     if (Array.isArray(data.data)) {
                         allData = data.data;
                         
-                        // Process data - ensure outlet_live is standardized
+                        // Process priority values (1-10 normal, others outliers)
                         if (allData.length > 0) {
                             allData = allData.map((seller, index) => {
-                                // Normalize outlet_live field
-                                let outletLive = seller.outlet_live;
-                                if (typeof outletLive === 'string') {
-                                    outletLive = outletLive.toLowerCase();
+                                // Process outlet_live status (string 'on'/'off' or 1/0)
+                                let status = seller.outlet_live;
+                                if (typeof status === 'string') {
+                                    if (status.toLowerCase() === 'on' || status === '1' || status === 'true') {
+                                        status = 1;
+                                    } else if (status.toLowerCase() === 'off' || status === '0' || status === 'false') {
+                                        status = 0;
+                                    }
                                 }
                                 
-                                // Add priority_id if not present (for demonstration)
-                                let priorityId = seller.priority_id;
-                                if (!priorityId) {
-                                    // Assign priority based on ID for demo
-                                    if ([62, 63].includes(seller.id)) priorityId = 4;
-                                    else if ([57, 58].includes(seller.id)) priorityId = 3;
-                                    else if ([59, 60].includes(seller.id)) priorityId = 2;
-                                    else if ([23, 30].includes(seller.id)) priorityId = 1;
-                                    else priorityId = 1;
-                                }
+                                // Get priority value from priority_id and classify (1-10 normal, others outliers)
+                                let priority = Number(seller.priority_id) || 1;
+                                let isOutlier = priority < 1 || priority > 10;
+                                
+                                // Normalize priority for display (1-10)
+                                if (priority < 1) priority = 1;
+                                if (priority > 10) priority = 10;
                                 
                                 return {
                                     ...seller,
-                                    outlet_live: outletLive,
-                                    priority_id: Number(priorityId) || 1,
+                                    priority: priority,
+                                    isOutlier: isOutlier,
+                                    original_priority: seller.priority_id, // Keep original for display
+                                    status: Number(status) || 0,
                                     id: seller.id || index + 1
                                 };
                             });
@@ -516,22 +533,28 @@
         function applyFilter() {
             filteredData = [...allData];
             
-            // Apply status filter - outlet_live field (string)
-            if (statusFilter === 'live') {
+            // Apply status filter
+            if (statusFilter === 'active') {
                 filteredData = filteredData.filter(seller => {
-                    return String(seller.outlet_live).toLowerCase() === 'on';
+                    return Number(seller.status) === 1;
                 });
             } else if (statusFilter === 'inactive') {
                 filteredData = filteredData.filter(seller => {
-                    return String(seller.outlet_live).toLowerCase() !== 'on';
+                    return Number(seller.status) === 0;
                 });
+            }
+            
+            // Apply outlier filter
+            if (!showOutliers) {
+                filteredData = filteredData.filter(seller => !seller.isOutlier);
             }
             
             // Apply priority filter
             if (priorityFilter !== 'all') {
                 const selectedPriority = parseInt(priorityFilter);
                 filteredData = filteredData.filter(seller => {
-                    return Number(seller.priority_id) === selectedPriority;
+                    if (seller.isOutlier) return false;
+                    return Number(seller.priority) === selectedPriority;
                 });
             }
             
@@ -572,19 +595,41 @@
             let sortedData = [...filteredData];
             
             if (sortByPriority) {
-                if (priorityOrder === 'desc') {
-                    // Descending: 4→1 (highest first)
+                if (priorityOrder === 'outliers') {
+                    // Outliers first, then by priority (1 highest, 10 lowest)
                     sortedData.sort((a, b) => {
-                        const priorityA = Number(a.priority_id) || 0;
-                        const priorityB = Number(b.priority_id) || 0;
-                        return priorityB - priorityA; // Descending (4→1)
+                        // Outliers first
+                        if (a.isOutlier && !b.isOutlier) return -1;
+                        if (!a.isOutlier && b.isOutlier) return 1;
+                        
+                        // Both outliers or both normal
+                        const priorityA = Number(a.priority) || 0;
+                        const priorityB = Number(b.priority) || 0;
+                        return priorityA - priorityB; // Ascending (1→10) for normal
+                    });
+                } else if (priorityOrder === 'asc') {
+                    // Ascending: 1→10 (highest first), outliers at end
+                    sortedData.sort((a, b) => {
+                        // Normal priorities first
+                        if (!a.isOutlier && b.isOutlier) return -1;
+                        if (a.isOutlier && !b.isOutlier) return 1;
+                        
+                        // Both same type
+                        const priorityA = Number(a.priority) || 0;
+                        const priorityB = Number(b.priority) || 0;
+                        return priorityA - priorityB; // Ascending (1→10)
                     });
                 } else {
-                    // Ascending: 1→4 (lowest first)
+                    // Descending: 10→1 (lowest first), outliers at end
                     sortedData.sort((a, b) => {
-                        const priorityA = Number(a.priority_id) || 0;
-                        const priorityB = Number(b.priority_id) || 0;
-                        return priorityA - priorityB; // Ascending (1→4)
+                        // Normal priorities first
+                        if (!a.isOutlier && b.isOutlier) return -1;
+                        if (a.isOutlier && !b.isOutlier) return 1;
+                        
+                        // Both same type
+                        const priorityA = Number(a.priority) || 0;
+                        const priorityB = Number(b.priority) || 0;
+                        return priorityB - priorityA; // Descending (10→1)
                     });
                 }
             } else {
@@ -607,7 +652,7 @@
         
         function setStatusFilter(type) {
             statusFilter = type;
-            document.getElementById('statusFilter').checked = (type === 'live');
+            document.getElementById('statusFilter').checked = (type === 'active');
             applyFilter();
             updateStats();
             updateStatusButtons();
@@ -615,7 +660,7 @@
         }
         
         function toggleStatusFilter() {
-            statusFilter = document.getElementById('statusFilter').checked ? 'live' : 'all';
+            statusFilter = document.getElementById('statusFilter').checked ? 'active' : 'all';
             applyFilter();
             updateStats();
             updateStatusButtons();
@@ -626,6 +671,12 @@
             sortByPriority = !sortByPriority;
             applyFilter();
             updateSortMessage();
+        }
+        
+        function toggleOutliers() {
+            showOutliers = document.getElementById('showOutliers').checked;
+            applyFilter();
+            updateFilterMessage();
         }
         
         function applyPriorityFilter() {
@@ -687,9 +738,9 @@
             
             for (let i = startPage; i <= endPage; i++) {
                 if (i === currentPage) {
-                    pageNumbersHTML += `<button style="background: #7B1FA2; padding: 5px 10px; border-radius: 4px; color: white; border: none; margin: 0 2px;">${i}</button>`;
+                    pageNumbersHTML += `<button style="background: #f57c00; padding: 5px 10px; border-radius: 4px; color: white; border: none; margin: 0 2px;">${i}</button>`;
                 } else {
-                    pageNumbersHTML += `<button onclick="goToPage(${i})" style="padding: 5px 10px; border-radius: 4px; background: #9C27B0; color: white; border: none; margin: 0 2px;">${i}</button>`;
+                    pageNumbersHTML += `<button onclick="goToPage(${i})" style="padding: 5px 10px; border-radius: 4px; background: #ff9800; color: white; border: none; margin: 0 2px;">${i}</button>`;
                 }
             }
             
@@ -766,8 +817,8 @@
         
         function updateFilterButton() {
             const button = document.getElementById('toggleStatusFilterBtn');
-            if (statusFilter === 'live') {
-                button.textContent = '🟢 Live Outlets Only';
+            if (statusFilter === 'active') {
+                button.textContent = 'Live Outlets Only';
                 button.className = 'filter-btn';
             } else {
                 button.textContent = 'Show All Sellers';
@@ -776,33 +827,33 @@
         }
         
         function updateStatusButtons() {
-            const liveBtn = document.querySelector('.status-btn.live');
+            const activeBtn = document.querySelector('.status-btn.active');
             const inactiveBtn = document.querySelector('.status-btn.inactive');
             const allBtn = document.querySelector('.status-btn.all');
             
-            if (!liveBtn) return;
+            if (!activeBtn) return;
             
-            liveBtn.classList.remove('live');
-            inactiveBtn.classList.remove('live');
-            allBtn.classList.remove('live');
+            activeBtn.classList.remove('active');
+            inactiveBtn.classList.remove('active');
+            allBtn.classList.remove('active');
             
-            if (statusFilter === 'live') {
-                liveBtn.classList.add('live');
+            if (statusFilter === 'active') {
+                activeBtn.classList.add('active');
             } else if (statusFilter === 'inactive') {
-                inactiveBtn.classList.add('live');
+                inactiveBtn.classList.add('active');
             } else {
-                allBtn.classList.add('live');
+                allBtn.classList.add('active');
             }
         }
         
         function updateSortButton() {
             const button = document.getElementById('toggleSortBtn');
             if (sortByPriority) {
-                button.textContent = '📊 Sorting by Priority';
+                button.textContent = 'Sorting by Priority';
                 button.className = 'sort-btn active';
                 document.getElementById('priorityOrder').disabled = false;
             } else {
-                button.textContent = '📊 Sort by Priority';
+                button.textContent = 'Sort by Priority';
                 button.className = 'sort-btn';
                 document.getElementById('priorityOrder').disabled = true;
             }
@@ -810,43 +861,62 @@
         
         function updateStats() {
             if (!allData || !Array.isArray(allData)) {
-                document.getElementById('liveCount').textContent = '0';
+                document.getElementById('activeCount').textContent = '0';
                 document.getElementById('inactiveCount').textContent = '0';
                 document.getElementById('totalCount').textContent = '0';
                 return;
             }
             
-            const liveCount = allData.filter(seller => {
-                return String(seller.outlet_live).toLowerCase() === 'on';
+            const activeCount = allData.filter(seller => {
+                return Number(seller.status) === 1;
             }).length;
             
             const inactiveCount = allData.filter(seller => {
-                return String(seller.outlet_live).toLowerCase() !== 'on';
+                return Number(seller.status) === 0;
             }).length;
             
-            document.getElementById('liveCount').textContent = liveCount;
+            document.getElementById('activeCount').textContent = activeCount;
             document.getElementById('inactiveCount').textContent = inactiveCount;
             document.getElementById('totalCount').textContent = allData.length;
         }
         
         function updatePriorityStats() {
             if (!allData || !Array.isArray(allData)) {
-                document.getElementById('priority4Count').textContent = '0';
-                document.getElementById('priority3Count').textContent = '0';
-                document.getElementById('priority2Count').textContent = '0';
-                document.getElementById('priority1Count').textContent = '0';
+                document.getElementById('priorityHighCount').textContent = '0';
+                document.getElementById('priorityMediumCount').textContent = '0';
+                document.getElementById('priorityLowCount').textContent = '0';
+                document.getElementById('priorityLowestCount').textContent = '0';
+                document.getElementById('outlierCount').textContent = '0';
                 return;
             }
             
-            const priority4Count = allData.filter(seller => seller.priority_id === 4).length;
-            const priority3Count = allData.filter(seller => seller.priority_id === 3).length;
-            const priority2Count = allData.filter(seller => seller.priority_id === 2).length;
-            const priority1Count = allData.filter(seller => seller.priority_id === 1).length;
+            const highCount = allData.filter(seller => {
+                const priority = Number(seller.priority) || 0;
+                return !seller.isOutlier && priority >= 1 && priority <= 3;
+            }).length;
             
-            document.getElementById('priority4Count').textContent = priority4Count;
-            document.getElementById('priority3Count').textContent = priority3Count;
-            document.getElementById('priority2Count').textContent = priority2Count;
-            document.getElementById('priority1Count').textContent = priority1Count;
+            const mediumCount = allData.filter(seller => {
+                const priority = Number(seller.priority) || 0;
+                return !seller.isOutlier && priority >= 4 && priority <= 6;
+            }).length;
+            
+            const lowCount = allData.filter(seller => {
+                const priority = Number(seller.priority) || 0;
+                return !seller.isOutlier && priority >= 7 && priority <= 9;
+            }).length;
+            
+            const lowestCount = allData.filter(seller => {
+                const priority = Number(seller.priority) || 0;
+                return !seller.isOutlier && priority === 10;
+            }).length;
+            
+            const outlierCount = allData.filter(seller => seller.isOutlier).length;
+            
+            document.getElementById('priorityHighCount').textContent = highCount;
+            document.getElementById('priorityMediumCount').textContent = mediumCount;
+            document.getElementById('priorityLowCount').textContent = lowCount;
+            document.getElementById('priorityLowestCount').textContent = lowestCount;
+            document.getElementById('outlierCount').textContent = outlierCount;
         }
         
         function updateSearchResults() {
@@ -858,10 +928,14 @@
         function updateFilterMessage() {
             let message = `Showing ${totalFilteredItems} sellers`;
             
-            if (statusFilter === 'live') {
+            if (statusFilter === 'active') {
                 message += ` (live only)`;
             } else if (statusFilter === 'inactive') {
                 message += ` (inactive only)`;
+            }
+            
+            if (!showOutliers) {
+                message += `, outliers hidden`;
             }
             
             if (priorityFilter !== 'all') {
@@ -873,7 +947,9 @@
         
         function updateSortMessage() {
             if (sortByPriority) {
-                const order = priorityOrder === 'desc' ? 'highest priority first (4→1)' : 'lowest priority first (1→4)';
+                const order = priorityOrder === 'asc' ? 'highest priority first (1→10)' : 
+                             priorityOrder === 'desc' ? 'lowest priority first (10→1)' : 
+                             'outliers first';
                 showMessage(`Sorting by priority (${order})`, 'info');
             } else {
                 showMessage(`No priority sorting applied`, 'info');
@@ -894,8 +970,10 @@
                 return;
             }
             
-            // Get headers
-            const headers = Object.keys(firstRow);
+            // Get headers, excluding internal fields
+            const headers = Object.keys(firstRow).filter(header => 
+                header !== 'isOutlier' && header !== 'original_priority'
+            );
             
             let html = '<table>';
             
@@ -903,8 +981,8 @@
             html += '<tr>';
             headers.forEach(header => {
                 const displayHeader = header.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                const isSortable = header === 'priority_id' || header === 'id' || header === 'outlet_live' || 
-                                  header === 'name' || header === 'seller_name' || header === 'title';
+                const isSortable = header === 'priority' || header === 'id' || header === 'outlet_live' || 
+                                  header === 'status' || header === 'name' || header === 'title';
                 const sortClass = isSortable ? 'sortable' : '';
                 html += `<th class="${sortClass}" onclick="sortByColumn('${header}')" title="${isSortable ? 'Click to sort' : ''}">${displayHeader}</th>`;
             });
@@ -912,20 +990,29 @@
             
             // Create data rows
             data.forEach((row, index) => {
-                const outletLive = String(row.outlet_live).toLowerCase();
-                const isLive = outletLive === 'on';
-                const priorityId = Number(row.priority_id) || 0;
+                const status = row.status;
+                const isActive = Number(status) === 1;
+                const priority = Number(row.priority) || 0;
+                const isOutlier = row.isOutlier;
+                const originalPriority = row.original_priority;
                 
                 // Determine priority class
-                let priorityClass = 'priority-other';
-                if (priorityId === 4) priorityClass = 'priority-4';
-                else if (priorityId === 3) priorityClass = 'priority-3';
-                else if (priorityId === 2) priorityClass = 'priority-2';
-                else if (priorityId === 1) priorityClass = 'priority-1';
+                let priorityClass = 'priority-outlier';
+                if (!isOutlier) {
+                    if (priority >= 1 && priority <= 3) {
+                        priorityClass = 'priority-high';
+                    } else if (priority >= 4 && priority <= 6) {
+                        priorityClass = 'priority-medium';
+                    } else if (priority >= 7 && priority <= 9) {
+                        priorityClass = 'priority-low';
+                    } else if (priority === 10) {
+                        priorityClass = 'priority-outlier'; // Lowest priority
+                    }
+                }
                 
                 // Add status class
-                if (isLive) {
-                    priorityClass += ' status-live';
+                if (isActive) {
+                    priorityClass += ' status-active';
                 } else {
                     priorityClass += ' status-inactive';
                 }
@@ -946,23 +1033,29 @@
                     let cellStyle = '';
                     let displayValue = String(value);
                     
-                    if (header === 'outlet_live') {
-                        if (isLive) {
+                    if (header === 'outlet_live' || header === 'status') {
+                        if (isActive) {
                             cellStyle = 'color: #4CAF50; font-weight: bold;';
-                            displayValue = 'On';
+                            displayValue = 'Live';
                         } else {
                             cellStyle = 'color: #f44336; font-weight: bold;';
-                            displayValue = 'Off';
+                            displayValue = 'Inactive';
                         }
-                    } else if (header === 'priority_id') {
-                        if (priorityId === 4) {
-                            cellStyle = 'color: #4CAF50; font-weight: bold;';
-                        } else if (priorityId === 3) {
+                    } else if (header === 'priority') {
+                        // Show original priority if it's an outlier
+                        if (isOutlier) {
+                            cellStyle = 'color: #9E9E9E; font-weight: bold;';
+                            displayValue = `${originalPriority || value}`;
+                        } else if (priority >= 1 && priority <= 3) {
+                            cellStyle = 'color: #2E7D32; font-weight: bold;';
+                            displayValue = `${value}`;
+                        } else if (priority >= 4 && priority <= 6) {
                             cellStyle = 'color: #2196F3; font-weight: bold;';
-                        } else if (priorityId === 2) {
-                            cellStyle = 'color: #ff9800; font-weight: bold;';
-                        } else if (priorityId === 1) {
-                            cellStyle = 'color: #e91e63; font-weight: bold;';
+                        } else if (priority >= 7 && priority <= 9) {
+                            cellStyle = 'color: #FF9800; font-weight: bold;';
+                        } else if (priority === 10) {
+                            cellStyle = 'color: #757575; font-weight: bold;';
+                            displayValue = `${value}`;
                         }
                     }
                     
@@ -1000,9 +1093,11 @@
         }
         
         function sortByColumn(column) {
-            if (column === 'priority_id') {
+            if (column === 'priority') {
                 // Toggle priority order
-                priorityOrder = priorityOrder === 'desc' ? 'asc' : 'desc';
+                const orders = ['asc', 'desc', 'outliers'];
+                const currentIndex = orders.indexOf(priorityOrder);
+                priorityOrder = orders[(currentIndex + 1) % orders.length];
                 document.getElementById('priorityOrder').value = priorityOrder;
                 sortByPriority = true;
                 applyFilter();
@@ -1012,16 +1107,16 @@
                 filteredData = sortedData;
                 displayCurrentPage();
                 showMessage('Sorted by ID (descending)', 'info');
-            } else if (column === 'outlet_live') {
-                // Sort by outlet_live (on first, then off)
+            } else if (column === 'outlet_live' || column === 'status') {
+                // Sort by status (active first, then inactive)
                 const sortedData = [...filteredData].sort((a, b) => {
-                    const aLive = String(a.outlet_live).toLowerCase() === 'on' ? 1 : 0;
-                    const bLive = String(b.outlet_live).toLowerCase() === 'on' ? 1 : 0;
-                    return bLive - aLive; // on first
+                    const aStatus = Number(a.status) || 0;
+                    const bStatus = Number(b.status) || 0;
+                    return bStatus - aStatus; // active first
                 });
                 filteredData = sortedData;
                 displayCurrentPage();
-                showMessage('Sorted by Outlet Live status (on first)', 'info');
+                showMessage('Sorted by Status (active first)', 'info');
             } else {
                 // Sort by other columns alphabetically
                 const sortedData = [...filteredData].sort((a, b) => {
@@ -1042,7 +1137,7 @@
             errorDiv.style.display = 'block';
             errorDiv.innerHTML = `
                 <div style="display: flex; align-items: center; justify-content: center; gap: 15px;">
-                    <span style="font-size: 24px;">/span>
+                    <span style="font-size: 24px;"></span>
                     <div>${message}</div>
                 </div>
             `;
@@ -1074,8 +1169,9 @@
         
         document.addEventListener('DOMContentLoaded', function() {
             // Set default states
-            document.getElementById('statusFilter').checked = (statusFilter === 'live');
+            document.getElementById('statusFilter').checked = (statusFilter === 'active');
             document.getElementById('priorityOrder').value = priorityOrder;
+            document.getElementById('showOutliers').checked = showOutliers;
             document.getElementById('priorityFilter').value = priorityFilter;
             document.getElementById('pageSize').value = pageSize;
             
