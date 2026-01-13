@@ -2580,7 +2580,77 @@ app.get('/galleries', (req, res) => {
 res.sendFile(__dirname + '/galleries.html');
 });
 
+// Add these routes to your Express app
 
+// Update record endpoint
+app.put('/api/:table/:id', async (req, res) => {
+  try {
+    const { table, id } = req.params;
+    const updateData = req.body;
+    
+    // Validate table name
+    const validTables = ['products', 'sellers', 'users', 'videos', 'galleries'];
+    if (!validTables.includes(table)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid table name' 
+      });
+    }
+    
+    // Remove id from update data if present
+    delete updateData.id;
+    
+    const result = await executeUpdate(table, id, updateData);
+    
+    res.json({
+      success: true,
+      message: 'Record updated successfully',
+      affectedRows: result.affectedRows
+    });
+  } catch (error) {
+    console.error('Update error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get single record endpoint
+app.get('/api/:table/:id', async (req, res) => {
+  try {
+    const { table, id } = req.params;
+    
+    // Validate table name
+    const validTables = ['products', 'sellers', 'users', 'videos', 'galleries'];
+    if (!validTables.includes(table)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid table name' 
+      });
+    }
+    
+    const record = await getRecordById(table, id);
+    
+    if (!record) {
+      return res.status(404).json({
+        success: false,
+        error: 'Record not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: record
+    });
+  } catch (error) {
+    console.error('Get record error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 // -------------------------
 // Root and other endpoints
 // -------------------------
