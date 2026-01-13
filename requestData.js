@@ -78,7 +78,7 @@ const cache = {
         public_phone,
         whatsapp,
         instagram,
-        Address_Market
+        public_address
       FROM u130660877_zulu.seller_data
     `
   },
@@ -87,11 +87,11 @@ const cache = {
     data: null,
     timestamp: 0,
     query: `
-      SELECT
-        Id,
-        Name,
-        Phone,
-        \`E Mail\`,
+	SELECT
+        id,
+        username,
+        mobile,
+        email,
         preffered_outlets,
         preffred_price_range,
         trial_route,
@@ -112,7 +112,7 @@ const cache = {
         id,
         seller_id,
         product_id,
-        video_url,
+        video,
         thumbnail,
         status,
         created_at
