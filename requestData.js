@@ -99,6 +99,8 @@ const cache = {
         are_you_interested,
         cohort1,
         cohort2,
+		cohort_status,
+		cac.
         owner
       FROM u130660877_zulu.users
     `
