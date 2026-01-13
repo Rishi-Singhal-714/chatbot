@@ -234,36 +234,53 @@
                 const response = await fetch('/api/sellers');
                 const data = await response.json();
                 
-                if (data.success && data.data.length > 0) {
-                    allData = data.data;
-                    applyFilter();
-                    showMessage(`✅ Loaded ${allData.length} sellers`, 'success');
-                    updateStats();
-                    
-                    // Show cache info
-                    const cacheDiv = document.createElement('div');
-                    cacheDiv.className = 'cache-info';
-                    cacheDiv.innerHTML = `
-                        <strong>Cache Info:</strong> Data is cached for 2 hours. 
-                        To force fresh data, clear cache from Dashboard.
-                        Database connection closes after 5 minutes of inactivity.
-                    `;
-                    document.getElementById('dataContainer').prepend(cacheDiv);
+                console.log('API Response:', data); // Debug log
+                
+                if (data && data.success) {
+                    // Check if data.data exists and is an array
+                    if (Array.isArray(data.data)) {
+                        allData = data.data;
+                        applyFilter();
+                        showMessage(`✅ Loaded ${allData.length} sellers`, 'success');
+                        updateStats();
+                        
+                        // Show cache info
+                        const cacheDiv = document.createElement('div');
+                        cacheDiv.className = 'cache-info';
+                        cacheDiv.innerHTML = `
+                            <strong>Cache Info:</strong> Data is cached for 2 hours. 
+                            To force fresh data, clear cache from Dashboard.
+                            Database connection closes after 5 minutes of inactivity.
+                        `;
+                        document.getElementById('dataContainer').prepend(cacheDiv);
+                    } else {
+                        console.error('Invalid data format:', data.data);
+                        showError('❌ Invalid data format received from server');
+                        showMessage(`❌ Invalid data format`, 'error');
+                        document.getElementById('dataContainer').innerHTML = 
+                            '<div style="padding: 40px; text-align: center; color: #666;">Invalid data format from server</div>';
+                    }
                 } else {
+                    console.error('API returned error:', data);
+                    showError(`❌ API Error: ${data ? data.error || 'Unknown error' : 'No response'}`);
+                    showMessage(`❌ Error loading data`, 'error');
                     document.getElementById('dataContainer').innerHTML = 
-                        '<div style="padding: 40px; text-align: center; color: #666;">No sellers found</div>';
+                        '<div style="padding: 40px; text-align: center; color: #666;">Error loading data from server</div>';
                 }
             } catch (error) {
+                console.error('Fetch error:', error);
                 document.getElementById('error').style.display = 'block';
                 document.getElementById('error').textContent = 'Error: ' + error.message;
-                showMessage(`❌ Error loading data: ${error.message}`, 'error');
+                showMessage(`❌ Network error: ${error.message}`, 'error');
+                document.getElementById('dataContainer').innerHTML = 
+                    '<div style="padding: 40px; text-align: center; color: #666;">Network error. Please check your connection.</div>';
             } finally {
                 document.getElementById('loading').style.display = 'none';
             }
         }
         
         function applyFilter() {
-            if (showOnlyLiveOutlets) {
+            if (showOnlyLiveOutlets && allData.length > 0) {
                 // Filter to show only live outlets
                 currentData = allData.filter(seller => {
                     const outletLive = seller.outlet_live;
@@ -279,7 +296,12 @@
                 currentData = [...allData];
             }
             
-            displayData(currentData);
+            if (currentData.length > 0) {
+                displayData(currentData);
+            } else {
+                document.getElementById('dataContainer').innerHTML = 
+                    '<div style="padding: 40px; text-align: center; color: #666;">No data to display</div>';
+            }
             updateFilterButton();
         }
         
@@ -310,6 +332,13 @@
         }
         
         function updateStats() {
+            if (!allData || !Array.isArray(allData)) {
+                document.getElementById('liveCount').textContent = '0';
+                document.getElementById('inactiveCount').textContent = '0';
+                document.getElementById('totalCount').textContent = '0';
+                return;
+            }
+            
             const liveCount = allData.filter(seller => {
                 const outletLive = seller.outlet_live;
                 return outletLive === true || 
@@ -337,15 +366,31 @@
         function displayData(data) {
             const container = document.getElementById('dataContainer');
             
+            // Check if data is valid
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                container.innerHTML = '<div style="padding: 40px; text-align: center; color: #666;">No data to display</div>';
+                return;
+            }
+            
+            // Get headers from first row
+            const firstRow = data[0];
+            if (!firstRow || typeof firstRow !== 'object') {
+                container.innerHTML = '<div style="padding: 40px; text-align: center; color: #666;">Invalid data format</div>';
+                return;
+            }
+            
+            const headers = Object.keys(firstRow);
+            
             let html = '<table>';
             
-            const headers = Object.keys(data[0]);
+            // Create header row
             html += '<tr>';
             headers.forEach(header => {
                 html += `<th>${header}</th>`;
             });
             html += '</tr>';
             
+            // Create data rows
             data.forEach(row => {
                 const outletLive = row.outlet_live;
                 const isLive = outletLive === true || 
@@ -358,7 +403,13 @@
                 headers.forEach(header => {
                     let value = row[header];
                     if (value === null || value === undefined) value = '';
-                    if (typeof value === 'object') value = JSON.stringify(value);
+                    if (typeof value === 'object') {
+                        try {
+                            value = JSON.stringify(value);
+                        } catch (e) {
+                            value = String(value);
+                        }
+                    }
                     
                     // Add special styling for outlet_live column
                     let cellStyle = '';
@@ -366,34 +417,50 @@
                         cellStyle = isLive ? 'color: #4CAF50; font-weight: bold;' : 'color: #f44336;';
                     }
                     
-                    html += `<td title="${value}" style="${cellStyle}">${String(value).substring(0, 50)}${String(value).length > 50 ? '...' : ''}</td>`;
+                    const displayValue = String(value);
+                    const truncatedValue = displayValue.substring(0, 50);
+                    const isTruncated = displayValue.length > 50;
+                    
+                    html += `<td title="${value}" style="${cellStyle}">${truncatedValue}${isTruncated ? '...' : ''}</td>`;
                 });
                 html += '</tr>';
             });
             
             html += '</table>';
             
-            // Append to existing content (keeping cache info at top)
-            if (container.innerHTML.includes('Cache Info')) {
-                const tableDiv = document.createElement('div');
-                tableDiv.innerHTML = html;
-                container.appendChild(tableDiv);
-            } else {
-                container.innerHTML = html;
-            }
+            container.innerHTML = html;
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = message;
+            errorDiv.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; gap: 15px;">
+                    <span style="font-size: 24px;">⚠️</span>
+                    <div>${message}</div>
+                </div>
+            `;
         }
         
         function showMessage(text, type = 'success') {
             const messageDiv = document.getElementById('message');
             messageDiv.textContent = text;
-            messageDiv.style.color = type === 'error' ? '#721c24' : 
-                                   type === 'info' ? '#0c5460' : '#155724';
-            messageDiv.style.background = type === 'error' ? '#f8d7da' : 
-                                        type === 'info' ? '#d1ecf1' : '#d4edda';
-            messageDiv.style.border = `1px solid ${type === 'error' ? '#f5c6cb' : 
-                                      type === 'info' ? '#bee5eb' : '#c3e6cb'}`;
+            
+            const colors = {
+                success: { bg: '#d4edda', text: '#155724', border: '#c3e6cb' },
+                error: { bg: '#f8d7da', text: '#721c24', border: '#f5c6cb' },
+                info: { bg: '#d1ecf1', text: '#0c5460', border: '#bee5eb' }
+            };
+            
+            const color = colors[type] || colors.success;
+            messageDiv.style.background = color.bg;
+            messageDiv.style.color = color.text;
+            messageDiv.style.border = `1px solid ${color.border}`;
+            messageDiv.style.display = 'block';
             
             setTimeout(() => {
+                messageDiv.style.display = 'none';
                 messageDiv.textContent = '';
                 messageDiv.style.background = '';
                 messageDiv.style.border = 'none';
