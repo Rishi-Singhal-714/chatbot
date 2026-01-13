@@ -285,7 +285,95 @@ function executeQuery(query) {
     });
   });
 }
+// Add these functions to your database module
 
+// Execute update query
+function executeUpdate(table, id, updateData) {
+  return new Promise((resolve, reject) => {
+    ensureConnection();
+    
+    if (!pool) {
+      console.error('❌ Database connection pool not available');
+      reject(new Error('Database connection not available'));
+      return;
+    }
+    
+    // Build SET clause
+    const setClause = Object.keys(updateData)
+      .map(key => `${key} = ?`)
+      .join(', ');
+    
+    const values = Object.values(updateData);
+    values.push(id);
+    
+    const query = `UPDATE ${table} SET ${setClause} WHERE id = ?`;
+    
+    console.log(`📝 Executing update query: ${query.substring(0, 100)}...`);
+    lastQueryTime = Date.now();
+    
+    pool.getConnection((err, connection) => {
+      if (err) {
+        console.error('❌ Database connection error:', err);
+        reject(err);
+        return;
+      }
+      
+      connection.query(query, values, (error, results) => {
+        connection.release();
+        
+        if (error) {
+          console.error('❌ Update execution error:', error);
+          reject(error);
+          return;
+        }
+        
+        console.log(`✅ Update successful, affected rows: ${results.affectedRows}`);
+        
+        // Clear cache for this table after update
+        clearCache(table);
+        
+        // Close connection after successful update (delayed)
+        setTimeout(() => {
+          console.log('🔌 Closing connection after update');
+          closeConnectionPool();
+        }, 3000);
+        
+        resolve(results);
+      });
+    });
+  });
+}
+
+// Get single record by ID
+async function getRecordById(table, id) {
+  ensureConnection();
+  
+  if (!pool) {
+    throw new Error('Database connection not available');
+  }
+  
+  const query = `SELECT * FROM ${table} WHERE id = ?`;
+  
+  return new Promise((resolve, reject) => {
+    pool.getConnection((err, connection) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      
+      connection.query(query, [id], (error, results) => {
+        connection.release();
+        
+        if (error) {
+          reject(error);
+          return;
+        }
+        
+        resolve(results[0] || null);
+      });
+    });
+  });
+}
 // Get cached data or fetch from database
 async function getCachedData(type) {
   const now = Date.now();
