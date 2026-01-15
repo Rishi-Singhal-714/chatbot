@@ -1407,7 +1407,6 @@ function urlEncodeType2(t) {
   return encodeURIComponent(t.trim().replace(/\s+/g, ' ')).replace(/%20/g, '%20');
 }
 
-// Replace the existing buildConciseResponse function with this:
 function buildConciseResponse(userMessage, galleryMatches = [], sellersObj = {}) {
   const galleries = (galleryMatches && galleryMatches.length) ? galleryMatches.slice(0,5) : galleriesData.slice(0,5);
   const sellersList = [];
@@ -1439,15 +1438,17 @@ function buildConciseResponse(userMessage, galleryMatches = [], sellersObj = {})
         msg += `${i+1}. *${displayText}*\n`;
         msg += `   🔗 ${link}\n`;
         
-        // Add image if available
+        // Only add image if available and valid
         if (g.image1 && g.image1.trim() !== '') {
           let imageUrl = g.image1.trim();
           // Handle relative URLs
           if (imageUrl.startsWith('/')) {
             imageUrl = `https://zulushop.in${imageUrl}`;
           }
-          // Send image as a special format that will be rendered
-          msg += `   ${imageUrl}\n`;
+          // Check if it's a valid URL
+          if (imageUrl.startsWith('http')) {
+            msg += `   📷 ${imageUrl}\n`;
+          }
         }
       } else if (g.type2) {
         // Fallback to old format if no id
@@ -1455,13 +1456,16 @@ function buildConciseResponse(userMessage, galleryMatches = [], sellersObj = {})
         msg += `${i+1}. *${g.type2}*\n`;
         msg += `   🔗 ${link}\n`;
         
-        // Add image if available
+        // Only add image if available and valid
         if (g.image1 && g.image1.trim() !== '') {
           let imageUrl = g.image1.trim();
           if (imageUrl.startsWith('/')) {
             imageUrl = `https://zulushop.in${imageUrl}`;
           }
-          msg += `   📷 [IMAGE:${imageUrl}]\n`;
+          // Check if it's a valid URL
+          if (imageUrl.startsWith('http')) {
+            msg += `   📷 ${imageUrl}\n`;
+          }
         }
       } else if (g.name) {
         // If no type2 but has name
@@ -1469,13 +1473,16 @@ function buildConciseResponse(userMessage, galleryMatches = [], sellersObj = {})
         msg += `${i+1}. *${g.name}*\n`;
         msg += `   🔗 ${link}\n`;
         
-        // Add image if available
+        // Only add image if available and valid
         if (g.image1 && g.image1.trim() !== '') {
           let imageUrl = g.image1.trim();
           if (imageUrl.startsWith('/')) {
             imageUrl = `https://zulushop.in${imageUrl}`;
           }
-          msg += `   📷 [IMAGE:${imageUrl}]\n`;
+          // Check if it's a valid URL
+          if (imageUrl.startsWith('http')) {
+            msg += `   📷 ${imageUrl}\n`;
+          }
         }
       } else {
         msg += `${i+1}. Product — No link available\n`;
