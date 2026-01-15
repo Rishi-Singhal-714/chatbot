@@ -1653,7 +1653,7 @@
             
             const welcomeText = `Welcome to Zulu Club${isAuthenticated ? ' (Verified)' : ''}!
 
-${isAuthenticated ? '✅ You have **full access** to all features!' : '🎉 You have **unlimited access** to company info and product browsing!'}
+${isAuthenticated ? '✅ You have full access to all features!' : '🎉 You have unlimited access to company info and product browsing!'}
 
 I can help you with:
 • Company details and information
@@ -1770,7 +1770,7 @@ Try asking: "Tell me about Zulu Club" or "Show me home decor items"`;
             while (i < lines.length) {
                 const line = lines[i];
                 
-                // Check if this line looks like a gallery item (starts with number and dot followed by **title**)
+                // Check if this line looks like a gallery item (starts with number and dot followed by title)
                 const galleryMatch = line.match(/^(\d+)\.\s+\*\*(.+?)\*\*/);
                 if (galleryMatch) {
                     if (!inGallery) {
