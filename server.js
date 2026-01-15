@@ -1446,7 +1446,8 @@ function buildConciseResponse(userMessage, galleryMatches = [], sellersObj = {})
           if (imageUrl.startsWith('/')) {
             imageUrl = `https://zulushop.in${imageUrl}`;
           }
-          msg += `   🖼️ ${imageUrl}\n`;
+          // Send image as a special format that will be rendered
+          msg += `   📷 [IMAGE:${imageUrl}]\n`;
         }
       } else if (g.type2) {
         // Fallback to old format if no id
@@ -1460,7 +1461,7 @@ function buildConciseResponse(userMessage, galleryMatches = [], sellersObj = {})
           if (imageUrl.startsWith('/')) {
             imageUrl = `https://zulushop.in${imageUrl}`;
           }
-          msg += `   🖼️ ${imageUrl}\n`;
+          msg += `   📷 [IMAGE:${imageUrl}]\n`;
         }
       } else if (g.name) {
         // If no type2 but has name
@@ -1474,7 +1475,7 @@ function buildConciseResponse(userMessage, galleryMatches = [], sellersObj = {})
           if (imageUrl.startsWith('/')) {
             imageUrl = `https://zulushop.in${imageUrl}`;
           }
-          msg += `   🖼️ ${imageUrl}\n`;
+          msg += `   📷 [IMAGE:${imageUrl}]\n`;
         }
       } else {
         msg += `${i+1}. Product — No link available\n`;
