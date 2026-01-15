@@ -767,22 +767,27 @@
             max-height: 120px;
         }
         /* Image styling for chat */
-/* Image styling */
-.message-content img {
+/* Image styling for chat */
+.message-content .gallery-image {
   max-width: 200px;
   max-height: 150px;
   border-radius: 8px;
-  margin: 8px 0;
-  display: block;
   cursor: pointer;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
+  border: 2px solid #2d3746;
+  transition: transform 0.2s, border-color 0.2s;
+  display: block;
 }
 
-.message-content img:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  border-color: rgba(0, 132, 255, 0.3);
+.message-content .gallery-image:hover {
+  transform: scale(1.02);
+  border-color: #0084ff;
+}
+
+.message-content a {
+  color: #0084ff;
+  text-decoration: underline;
+  display: inline-block;
+  margin: 2px 0;
 }
 
 /* Image modal */
@@ -807,7 +812,7 @@
 .image-modal img {
   max-width: 90%;
   max-height: 90%;
-  border-radius: 12px;
+  border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   object-fit: contain;
 }
@@ -834,16 +839,6 @@
 .close-image-modal:hover {
   background: rgba(255, 255, 255, 0.2);
 }
-
-/* Error handling for images */
-.message-content img:not([src]) {
-  display: none;
-}
-
-.message-content img[src=""] {
-  display: none;
-}
-
     </style>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -1529,46 +1524,33 @@ async function sendMessageWithRetry(message) {
 // Replace the convertLinksToClickable function with this:
 
 function convertLinksToClickable(text) {
-  // First, handle [IMAGE:URL] format
-  let processedText = text.replace(/\[IMAGE:(https?:\/\/[^\]]+)\]/gi, function(match, imageUrl) {
-    return `<img src="${imageUrl}" alt="Gallery Image" class="gallery-image" data-full="${imageUrl}" style="max-width: 200px; max-height: 150px; border-radius: 8px; margin: 5px 0; display: block; cursor: pointer; border: 2px solid rgba(255, 255, 255, 0.1);">`;
-  });
+  const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(app\.zulu\.club\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|[A-Za-z0-9.-]+\.[A-Za-z]{2,}\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]))/ig;
   
-  // Convert newlines to <br>
-  processedText = processedText.replace(/\n/g, '<br>');
-  
-  // Handle regular image URLs (not wrapped in [IMAGE:])
-  const imageRegex = /(https?:\/\/[^\s<]+\.(?:png|jpg|jpeg|gif|webp|svg|PNG|JPG|JPEG))/gi;
-  processedText = processedText.replace(imageRegex, function(imageUrl) {
-    // Check if this URL is already inside an img tag (from the first step)
-    if (!processedText.includes(`src="${imageUrl}"`)) {
-      return `<img src="${imageUrl}" alt="Gallery Image" class="gallery-image" data-full="${imageUrl}" style="max-width: 200px; max-height: 150px; border-radius: 8px; margin: 5px 0; display: block; cursor: pointer; border: 2px solid rgba(255, 255, 255, 0.1);">`;
-    }
-    return imageUrl;
-  });
-  
-  // Handle regular non-image URLs (make them clickable links)
-  const urlRegex = /(https?:\/\/[^\s<]+)/gi;
-  processedText = processedText.replace(urlRegex, function(url) {
-    // Skip if already inside an img tag or a tag
-    if (processedText.includes(`src="${url}"`) || processedText.includes(`href="${url}"`)) {
-      return url;
+  return text.replace(urlRegex, function(url) {
+    let finalUrl = url;
+    if (!url.match(/^(https?|ftp|file):\/\//i)) {
+      if (url.startsWith('www.') || url.includes('app.zulu.club') || url.includes('.club/')) {
+        finalUrl = 'https://' + url;
+      }
     }
     
-    // Check if it's an image URL we might have missed
+    // Check if it's an image URL
     const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.PNG', '.JPG', '.JPEG'];
-    const isImage = imageExtensions.some(ext => url.toLowerCase().endsWith(ext));
+    const isImage = imageExtensions.some(ext => finalUrl.toLowerCase().endsWith(ext));
     
     if (isImage) {
-      return `<img src="${url}" alt="Gallery Image" class="gallery-image" data-full="${url}" style="max-width: 200px; max-height: 150px; border-radius: 8px; margin: 5px 0; display: block; cursor: pointer; border: 2px solid rgba(255, 255, 255, 0.1);">`;
+      // For image URLs, create an image element
+      return `<div style="margin: 8px 0;">
+                <img src="${finalUrl}" alt="Gallery Image" class="gallery-image" data-full="${finalUrl}" 
+                     style="max-width: 200px; max-height: 150px; border-radius: 8px; cursor: pointer; border: 2px solid #2d3746;">
+              </div>`;
     }
     
-    return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #0084ff; text-decoration: underline;">${url}</a>`;
+    return `<a href="${finalUrl}" target="_blank" rel="noopener noreferrer" 
+               style="color: #0084ff; text-decoration: underline; display: inline-block; margin: 2px 0;">${url}</a>`;
   });
-  
-  return processedText;
 }
-
+        
 // Display a message in the chat
 function displayMessage(text, sender) {
     const messageDiv = document.createElement('div');
