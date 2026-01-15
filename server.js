@@ -710,6 +710,7 @@ placement in Zulu showrooms, homepage visibility, or popup features.
 // -------------------------
 // CSV loaders: galleries + sellers
 // -------------------------
+// Replace the existing loadGalleriesData function with this:
 async function loadGalleriesData() {
   try {
     console.log('📥 Loading galleries CSV data...');
@@ -730,12 +731,13 @@ async function loadGalleriesData() {
         .pipe(csv())
         .on('data', (data) => {
           const mappedData = {
-            id: data.id || data.ID || '', // Add id field
+            id: data.id || data.ID || '',
             type2: data.type2 || data.Type2 || data.TYPE2 || '',
             cat_id: data.cat_id || data.CAT_ID || '',
             cat1: data.cat1 || data.Cat1 || data.CAT1 || '',
             seller_id: data.seller_id || data.SELLER_ID || data.Seller_ID || data.SellerId || data.sellerId || '',
-            name: data.name || data.Name || data.NAME || '' // Add name field
+            name: data.name || data.Name || data.NAME || '',
+            image1: data.image1 || data.Image1 || data.IMAGE1 || ''  // NEW: Added image1 field
           };      
           
           // Still check for type2 and cat1, but also accept if we have id
@@ -1405,6 +1407,7 @@ function urlEncodeType2(t) {
   return encodeURIComponent(t.trim().replace(/\s+/g, ' ')).replace(/%20/g, '%20');
 }
 
+// Replace the existing buildConciseResponse function with this:
 function buildConciseResponse(userMessage, galleryMatches = [], sellersObj = {}) {
   const galleries = (galleryMatches && galleryMatches.length) ? galleryMatches.slice(0,5) : galleriesData.slice(0,5);
   const sellersList = [];
@@ -1421,10 +1424,10 @@ function buildConciseResponse(userMessage, galleryMatches = [], sellersObj = {})
   (sellersObj.by_gpt || []).forEach(item => addSeller(item.seller));
   
   const sellersToShow = sellersList.slice(0,5);
-  let msg = `Based on your interest in "${userMessage}":\n`;
+  let msg = `Based on your interest in "${userMessage}":\n\n`;
 
   if (galleries.length) {
-    msg += `\nGalleries:\n`;
+    msg += `🎨 *Galleries*:\n`;
     galleries.slice(0,5).forEach((g, i) => {
       // Use id for link, type2 for display text, fallback to name
       const displayText = g.type2 || g.name || 'Product';
@@ -1433,37 +1436,76 @@ function buildConciseResponse(userMessage, galleryMatches = [], sellersObj = {})
       if (galleryId) {
         // Use the new link format: https://app.zulu.club/gallery/id=493
         const link = `https://app.zulu.club/gallery/id=${galleryId}`;
-        msg += `${i+1}. ${displayText} — ${link}\n`;
+        msg += `${i+1}. *${displayText}*\n`;
+        msg += `   🔗 ${link}\n`;
+        
+        // Add image if available
+        if (g.image1 && g.image1.trim() !== '') {
+          let imageUrl = g.image1.trim();
+          // Handle relative URLs
+          if (imageUrl.startsWith('/')) {
+            imageUrl = `https://zulushop.in${imageUrl}`;
+          }
+          msg += `   🖼️ ${imageUrl}\n`;
+        }
       } else if (g.type2) {
         // Fallback to old format if no id
         const link = `https://app.zulu.club/${urlEncodeType2(g.type2)}`;
-        msg += `${i+1}. ${g.type2} — ${link}\n`;
+        msg += `${i+1}. *${g.type2}*\n`;
+        msg += `   🔗 ${link}\n`;
+        
+        // Add image if available
+        if (g.image1 && g.image1.trim() !== '') {
+          let imageUrl = g.image1.trim();
+          if (imageUrl.startsWith('/')) {
+            imageUrl = `https://zulushop.in${imageUrl}`;
+          }
+          msg += `   🖼️ ${imageUrl}\n`;
+        }
       } else if (g.name) {
         // If no type2 but has name
         const link = `https://app.zulu.club/${urlEncodeType2(g.name)}`;
-        msg += `${i+1}. ${g.name} — ${link}\n`;
+        msg += `${i+1}. *${g.name}*\n`;
+        msg += `   🔗 ${link}\n`;
+        
+        // Add image if available
+        if (g.image1 && g.image1.trim() !== '') {
+          let imageUrl = g.image1.trim();
+          if (imageUrl.startsWith('/')) {
+            imageUrl = `https://zulushop.in${imageUrl}`;
+          }
+          msg += `   🖼️ ${imageUrl}\n`;
+        }
       } else {
         msg += `${i+1}. Product — No link available\n`;
       }
+      
+      // Add a blank line between items for readability
+      if (i < galleries.length - 1) msg += '\n';
     });
   } else {
-    msg += `\nGalleries:\nNone\n`;
+    msg += `🎨 *Galleries*:\nNone found\n`;
   }
   
-  msg += `\nSellers:\n`;
+  msg += `\n👥 *Sellers*:\n`;
   if (sellersToShow.length) {
     sellersToShow.forEach((s, i) => {
       const name = s.store_name || s.seller_id || `Seller ${i+1}`;
       const id = s.user_id || s.seller_id || '';
       const link = id ? `https://app.zulu.club/sellerassets/${id}` : '';
-      msg += `${i+1}. ${name}${link ? ` — ${link}` : ''}\n`;
+      msg += `${i+1}. *${name}*`;
+      if (link) {
+        msg += `\n   🔗 ${link}`;
+      }
+      if (i < sellersToShow.length - 1) msg += '\n\n';
     });
   } else {
-    msg += `None\n`;
+    msg += `None found\n`;
   }
 
   return msg.trim();
 }
+
 async function findGptMatchedCategories(userMessage, conversationHistory = []) {
   try {
     const csvDataForGPT = galleriesData.map(item => ({
