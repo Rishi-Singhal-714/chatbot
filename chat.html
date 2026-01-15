@@ -766,6 +766,77 @@
             min-height: 24px;
             max-height: 120px;
         }
+        /* Image styling for chat */
+.message-content img {
+  max-width: 250px;
+  max-height: 200px;
+  border-radius: 12px;
+  margin: 8px 0;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.message-content img:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.message.user .message-content img {
+  border-color: rgba(0, 132, 255, 0.3);
+}
+
+.message.assistant .message-content img {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Image modal */
+.image-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.95);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.image-modal.active {
+  display: flex;
+}
+
+.image-modal img {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.close-image-modal {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  font-size: 24px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+}
+
+.close-image-modal:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
     </style>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -795,6 +866,13 @@
                 </button>
             </div>
         </header>
+        <!-- Image Modal -->
+<div class="image-modal" id="imageModal">
+  <button class="close-image-modal" id="closeImageModal">
+    <i class="fas fa-times"></i>
+  </button>
+  <img id="modalImage" src="" alt="Full size image">
+</div>
 
         <!-- Status Banner -->
         <div class="status-banner" id="statusBanner">
@@ -949,7 +1027,37 @@ const otp1 = document.getElementById('otp1');
 const otp2 = document.getElementById('otp2');
 const otp3 = document.getElementById('otp3');
 const otp4 = document.getElementById('otp4');
+// Image modal functionality
+const imageModal = document.getElementById('imageModal');
+const modalImage = document.getElementById('modalImage');
+const closeImageModal = document.getElementById('closeImageModal');
 
+// Handle click on gallery images
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('gallery-image')) {
+    modalImage.src = e.target.dataset.full;
+    imageModal.classList.add('active');
+  }
+});
+
+// Close image modal
+closeImageModal.addEventListener('click', () => {
+  imageModal.classList.remove('active');
+});
+
+// Close image modal on outside click
+imageModal.addEventListener('click', (e) => {
+  if (e.target === imageModal) {
+    imageModal.classList.remove('active');
+  }
+});
+
+// Close image modal on Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && imageModal.classList.contains('active')) {
+    imageModal.classList.remove('active');
+  }
+});
 // Format phone number input
 function formatPhoneInput(value) {
     // Remove all non-digits and letters A/U
@@ -1438,22 +1546,30 @@ async function sendMessageWithRetry(message) {
     }
 }
 
-// Function to detect and convert URLs to clickable links
+// Replace the convertLinksToClickable function with this:
 function convertLinksToClickable(text) {
-    const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(app\.zulu\.club\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|[A-Za-z0-9.-]+\.[A-Za-z]{2,}\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]))/ig;
+  const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(app\.zulu\.club\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|[A-Za-z0-9.-]+\.[A-Za-z]{2,}\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]))/ig;
+  
+  return text.replace(urlRegex, function(url) {
+    let finalUrl = url;
+    if (!url.match(/^(https?|ftp|file):\/\//i)) {
+      if (url.startsWith('www.') || url.includes('app.zulu.club') || url.includes('.club/')) {
+        finalUrl = 'https://' + url;
+      }
+    }
     
-    return text.replace(urlRegex, function(url) {
-        let finalUrl = url;
-        if (!url.match(/^(https?|ftp|file):\/\//i)) {
-            if (url.startsWith('www.') || url.includes('app.zulu.club') || url.includes('.club/')) {
-                finalUrl = 'https://' + url;
-            }
-        }
-        
-        return `<a href="${finalUrl}" target="_blank" rel="noopener noreferrer" style="color: #0084ff; text-decoration: underline;">${url}</a>`;
-    });
+    // Check if it's an image URL
+    const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'];
+    const isImage = imageExtensions.some(ext => finalUrl.toLowerCase().endsWith(ext));
+    
+    if (isImage) {
+      // For image URLs, create an image element
+      return `<img src="${finalUrl}" alt="Gallery Image" class="gallery-image" data-full="${finalUrl}" style="max-width: 250px; max-height: 150px; border-radius: 8px; margin: 5px 0; display: block; cursor: pointer;">`;
+    }
+    
+    return `<a href="${finalUrl}" target="_blank" rel="noopener noreferrer" style="color: #0084ff; text-decoration: underline;">${url}</a>`;
+  });
 }
-
 // Display a message in the chat
 function displayMessage(text, sender) {
     const messageDiv = document.createElement('div');
