@@ -713,7 +713,7 @@ placement in Zulu showrooms, homepage visibility, or popup features.
 async function loadGalleriesData() {
   try {
     console.log('📥 Loading galleries CSV data...');
-    const response = await axios.get('https://raw.githubusercontent.com/Rishi-Singhal-714/gallabox-bot/main/galleries.csv', {
+    const response = await axios.get('https://raw.githubusercontent.com/Rishi-Singhal-714/chatbot/main/galleries.csv', {
       timeout: 60000 
     });
     
@@ -758,7 +758,7 @@ async function loadGalleriesData() {
 async function loadSellersData() {
   try {
     console.log('📥 Loading sellers CSV data...');
-    const response = await axios.get('https://raw.githubusercontent.com/Rishi-Singhal-714/gallabox-bot/main/sellers.csv', {
+    const response = await axios.get('https://raw.githubusercontent.com/Rishi-Singhal-714/chatbot/main/sellers.csv', {
       timeout: 60000
     });
     
