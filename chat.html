@@ -985,6 +985,8 @@
     </div>
 
     <script>
+// Replace the ENTIRE JavaScript section in your chat.html with this:
+
 // Global state
 let currentSessionId = '';
 let isAuthenticated = false;
@@ -1035,46 +1037,11 @@ const otp1 = document.getElementById('otp1');
 const otp2 = document.getElementById('otp2');
 const otp3 = document.getElementById('otp3');
 const otp4 = document.getElementById('otp4');
+
+// Image modal elements
 const imageModal = document.getElementById('imageModal');
 const modalImage = document.getElementById('modalImage');
 const closeImageModal = document.getElementById('closeImageModal');
-
-// Handle image clicks
-document.addEventListener('click', function(e) {
-  if (e.target.classList.contains('gallery-image')) {
-    const imgSrc = e.target.getAttribute('src');
-    if (imgSrc) {
-      modalImage.src = imgSrc;
-      imageModal.classList.add('active');
-    }
-  }
-});
-
-// Close modal
-closeImageModal.addEventListener('click', function() {
-  imageModal.classList.remove('active');
-});
-
-// Close on outside click
-imageModal.addEventListener('click', function(e) {
-  if (e.target === imageModal) {
-    imageModal.classList.remove('active');
-  }
-});
-
-// Close on escape key
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape' && imageModal.classList.contains('active')) {
-    imageModal.classList.remove('active');
-  }
-});
-
-// Handle image load errors
-document.addEventListener('error', function(e) {
-  if (e.target.tagName === 'IMG') {
-    e.target.style.display = 'none';
-  }
-}, true);
 
 // Format phone number input
 function formatPhoneInput(value) {
@@ -1468,7 +1435,7 @@ Try asking: "Tell me about Zulu Club" or "Show me home decor items"`;
     welcomeMessageShown = true;
 }
 
-// Update the sendMessage function to handle session errors:
+// Send message function
 async function sendMessage() {
   const message = messageInput.value.trim();
   if (!message) return;
@@ -1494,43 +1461,39 @@ async function sendMessage() {
       body: JSON.stringify({
         sessionId: currentSessionId,
         message: message,
-        // Also send phoneNumber for authenticated users
         phoneNumber: isAuthenticated ? currentSessionId : null
       })
     });
         
-        const data = await response.json();
-        console.log('Response from server:', data);
-        
-        // Hide typing indicator
-        hideTyping();
-        
-        if (data.success) {
-            displayMessage(data.response, 'assistant');
-        } else {
-            if (data.error === 'Invalid session') {
-                console.log('Session invalid during message send, creating new session...');
-                // Create new session and retry
-                await createSession();
-                // After creating new session, send the message again
-                sendMessageWithRetry(message);
-            } else {
-                displayMessage('Error: ' + (data.error || 'Unknown error'), 'assistant');
-            }
-        }
-    } catch (error) {
-        hideTyping();
-        console.error('Error sending message:', error);
-        displayMessage('Network error. Please check your connection.', 'assistant');
-    }
+    const data = await response.json();
+    console.log('Response from server:', data);
     
-    sendBtn.disabled = !messageInput.value.trim();
-    messageInput.focus();
+    // Hide typing indicator
+    hideTyping();
+    
+    if (data.success) {
+        displayMessage(data.response, 'assistant');
+    } else {
+        if (data.error === 'Invalid session') {
+            console.log('Session invalid during message send, creating new session...');
+            await createSession();
+            sendMessageWithRetry(message);
+        } else {
+            displayMessage('Error: ' + (data.error || 'Unknown error'), 'assistant');
+        }
+    }
+  } catch (error) {
+    hideTyping();
+    console.error('Error sending message:', error);
+    displayMessage('Network error. Please check your connection.', 'assistant');
+  }
+  
+  sendBtn.disabled = !messageInput.value.trim();
+  messageInput.focus();
 }
 
-// Add a helper function to retry sending message after session recreation
+// Send message with retry
 async function sendMessageWithRetry(message) {
-    // Show typing indicator
     showTyping();
     
     try {
@@ -1549,7 +1512,6 @@ async function sendMessageWithRetry(message) {
         const data = await response.json();
         console.log('Retry response from server:', data);
         
-        // Hide typing indicator
         hideTyping();
         
         if (data.success) {
@@ -1564,36 +1526,26 @@ async function sendMessageWithRetry(message) {
     }
 }
 
+// Fixed convertLinksToClickable function
 function convertLinksToClickable(text) {
-  let processedText = text;
+  // First convert newlines to <br>
+  let processedText = text.replace(/\n/g, '<br>');
   
-  // First, handle special image format [IMAGE:URL]
-  const imageRegex = /\[IMAGE:(https?:\/\/[^\]]+)\]/gi;
-  processedText = processedText.replace(imageRegex, function(match, imageUrl) {
-    return `<img src="${imageUrl}" alt="Gallery Image" class="gallery-image" data-full="${imageUrl}" style="max-width: 200px; max-height: 150px; border-radius: 8px; margin: 5px 0; display: block; cursor: pointer; border: 2px solid rgba(255, 255, 255, 0.1);">`;
-  });
-  
-  // Then handle regular links
-  const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(app\.zulu\.club\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|[A-Za-z0-9.-]+\.[A-Za-z]{2,}\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]))/ig;
+  // Find all URLs
+  const urlRegex = /(https?:\/\/[^\s<]+)/gi;
   
   processedText = processedText.replace(urlRegex, function(url) {
-    let finalUrl = url;
-    if (!url.match(/^(https?|ftp|file):\/\//i)) {
-      if (url.startsWith('www.') || url.includes('app.zulu.club') || url.includes('.club/')) {
-        finalUrl = 'https://' + url;
-      }
-    }
-    
-    // Check if it's an image URL (not already handled by [IMAGE:] format)
+    // Check if it's an image URL
     const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.PNG', '.JPG', '.JPEG'];
-    const isImage = imageExtensions.some(ext => finalUrl.toLowerCase().endsWith(ext));
+    const isImage = imageExtensions.some(ext => url.toLowerCase().endsWith(ext));
     
-    // Skip if already processed as [IMAGE:] format
-    if (isImage && !url.includes('[IMAGE:')) {
-      return `<img src="${finalUrl}" alt="Gallery Image" class="gallery-image" data-full="${finalUrl}" style="max-width: 200px; max-height: 150px; border-radius: 8px; margin: 5px 0; display: block; cursor: pointer; border: 2px solid rgba(255, 255, 255, 0.1);">`;
+    if (isImage) {
+      // Remove any query parameters for cleaner display
+      const cleanUrl = url.split('?')[0];
+      return `<img src="${url}" alt="Gallery Image" class="gallery-image" data-full="${url}" style="max-width: 200px; max-height: 150px; border-radius: 8px; margin: 5px 0; display: block; cursor: pointer; border: 2px solid rgba(255, 255, 255, 0.1);">`;
+    } else {
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #0084ff; text-decoration: underline;">${url}</a>`;
     }
-    
-    return `<a href="${finalUrl}" target="_blank" rel="noopener noreferrer" style="color: #0084ff; text-decoration: underline;">${url}</a>`;
   });
   
   return processedText;
@@ -1611,9 +1563,8 @@ function displayMessage(text, sender) {
     const messageDisplayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     
     const processedText = convertLinksToClickable(text);
-    const formattedText = processedText.replace(/\n/g, '<br>');
     contentDiv.innerHTML = `
-        ${formattedText}
+        ${processedText}
         <span class="message-time">${messageDisplayTime}</span>
     `;
     
@@ -1696,8 +1647,8 @@ function startOtpTimer() {
         }
     }, 1000);
 }
-        
-// Update the checkAuthentication function to handle session errors:
+
+// Check authentication
 async function checkAuthentication() {
     console.log('Checking authentication...');
     
@@ -1779,7 +1730,7 @@ async function checkAuthentication() {
     await createSession();
 }
 
-// Update the loadChatHistory function to handle invalid sessions:
+// Load chat history
 async function loadChatHistory() {
     try {
         console.log('Loading chat history for session:', currentSessionId);
@@ -1882,6 +1833,43 @@ async function logout() {
         console.error('Error logging out:', error);
     }
 }
+
+// Image modal functionality
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('gallery-image')) {
+    const imgSrc = e.target.getAttribute('src');
+    if (imgSrc) {
+      modalImage.src = imgSrc;
+      imageModal.classList.add('active');
+    }
+  }
+});
+
+// Close image modal
+closeImageModal.addEventListener('click', function() {
+  imageModal.classList.remove('active');
+});
+
+// Close on outside click
+imageModal.addEventListener('click', function(e) {
+  if (e.target === imageModal) {
+    imageModal.classList.remove('active');
+  }
+});
+
+// Close on escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && imageModal.classList.contains('active')) {
+    imageModal.classList.remove('active');
+  }
+});
+
+// Handle image load errors
+document.addEventListener('error', function(e) {
+  if (e.target.tagName === 'IMG' && e.target.classList.contains('gallery-image')) {
+    e.target.style.display = 'none';
+  }
+}, true);
 
 // Event Listeners
 phoneInput.addEventListener('input', function(e) {
@@ -2032,4 +2020,3 @@ window.addEventListener('load', () => {
     </script>
 </body>
 </html>
-
