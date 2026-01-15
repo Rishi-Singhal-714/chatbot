@@ -1521,73 +1521,92 @@ async function sendMessageWithRetry(message) {
     }
 }
 
-// Replace the convertLinksToClickable function with this:
-
 function convertLinksToClickable(text) {
-  const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(app\.zulu\.club\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|[A-Za-z0-9.-]+\.[A-Za-z]{2,}\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]))/ig;
+  // First, split the text into lines
+  const lines = text.split('\n');
+  let processedLines = [];
   
-  return text.replace(urlRegex, function(url) {
-    let finalUrl = url;
-    if (!url.match(/^(https?|ftp|file):\/\//i)) {
-      if (url.startsWith('www.') || url.includes('app.zulu.club') || url.includes('.club/')) {
-        finalUrl = 'https://' + url;
-      }
-    }
+  lines.forEach(line => {
+    let processedLine = line;
     
-    // Check if it's an image URL
-    const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.PNG', '.JPG', '.JPEG'];
-    const isImage = imageExtensions.some(ext => finalUrl.toLowerCase().endsWith(ext));
+    // Check if line contains a URL
+    const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(app\.zulu\.club\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|[A-Za-z0-9.-]+\.[A-Za-z]{2,}\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]))/ig;
     
-    if (isImage) {
-      // For image URLs, create an image element
-      return `<div style="margin: 8px 0;">
-                <img src="${finalUrl}" alt="Gallery Image" class="gallery-image" data-full="${finalUrl}" 
-                     style="max-width: 200px; max-height: 150px; border-radius: 8px; cursor: pointer; border: 2px solid #2d3746;">
-              </div>`;
-    }
+    // Find all URLs in this line
+    const urls = line.match(urlRegex);
     
-    return `<a href="${finalUrl}" target="_blank" rel="noopener noreferrer" 
-               style="color: #0084ff; text-decoration: underline; display: inline-block; margin: 2px 0;">${url}</a>`;
-  });
-}
+    if (urls) {
+      urls.forEach(url => {
+        let finalUrl = url;
+        if (!url.match(/^(https?|ftp|file):\/\//i)) {
+          if (url.startsWith('www.') || url.includes('app.zulu.club') || url.includes('.club/')) {
+            finalUrl = 'https://' + url;
+          }
+        }
         
-// Display a message in the chat
+        // Check if it's an image URL
+        const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.PNG', '.JPG', '.JPEG'];
+        const isImage = imageExtensions.some(ext => finalUrl.toLowerCase().endsWith(ext));
+        
+        if (isImage) {
+          // For image URLs, create an image element
+          processedLine = processedLine.replace(url, 
+            `<div style="margin: 8px 0 8px 20px;">
+               <img src="${finalUrl}" alt="Gallery Image" class="gallery-image" data-full="${finalUrl}" 
+                    style="max-width: 200px; max-height: 150px; border-radius: 8px; cursor: pointer; border: 2px solid #2d3746;">
+             </div>`
+          );
+        } else {
+          // For non-image URLs, create a link
+          processedLine = processedLine.replace(url, 
+            `<a href="${finalUrl}" target="_blank" rel="noopener noreferrer" 
+               style="color: #0084ff; text-decoration: underline;">${url}</a>`
+          );
+        }
+      });
+    }
+    
+    processedLines.push(processedLine);
+  });
+  
+  // Join lines back with <br> for HTML display
+  return processedLines.join('<br>');
+}
 function displayMessage(text, sender) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${sender}`;
-    
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content';
-    
-    const now = new Date();
-    const messageDisplayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    
-    const processedText = convertLinksToClickable(text);
-    contentDiv.innerHTML = `
-        ${processedText}
-        <span class="message-time">${messageDisplayTime}</span>
-    `;
-    
-    messageDiv.appendChild(contentDiv);
-    
-    // Add click handlers for links
-    setTimeout(() => {
-        const links = contentDiv.querySelectorAll('a');
-        links.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.stopPropagation();
-            });
-            
-            link.addEventListener('touchstart', (e) => {
-                e.stopPropagation();
-            });
-        });
-    }, 100);
-    
-    chatMessages.appendChild(messageDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-    
-    return messageDiv;
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `message ${sender}`;
+  
+  const contentDiv = document.createElement('div');
+  contentDiv.className = 'message-content';
+  
+  const now = new Date();
+  const messageDisplayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  
+  // Process the text to convert URLs and preserve formatting
+  const formattedText = convertLinksToClickable(text);
+  
+  contentDiv.innerHTML = `
+    ${formattedText}
+    <br>
+    <span class="message-time">${messageDisplayTime}</span>
+  `;
+  
+  messageDiv.appendChild(contentDiv);
+  chatMessages.appendChild(messageDiv);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  
+  // Add event listeners for images
+  setTimeout(() => {
+    const images = contentDiv.querySelectorAll('.gallery-image');
+    images.forEach(img => {
+      img.addEventListener('click', (e) => {
+        modalImage.src = e.target.src;
+        imageModal.classList.add('active');
+      });
+    });
+  }, 100);
+  
+  return messageDiv;
 }
 
 // Show typing indicator
