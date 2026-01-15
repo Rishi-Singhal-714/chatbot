@@ -177,7 +177,7 @@
         /* Message Bubbles */
         .message {
             display: flex;
-            max-width: 80%;
+            max-width: 90%;
             animation: fadeIn 0.3s ease;
         }
 
@@ -197,12 +197,13 @@
         }
 
         .message-content {
-            padding: 16px 20px;
+            padding: 14px 18px;
             border-radius: 18px;
             font-size: 14px;
             line-height: 1.5;
             position: relative;
             word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         .message.user .message-content {
@@ -221,7 +222,7 @@
         .message-time {
             font-size: 11px;
             opacity: 0.7;
-            margin-top: 8px;
+            margin-top: 4px;
             display: block;
             text-align: right;
         }
@@ -349,7 +350,7 @@
             color: white;
             font-size: 15px;
             resize: none;
-            max-height: 100px;
+            max-height: 120px;
             padding: 8px 0;
             font-family: inherit;
             line-height: 1.4;
@@ -697,112 +698,150 @@
         a {
             color: #0084ff;
             text-decoration: none;
-            word-break: break-all;
         }
 
         a:hover {
             text-decoration: underline;
         }
 
-        /* Gallery Item Layout */
-        .gallery-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 16px;
-            margin: 12px 0;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            border-left: 3px solid #0084ff;
-        }
-
-        .gallery-item-content {
-            flex: 1;
-            min-width: 0; /* Allow text to wrap */
-        }
-
-        .gallery-item-title {
-            font-weight: 600;
-            font-size: 15px;
-            margin-bottom: 6px;
-            color: #e1e8ed;
-        }
-
-        .gallery-item-link {
-            font-size: 13px;
-            color: #a0b3c5;
-            word-break: break-all;
-        }
-
-        .gallery-item-link a {
-            font-size: 13px;
-        }
-
-        /* Gallery Images */
-        .gallery-image-container {
-            flex-shrink: 0;
+        /* Enhanced Gallery and Image Styles */
+        .message-content {
             position: relative;
-            width: 150px;
+        }
+
+        /* Gallery container */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+            margin: 12px 0;
+        }
+
+        /* Gallery item wrapper */
+        .gallery-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            border: 1px solid #2d3746;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0, 132, 255, 0.2);
+            border-color: #0084ff;
+        }
+
+        /* Image container with aspect ratio handling */
+        .image-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            background: #0a1014;
+            cursor: pointer;
+        }
+
+        /* Default for landscape (16:9) */
+        .image-container.landscape {
+            aspect-ratio: 16/9;
+        }
+
+        /* For portrait (9:16) */
+        .image-container.portrait {
+            aspect-ratio: 9/16;
+        }
+
+        /* Square images */
+        .image-container.square {
+            aspect-ratio: 1/1;
+        }
+
+        /* Loading state */
+        .image-container.loading {
             min-height: 150px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
+        /* Gallery image - responsive and properly scaled */
         .gallery-image {
-            max-width: 150px;
-            max-height: 150px;
-            border-radius: 10px;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            transition: transform 0.4s ease;
+            background: linear-gradient(135deg, #1a2733 0%, #0a1014 100%);
+        }
+
+        .image-container:hover .gallery-image {
+            transform: scale(1.05);
+        }
+
+        /* Image info overlay */
+        .image-info {
+            padding: 12px;
+            background: rgba(10, 16, 20, 0.95);
+            border-top: 1px solid #2d3746;
+        }
+
+        .image-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .image-description {
+            font-size: 11px;
+            color: #a0b3c5;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Loading placeholder for images */
+        .image-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #1a2733 25%, #2d3746 50%, #1a2733 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* For single image display (non-gallery) */
+        .message-content .single-image {
+            max-width: 300px;
+            max-height: 400px;
+            border-radius: 12px;
+            margin: 8px 0;
             cursor: pointer;
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            border: 2px solid #2d3746;
+            background: #0a1014;
             transition: all 0.3s ease;
             object-fit: contain;
-            background: rgba(0, 0, 0, 0.2);
         }
 
-        .gallery-image:hover {
-            transform: scale(1.05);
+        .message-content .single-image:hover {
             border-color: #0084ff;
-            box-shadow: 0 4px 20px rgba(0, 132, 255, 0.2);
+            box-shadow: 0 8px 25px rgba(0, 132, 255, 0.3);
         }
 
-        .gallery-image.portrait {
-            max-height: 200px;
-            max-width: 120px;
-        }
-
-        .gallery-image.landscape {
-            max-width: 180px;
-            max-height: 120px;
-        }
-
-        .gallery-image-loading {
-            width: 150px;
-            height: 150px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            border: 2px dashed #2d3746;
-        }
-
-        .gallery-image-error {
-            width: 150px;
-            height: 150px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 107, 107, 0.05);
-            border-radius: 10px;
-            border: 2px solid rgba(255, 107, 107, 0.2);
-            color: #ff6b6b;
-            font-size: 12px;
-            text-align: center;
-            padding: 10px;
-        }
-
-        /* Image Modal */
+        /* Image modal enhancements */
         .image-modal {
             position: fixed;
             top: 0;
@@ -815,26 +854,30 @@
             justify-content: center;
             z-index: 2000;
             padding: 20px;
+            backdrop-filter: blur(10px);
         }
 
         .image-modal.active {
             display: flex;
+            animation: fadeIn 0.3s ease;
         }
 
-        .image-modal-content {
+        .image-modal img {
             max-width: 90%;
             max-height: 90%;
-            position: relative;
-        }
-
-        .image-modal-img {
-            max-width: 100%;
-            max-height: 90vh;
-            border-radius: 12px;
+            border-radius: 16px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             object-fit: contain;
+            background: #0a1014;
+            animation: scaleIn 0.4s ease;
         }
 
+        @keyframes scaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* Modal controls */
         .close-image-modal {
             position: absolute;
             top: 20px;
@@ -843,6 +886,32 @@
             border: none;
             color: white;
             font-size: 24px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            z-index: 2001;
+            transition: all 0.3s ease;
+        }
+
+        .close-image-modal:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+
+        /* Image navigation in modal */
+        .image-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            font-size: 20px;
             width: 44px;
             height: 44px;
             border-radius: 50%;
@@ -852,42 +921,44 @@
             justify-content: center;
             backdrop-filter: blur(10px);
             z-index: 2001;
-            transition: background 0.3s;
+            transition: all 0.3s ease;
         }
 
-        .close-image-modal:hover {
+        .image-nav:hover {
             background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
         }
 
-        .image-modal-loader {
+        .image-nav.prev {
+            left: 20px;
+        }
+
+        .image-nav.next {
+            right: 20px;
+        }
+
+        /* Image info in modal */
+        .modal-image-info {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 14px;
+            bottom: 20px;
+            left: 0;
+            right: 0;
             text-align: center;
+            color: white;
+            padding: 15px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            border-radius: 0 0 16px 16px;
         }
 
-        /* Sections in messages */
-        .message-section {
-            margin: 12px 0;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .message-section:last-child {
-            border-bottom: none;
-        }
-
-        .section-title {
+        .modal-image-title {
             font-size: 16px;
             font-weight: 600;
-            margin-bottom: 12px;
-            color: #e1e8ed;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .modal-image-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
         }
 
         /* Utility Classes */
@@ -935,7 +1006,7 @@
             }
 
             .message {
-                max-width: 90%;
+                max-width: 95%;
             }
 
             .instructions-panel {
@@ -948,29 +1019,57 @@
                 font-size: 18px;
             }
 
-            .gallery-item {
-                flex-direction: column;
-                gap: 12px;
+            /* Responsive image handling */
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+                gap: 10px;
+            }
+            
+            .image-container.landscape {
+                aspect-ratio: 16/9;
+            }
+            
+            .image-container.portrait {
+                aspect-ratio: 3/4; /* Slightly adjust for mobile */
+            }
+            
+            .image-info {
+                padding: 10px;
+            }
+            
+            .image-title {
+                font-size: 12px;
+            }
+            
+            .image-description {
+                font-size: 10px;
             }
 
-            .gallery-image-container {
-                width: 100%;
-                min-height: 120px;
+            .single-image {
+                max-width: 250px;
+                max-height: 350px;
             }
 
+            /* Touch-friendly image sizes for mobile */
             .gallery-image {
-                max-width: 100%;
-                max-height: 150px;
+                object-fit: cover;
             }
-
-            .gallery-image.portrait {
-                max-height: 180px;
-                max-width: 100%;
+            
+            .image-container {
+                min-height: 150px;
             }
+        }
 
-            .gallery-image.landscape {
-                max-width: 100%;
-                max-height: 120px;
+        /* For very small screens */
+        @media (max-width: 480px) {
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+                gap: 8px;
+            }
+            
+            .single-image {
+                max-width: 200px;
+                max-height: 300px;
             }
         }
 
@@ -978,13 +1077,6 @@
         .message-input {
             min-height: 24px;
             max-height: 120px;
-        }
-
-        /* Error handling for images */
-        .gallery-image:not([src]),
-        .gallery-image[src=""],
-        .gallery-image[src="undefined"] {
-            display: none;
         }
     </style>
     <!-- Font Awesome -->
@@ -1021,13 +1113,7 @@
             <button class="close-image-modal" id="closeImageModal">
                 <i class="fas fa-times"></i>
             </button>
-            <div class="image-modal-content">
-                <img id="modalImage" src="" alt="Gallery Image" class="image-modal-img">
-                <div class="image-modal-loader hidden" id="imageModalLoader">
-                    <div class="spinner"></div>
-                    <div style="margin-top: 10px;">Loading image...</div>
-                </div>
-            </div>
+            <img id="modalImage" src="" alt="Gallery Image">
         </div>
 
         <!-- Status Banner -->
@@ -1133,310 +1219,439 @@
     </div>
 
     <script>
-// Global state
-let currentSessionId = '';
-let isAuthenticated = false;
-let isAdmin = false;
-let otpTimer = null;
-let countdown = 60;
-let welcomeMessageShown = false;
+        // Global state
+        let currentSessionId = '';
+        let isAuthenticated = false;
+        let isAdmin = false;
+        let otpTimer = null;
+        let countdown = 60;
+        let welcomeMessageShown = false;
+        let currentGalleryImages = [];
 
-// DOM Elements
-const statusBanner = document.getElementById('statusBanner');
-const phoneInput = document.getElementById('phoneInput');
-const sendOtpBtn = document.getElementById('sendOtpBtn');
-const verifyOtpBtn = document.getElementById('verifyOtpBtn');
-const resendOtpBtn = document.getElementById('resendOtpBtn');
-const otpPhoneNumber = document.getElementById('otpPhoneNumber');
-const phoneAlert = document.getElementById('phoneAlert');
-const otpAlert = document.getElementById('otpAlert');
-const timer = document.getElementById('timer');
-const countdownSpan = document.getElementById('countdown');
+        // DOM Elements
+        const statusBanner = document.getElementById('statusBanner');
+        const phoneInput = document.getElementById('phoneInput');
+        const sendOtpBtn = document.getElementById('sendOtpBtn');
+        const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+        const resendOtpBtn = document.getElementById('resendOtpBtn');
+        const otpPhoneNumber = document.getElementById('otpPhoneNumber');
+        const phoneAlert = document.getElementById('phoneAlert');
+        const otpAlert = document.getElementById('otpAlert');
+        const timer = document.getElementById('timer');
+        const countdownSpan = document.getElementById('countdown');
 
-// Chat elements
-const chatMessages = document.getElementById('chatMessages');
-const messageInput = document.getElementById('messageInput');
-const sendBtn = document.getElementById('sendBtn');
-const profileAvatar = document.getElementById('profileAvatar');
-const profileName = document.getElementById('profileName');
-const statusMessage = document.getElementById('statusMessage');
+        // Chat elements
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const profileAvatar = document.getElementById('profileAvatar');
+        const profileName = document.getElementById('profileName');
+        const statusMessage = document.getElementById('statusMessage');
 
-// Image modal elements
-const imageModal = document.getElementById('imageModal');
-const modalImage = document.getElementById('modalImage');
-const closeImageModal = document.getElementById('closeImageModal');
-const imageModalLoader = document.getElementById('imageModalLoader');
+        // Header buttons
+        const logoutBtn = document.getElementById('logoutBtn');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const infoBtn = document.getElementById('infoBtn');
 
-// Format phone number input
-function formatPhoneInput(value) {
-    let cleaned = value.replace(/[^0-9auAU]/g, '');
-    let digits = cleaned.replace(/[^0-9]/g, '').substring(0, 10);
-    let suffix = '';
-    if (cleaned.length > 10) {
-        let lastChar = cleaned.charAt(cleaned.length - 1).toUpperCase();
-        if (lastChar === 'A' || lastChar === 'U') {
-            suffix = lastChar;
-            digits = digits.substring(0, 10);
+        // Modals
+        const verificationModal = document.getElementById('verificationModal');
+        const instructionsPanel = document.getElementById('instructionsPanel');
+
+        // Steps
+        const phoneStep = document.getElementById('phoneStep');
+        const otpStep = document.getElementById('otpStep');
+
+        // Close buttons
+        const closeVerifyModal = document.getElementById('closeVerifyModal');
+        const closeInstructionsBtn = document.getElementById('closeInstructionsBtn');
+
+        // OTP input elements
+        const otp1 = document.getElementById('otp1');
+        const otp2 = document.getElementById('otp2');
+        const otp3 = document.getElementById('otp3');
+        const otp4 = document.getElementById('otp4');
+
+        // Image modal elements
+        const imageModal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        const closeImageModal = document.getElementById('closeImageModal');
+
+        // Format phone number input
+        function formatPhoneInput(value) {
+            // Remove all non-digits and letters A/U
+            let cleaned = value.replace(/[^0-9auAU]/g, '');
+            
+            // Get first 10 digits
+            let digits = cleaned.replace(/[^0-9]/g, '').substring(0, 10);
+            
+            // Get suffix if present (A or U)
+            let suffix = '';
+            if (cleaned.length > 10) {
+                let lastChar = cleaned.charAt(cleaned.length - 1).toUpperCase();
+                if (lastChar === 'A' || lastChar === 'U') {
+                    suffix = lastChar;
+                    digits = digits.substring(0, 10); // Ensure only 10 digits
+                }
+            }
+            
+            return digits + suffix;
         }
-    }
-    return digits + suffix;
-}
 
-// Validate phone number
-function validatePhoneNumber(phone) {
-    const regex = /^[0-9]{10}[AU]?$/i;
-    if (!regex.test(phone)) return false;
-    const digits = phone.replace(/[^0-9]/g, '');
-    const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
-    if (suffix && !['A', 'U'].includes(suffix)) return false;
-    return true;
-}
-
-// Create session
-async function createSession() {
-    try {
-        console.log('Creating new session...');
-        const response = await fetch('/chat/create-session', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'}
-        });
-        const data = await response.json();
-        if (data.success) {
-            currentSessionId = data.sessionId;
-            isAuthenticated = false;
-            localStorage.setItem('zulu_session_id', currentSessionId);
-            console.log('✅ Session created:', currentSessionId);
-            updateUI();
-            messageInput.disabled = false;
-            messageInput.focus();
-            await loadChatHistory();
+        // Validate phone number
+        function validatePhoneNumber(phone) {
+            // Check if it's exactly 10 digits or 10 digits + A/U
+            const regex = /^[0-9]{10}[AU]?$/i;
+            if (!regex.test(phone)) {
+                return false;
+            }
+            
+            const digits = phone.replace(/[^0-9]/g, '');
+            const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
+            
+            // If suffix is present, it must be A or U
+            if (suffix && !['A', 'U'].includes(suffix)) {
+                return false;
+            }
+            
             return true;
-        } else {
-            console.error('Failed to create session:', data.error);
-            alert('Failed to create session. Please try again.');
-            return false;
         }
-    } catch (error) {
-        console.error('Error creating session:', error);
-        alert('Network error. Please try again.');
-        return false;
-    }
-}
 
-// Update UI based on authentication status
-function updateUI() {
-    if (isAuthenticated) {
-        statusBanner.className = 'status-banner verified';
-        statusMessage.innerHTML = '✅ Verified • Full Access to All Features';
-        profileName.innerHTML = 'Verified User <span class="verified-badge">Verified</span>';
-        profileAvatar.textContent = '✓';
-        profileAvatar.style.background = 'linear-gradient(135deg, #00b894 0%, #00cec9 100%)';
-        verifyBtn.style.display = 'none';
-        logoutBtn.classList.remove('hidden');
-    } else {
-        statusBanner.className = 'status-banner';
-        statusMessage.innerHTML = '🎉 Unlimited access to Company & Product features';
-        profileName.textContent = 'Guest User';
-        profileAvatar.textContent = 'ZC';
-        profileAvatar.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-        verifyBtn.style.display = 'flex';
-        logoutBtn.classList.add('hidden');
-    }
-    messageInput.disabled = false;
-    messageInput.placeholder = 'Type your message...';
-    sendBtn.disabled = !messageInput.value.trim();
-}
-
-// Show verification modal
-function showVerificationModal() {
-    verificationModal.classList.add('active');
-    phoneInput.value = '';
-    phoneAlert.classList.add('hidden');
-    phoneStep.classList.remove('hidden');
-    otpStep.classList.add('hidden');
-    clearOtpInputs();
-    otpAlert.classList.add('hidden');
-    if (otpTimer) clearInterval(otpTimer);
-    timer.classList.add('hidden');
-    resendOtpBtn.disabled = false;
-    resendOtpBtn.innerHTML = 'Resend Code';
-    phoneInput.focus();
-}
-
-// Send OTP
-async function sendOtp() {
-    const phone = phoneInput.value.trim();
-    if (!validatePhoneNumber(phone)) {
-        phoneAlert.className = 'alert error';
-        phoneAlert.textContent = 'Please enter a valid phone number (10 digits + optional A/U)';
-        phoneAlert.classList.remove('hidden');
-        return;
-    }
-    sendOtpBtn.innerHTML = '<div class="spinner"></div>';
-    sendOtpBtn.disabled = true;
-    phoneAlert.classList.add('hidden');
-    try {
-        console.log('Sending OTP to:', phone);
-        const response = await fetch('/auth/send-otp', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({phoneNumber: phone})
-        });
-        const data = await response.json();
-        if (data.success) {
-            otpPhoneNumber.textContent = phone;
-            phoneStep.classList.add('hidden');
-            otpStep.classList.remove('hidden');
-            if (data.debugOtp) {
-                phoneAlert.className = 'alert success';
-                phoneAlert.innerHTML = `<strong>Development Mode:</strong> OTP is: <strong>${data.debugOtp}</strong>`;
-                phoneAlert.classList.remove('hidden');
-                console.log(`📱 DEVELOPMENT OTP for ${phone}: ${data.debugOtp}`);
+        // Create session
+        async function createSession() {
+            try {
+                console.log('Creating new session...');
+                const response = await fetch('/chat/create-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentSessionId = data.sessionId;
+                    isAuthenticated = false;
+                    
+                    // Store session ID in localStorage
+                    localStorage.setItem('zulu_session_id', currentSessionId);
+                    
+                    console.log('✅ Session created:', currentSessionId);
+                    
+                    // Update UI
+                    updateUI();
+                    messageInput.disabled = false;
+                    messageInput.focus();
+                    
+                    // Load chat history (which will show welcome message if needed)
+                    await loadChatHistory();
+                    return true;
+                } else {
+                    console.error('Failed to create session:', data.error);
+                    alert('Failed to create session. Please try again.');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error creating session:', error);
+                alert('Network error. Please try again.');
+                return false;
             }
-            startOtpTimer();
-            otp1.focus();
-        } else {
-            phoneAlert.className = 'alert error';
-            phoneAlert.textContent = data.error || 'Failed to send OTP';
-            phoneAlert.classList.remove('hidden');
-            sendOtpBtn.disabled = false;
-            sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Verification Code';
         }
-    } catch (error) {
-        phoneAlert.className = 'alert error';
-        phoneAlert.textContent = 'Network error. Please try again.';
-        phoneAlert.classList.remove('hidden');
-        sendOtpBtn.disabled = false;
-        sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Verification Code';
-        console.error('Error sending OTP:', error);
-    }
-}
 
-// Verify OTP
-async function verifyOtp() {
-    const otp = otp1.value + otp2.value + otp3.value + otp4.value;
-    const phone = otpPhoneNumber.textContent;
-    if (otp.length !== 4 || !/^\d{4}$/.test(otp)) {
-        otpAlert.className = 'alert error';
-        otpAlert.textContent = 'Please enter a valid 4-digit OTP';
-        otpAlert.classList.remove('hidden');
-        return;
-    }
-    verifyOtpBtn.innerHTML = '<div class="spinner"></div>';
-    verifyOtpBtn.disabled = true;
-    otpAlert.classList.add('hidden');
-    try {
-        console.log('Verifying OTP for:', phone);
-        const response = await fetch('/auth/verify-otp', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({phoneNumber: phone, otp: otp})
-        });
-        const data = await response.json();
-        if (data.success) {
-            otpAlert.className = 'alert success';
-            otpAlert.textContent = '✓ Phone verified successfully!';
-            otpAlert.classList.remove('hidden');
-            isAuthenticated = true;
-            isAdmin = data.isAdmin || false;
-            currentSessionId = phone;
-            localStorage.setItem('zulu_verified_phone', phone);
-            localStorage.removeItem('zulu_session_id');
-            updateUI();
-            setTimeout(() => {
-                verificationModal.classList.remove('active');
-                displayMessage('✅ Your phone has been verified! You now have full access to all features.', 'assistant');
-                messageInput.disabled = false;
-                sendBtn.disabled = false;
-                messageInput.focus();
-                console.log(`✅ User ${phone} verified successfully, full access granted`);
-            }, 2000);
-        } else {
-            otpAlert.className = 'alert error';
-            otpAlert.textContent = data.error || 'Invalid OTP. Please check and try again.';
-            otpAlert.classList.remove('hidden');
-            verifyOtpBtn.disabled = false;
-            verifyOtpBtn.innerHTML = '<i class="fas fa-check"></i> Verify Code';
-            clearOtpInputs();
-            otp1.focus();
-        }
-    } catch (error) {
-        otpAlert.className = 'alert error';
-        otpAlert.textContent = 'Network error. Please try again.';
-        otpAlert.classList.remove('hidden');
-        verifyOtpBtn.disabled = false;
-        verifyOtpBtn.innerHTML = '<i class="fas fa-check"></i> Verify Code';
-        console.error('Error verifying OTP:', error);
-    }
-}
-
-// Resend OTP
-async function resendOtp() {
-    resendOtpBtn.innerHTML = '<div class="spinner"></div>';
-    resendOtpBtn.disabled = true;
-    try {
-        const phone = otpPhoneNumber.textContent;
-        const response = await fetch('/auth/send-otp', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({phoneNumber: phone})
-        });
-        const data = await response.json();
-        if (data.success) {
-            clearInterval(otpTimer);
-            startOtpTimer();
-            clearOtpInputs();
-            otp1.focus();
-            if (data.debugOtp) {
-                otpAlert.className = 'alert success';
-                otpAlert.innerHTML = `<strong>Development Mode:</strong> New OTP is: <strong>${data.debugOtp}</strong>`;
-                otpAlert.classList.remove('hidden');
-                console.log(`📱 New OTP for ${phone}: ${data.debugOtp}`);
+        // Update UI based on authentication status
+        function updateUI() {
+            if (isAuthenticated) {
+                statusBanner.className = 'status-banner verified';
+                statusMessage.innerHTML = '✅ Verified • Full Access to All Features';
+                profileName.innerHTML = 'Verified User <span class="verified-badge">Verified</span>';
+                profileAvatar.textContent = '✓';
+                profileAvatar.style.background = 'linear-gradient(135deg, #00b894 0%, #00cec9 100%)';
+                verifyBtn.style.display = 'none';
+                logoutBtn.classList.remove('hidden');
+            } else {
+                statusBanner.className = 'status-banner';
+                statusMessage.innerHTML = '🎉 Unlimited access to Company & Product features';
+                profileName.textContent = 'Guest User';
+                profileAvatar.textContent = 'ZC';
+                profileAvatar.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                verifyBtn.style.display = 'flex';
+                logoutBtn.classList.add('hidden');
             }
-            setTimeout(() => otpAlert.classList.add('hidden'), 3000);
-        } else {
+            
+            // Always enable chat input (unlimited messages)
+            messageInput.disabled = false;
+            messageInput.placeholder = 'Type your message...';
+            sendBtn.disabled = !messageInput.value.trim();
+        }
+
+        // Show verification modal
+        function showVerificationModal() {
+            verificationModal.classList.add('active');
+            phoneInput.value = '';
+            phoneAlert.classList.add('hidden');
+            phoneStep.classList.remove('hidden');
+            otpStep.classList.add('hidden');
+            
+            // Reset OTP step state
+            clearOtpInputs();
+            otpAlert.classList.add('hidden');
+            
+            // Reset timer and resend button
+            if (otpTimer) {
+                clearInterval(otpTimer);
+            }
+            timer.classList.add('hidden');
             resendOtpBtn.disabled = false;
             resendOtpBtn.innerHTML = 'Resend Code';
-            otpAlert.className = 'alert error';
-            otpAlert.textContent = data.error || 'Failed to resend OTP';
-            otpAlert.classList.remove('hidden');
+            
+            phoneInput.focus();
         }
-    } catch (error) {
-        resendOtpBtn.disabled = false;
-        resendOtpBtn.innerHTML = 'Resend Code';
-        otpAlert.className = 'alert error';
-        otpAlert.textContent = 'Network error. Please try again.';
-        otpAlert.classList.remove('hidden');
-        console.error('Error resending OTP:', error);
-    }
-}
 
-// Clear OTP inputs
-function clearOtpInputs() {
-    otp1.value = otp2.value = otp3.value = otp4.value = '';
-}
+        // Send OTP
+        async function sendOtp() {
+            const phone = phoneInput.value.trim();
+            
+            if (!validatePhoneNumber(phone)) {
+                phoneAlert.className = 'alert error';
+                phoneAlert.textContent = 'Please enter a valid phone number (10 digits + optional A/U)';
+                phoneAlert.classList.remove('hidden');
+                return;
+            }
+            
+            sendOtpBtn.innerHTML = '<div class="spinner"></div>';
+            sendOtpBtn.disabled = true;
+            phoneAlert.classList.add('hidden');
+            
+            try {
+                console.log('Sending OTP to:', phone);
+                const response = await fetch('/auth/send-otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        phoneNumber: phone
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Store phone number for OTP verification
+                    otpPhoneNumber.textContent = phone;
+                    
+                    // Show OTP step
+                    phoneStep.classList.add('hidden');
+                    otpStep.classList.remove('hidden');
+                    
+                    // Show debug info if available
+                    if (data.debugOtp) {
+                        phoneAlert.className = 'alert success';
+                        phoneAlert.innerHTML = `<strong>Development Mode:</strong> OTP is: <strong>${data.debugOtp}</strong>`;
+                        phoneAlert.classList.remove('hidden');
+                        console.log(`📱 DEVELOPMENT OTP for ${phone}: ${data.debugOtp}`);
+                    }
+                    
+                    // Start OTP timer
+                    startOtpTimer();
+                    
+                    // Focus first OTP input
+                    otp1.focus();
+                } else {
+                    phoneAlert.className = 'alert error';
+                    phoneAlert.textContent = data.error || 'Failed to send OTP';
+                    phoneAlert.classList.remove('hidden');
+                    sendOtpBtn.disabled = false;
+                    sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Verification Code';
+                }
+            } catch (error) {
+                phoneAlert.className = 'alert error';
+                phoneAlert.textContent = 'Network error. Please try again.';
+                phoneAlert.classList.remove('hidden');
+                sendOtpBtn.disabled = false;
+                sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Verification Code';
+                console.error('Error sending OTP:', error);
+            }
+        }
 
-// Handle OTP input navigation
-function handleOtpInput(e, current, next, prev) {
-    e.preventDefault();
-    if (e.key === 'Backspace' && !current.value && prev) {
-        prev.focus();
-    } else if (e.key === 'Backspace' && current.value) {
-        current.value = '';
-    } else if (e.key.length === 1 && /^\d$/.test(e.key)) {
-        current.value = e.key;
-        if (next) setTimeout(() => next.focus(), 10);
-    } else if (e.key === 'ArrowRight' && next) {
-        next.focus();
-    } else if (e.key === 'ArrowLeft' && prev) {
-        prev.focus();
-    }
-}
+        // Verify OTP
+        async function verifyOtp() {
+            const otp = otp1.value + otp2.value + otp3.value + otp4.value;
+            const phone = otpPhoneNumber.textContent;
+            
+            if (otp.length !== 4 || !/^\d{4}$/.test(otp)) {
+                otpAlert.className = 'alert error';
+                otpAlert.textContent = 'Please enter a valid 4-digit OTP';
+                otpAlert.classList.remove('hidden');
+                return;
+            }
+            
+            verifyOtpBtn.innerHTML = '<div class="spinner"></div>';
+            verifyOtpBtn.disabled = true;
+            otpAlert.classList.add('hidden');
+            
+            try {
+                console.log('Verifying OTP for:', phone);
+                const response = await fetch('/auth/verify-otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        phoneNumber: phone,
+                        otp: otp
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    otpAlert.className = 'alert success';
+                    otpAlert.textContent = '✓ Phone verified successfully!';
+                    otpAlert.classList.remove('hidden');
+                    
+                    // Update state
+                    isAuthenticated = true;
+                    isAdmin = data.isAdmin || false;
+                    const oldSessionId = currentSessionId;
+                    currentSessionId = phone; // Switch to phone number as session ID
+                    
+                    // Store in localStorage for auto-login
+                    localStorage.setItem('zulu_verified_phone', phone);
+                    localStorage.removeItem('zulu_session_id');
+                    
+                    // Update UI
+                    updateUI();
+                    
+                    // Show success message for 2 seconds then continue chat
+                    setTimeout(() => {
+                        verificationModal.classList.remove('active');
+                        displayMessage('✅ Your phone has been verified! You now have full access to all features.', 'assistant');
+                        
+                        // Enable chat input
+                        messageInput.disabled = false;
+                        sendBtn.disabled = false;
+                        messageInput.focus();
+                        
+                        console.log(`✅ User ${phone} verified successfully, full access granted`);
+                    }, 2000);
+                    
+                } else {
+                    otpAlert.className = 'alert error';
+                    otpAlert.textContent = data.error || 'Invalid OTP. Please check and try again.';
+                    otpAlert.classList.remove('hidden');
+                    verifyOtpBtn.disabled = false;
+                    verifyOtpBtn.innerHTML = '<i class="fas fa-check"></i> Verify Code';
+                    
+                    // Clear OTP inputs on error
+                    clearOtpInputs();
+                    otp1.focus();
+                }
+            } catch (error) {
+                otpAlert.className = 'alert error';
+                otpAlert.textContent = 'Network error. Please try again.';
+                otpAlert.classList.remove('hidden');
+                verifyOtpBtn.disabled = false;
+                verifyOtpBtn.innerHTML = '<i class="fas fa-check"></i> Verify Code';
+                console.error('Error verifying OTP:', error);
+            }
+        }
 
-// Load welcome message
-function loadWelcomeMessage() {
-    if (welcomeMessageShown) return;
-    const welcomeText = `Welcome to Zulu Club${isAuthenticated ? ' (Verified)' : ''}!
+        // Resend OTP
+        async function resendOtp() {
+            resendOtpBtn.innerHTML = '<div class="spinner"></div>';
+            resendOtpBtn.disabled = true;
+            
+            try {
+                const phone = otpPhoneNumber.textContent;
+                const response = await fetch('/auth/send-otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        phoneNumber: phone
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Restart timer
+                    clearInterval(otpTimer);
+                    startOtpTimer();
+                    
+                    // Clear previous OTP inputs
+                    clearOtpInputs();
+                    otp1.focus();
+                    
+                    // Show debug info if available
+                    if (data.debugOtp) {
+                        otpAlert.className = 'alert success';
+                        otpAlert.innerHTML = `<strong>Development Mode:</strong> New OTP is: <strong>${data.debugOtp}</strong>`;
+                        otpAlert.classList.remove('hidden');
+                        console.log(`📱 New OTP for ${phone}: ${data.debugOtp}`);
+                    }
+                    
+                    setTimeout(() => {
+                        otpAlert.classList.add('hidden');
+                    }, 3000);
+                    
+                } else {
+                    // Only enable button on error
+                    resendOtpBtn.disabled = false;
+                    resendOtpBtn.innerHTML = 'Resend Code';
+                    
+                    otpAlert.className = 'alert error';
+                    otpAlert.textContent = data.error || 'Failed to resend OTP';
+                    otpAlert.classList.remove('hidden');
+                }
+            } catch (error) {
+                // Only enable button on error
+                resendOtpBtn.disabled = false;
+                resendOtpBtn.innerHTML = 'Resend Code';
+                
+                otpAlert.className = 'alert error';
+                otpAlert.textContent = 'Network error. Please try again.';
+                otpAlert.classList.remove('hidden');
+                console.error('Error resending OTP:', error);
+            }
+        }
+
+        // Clear OTP inputs
+        function clearOtpInputs() {
+            otp1.value = '';
+            otp2.value = '';
+            otp3.value = '';
+            otp4.value = '';
+        }
+
+        // Handle OTP input navigation
+        function handleOtpInput(e, current, next, prev) {
+            e.preventDefault();
+            
+            if (e.key === 'Backspace' && !current.value && prev) {
+                prev.focus();
+            } else if (e.key === 'Backspace' && current.value) {
+                current.value = '';
+            } else if (e.key.length === 1 && /^\d$/.test(e.key)) {
+                current.value = e.key;
+                if (next) {
+                    setTimeout(() => next.focus(), 10);
+                }
+            } else if (e.key === 'ArrowRight' && next) {
+                next.focus();
+            } else if (e.key === 'ArrowLeft' && prev) {
+                prev.focus();
+            }
+        }
+
+        // Load welcome message
+        function loadWelcomeMessage() {
+            // Check if welcome message has already been shown
+            if (welcomeMessageShown) return;
+            
+            const welcomeText = `Welcome to Zulu Club${isAuthenticated ? ' (Verified)' : ''}!
 
 ${isAuthenticated ? '✅ You have **full access** to all features!' : '🎉 You have **unlimited access** to company info and product browsing!'}
 
@@ -1448,606 +1663,709 @@ ${isAuthenticated ? '• Seller information and partnerships\n• Investor queri
 ${isAuthenticated ? '' : 'Verify your phone to unlock all features including seller, investors, and agent support.'}
 
 Try asking: "Tell me about Zulu Club" or "Show me home decor items"`;
-    displayMessage(welcomeText, 'assistant');
-    welcomeMessageShown = true;
-}
 
-// Send message function
-async function sendMessage() {
-    const message = messageInput.value.trim();
-    if (!message) return;
-    displayMessage(message, 'user');
-    messageInput.value = '';
-    messageInput.style.height = 'auto';
-    sendBtn.disabled = true;
-    showTyping();
-    try {
-        console.log('Sending message:', message, 'Session ID:', currentSessionId, 'Authenticated:', isAuthenticated);
-        const response = await fetch('/chat/message', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                sessionId: currentSessionId,
-                message: message,
-                phoneNumber: isAuthenticated ? currentSessionId : null
-            })
-        });
-        const data = await response.json();
-        console.log('Response from server:', data);
-        hideTyping();
-        if (data.success) {
-            displayMessage(data.response, 'assistant');
-        } else {
-            if (data.error === 'Invalid session') {
-                console.log('Session invalid during message send, creating new session...');
-                await createSession();
-                sendMessageWithRetry(message);
-            } else {
-                displayMessage('Error: ' + (data.error || 'Unknown error'), 'assistant');
-            }
+            displayMessage(welcomeText, 'assistant');
+            welcomeMessageShown = true;
         }
-    } catch (error) {
-        hideTyping();
-        console.error('Error sending message:', error);
-        displayMessage('Network error. Please check your connection.', 'assistant');
-    }
-    sendBtn.disabled = !messageInput.value.trim();
-    messageInput.focus();
-}
 
-// Send message with retry
-async function sendMessageWithRetry(message) {
-    showTyping();
-    try {
-        console.log('Retrying message:', message, 'Session ID:', currentSessionId);
-        const response = await fetch('/chat/message', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({sessionId: currentSessionId, message: message})
-        });
-        const data = await response.json();
-        console.log('Retry response from server:', data);
-        hideTyping();
-        if (data.success) {
-            displayMessage(data.response, 'assistant');
-        } else {
-            displayMessage('Error: ' + (data.error || 'Unknown error'), 'assistant');
-        }
-    } catch (error) {
-        hideTyping();
-        console.error('Error retrying message:', error);
-        displayMessage('Network error. Please check your connection.', 'assistant');
-    }
-}
-
-// Enhanced convertLinksToClickable function with gallery item detection
-function convertLinksToClickable(text) {
-    if (!text) return '';
-    
-    // First, process the text to identify gallery items
-    const lines = text.split('\n');
-    let result = '';
-    let inGalleryItem = false;
-    let galleryItemContent = '';
-    let galleryItemNumber = 0;
-    let galleryItemTitle = '';
-    let galleryItemLink = '';
-    let galleryItemImage = '';
-    
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        
-        // Check if this line starts a new gallery item (starts with number and dot)
-        if (line.match(/^\d+\.\s+/)) {
-            // If we were already in a gallery item, render it first
-            if (inGalleryItem) {
-                result += createGalleryItemHtml(galleryItemNumber, galleryItemTitle, galleryItemLink, galleryItemImage);
-            }
+        // Send message function
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
             
-            // Start new gallery item
-            inGalleryItem = true;
-            galleryItemNumber = parseInt(line.match(/^\d+/)[0]);
-            galleryItemTitle = line.replace(/^\d+\.\s+/, '');
-            galleryItemLink = '';
-            galleryItemImage = '';
-        }
-        // Check for link line (contains 🔗 or http)
-        else if (inGalleryItem && (line.includes('🔗') || line.includes('http'))) {
-            galleryItemLink = line.replace('🔗', '').trim();
-        }
-        // Check for image line (contains image URL)
-        else if (inGalleryItem && (line.includes('📷') || line.match(/\.(png|jpg|jpeg|gif|webp|svg|PNG|JPG|JPEG)/))) {
-            galleryItemImage = line.replace('📷', '').trim();
-        }
-        // If line is empty or starts a new section, end current gallery item
-        else if (line === '' || line.startsWith('🎨') || line.startsWith('👥') || line.includes('*Galleries*') || line.includes('*Sellers*')) {
-            if (inGalleryItem) {
-                result += createGalleryItemHtml(galleryItemNumber, galleryItemTitle, galleryItemLink, galleryItemImage);
-                inGalleryItem = false;
-            }
-            result += line + '<br>';
-        }
-        // Regular line
-        else {
-            if (inGalleryItem) {
-                result += createGalleryItemHtml(galleryItemNumber, galleryItemTitle, galleryItemLink, galleryItemImage);
-                inGalleryItem = false;
-            }
+            // Display user message
+            displayMessage(message, 'user');
             
-            // Convert URLs to links
-            let processedLine = line;
-            const urlRegex = /(https?:\/\/[^\s<]+)/gi;
-            processedLine = processedLine.replace(urlRegex, function(url) {
-                // Check if it's an image URL
-                const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.PNG', '.JPG', '.JPEG'];
-                const isImage = imageExtensions.some(ext => url.toLowerCase().endsWith(ext));
-                if (isImage) {
-                    return `<img src="${url}" alt="Gallery Image" class="gallery-image" data-full="${url}" style="max-width: 150px; max-height: 150px; border-radius: 8px; cursor: pointer; border: 2px solid rgba(255, 255, 255, 0.1);">`;
+            // Clear input
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            sendBtn.disabled = true;
+            
+            // Show typing indicator
+            showTyping();
+            
+            try {
+                console.log('Sending message:', message, 'Session ID:', currentSessionId, 'Authenticated:', isAuthenticated);
+                const response = await fetch('/chat/message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sessionId: currentSessionId,
+                        message: message,
+                        phoneNumber: isAuthenticated ? currentSessionId : null
+                    })
+                });
+                    
+                const data = await response.json();
+                console.log('Response from server:', data);
+                
+                // Hide typing indicator
+                hideTyping();
+                
+                if (data.success) {
+                    displayMessage(data.response, 'assistant');
                 } else {
-                    return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #0084ff; text-decoration: underline;">${url}</a>`;
+                    if (data.error === 'Invalid session') {
+                        console.log('Session invalid during message send, creating new session...');
+                        await createSession();
+                        sendMessageWithRetry(message);
+                    } else {
+                        displayMessage('Error: ' + (data.error || 'Unknown error'), 'assistant');
+                    }
+                }
+            } catch (error) {
+                hideTyping();
+                console.error('Error sending message:', error);
+                displayMessage('Network error. Please check your connection.', 'assistant');
+            }
+            
+            sendBtn.disabled = !messageInput.value.trim();
+            messageInput.focus();
+        }
+
+        // Send message with retry
+        async function sendMessageWithRetry(message) {
+            showTyping();
+            
+            try {
+                console.log('Retrying message:', message, 'Session ID:', currentSessionId);
+                const response = await fetch('/chat/message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sessionId: currentSessionId,
+                        message: message
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Retry response from server:', data);
+                
+                hideTyping();
+                
+                if (data.success) {
+                    displayMessage(data.response, 'assistant');
+                } else {
+                    displayMessage('Error: ' + (data.error || 'Unknown error'), 'assistant');
+                }
+            } catch (error) {
+                hideTyping();
+                console.error('Error retrying message:', error);
+                displayMessage('Network error. Please check your connection.', 'assistant');
+            }
+        }
+
+        // Convert links and images to clickable elements
+        function convertLinksToClickable(text) {
+            const lines = text.split('\n');
+            let processedLines = [];
+            let i = 0;
+            let inGallery = false;
+            currentGalleryImages = []; // Reset gallery images
+            
+            while (i < lines.length) {
+                const line = lines[i];
+                
+                // Check if this line looks like a gallery item (starts with number and dot followed by **title**)
+                const galleryMatch = line.match(/^(\d+)\.\s+\*\*(.+?)\*\*/);
+                if (galleryMatch) {
+                    if (!inGallery) {
+                        processedLines.push('<div class="gallery-grid">');
+                        inGallery = true;
+                    }
+                    
+                    const itemNumber = galleryMatch[1];
+                    const title = galleryMatch[2];
+                    let description = '';
+                    let imageUrl = '';
+                    let linkUrl = '';
+                    
+                    // Look for image URL in next lines
+                    for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
+                        if (lines[j].includes('📷') && lines[j].includes('http')) {
+                            imageUrl = lines[j].replace('📷', '').trim();
+                            i = j; // Skip this line
+                            break;
+                        } else if (lines[j].includes('🔗') && lines[j].includes('http')) {
+                            linkUrl = lines[j].replace('🔗', '').trim();
+                        } else if (lines[j].trim() && !lines[j].includes('📷') && !lines[j].includes('🔗')) {
+                            description = lines[j].trim();
+                        }
+                    }
+                    
+                    if (imageUrl) {
+                        // Store image for modal navigation
+                        currentGalleryImages.push({
+                            src: imageUrl,
+                            title: title,
+                            description: description,
+                            link: linkUrl
+                        });
+                        
+                        const imageId = currentGalleryImages.length - 1;
+                        const galleryHtml = `
+                            <div class="gallery-item">
+                                <div class="image-container loading" data-image-id="${imageId}">
+                                    <div class="image-loading"></div>
+                                    <img src="${imageUrl}" 
+                                         alt="${title}" 
+                                         class="gallery-image" 
+                                         data-image-id="${imageId}"
+                                         loading="lazy"
+                                         onload="this.parentElement.classList.remove('loading'); 
+                                                 detectImageOrientation(this)">
+                                </div>
+                                <div class="image-info">
+                                    <div class="image-title">${title}</div>
+                                    ${description ? `<div class="image-description">${description}</div>` : ''}
+                                    ${linkUrl ? `<a href="${linkUrl}" target="_blank" style="color: #0084ff; font-size: 11px; margin-top: 4px; display: block;">View Product</a>` : ''}
+                                </div>
+                            </div>
+                        `;
+                        
+                        processedLines.push(galleryHtml);
+                    }
+                } 
+                // Check for single image in message
+                else if (line.includes('📷') && line.includes('http')) {
+                    const imageUrl = line.replace('📷', '').trim();
+                    currentGalleryImages.push({
+                        src: imageUrl,
+                        title: '',
+                        description: '',
+                        link: ''
+                    });
+                    
+                    const imageId = currentGalleryImages.length - 1;
+                    const singleImageHtml = `
+                        <img src="${imageUrl}" 
+                             class="single-image" 
+                             data-image-id="${imageId}"
+                             alt="Image"
+                             loading="lazy"
+                             onload="detectImageOrientation(this)">
+                    `;
+                    processedLines.push(singleImageHtml);
+                } 
+                // Regular text line
+                else {
+                    if (inGallery) {
+                        processedLines.push('</div>');
+                        inGallery = false;
+                    }
+                    
+                    let processedLine = line;
+                    const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(app\.zulu\.club\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|[A-Za-z0-9.-]+\.[A-Za-z]{2,}\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]))/ig;
+                    
+                    processedLine = processedLine.replace(urlRegex, function(url) {
+                        let finalUrl = url;
+                        if (!url.match(/^(https?|ftp|file):\/\//i)) {
+                            if (url.startsWith('www.') || url.includes('app.zulu.club') || url.includes('.club/')) {
+                                finalUrl = 'https://' + url;
+                            }
+                        }
+                        return `<a href="${finalUrl}" target="_blank" rel="noopener noreferrer" style="color: #0084ff; text-decoration: underline;">${url}</a>`;
+                    });
+                    
+                    processedLines.push(processedLine);
+                }
+                
+                i++;
+            }
+            
+            // Close gallery if still open
+            if (inGallery) {
+                processedLines.push('</div>');
+            }
+            
+            return processedLines.join('<br>');
+        }
+
+        // Detect image orientation and apply appropriate class
+        function detectImageOrientation(img) {
+            const aspectRatio = img.naturalWidth / img.naturalHeight;
+            let orientationClass = 'square';
+            
+            if (aspectRatio < 0.8) {
+                orientationClass = 'portrait'; // Tall image (9:16)
+            } else if (aspectRatio > 1.2) {
+                orientationClass = 'landscape'; // Wide image (16:9)
+            }
+            
+            // Apply class to container if it exists
+            const container = img.parentElement;
+            if (container && container.classList.contains('image-container')) {
+                container.classList.remove('loading');
+                container.classList.add(orientationClass);
+            }
+            
+            // For single images, we can adjust max dimensions based on orientation
+            if (img.classList.contains('single-image')) {
+                if (orientationClass === 'portrait') {
+                    img.style.maxHeight = '400px';
+                    img.style.maxWidth = '225px'; // 9:16 ratio
+                } else if (orientationClass === 'landscape') {
+                    img.style.maxHeight = '225px';
+                    img.style.maxWidth = '400px'; // 16:9 ratio
+                } else {
+                    img.style.maxHeight = '300px';
+                    img.style.maxWidth = '300px'; // Square
+                }
+            }
+        }
+
+        // Display message in chat
+        function displayMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            const now = new Date();
+            const messageDisplayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            // Process the text to convert URLs and preserve formatting
+            const formattedText = convertLinksToClickable(text);
+            
+            contentDiv.innerHTML = `
+                ${formattedText}
+                <br>
+                <span class="message-time">${messageDisplayTime}</span>
+            `;
+            
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Add event listeners for images after they're added to DOM
+            setTimeout(() => {
+                const images = contentDiv.querySelectorAll('.gallery-image, .single-image');
+                images.forEach(img => {
+                    img.addEventListener('click', (e) => {
+                        const imageId = parseInt(e.target.getAttribute('data-image-id'));
+                        if (!isNaN(imageId) && currentGalleryImages[imageId]) {
+                            showImageInModal(imageId);
+                        }
+                    });
+                });
+            }, 100);
+            
+            return messageDiv;
+        }
+
+        // Show image in modal
+        function showImageInModal(imageId) {
+            if (!currentGalleryImages[imageId]) return;
+            
+            const image = currentGalleryImages[imageId];
+            modalImage.src = image.src;
+            
+            // Update modal info
+            const existingInfo = document.querySelector('.modal-image-info');
+            if (existingInfo) existingInfo.remove();
+            
+            if (image.title || image.description) {
+                const modalInfo = document.createElement('div');
+                modalInfo.className = 'modal-image-info';
+                modalInfo.innerHTML = `
+                    ${image.title ? `<div class="modal-image-title">${image.title}</div>` : ''}
+                    ${image.description ? `<div class="modal-image-desc">${image.description}</div>` : ''}
+                    ${image.link ? `<a href="${image.link}" target="_blank" style="color: #0084ff; margin-top: 8px; display: inline-block;">View Product</a>` : ''}
+                `;
+                imageModal.appendChild(modalInfo);
+            }
+            
+            imageModal.classList.add('active');
+        }
+
+        // Show typing indicator
+        function showTyping() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message assistant';
+            typingDiv.id = 'typingIndicator';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content typing-indicator';
+            contentDiv.innerHTML = `
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            `;
+            
+            typingDiv.appendChild(contentDiv);
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Hide typing indicator
+        function hideTyping() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+
+        // Auto-resize textarea
+        function autoResizeTextarea(textarea) {
+            textarea.style.height = 'auto';
+            const newHeight = Math.min(textarea.scrollHeight, 100);
+            textarea.style.height = newHeight + 'px';
+        }
+
+        // Start OTP timer
+        function startOtpTimer() {
+            countdown = 60;
+            countdownSpan.textContent = countdown;
+            timer.classList.remove('hidden');
+            
+            // Ensure button is disabled when timer starts
+            resendOtpBtn.disabled = true;
+            resendOtpBtn.innerHTML = 'Resend Code'; // Reset text from spinner
+            
+            if (otpTimer) {
+                clearInterval(otpTimer);
+            }
+            
+            otpTimer = setInterval(() => {
+                countdown--;
+                countdownSpan.textContent = countdown;
+                
+                if (countdown <= 0) {
+                    clearInterval(otpTimer);
+                    timer.classList.add('hidden');
+                    resendOtpBtn.disabled = false;
+                }
+            }, 1000);
+        }
+
+        // Check authentication
+        async function checkAuthentication() {
+            console.log('Checking authentication...');
+            
+            // Check if there's a stored phone number in localStorage
+            const storedPhone = localStorage.getItem('zulu_verified_phone');
+            if (storedPhone) {
+                try {
+                    const response = await fetch('/auth/check-status', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            phoneNumber: storedPhone
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.verified) {
+                        // Auto-login verified user
+                        currentSessionId = storedPhone;
+                        isAuthenticated = true;
+                        isAdmin = data.isAdmin || false;
+                        
+                        console.log('✅ Auto-login as verified user:', storedPhone);
+                        
+                        // Update UI
+                        updateUI();
+                        messageInput.disabled = false;
+                        messageInput.focus();
+                        
+                        // Load chat history
+                        await loadChatHistory();
+                        return;
+                    } else {
+                        console.log('User not verified, removing from localStorage');
+                        localStorage.removeItem('zulu_verified_phone');
+                    }
+                } catch (error) {
+                    console.error('Error checking verification:', error);
+                }
+            }
+            
+            // Check if there's a session in localStorage
+            const sessionId = localStorage.getItem('zulu_session_id');
+            
+            if (sessionId) {
+                try {
+                    const response = await fetch(`/chat/history/${sessionId}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        currentSessionId = sessionId;
+                        isAuthenticated = data.isAuthenticated || false;
+                        
+                        console.log('✅ Reusing existing session:', sessionId);
+                        
+                        // Update UI
+                        updateUI();
+                        messageInput.disabled = false;
+                        messageInput.focus();
+                        
+                        // Load existing chat history
+                        await loadChatHistory();
+                        return;
+                    } else {
+                        console.log('Session invalid, removing from localStorage and creating new one:', data.error);
+                        localStorage.removeItem('zulu_session_id');
+                    }
+                } catch (error) {
+                    console.error('Error checking session:', error);
+                    localStorage.removeItem('zulu_session_id');
+                }
+            }
+            
+            // If no existing session, create a new one
+            console.log('No existing session found, creating new session');
+            await createSession();
+        }
+
+        // Load chat history
+        async function loadChatHistory() {
+            try {
+                console.log('Loading chat history for session:', currentSessionId);
+                const response = await fetch(`/chat/history/${currentSessionId}`);
+                const data = await response.json();
+                
+                console.log('History response:', data);
+                
+                if (data.success) {
+                    // Clear current messages
+                    chatMessages.innerHTML = '';
+                    
+                    // Display all messages from history
+                    if (data.history && data.history.length > 0) {
+                        data.history.forEach(msg => {
+                            if (msg.role === 'user' || msg.role === 'assistant') {
+                                displayMessage(msg.content, msg.role === 'user' ? 'user' : 'assistant');
+                            }
+                        });
+                    } else {
+                        // If no history and welcome message hasn't been shown, show it
+                        if (!welcomeMessageShown) {
+                            loadWelcomeMessage();
+                        }
+                    }
+                } else {
+                    console.error('Failed to load chat history:', data.error);
+                    
+                    // If session is invalid, clear localStorage and create a new session
+                    if (data.error === 'Invalid session') {
+                        console.log('Session invalid, clearing localStorage and creating new session...');
+                        localStorage.removeItem('zulu_session_id');
+                        localStorage.removeItem('zulu_verified_phone');
+                        
+                        // Create new session
+                        await createSession();
+                    } else if (!welcomeMessageShown) {
+                        // If no history and welcome message hasn't been shown, show it
+                        loadWelcomeMessage();
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+                // If error and welcome message hasn't been shown, show it
+                if (!welcomeMessageShown) {
+                    loadWelcomeMessage();
+                }
+            }
+        }
+
+        // Logout function
+        async function logout() {
+            try {
+                if (isAuthenticated) {
+                    await fetch('/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            phoneNumber: currentSessionId
+                        })
+                    });
+                }
+                
+                // Clear localStorage
+                localStorage.removeItem('zulu_session_id');
+                localStorage.removeItem('zulu_verified_phone');
+                
+                // Reset state
+                currentSessionId = '';
+                isAuthenticated = false;
+                isAdmin = false;
+                welcomeMessageShown = false;
+                currentGalleryImages = [];
+                
+                // Clear chat messages
+                chatMessages.innerHTML = '';
+                
+                // Hide modals
+                verificationModal.classList.remove('active');
+                instructionsPanel.classList.remove('active');
+                
+                // Reset verification modal
+                phoneStep.classList.remove('hidden');
+                otpStep.classList.add('hidden');
+                phoneInput.value = '';
+                clearOtpInputs();
+                phoneAlert.classList.add('hidden');
+                otpAlert.classList.add('hidden');
+                
+                if (otpTimer) {
+                    clearInterval(otpTimer);
+                    timer.classList.add('hidden');
+                }
+                
+                // Create new session
+                await checkAuthentication();
+                
+            } catch (error) {
+                console.error('Error logging out:', error);
+            }
+        }
+
+        // Event Listeners
+        phoneInput.addEventListener('input', function(e) {
+            let formatted = formatPhoneInput(this.value);
+            this.value = formatted;
+            
+            if (validatePhoneNumber(formatted)) {
+                this.classList.remove('invalid');
+                this.classList.add('valid');
+                phoneAlert.classList.add('hidden');
+                sendOtpBtn.disabled = false;
+            } else {
+                this.classList.remove('valid');
+                this.classList.add('invalid');
+                phoneAlert.classList.remove('hidden');
+                
+                if (formatted.length === 11) {
+                    const suffix = formatted.slice(-1).toUpperCase();
+                    if (!['A', 'U'].includes(suffix)) {
+                        phoneAlert.textContent = 'Invalid suffix. Only A (Admin) or U (User) allowed.';
+                    } else if (formatted.slice(0, 10).length !== 10 || !/^\d{10}$/.test(formatted.slice(0, 10))) {
+                        phoneAlert.textContent = 'First 10 characters must be digits.';
+                    }
+                } else if (formatted.length > 0 && formatted.length < 10) {
+                    phoneAlert.textContent = 'Phone number must be 10 digits.';
+                } else if (formatted.length > 11) {
+                    phoneAlert.textContent = 'Maximum 11 characters (10 digits + A/U).';
+                } else {
+                    phoneAlert.textContent = 'Please enter a valid 10-digit number with optional A/U suffix';
+                }
+                
+                sendOtpBtn.disabled = true;
+            }
+        });
+
+        sendOtpBtn.addEventListener('click', sendOtp);
+        verifyOtpBtn.addEventListener('click', verifyOtp);
+        resendOtpBtn.addEventListener('click', resendOtp);
+        sendBtn.addEventListener('click', sendMessage);
+
+        // OTP input navigation
+        otp1.addEventListener('keydown', (e) => handleOtpInput(e, otp1, otp2, null));
+        otp2.addEventListener('keydown', (e) => handleOtpInput(e, otp2, otp3, otp1));
+        otp3.addEventListener('keydown', (e) => handleOtpInput(e, otp3, otp4, otp2));
+        otp4.addEventListener('keydown', (e) => handleOtpInput(e, otp4, null, otp3));
+
+        // Enter key in OTP inputs
+        [otp1, otp2, otp3, otp4].forEach(input => {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    verifyOtp();
                 }
             });
-            result += processedLine + '<br>';
-        }
-    }
-    
-    // Don't forget the last gallery item
-    if (inGalleryItem) {
-        result += createGalleryItemHtml(galleryItemNumber, galleryItemTitle, galleryItemLink, galleryItemImage);
-    }
-    
-    return result;
-}
-
-// Create HTML for a gallery item
-function createGalleryItemHtml(number, title, link, imageUrl) {
-    let html = `<div class="gallery-item">`;
-    
-    // Image container (left side)
-    if (imageUrl && imageUrl.trim() !== '') {
-        let imageClass = 'gallery-image';
-        // Try to detect aspect ratio based on URL or add a loading handler
-        html += `
-        <div class="gallery-image-container">
-            <img src="${imageUrl}" 
-                 alt="${title}" 
-                 class="${imageClass}" 
-                 data-full="${imageUrl}"
-                 onload="this.onload=null; detectImageAspectRatio(this)"
-                 onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<div class=\'gallery-image-error\'>Image failed to load</div>'">
-        </div>`;
-    }
-    
-    // Content (right side)
-    html += `<div class="gallery-item-content">`;
-    html += `<div class="gallery-item-title">${number}. ${title}</div>`;
-    
-    if (link && link.trim() !== '') {
-        const cleanLink = link.replace('🔗', '').trim();
-        html += `<div class="gallery-item-link">🔗 <a href="${cleanLink}" target="_blank" rel="noopener noreferrer">${cleanLink}</a></div>`;
-    }
-    
-    html += `</div></div>`;
-    return html;
-}
-
-// Detect image aspect ratio and apply appropriate class
-function detectImageAspectRatio(img) {
-    if (!img.naturalWidth || !img.naturalHeight) return;
-    
-    const aspectRatio = img.naturalWidth / img.naturalHeight;
-    
-    // Remove existing aspect ratio classes
-    img.classList.remove('portrait', 'landscape');
-    
-    // Apply class based on aspect ratio
-    if (aspectRatio < 0.8) {
-        // Portrait (9:16 is 0.5625, we use < 0.8 for portrait)
-        img.classList.add('portrait');
-    } else if (aspectRatio > 1.2) {
-        // Landscape (16:9 is 1.777, we use > 1.2 for landscape)
-        img.classList.add('landscape');
-    }
-    // Square images (0.8 - 1.2) get no special class
-}
-
-// Display a message in the chat
-function displayMessage(text, sender) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${sender}`;
-    
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content';
-    
-    const now = new Date();
-    const messageDisplayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    
-    const processedText = convertLinksToClickable(text);
-    contentDiv.innerHTML = `
-        ${processedText}
-        <span class="message-time">${messageDisplayTime}</span>
-    `;
-    
-    messageDiv.appendChild(contentDiv);
-    
-    // Add click handlers for images
-    setTimeout(() => {
-        const images = contentDiv.querySelectorAll('.gallery-image');
-        images.forEach(img => {
-            img.addEventListener('click', (e) => {
-                openImageModal(e.target.src);
-            });
-            img.addEventListener('touchstart', (e) => {
-                e.stopPropagation();
-            });
         });
-        
-        // Add click handlers for links
-        const links = contentDiv.querySelectorAll('a');
-        links.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.stopPropagation();
-            });
-            link.addEventListener('touchstart', (e) => {
-                e.stopPropagation();
-            });
+
+        // Enter key in phone input
+        phoneInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                sendOtp();
+            }
         });
-    }, 100);
-    
-    chatMessages.appendChild(messageDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-    
-    return messageDiv;
-}
 
-// Open image modal
-function openImageModal(src) {
-    if (!src) return;
-    
-    modalImage.src = '';
-    imageModalLoader.classList.remove('hidden');
-    imageModal.classList.add('active');
-    
-    modalImage.onload = () => {
-        imageModalLoader.classList.add('hidden');
-    };
-    
-    modalImage.onerror = () => {
-        imageModalLoader.classList.add('hidden');
-        modalImage.alt = 'Failed to load image';
-    };
-    
-    modalImage.src = src;
-}
-
-// Show typing indicator
-function showTyping() {
-    const typingDiv = document.createElement('div');
-    typingDiv.className = 'message assistant';
-    typingDiv.id = 'typingIndicator';
-    
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content typing-indicator';
-    contentDiv.innerHTML = `
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
-    `;
-    
-    typingDiv.appendChild(contentDiv);
-    chatMessages.appendChild(typingDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-// Hide typing indicator
-function hideTyping() {
-    const typing = document.getElementById('typingIndicator');
-    if (typing) typing.remove();
-}
-
-// Auto-resize textarea
-function autoResizeTextarea(textarea) {
-    textarea.style.height = 'auto';
-    const newHeight = Math.min(textarea.scrollHeight, 100);
-    textarea.style.height = newHeight + 'px';
-}
-
-// Start OTP timer
-function startOtpTimer() {
-    countdown = 60;
-    countdownSpan.textContent = countdown;
-    timer.classList.remove('hidden');
-    resendOtpBtn.disabled = true;
-    resendOtpBtn.innerHTML = 'Resend Code';
-    
-    if (otpTimer) clearInterval(otpTimer);
-    
-    otpTimer = setInterval(() => {
-        countdown--;
-        countdownSpan.textContent = countdown;
-        if (countdown <= 0) {
-            clearInterval(otpTimer);
-            timer.classList.add('hidden');
-            resendOtpBtn.disabled = false;
-        }
-    }, 1000);
-}
-
-// Check authentication
-async function checkAuthentication() {
-    console.log('Checking authentication...');
-    const storedPhone = localStorage.getItem('zulu_verified_phone');
-    if (storedPhone) {
-        try {
-            const response = await fetch('/auth/check-status', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({phoneNumber: storedPhone})
-            });
-            const data = await response.json();
-            if (data.success && data.verified) {
-                currentSessionId = storedPhone;
-                isAuthenticated = true;
-                isAdmin = data.isAdmin || false;
-                console.log('✅ Auto-login as verified user:', storedPhone);
-                updateUI();
-                messageInput.disabled = false;
-                messageInput.focus();
-                await loadChatHistory();
-                return;
-            } else {
-                localStorage.removeItem('zulu_verified_phone');
+        // Enter key in message input (with shift for new line)
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
             }
-        } catch (error) {
-            console.error('Error checking verification:', error);
-        }
-    }
-    
-    const sessionId = localStorage.getItem('zulu_session_id');
-    if (sessionId) {
-        try {
-            const response = await fetch(`/chat/history/${sessionId}`);
-            const data = await response.json();
-            if (data.success) {
-                currentSessionId = sessionId;
-                isAuthenticated = data.isAuthenticated || false;
-                console.log('✅ Reusing existing session:', sessionId);
-                updateUI();
-                messageInput.disabled = false;
-                messageInput.focus();
-                await loadChatHistory();
-                return;
-            } else {
-                localStorage.removeItem('zulu_session_id');
-            }
-        } catch (error) {
-            console.error('Error checking session:', error);
-            localStorage.removeItem('zulu_session_id');
-        }
-    }
-    
-    console.log('No existing session found, creating new session');
-    await createSession();
-}
+        });
 
-// Load chat history
-async function loadChatHistory() {
-    try {
-        console.log('Loading chat history for session:', currentSessionId);
-        const response = await fetch(`/chat/history/${currentSessionId}`);
-        const data = await response.json();
-        console.log('History response:', data);
-        if (data.success) {
-            chatMessages.innerHTML = '';
-            if (data.history && data.history.length > 0) {
-                data.history.forEach(msg => {
-                    if (msg.role === 'user' || msg.role === 'assistant') {
-                        displayMessage(msg.content, msg.role === 'user' ? 'user' : 'assistant');
-                    }
-                });
-            } else {
-                if (!welcomeMessageShown) loadWelcomeMessage();
-            }
-        } else {
-            console.error('Failed to load chat history:', data.error);
-            if (data.error === 'Invalid session') {
-                localStorage.removeItem('zulu_session_id');
-                localStorage.removeItem('zulu_verified_phone');
-                await createSession();
-            } else if (!welcomeMessageShown) {
-                loadWelcomeMessage();
-            }
-        }
-    } catch (error) {
-        console.error('Error loading chat history:', error);
-        if (!welcomeMessageShown) loadWelcomeMessage();
-    }
-}
+        // Auto-resize message input
+        messageInput.addEventListener('input', function() {
+            autoResizeTextarea(this);
+            sendBtn.disabled = !this.value.trim();
+        });
 
-// Logout function
-async function logout() {
-    try {
-        if (isAuthenticated) {
-            await fetch('/auth/logout', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({phoneNumber: currentSessionId})
-            });
-        }
-        localStorage.removeItem('zulu_session_id');
-        localStorage.removeItem('zulu_verified_phone');
-        currentSessionId = '';
-        isAuthenticated = false;
-        isAdmin = false;
-        welcomeMessageShown = false;
-        chatMessages.innerHTML = '';
-        verificationModal.classList.remove('active');
-        instructionsPanel.classList.remove('active');
-        phoneStep.classList.remove('hidden');
-        otpStep.classList.add('hidden');
-        phoneInput.value = '';
-        clearOtpInputs();
-        phoneAlert.classList.add('hidden');
-        otpAlert.classList.add('hidden');
-        if (otpTimer) {
-            clearInterval(otpTimer);
-            timer.classList.add('hidden');
-        }
-        await checkAuthentication();
-    } catch (error) {
-        console.error('Error logging out:', error);
-    }
-}
+        // Info button
+        infoBtn.addEventListener('click', () => {
+            instructionsPanel.classList.add('active');
+        });
 
-// Event Listeners
-phoneInput.addEventListener('input', function(e) {
-    let formatted = formatPhoneInput(this.value);
-    this.value = formatted;
-    if (validatePhoneNumber(formatted)) {
-        this.classList.remove('invalid');
-        this.classList.add('valid');
-        phoneAlert.classList.add('hidden');
-        sendOtpBtn.disabled = false;
-    } else {
-        this.classList.remove('valid');
-        this.classList.add('invalid');
-        phoneAlert.classList.remove('hidden');
-        if (formatted.length === 11) {
-            const suffix = formatted.slice(-1).toUpperCase();
-            if (!['A', 'U'].includes(suffix)) {
-                phoneAlert.textContent = 'Invalid suffix. Only A (Admin) or U (User) allowed.';
-            } else if (formatted.slice(0, 10).length !== 10 || !/^\d{10}$/.test(formatted.slice(0, 10))) {
-                phoneAlert.textContent = 'First 10 characters must be digits.';
-            }
-        } else if (formatted.length > 0 && formatted.length < 10) {
-            phoneAlert.textContent = 'Phone number must be 10 digits.';
-        } else if (formatted.length > 11) {
-            phoneAlert.textContent = 'Maximum 11 characters (10 digits + A/U).';
-        } else {
-            phoneAlert.textContent = 'Please enter a valid 10-digit number with optional A/U suffix';
-        }
-        sendOtpBtn.disabled = true;
-    }
-});
-
-sendOtpBtn.addEventListener('click', sendOtp);
-verifyOtpBtn.addEventListener('click', verifyOtp);
-resendOtpBtn.addEventListener('click', resendOtp);
-sendBtn.addEventListener('click', sendMessage);
-
-// OTP input navigation
-otp1.addEventListener('keydown', (e) => handleOtpInput(e, otp1, otp2, null));
-otp2.addEventListener('keydown', (e) => handleOtpInput(e, otp2, otp3, otp1));
-otp3.addEventListener('keydown', (e) => handleOtpInput(e, otp3, otp4, otp2));
-otp4.addEventListener('keydown', (e) => handleOtpInput(e, otp4, null, otp3));
-
-// Enter key in OTP inputs
-[otp1, otp2, otp3, otp4].forEach(input => {
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') verifyOtp();
-    });
-});
-
-// Enter key in phone input
-phoneInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') sendOtp();
-});
-
-// Enter key in message input
-messageInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-    }
-});
-
-// Auto-resize message input
-messageInput.addEventListener('input', function() {
-    autoResizeTextarea(this);
-    sendBtn.disabled = !this.value.trim();
-});
-
-// Info button
-infoBtn.addEventListener('click', () => {
-    instructionsPanel.classList.add('active');
-});
-
-// Close buttons
-closeVerifyModal.addEventListener('click', () => {
-    verificationModal.classList.remove('active');
-    phoneStep.classList.remove('hidden');
-    otpStep.classList.add('hidden');
-    phoneInput.value = '';
-    clearOtpInputs();
-    phoneAlert.classList.add('hidden');
-    otpAlert.classList.add('hidden');
-    if (otpTimer) {
-        clearInterval(otpTimer);
-        timer.classList.add('hidden');
-    }
-});
-
-closeInstructionsBtn.addEventListener('click', () => {
-    instructionsPanel.classList.remove('active');
-});
-
-// Verify button
-verifyBtn.addEventListener('click', () => {
-    showVerificationModal();
-});
-
-// Logout button
-document.getElementById('logoutBtn').addEventListener('click', () => {
-    if (confirm('Are you sure you want to logout?')) {
-        logout();
-    }
-});
-
-// Image modal
-closeImageModal.addEventListener('click', () => {
-    imageModal.classList.remove('active');
-});
-
-imageModal.addEventListener('click', (e) => {
-    if (e.target === imageModal) {
-        imageModal.classList.remove('active');
-    }
-});
-
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        verificationModal.classList.remove('active');
-        instructionsPanel.classList.remove('active');
-        if (imageModal.classList.contains('active')) {
-            imageModal.classList.remove('active');
-        }
-    }
-});
-
-// Close modals on outside click
-document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('modal-overlay')) {
-        e.target.classList.remove('active');
-        if (e.target.id === 'verificationModal') {
+        // Close buttons
+        closeVerifyModal.addEventListener('click', () => {
+            verificationModal.classList.remove('active');
             phoneStep.classList.remove('hidden');
             otpStep.classList.add('hidden');
             phoneInput.value = '';
             clearOtpInputs();
             phoneAlert.classList.add('hidden');
             otpAlert.classList.add('hidden');
+            
             if (otpTimer) {
                 clearInterval(otpTimer);
                 timer.classList.add('hidden');
             }
-        }
-    }
-});
+        });
 
-// Initialize
-window.addEventListener('load', () => {
-    console.log('Page loaded, initializing...');
-    checkAuthentication();
-});
+        closeInstructionsBtn.addEventListener('click', () => {
+            instructionsPanel.classList.remove('active');
+        });
+
+        // Verify button
+        verifyBtn.addEventListener('click', () => {
+            showVerificationModal();
+        });
+
+        // Logout button
+        logoutBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to logout?')) {
+                logout();
+            }
+        });
+
+        // Image modal events
+        closeImageModal.addEventListener('click', function() {
+            imageModal.classList.remove('active');
+        });
+
+        // Close image modal on outside click
+        imageModal.addEventListener('click', function(e) {
+            if (e.target === imageModal) {
+                imageModal.classList.remove('active');
+            }
+        });
+
+        // Close modals on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                verificationModal.classList.remove('active');
+                instructionsPanel.classList.remove('active');
+                imageModal.classList.remove('active');
+            }
+        });
+
+        // Initialize
+        window.addEventListener('load', () => {
+            console.log('Page loaded, initializing...');
+            checkAuthentication();
+        });
     </script>
 </body>
 </html>
