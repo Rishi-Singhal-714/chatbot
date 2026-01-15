@@ -1526,26 +1526,44 @@ async function sendMessageWithRetry(message) {
     }
 }
 
-// Fixed convertLinksToClickable function
+// Replace the convertLinksToClickable function with this:
+
 function convertLinksToClickable(text) {
-  // First convert newlines to <br>
-  let processedText = text.replace(/\n/g, '<br>');
+  // First, handle [IMAGE:URL] format
+  let processedText = text.replace(/\[IMAGE:(https?:\/\/[^\]]+)\]/gi, function(match, imageUrl) {
+    return `<img src="${imageUrl}" alt="Gallery Image" class="gallery-image" data-full="${imageUrl}" style="max-width: 200px; max-height: 150px; border-radius: 8px; margin: 5px 0; display: block; cursor: pointer; border: 2px solid rgba(255, 255, 255, 0.1);">`;
+  });
   
-  // Find all URLs
+  // Convert newlines to <br>
+  processedText = processedText.replace(/\n/g, '<br>');
+  
+  // Handle regular image URLs (not wrapped in [IMAGE:])
+  const imageRegex = /(https?:\/\/[^\s<]+\.(?:png|jpg|jpeg|gif|webp|svg|PNG|JPG|JPEG))/gi;
+  processedText = processedText.replace(imageRegex, function(imageUrl) {
+    // Check if this URL is already inside an img tag (from the first step)
+    if (!processedText.includes(`src="${imageUrl}"`)) {
+      return `<img src="${imageUrl}" alt="Gallery Image" class="gallery-image" data-full="${imageUrl}" style="max-width: 200px; max-height: 150px; border-radius: 8px; margin: 5px 0; display: block; cursor: pointer; border: 2px solid rgba(255, 255, 255, 0.1);">`;
+    }
+    return imageUrl;
+  });
+  
+  // Handle regular non-image URLs (make them clickable links)
   const urlRegex = /(https?:\/\/[^\s<]+)/gi;
-  
   processedText = processedText.replace(urlRegex, function(url) {
-    // Check if it's an image URL
+    // Skip if already inside an img tag or a tag
+    if (processedText.includes(`src="${url}"`) || processedText.includes(`href="${url}"`)) {
+      return url;
+    }
+    
+    // Check if it's an image URL we might have missed
     const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.PNG', '.JPG', '.JPEG'];
     const isImage = imageExtensions.some(ext => url.toLowerCase().endsWith(ext));
     
     if (isImage) {
-      // Remove any query parameters for cleaner display
-      const cleanUrl = url.split('?')[0];
       return `<img src="${url}" alt="Gallery Image" class="gallery-image" data-full="${url}" style="max-width: 200px; max-height: 150px; border-radius: 8px; margin: 5px 0; display: block; cursor: pointer; border: 2px solid rgba(255, 255, 255, 0.1);">`;
-    } else {
-      return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #0084ff; text-decoration: underline;">${url}</a>`;
     }
+    
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #0084ff; text-decoration: underline;">${url}</a>`;
   });
   
   return processedText;
