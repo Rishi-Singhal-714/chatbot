@@ -767,30 +767,30 @@
             max-height: 120px;
         }
         /* Image styling for chat */
-/* Image styling for chat */
+/* Add this CSS for gallery item layout */
 .message-content .gallery-image {
-  max-width: 200px;
-  max-height: 150px;
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
   border-radius: 8px;
   cursor: pointer;
   border: 2px solid #2d3746;
   transition: transform 0.2s, border-color 0.2s;
-  display: block;
 }
 
 .message-content .gallery-image:hover {
-  transform: scale(1.02);
+  transform: scale(1.05);
   border-color: #0084ff;
 }
 
+/* Ensure links are properly styled */
 .message-content a {
   color: #0084ff;
   text-decoration: underline;
-  display: inline-block;
-  margin: 2px 0;
+  word-break: break-all;
 }
 
-/* Image modal */
+/* Keep existing image modal CSS */
 .image-modal {
   position: fixed;
   top: 0;
@@ -1525,53 +1525,73 @@ function convertLinksToClickable(text) {
   // First, split the text into lines
   const lines = text.split('\n');
   let processedLines = [];
+  let i = 0;
   
-  lines.forEach(line => {
-    let processedLine = line;
+  while (i < lines.length) {
+    const line = lines[i];
     
-    // Check if line contains a URL
-    const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(app\.zulu\.club\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|[A-Za-z0-9.-]+\.[A-Za-z]{2,}\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]))/ig;
-    
-    // Find all URLs in this line
-    const urls = line.match(urlRegex);
-    
-    if (urls) {
-      urls.forEach(url => {
+    // Check if this line looks like a gallery item (starts with number and dot)
+    if (line.match(/^\d+\.\s+\*/)) {
+      // This is a gallery item line
+      let galleryItem = line;
+      let imageUrl = null;
+      
+      // Check next line for link
+      if (i + 1 < lines.length && lines[i + 1].includes('🔗')) {
+        galleryItem += '<br>' + lines[i + 1];
+        i++; // Move to next line
+      }
+      
+      // Check next line for image
+      if (i + 1 < lines.length && lines[i + 1].includes('📷')) {
+        imageUrl = lines[i + 1].replace('📷', '').trim();
+        i++; // Move to next line
+      }
+      
+      if (imageUrl) {
+        // Create horizontal layout with image on left, text on right
+        const imageHtml = `
+          <div style="display: flex; align-items: flex-start; margin: 10px 0;">
+            <div style="margin-right: 15px; flex-shrink: 0;">
+              <img src="${imageUrl}" alt="Gallery Image" class="gallery-image" data-full="${imageUrl}" 
+                   style="width: 120px; height: 120px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid #2d3746;">
+            </div>
+            <div>
+              ${galleryItem.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color: #0084ff; text-decoration: underline;">$1</a>')}
+            </div>
+          </div>
+        `;
+        processedLines.push(imageHtml);
+      } else {
+        // No image, just show text
+        const textHtml = galleryItem.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color: #0084ff; text-decoration: underline;">$1</a>');
+        processedLines.push(textHtml);
+      }
+    } else {
+      // Regular line, process URLs normally
+      let processedLine = line;
+      const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(app\.zulu\.club\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|[A-Za-z0-9.-]+\.[A-Za-z]{2,}\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]))/ig;
+      
+      processedLine = processedLine.replace(urlRegex, function(url) {
         let finalUrl = url;
         if (!url.match(/^(https?|ftp|file):\/\//i)) {
           if (url.startsWith('www.') || url.includes('app.zulu.club') || url.includes('.club/')) {
             finalUrl = 'https://' + url;
           }
         }
-        
-        // Check if it's an image URL
-        const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.PNG', '.JPG', '.JPEG'];
-        const isImage = imageExtensions.some(ext => finalUrl.toLowerCase().endsWith(ext));
-        
-        if (isImage) {
-          // For image URLs, create an image element
-          processedLine = processedLine.replace(url, 
-            `<div style="margin: 8px 0 8px 20px;">
-               <img src="${finalUrl}" alt="Gallery Image" class="gallery-image" data-full="${finalUrl}" 
-                    style="max-width: 200px; max-height: 150px; border-radius: 8px; cursor: pointer; border: 2px solid #2d3746;">
-             </div>`
-          );
-        } else {
-          // For non-image URLs, create a link
-          processedLine = processedLine.replace(url, 
-            `<a href="${finalUrl}" target="_blank" rel="noopener noreferrer" 
-               style="color: #0084ff; text-decoration: underline;">${url}</a>`
-          );
-        }
+        return `<a href="${finalUrl}" target="_blank" rel="noopener noreferrer" style="color: #0084ff; text-decoration: underline;">${url}</a>`;
       });
+      
+      processedLines.push(processedLine);
     }
     
-    processedLines.push(processedLine);
-  });
+    i++;
+  }
   
   // Join lines back with <br> for HTML display
   return processedLines.join('<br>');
 }
+        
 function displayMessage(text, sender) {
   const messageDiv = document.createElement('div');
   messageDiv.className = `message ${sender}`;
