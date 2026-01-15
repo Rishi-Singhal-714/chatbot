@@ -767,27 +767,22 @@
             max-height: 120px;
         }
         /* Image styling for chat */
+/* Image styling */
 .message-content img {
-  max-width: 250px;
-  max-height: 200px;
-  border-radius: 12px;
+  max-width: 200px;
+  max-height: 150px;
+  border-radius: 8px;
   margin: 8px 0;
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  display: block;
   cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.1);
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .message-content img:hover {
-  transform: scale(1.02);
+  transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.message.user .message-content img {
   border-color: rgba(0, 132, 255, 0.3);
-}
-
-.message.assistant .message-content img {
-  border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* Image modal */
@@ -812,8 +807,9 @@
 .image-modal img {
   max-width: 90%;
   max-height: 90%;
-  border-radius: 16px;
+  border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  object-fit: contain;
 }
 
 .close-image-modal {
@@ -832,11 +828,22 @@
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(10px);
+  z-index: 2001;
 }
 
 .close-image-modal:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
+/* Error handling for images */
+.message-content img:not([src]) {
+  display: none;
+}
+
+.message-content img[src=""] {
+  display: none;
+}
+
     </style>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -867,11 +874,12 @@
             </div>
         </header>
         <!-- Image Modal -->
+<!-- Add this before closing </body> -->
 <div class="image-modal" id="imageModal">
   <button class="close-image-modal" id="closeImageModal">
     <i class="fas fa-times"></i>
   </button>
-  <img id="modalImage" src="" alt="Full size image">
+  <img id="modalImage" src="" alt="Gallery Image">
 </div>
 
         <!-- Status Banner -->
@@ -1027,37 +1035,47 @@ const otp1 = document.getElementById('otp1');
 const otp2 = document.getElementById('otp2');
 const otp3 = document.getElementById('otp3');
 const otp4 = document.getElementById('otp4');
-// Image modal functionality
 const imageModal = document.getElementById('imageModal');
 const modalImage = document.getElementById('modalImage');
 const closeImageModal = document.getElementById('closeImageModal');
 
-// Handle click on gallery images
-document.addEventListener('click', (e) => {
+// Handle image clicks
+document.addEventListener('click', function(e) {
   if (e.target.classList.contains('gallery-image')) {
-    modalImage.src = e.target.dataset.full;
-    imageModal.classList.add('active');
+    const imgSrc = e.target.getAttribute('src');
+    if (imgSrc) {
+      modalImage.src = imgSrc;
+      imageModal.classList.add('active');
+    }
   }
 });
 
-// Close image modal
-closeImageModal.addEventListener('click', () => {
+// Close modal
+closeImageModal.addEventListener('click', function() {
   imageModal.classList.remove('active');
 });
 
-// Close image modal on outside click
-imageModal.addEventListener('click', (e) => {
+// Close on outside click
+imageModal.addEventListener('click', function(e) {
   if (e.target === imageModal) {
     imageModal.classList.remove('active');
   }
 });
 
-// Close image modal on Escape key
-document.addEventListener('keydown', (e) => {
+// Close on escape key
+document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape' && imageModal.classList.contains('active')) {
     imageModal.classList.remove('active');
   }
 });
+
+// Handle image load errors
+document.addEventListener('error', function(e) {
+  if (e.target.tagName === 'IMG') {
+    e.target.style.display = 'none';
+  }
+}, true);
+
 // Format phone number input
 function formatPhoneInput(value) {
     // Remove all non-digits and letters A/U
@@ -1546,11 +1564,19 @@ async function sendMessageWithRetry(message) {
     }
 }
 
-// Replace the convertLinksToClickable function with this:
 function convertLinksToClickable(text) {
+  let processedText = text;
+  
+  // First, handle special image format [IMAGE:URL]
+  const imageRegex = /\[IMAGE:(https?:\/\/[^\]]+)\]/gi;
+  processedText = processedText.replace(imageRegex, function(match, imageUrl) {
+    return `<img src="${imageUrl}" alt="Gallery Image" class="gallery-image" data-full="${imageUrl}" style="max-width: 200px; max-height: 150px; border-radius: 8px; margin: 5px 0; display: block; cursor: pointer; border: 2px solid rgba(255, 255, 255, 0.1);">`;
+  });
+  
+  // Then handle regular links
   const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(app\.zulu\.club\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|[A-Za-z0-9.-]+\.[A-Za-z]{2,}\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]))/ig;
   
-  return text.replace(urlRegex, function(url) {
+  processedText = processedText.replace(urlRegex, function(url) {
     let finalUrl = url;
     if (!url.match(/^(https?|ftp|file):\/\//i)) {
       if (url.startsWith('www.') || url.includes('app.zulu.club') || url.includes('.club/')) {
@@ -1558,18 +1584,21 @@ function convertLinksToClickable(text) {
       }
     }
     
-    // Check if it's an image URL
-    const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'];
+    // Check if it's an image URL (not already handled by [IMAGE:] format)
+    const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.PNG', '.JPG', '.JPEG'];
     const isImage = imageExtensions.some(ext => finalUrl.toLowerCase().endsWith(ext));
     
-    if (isImage) {
-      // For image URLs, create an image element
-      return `<img src="${finalUrl}" alt="Gallery Image" class="gallery-image" data-full="${finalUrl}" style="max-width: 250px; max-height: 150px; border-radius: 8px; margin: 5px 0; display: block; cursor: pointer;">`;
+    // Skip if already processed as [IMAGE:] format
+    if (isImage && !url.includes('[IMAGE:')) {
+      return `<img src="${finalUrl}" alt="Gallery Image" class="gallery-image" data-full="${finalUrl}" style="max-width: 200px; max-height: 150px; border-radius: 8px; margin: 5px 0; display: block; cursor: pointer; border: 2px solid rgba(255, 255, 255, 0.1);">`;
     }
     
     return `<a href="${finalUrl}" target="_blank" rel="noopener noreferrer" style="color: #0084ff; text-decoration: underline;">${url}</a>`;
   });
+  
+  return processedText;
 }
+
 // Display a message in the chat
 function displayMessage(text, sender) {
     const messageDiv = document.createElement('div');
@@ -2003,3 +2032,4 @@ window.addEventListener('load', () => {
     </script>
 </body>
 </html>
+
