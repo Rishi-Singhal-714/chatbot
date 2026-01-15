@@ -730,13 +730,16 @@ async function loadGalleriesData() {
         .pipe(csv())
         .on('data', (data) => {
           const mappedData = {
+            id: data.id || data.ID || '', // Add id field
             type2: data.type2 || data.Type2 || data.TYPE2 || '',
             cat_id: data.cat_id || data.CAT_ID || '',
             cat1: data.cat1 || data.Cat1 || data.CAT1 || '',
-            seller_id: data.seller_id || data.SELLER_ID || data.Seller_ID || data.SellerId || data.sellerId || ''
+            seller_id: data.seller_id || data.SELLER_ID || data.Seller_ID || data.SellerId || data.sellerId || '',
+            name: data.name || data.Name || data.NAME || '' // Add name field
           };      
           
-          if (mappedData.type2 && mappedData.cat1) {
+          // Still check for type2 and cat1, but also accept if we have id
+          if ((mappedData.type2 || mappedData.id) && mappedData.cat1) {
             results.push(mappedData);
           }
         })
@@ -1423,9 +1426,25 @@ function buildConciseResponse(userMessage, galleryMatches = [], sellersObj = {})
   if (galleries.length) {
     msg += `\nGalleries:\n`;
     galleries.slice(0,5).forEach((g, i) => {
-      const t = g.type2 || '';
-      const link = `app.zulu.club/${urlEncodeType2(t)}`;
-      msg += `${i+1}. ${t} — ${link}\n`;
+      // Use id for link, type2 for display text, fallback to name
+      const displayText = g.type2 || g.name || 'Product';
+      const galleryId = g.id || '';
+      
+      if (galleryId) {
+        // Use the new link format: https://app.zulu.club/gallery/id=493
+        const link = `https://app.zulu.club/gallery/id=${galleryId}`;
+        msg += `${i+1}. ${displayText} — ${link}\n`;
+      } else if (g.type2) {
+        // Fallback to old format if no id
+        const link = `https://app.zulu.club/${urlEncodeType2(g.type2)}`;
+        msg += `${i+1}. ${g.type2} — ${link}\n`;
+      } else if (g.name) {
+        // If no type2 but has name
+        const link = `https://app.zulu.club/${urlEncodeType2(g.name)}`;
+        msg += `${i+1}. ${g.name} — ${link}\n`;
+      } else {
+        msg += `${i+1}. Product — No link available\n`;
+      }
     });
   } else {
     msg += `\nGalleries:\nNone\n`;
@@ -1436,7 +1455,7 @@ function buildConciseResponse(userMessage, galleryMatches = [], sellersObj = {})
     sellersToShow.forEach((s, i) => {
       const name = s.store_name || s.seller_id || `Seller ${i+1}`;
       const id = s.user_id || s.seller_id || '';
-      const link = id ? `app.zulu.club/sellerassets/${id}` : '';
+      const link = id ? `https://app.zulu.club/sellerassets/${id}` : '';
       msg += `${i+1}. ${name}${link ? ` — ${link}` : ''}\n`;
     });
   } else {
@@ -1445,16 +1464,17 @@ function buildConciseResponse(userMessage, galleryMatches = [], sellersObj = {})
 
   return msg.trim();
 }
-
 async function findGptMatchedCategories(userMessage, conversationHistory = []) {
   try {
     const csvDataForGPT = galleriesData.map(item => ({
+      id: item.id, // Add id to data sent to GPT
       type2: item.type2,
       cat1: item.cat1,
-      cat_id: item.cat_id
+      cat_id: item.cat_id,
+      name: item.name // Add name field
     }));
     
-    const systemContent = "You are a product matching expert for Zulu Club. Use the conversation history to understand what the user wants, and return only JSON with top matches and a compact reasoning field.";
+    const systemContent = "You are a product matching expert for Zulu Club. Use the conversation history to understand what the user wants, and return only JSON with top matches and a compact reasoning field. Prefer to use 'id' field for matching when available.";
     const messagesForGPT = [{ role: 'system', content: systemContent }];
     
     const historyToInclude = Array.isArray(conversationHistory) ? conversationHistory.slice(-30) : [];
@@ -1464,7 +1484,7 @@ async function findGptMatchedCategories(userMessage, conversationHistory = []) {
     }
     
     const userPrompt = `
-Using the conversation above and the user's latest message, return the top 5 matching categories from the AVAILABLE PRODUCT CATEGORIES (use the "type2" field). For each match return a short reason and a relevance score 0.0-1.0.
+Using the conversation above and the user's latest message, return the top 5 matching categories from the AVAILABLE PRODUCT CATEGORIES (use the "id" field when available, otherwise "type2" field). For each match return a short reason and a relevance score 0.0-1.0.
 
 AVAILABLE PRODUCT CATEGORIES:
 ${JSON.stringify(csvDataForGPT, null, 2)}
@@ -1474,7 +1494,12 @@ USER MESSAGE: "${userMessage}"
 RESPONSE FORMAT (JSON ONLY):
 {
   "matches": [
-    { "type2": "exact-type2-value-from-csv", "reason": "brief explanation", "score": 0.9 }
+    { 
+      "id": "exact-id-value-from-csv", 
+      "type2": "type2-value-from-csv",
+      "reason": "brief explanation", 
+      "score": 0.9 
+    }
   ],
   "reasoning": "1-3 sentence summary of how you matched categories (brief steps)"
 }
@@ -1505,7 +1530,15 @@ RESPONSE FORMAT (JSON ONLY):
     }
     
     const matchedCategories = matches
-      .map(match => galleriesData.find(item => String(item.type2).trim() === String(match.type2).trim()))
+      .map(match => {
+        // Try to find by id first, then by type2
+        if (match.id) {
+          return galleriesData.find(item => String(item.id).trim() === String(match.id).trim());
+        } else if (match.type2) {
+          return galleriesData.find(item => String(item.type2).trim() === String(match.type2).trim());
+        }
+        return null;
+      })
       .filter(Boolean)
       .slice(0,5);
 
@@ -1516,7 +1549,6 @@ RESPONSE FORMAT (JSON ONLY):
     return [];
   }
 }
-
 async function classifyAndMatchWithGPT(userMessage) {
   const text = (userMessage || '').trim();
   if (!text) {
@@ -1527,7 +1559,14 @@ async function classifyAndMatchWithGPT(userMessage) {
     return { intent: 'company', confidence: 0.0, reason: 'OpenAI not configured', matches: [], reasoning: '' };
   }
   
-  const csvDataForGPT = galleriesData.map(item => ({ type2: item.type2, cat1: item.cat1, cat_id: item.cat_id }));
+  // Include id in the data sent to GPT
+  const csvDataForGPT = galleriesData.map(item => ({ 
+    id: item.id, 
+    type2: item.type2, 
+    cat1: item.cat1, 
+    cat_id: item.cat_id,
+    name: item.name 
+  }));
   
   const prompt = `
 You are an assistant for Zulu Club (a lifestyle shopping service).
@@ -1538,10 +1577,10 @@ Task:
    - "product": the user is asking to browse or buy items, asking what we have, searching for products/categories.
    - "seller": queries about selling on the platform, onboarding merchants.
    - "investors": questions about business model, revenue, funding, pitch, investment.
-   - "agent": the user explicitly asks to connect to a human/agent/representative, or asks for a person to contact them (e.g., "connect me to agent", "I want a human", "talk to a person", "connect to representative").
+   - "agent": the user explicitly asks to connect to a human/agent/representative, or asks for a person to contact them.
    - "voice_ai": the user is asking for an AI-made song, AI music message, custom voice AI output, goofy/personalised audio, etc.
 
-2) If the intent is "product", pick up to 5 best-matching categories from the AVAILABLE CATEGORIES list provided.
+2) If the intent is "product", pick up to 5 best-matching categories from the AVAILABLE CATEGORIES list provided. Use "id" field when available.
 
 3) Return ONLY valid JSON in this exact format (no extra text):
 {
@@ -1549,7 +1588,12 @@ Task:
   "confidence": 0.0,
   "reason": "short explanation for the chosen intent",
   "matches": [
-    { "type2": "exact-type2-from-csv", "reason": "why it matches", "score": 0.85 }
+    { 
+      "id": "exact-id-from-csv", 
+      "type2": "exact-type2-from-csv", 
+      "reason": "why it matches", 
+      "score": 0.85 
+    }
   ],
   "reasoning": "1-3 sentence concise explanation of the steps you took to decide (brief chain-of-thought)"
 }
@@ -1583,7 +1627,12 @@ USER MESSAGE:
       const intent = (parsed.intent && allowedIntents.includes(parsed.intent)) ? parsed.intent : 'company';
       const confidence = Number(parsed.confidence) || 0.0;
       const reason = parsed.reason || '';
-      const matches = Array.isArray(parsed.matches) ? parsed.matches.map(m => ({ type2: m.type2, reason: m.reason, score: Number(m.score) || 0 })) : [];
+      const matches = Array.isArray(parsed.matches) ? parsed.matches.map(m => ({ 
+        id: m.id, 
+        type2: m.type2, 
+        reason: m.reason, 
+        score: Number(m.score) || 0 
+      })) : [];
       const reasoning = parsed.reasoning || parsed.debug_reasoning || '';
       
       console.log('🧾 classifyAndMatchWithGPT parsed:', { raw, parsed, intent, confidence });
@@ -1963,61 +2012,71 @@ For more details, please contact our support team.`;
       return await generateInvestorResponse(userMessage);
     }
     
-    if (intent === 'product' && galleriesData.length > 0) {
-      if (session.lastDetectedIntent !== 'product') {
-        session.lastDetectedIntent = 'product';
-        session.lastDetectedIntentTs = nowMs();
-      }
-      
-      const matchedType2s = (classification.matches || []).map(m => m.type2).filter(Boolean);
-      let matchedCategories = [];
-      
-      if (matchedType2s.length > 0) {
-        matchedCategories = matchedType2s
-          .map(t => galleriesData.find(g => String(g.type2).trim() === String(t).trim()))
-          .filter(Boolean)
-          .slice(0,5);
-      }
-      
-      if (matchedCategories.length === 0) {
-        const fullHistory = getFullSessionHistory(sessionId);
-        matchedCategories = await findGptMatchedCategories(userMessage, fullHistory);
+    // In the getChatGPTResponse function, update the product handling section:
+if (intent === 'product' && galleriesData.length > 0) {
+  if (session.lastDetectedIntent !== 'product') {
+    session.lastDetectedIntent = 'product';
+    session.lastDetectedIntentTs = nowMs();
+  }
+  
+  const matchedIds = (classification.matches || []).map(m => m.id).filter(Boolean);
+  const matchedType2s = (classification.matches || []).map(m => m.type2).filter(Boolean);
+  let matchedCategories = [];
+  
+  if (matchedIds.length > 0) {
+    // Try to match by id first
+    matchedCategories = matchedIds
+      .map(id => galleriesData.find(g => String(g.id).trim() === String(id).trim()))
+      .filter(Boolean);
+  }
+  
+  if (matchedCategories.length === 0 && matchedType2s.length > 0) {
+    // Fallback to type2 matching
+    matchedCategories = matchedType2s
+      .map(t => galleriesData.find(g => String(g.type2).trim() === String(t).trim()))
+      .filter(Boolean)
+      .slice(0,5);
+  }
+  
+  if (matchedCategories.length === 0) {
+    const fullHistory = getFullSessionHistory(sessionId);
+    matchedCategories = await findGptMatchedCategories(userMessage, fullHistory);
+  } else {
+    const fullHistory = getFullSessionHistory(sessionId);
+    const isShortOrQualifier = (msg) => {
+      if (!msg) return false;
+      const trimmed = String(msg).trim();
+      if (trimmed.split(/\s+/).length <= 3) return true;
+      if (trimmed.length <= 12) return true;
+      return false;
+    };
+    
+    if (isShortOrQualifier(userMessage)) {
+      const refined = await findGptMatchedCategories(userMessage, fullHistory);
+      if (refined && refined.length > 0) matchedCategories = refined;
+    }
+  }
+  
+  if (matchedCategories.length === 0) {
+    if (containsClothingKeywords(userMessage)) {
+      const fullHistory = getFullSessionHistory(sessionId);
+      matchedCategories = await findGptMatchedCategories(userMessage, fullHistory);
+    } else {
+      const keywordMatches = findKeywordMatchesInCat1(userMessage);
+      if (keywordMatches.length > 0) {
+        matchedCategories = keywordMatches;
       } else {
         const fullHistory = getFullSessionHistory(sessionId);
-        const isShortOrQualifier = (msg) => {
-          if (!msg) return false;
-          const trimmed = String(msg).trim();
-          if (trimmed.split(/\s+/).length <= 3) return true;
-          if (trimmed.length <= 12) return true;
-          return false;
-        };
-        
-        if (isShortOrQualifier(userMessage)) {
-          const refined = await findGptMatchedCategories(userMessage, fullHistory);
-          if (refined && refined.length > 0) matchedCategories = refined;
-        }
+        matchedCategories = await findGptMatchedCategories(userMessage, fullHistory);
       }
-      
-      if (matchedCategories.length === 0) {
-        if (containsClothingKeywords(userMessage)) {
-          const fullHistory = getFullSessionHistory(sessionId);
-          matchedCategories = await findGptMatchedCategories(userMessage, fullHistory);
-        } else {
-          const keywordMatches = findKeywordMatchesInCat1(userMessage);
-          if (keywordMatches.length > 0) {
-            matchedCategories = keywordMatches;
-          } else {
-            const fullHistory = getFullSessionHistory(sessionId);
-            matchedCategories = await findGptMatchedCategories(userMessage, fullHistory);
-          }
-        }
-      }
-      
-      const detectedGender = inferGenderFromCategories(matchedCategories);
-      const sellers = await findSellersForQuery(userMessage, matchedCategories, detectedGender);
-      
-      return buildConciseResponse(userMessage, matchedCategories, sellers);
     }
+  }
+  
+  const detectedGender = inferGenderFromCategories(matchedCategories);
+  const sellers = await findSellersForQuery(userMessage, matchedCategories, detectedGender);
+  
+  return buildConciseResponse(userMessage, matchedCategories, sellers);
+}
     
     // Default: company response
     return await generateCompanyResponse(userMessage, getFullSessionHistory(sessionId), companyInfo = ZULU_CLUB_INFO);
