@@ -1447,7 +1447,7 @@ function buildConciseResponse(userMessage, galleryMatches = [], sellersObj = {})
             imageUrl = `https://zulushop.in${imageUrl}`;
           }
           // Send image as a special format that will be rendered
-          msg += `   📷 [IMAGE:${imageUrl}]\n`;
+          msg += `   ${imageUrl}\n`;
         }
       } else if (g.type2) {
         // Fallback to old format if no id
