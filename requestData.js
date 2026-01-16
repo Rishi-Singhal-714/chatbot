@@ -23,7 +23,8 @@ const tableMapping = {
   'sellers': 'seller_data',
   'users': 'users',
   'videos': 'shop_able_videos',
-  'galleries': 'galleries'
+  'galleries': 'galleries',
+  'appconfigs': 'app_configs'
 };
 
 // Column mapping for each table - ONLY the columns we want to fetch and edit
