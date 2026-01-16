@@ -496,6 +496,7 @@ const checkAuthentication = (req, res, next) => {
 // -------------------------
 // Google Sheets config
 // -------------------------
+const UPLOAD_API_URL = process.env.UPLOAD_API_URL || 'https://api.zulushop.in/api/v1/user/upload';
 const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID || 'History';
 const AGENT_TICKETS_SHEET = process.env.AGENT_TICKETS_SHEET || 'Tickets_History';
 const SA_JSON_B64 = process.env.GOOGLE_SERVICE_ACCOUNT_JSON_BASE64 || '';
@@ -2423,6 +2424,111 @@ app.post('/chat/create-session', (req, res) => {
 // Also update the /chat/history/:sessionId endpoint to handle missing sessions:
 // Get chat history for a session
 // Get chat history for a session
+// Add this new endpoint to handle image uploads
+app.post('/api/upload-image', async (req, res) => {
+  try {
+    // This endpoint should be called by the frontend with base64 image data
+    const { imageData, fileName = 'upload.jpg' } = req.body;
+    
+    if (!imageData) {
+      return res.status(400).json({
+        success: false,
+        error: 'No image data provided'
+      });
+    }
+    
+    console.log(`📤 Uploading image to Hostinger: ${fileName}`);
+    
+    // Convert base64 to buffer
+    const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+    const imageBuffer = Buffer.from(base64Data, 'base64');
+    
+    // Create FormData for upload
+    const FormData = require('form-data');
+    const formData = new FormData();
+    formData.append('image', imageBuffer, {
+      filename: fileName,
+      contentType: 'image/jpeg'
+    });
+    
+    // Upload to Hostinger API
+    const uploadResponse = await axios.post(UPLOAD_API_URL, formData, {
+      headers: {
+        ...formData.getHeaders()
+      },
+      timeout: 30000 // 30 second timeout
+    });
+    
+    const result = uploadResponse.data;
+    console.log('Upload API response:', result);
+    
+    // Try multiple response formats
+    let imageUrl = null;
+    
+    if (result) {
+      // Format 1: Direct URL
+      if (result.url) {
+        imageUrl = result.url;
+      }
+      // Format 2: image_url
+      else if (result.image_url) {
+        imageUrl = result.image_url;
+      }
+      // Format 3: data contains URL
+      else if (result.data) {
+        if (typeof result.data === 'string') {
+          imageUrl = result.data;
+        } else if (result.data.url) {
+          imageUrl = result.data.url;
+        } else if (result.data.image_url) {
+          imageUrl = result.data.image_url;
+        }
+      }
+      // Format 4: success response
+      else if (result.success && result.data) {
+        if (typeof result.data === 'string') {
+          imageUrl = result.data;
+        } else if (result.data.url) {
+          imageUrl = result.data.url;
+        } else if (result.data.image_url) {
+          imageUrl = result.data.image_url;
+        }
+      }
+    }
+    
+    if (imageUrl) {
+      res.json({
+        success: true,
+        imageUrl: imageUrl,
+        message: 'Image uploaded successfully'
+      });
+    } else {
+      console.error('❌ Could not find image URL in response:', result);
+      res.status(500).json({
+        success: false,
+        error: 'Could not extract image URL from upload response'
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Image upload error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to upload image'
+    });
+  }
+});
+
+// Add this endpoint to get upload configuration
+app.get('/api/upload-config', (req, res) => {
+  res.json({
+    success: true,
+    uploadApiUrl: UPLOAD_API_URL,
+    maxFileSize: 5 * 1024 * 1024, // 5MB
+    allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+  });
+});
+
 app.get('/chat/history/:sessionId', async (req, res) => {
   try {
     const { sessionId } = req.params;
