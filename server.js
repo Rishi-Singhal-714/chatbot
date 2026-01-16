@@ -2482,7 +2482,93 @@ app.get('/chat/history/:sessionId', async (req, res) => {
 // New Database Endpoints
 // -------------------------
 // Main server file - Add this endpoint
+// Add these endpoints with the other API endpoints in server.js
 
+// Get categories data
+app.get('/api/categories', async (req, res) => {
+  try {
+    const data = await db.getCachedData('categories');
+    
+    res.json({
+      success: true,
+      data: data,
+      count: data.length
+    });
+  } catch (error) {
+    console.error('❌ Error fetching categories:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Update categories record
+app.put('/api/categories/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    // Remove id from update data if present
+    delete updateData.id;
+    
+    const result = await db.executeUpdate('categories', id, updateData);
+    
+    res.json({
+      success: true,
+      message: 'Category updated successfully',
+      affectedRows: result.affectedRows
+    });
+  } catch (error) {
+    console.error('Update categories error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get single categories record
+app.get('/api/categories/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const record = await db.getRecordById('categories', id);
+    
+    if (!record) {
+      return res.status(404).json({
+        success: false,
+        error: 'Category record not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: record
+    });
+  } catch (error) {
+    console.error('Get categories record error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Add categories to the clear-cache endpoint
+app.post('/api/clear-cache/:type', (req, res) => {
+  const { type } = req.params;
+  
+  if (type === 'all') {
+    db.clearAllCaches();
+    res.json({ success: true, message: 'All caches cleared' });
+  } else if (['products', 'sellers', 'videos', 'users', 'galleries', 'appconfigs', 'categories'].includes(type)) {
+    db.clearCache(type);
+    res.json({ success: true, message: `Cache cleared for ${type}` });
+  } else {
+    res.status(400).json({ success: false, error: 'Invalid cache type' });
+  }
+});
 // Get product stats by updater
 app.get('/api/product-stats-by-updater', async (req, res) => {
   try {
@@ -2792,7 +2878,10 @@ app.get('/users', (req, res) => {
 app.get('/galleries', (req, res) => {
 res.sendFile(__dirname + '/galleries.html');
 });
-
+// Add this with the other HTML page routes
+app.get('/categories', (req, res) => {
+  res.sendFile(__dirname + '/categories.html');
+});
 // Update record endpoint
 app.put('/api/:table/:id', async (req, res) => {
   try {
