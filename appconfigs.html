@@ -653,7 +653,48 @@
             document.getElementById('loading').style.display = 'none';
         }
     }
+    // Add these helper functions at the top of your script section:
+function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function getFieldOptions(field) {
+    const lowerField = field.toLowerCase();
     
+    if (lowerField.includes('gender')) {
+        return [
+            { value: 'male', label: 'Male' },
+            { value: 'female', label: 'Female' },
+            { value: 'other', label: 'Other' },
+            { value: 'prefer_not_to_say', label: 'Prefer not to say' }
+        ];
+    }
+    
+    if (lowerField.includes('role')) {
+        return [
+            { value: 'user', label: 'User' },
+            { value: 'admin', label: 'Admin' },
+            { value: 'moderator', label: 'Moderator' },
+            { value: 'subscriber', label: 'Subscriber' },
+            { value: 'guest', label: 'Guest' }
+        ];
+    }
+    
+    if (lowerField.includes('status')) {
+        return [
+            { value: 1, label: 'Active' },
+            { value: 0, label: 'Inactive' },
+            { value: 2, label: 'Pending' },
+            { value: 3, label: 'Suspended' }
+        ];
+    }
+    
+    // Default options
+    return [];
+}
     function formatDateForDisplay(dateString) {
         if (!dateString) return '';
         try {
@@ -1028,82 +1069,163 @@
         updatePaginationControls();
     }
     
-    function openFieldEditModal(cell) {
-        const id = cell.getAttribute('data-id');
-        const field = cell.getAttribute('data-field');
-        const value = decodeURIComponent(cell.getAttribute('data-value') || '');
-        
-        currentEditId = id;
-        currentEditField = field;
-        originalValue = value;
-        
-        // Set field name and info
-        const displayField = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-        document.getElementById('fieldName').textContent = `Editing ${displayField}`;
-        document.getElementById('fieldLabel').textContent = displayField;
-        document.getElementById('fieldInfo').textContent = `Config ID: ${id}`;
-        document.getElementById('configId').textContent = id;
-        
-        // Create appropriate input based on field type
-        const fieldInput = document.getElementById('fieldInput');
-        fieldInput.innerHTML = '';
-        
-        let inputHtml = '';
-        
-        // Determine input type based on field name
-        if (field === 'announcement1' || field === 'announcement2') {
-            // Textarea for announcements
-            inputHtml = `
-                <textarea id="editValue" name="${field}" class="form-control" rows="4" 
-                          placeholder="Enter ${displayField.toLowerCase()}...">${value}</textarea>
-            `;
-        } else if (field === 'club_slider_images') {
-            // Textarea for slider images (could be JSON array or comma separated)
-            inputHtml = `
-                <textarea id="editValue" name="${field}" class="form-control" rows="6" 
-                          placeholder="Enter club slider images (JSON array or comma separated URLs)...">${value}</textarea>
-                <div style="margin-top: 10px; font-size: 12px; color: #666;">
-                    <small>Format: ["url1", "url2"] or url1,url2,url3</small>
-                </div>
-            `;
-        } else if (field === 'created_at' || field === 'updated_at') {
-            // Date time input for timestamps
-            const dateValue = formatDateForInput(value);
-            inputHtml = `
-                <input type="datetime-local" id="editValue" name="${field}" value="${dateValue}" 
-                       class="form-control">
-                <div style="margin-top: 5px; font-size: 12px; color: #666;">
-                    <small>Current value: ${value || 'Empty'}</small>
-                </div>
-            `;
-        } else if (field === 'id') {
-            // ID field - read only
-            inputHtml = `
-                <input type="text" id="editValue" name="${field}" value="${value}" 
-                       class="form-control" readonly style="background: #f5f5f5;">
-                <div style="margin-top: 5px; font-size: 12px; color: #666;">
-                    <small>ID cannot be changed</small>
-                </div>
-            `;
-        } else {
-            // Default text input
-            inputHtml = `
-                <input type="text" id="editValue" name="${field}" value="${value}" 
-                       class="form-control" placeholder="Enter ${displayField.toLowerCase()}...">
-            `;
+ // Replace the openFieldEditModal function with this improved version:
+function openFieldEditModal(cell) {
+    const id = cell.getAttribute('data-id');
+    const field = cell.getAttribute('data-field');
+    const value = decodeURIComponent(cell.getAttribute('data-value') || '');
+    
+    currentEditId = id;
+    currentEditField = field;
+    originalValue = value;
+    
+    // Debug log
+    console.log('Opening edit modal:', { id, field, value });
+    
+    // Set field name and info
+    const displayField = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    document.getElementById('fieldName').textContent = `Editing ${displayField}`;
+    document.getElementById('fieldLabel').textContent = displayField;
+    document.getElementById('fieldInfo').textContent = `User ID: ${id} | Field: ${field}`;
+    
+    // Create appropriate input based on field type
+    const fieldInput = document.getElementById('fieldInput');
+    fieldInput.innerHTML = '';
+    
+    let inputHtml = '';
+    
+    // Determine input type based on field name and value
+    if (field.toLowerCase().includes('description') || 
+        field.toLowerCase().includes('bio') ||
+        field.toLowerCase().includes('content') ||
+        field.toLowerCase().includes('address') ||
+        field.toLowerCase().includes('note') ||
+        (String(value).length > 100 && !field.toLowerCase().includes('image'))) {
+        // Textarea for long text
+        inputHtml = `
+            <textarea id="editValue" name="${field}" class="form-control" rows="4" 
+                      placeholder="Enter ${displayField.toLowerCase()}...">${escapeHtml(value)}</textarea>
+        `;
+    } else if (field.toLowerCase().includes('toggle') ||
+              field.toLowerCase().includes('status') ||
+              field.toLowerCase().includes('active') ||
+              field.toLowerCase().includes('enabled') ||
+              field.toLowerCase().includes('verified') ||
+              field.toLowerCase().includes('is_')) {
+        // Checkbox for boolean fields
+        const isChecked = value === true || value === 1 || value === '1' || 
+                         String(value).toLowerCase() === 'true' || 
+                         String(value).toLowerCase() === 'yes' ||
+                         String(value).toLowerCase() === 'active' ||
+                         String(value).toLowerCase() === 'on';
+        inputHtml = `
+            <div style="display: flex; align-items: center; gap: 15px; padding: 12px; background: #f8f9fa; border-radius: 5px;">
+                <input type="checkbox" id="editValue" name="${field}" ${isChecked ? 'checked' : ''} 
+                       class="form-control" style="width: auto; transform: scale(1.3);">
+                <span style="color: #666; font-size: 14px;">
+                    ${isChecked ? 'Currently: Active' : 'Currently: Inactive'}
+                </span>
+            </div>
+        `;
+    } else if (field.toLowerCase().includes('image') || 
+              field.toLowerCase().includes('url') ||
+              field.toLowerCase().includes('avatar') ||
+              field.toLowerCase().includes('photo') ||
+              field.toLowerCase().includes('thumbnail') ||
+              field.toLowerCase().includes('link') ||
+              field.toLowerCase().includes('website') ||
+              field.toLowerCase().includes('profile')) {
+        // URL input with preview
+        inputHtml = `
+            <input type="url" id="editValue" name="${field}" value="${escapeHtml(value)}" 
+                   class="form-control" placeholder="https://example.com/image.jpg">
+            ${value ? `<div style="margin-top: 10px; font-size: 12px; color: #666;">
+                <a href="${escapeHtml(value)}" target="_blank" style="color: #2196F3; text-decoration: none;">🔗 Open Link</a>
+            </div>` : ''}
+        `;
+    } else if (field.toLowerCase().includes('email')) {
+        // Email input
+        inputHtml = `
+            <input type="email" id="editValue" name="${field}" value="${escapeHtml(value)}" 
+                   class="form-control" placeholder="user@example.com">
+        `;
+    } else if (field.toLowerCase().includes('phone') ||
+              field.toLowerCase().includes('mobile') ||
+              field.toLowerCase().includes('contact')) {
+        // Phone input
+        inputHtml = `
+            <input type="tel" id="editValue" name="${field}" value="${escapeHtml(value)}" 
+                   class="form-control" placeholder="+91 9876543210">
+        `;
+    } else if (field.toLowerCase().includes('date') ||
+              field.toLowerCase().includes('created') ||
+              field.toLowerCase().includes('updated') ||
+              field.toLowerCase().includes('joined') ||
+              field.toLowerCase().includes('birthday') ||
+              field.toLowerCase().includes('dob')) {
+        // Date input - try to format the date for input
+        let dateValue = value;
+        if (value) {
+            const date = new Date(value);
+            if (!isNaN(date.getTime())) {
+                // Convert to YYYY-MM-DDTHH:mm format for datetime-local
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                dateValue = `${year}-${month}-${day}T${hours}:${minutes}`;
+            }
         }
+        inputHtml = `
+            <input type="datetime-local" id="editValue" name="${field}" value="${dateValue}" 
+                   class="form-control">
+        `;
+    } else if (field.toLowerCase().includes('password') ||
+              field.toLowerCase().includes('token') ||
+              field.toLowerCase().includes('secret') ||
+              field.toLowerCase().includes('key')) {
+        // Password input for sensitive fields
+        inputHtml = `
+            <input type="password" id="editValue" name="${field}" value="${escapeHtml(value)}" 
+                   class="form-control" placeholder="Enter ${displayField.toLowerCase()}...">
+        `;
+    } else if (field.toLowerCase().includes('gender') ||
+              field.toLowerCase().includes('role') ||
+              field.toLowerCase().includes('type') ||
+              field.toLowerCase().includes('category')) {
+        // Select dropdown for predefined options
+        const options = getFieldOptions(field);
+        let optionsHtml = '';
+        options.forEach(option => {
+            const selected = value == option.value ? 'selected' : '';
+            optionsHtml += `<option value="${option.value}" ${selected}>${option.label}</option>`;
+        });
         
-        fieldInput.innerHTML = inputHtml;
-        
-        // Focus on the input (except for ID)
-        setTimeout(() => {
-            const input = document.getElementById('editValue');
-            if (input && field !== 'id') input.focus();
-        }, 100);
-        
-        // Show modal
-        document.getElementById('editModal').style.display = 'block';
+        inputHtml = `
+            <select id="editValue" name="${field}" class="form-control">
+                ${optionsHtml}
+            </select>
+        `;
+    } else {
+        // Default text input
+        inputHtml = `
+            <input type="text" id="editValue" name="${field}" value="${escapeHtml(value)}" 
+                   class="form-control" placeholder="Enter ${displayField.toLowerCase()}...">
+        `;
     }
+    
+    fieldInput.innerHTML = inputHtml;
+    
+    // Focus on the input
+    setTimeout(() => {
+        const input = document.getElementById('editValue');
+        if (input) input.focus();
+    }, 100);
+    
+    // Show modal
+    document.getElementById('editModal').style.display = 'block';
+}
     
     function closeModal() {
         document.getElementById('editModal').style.display = 'none';
@@ -1112,95 +1234,119 @@
         originalValue = null;
     }
     
-    document.getElementById('editForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
+   // Replace the entire edit form submit handler with this improved version:
+document.getElementById('editForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const input = document.getElementById('editValue');
+    let newValue;
+    
+    if (input.type === 'checkbox') {
+        newValue = input.checked ? 1 : 0;
+    } else {
+        newValue = input.value.trim();
         
-        const input = document.getElementById('editValue');
-        let newValue;
+        // Convert empty string to null for database
+        if (newValue === '') {
+            newValue = null;
+        }
+    }
+    
+    // Check if value actually changed
+    if (JSON.stringify(newValue) === JSON.stringify(originalValue)) {
+        showMessage('ℹ️ No changes detected', 'info');
+        closeModal();
+        return;
+    }
+    
+    try {
+        showMessage('🔄 Saving changes...', 'info');
         
-        if (input.tagName === 'SELECT') {
-            newValue = input.value;
-        } else if (input.type === 'datetime-local') {
-            newValue = input.value;
-            // If empty, set to null
-            if (newValue === '') newValue = null;
-        } else {
-            newValue = input.value.trim();
-            
-            // Convert empty string to null for database
-            if (newValue === '') {
-                newValue = null;
+        const updateData = {};
+        updateData[currentEditField] = newValue;
+        
+        // Debug: Log what we're sending
+        console.log('Updating user ID:', currentEditId, 'Field:', currentEditField, 'Data:', updateData);
+        
+        // Try different API endpoints if needed
+        const endpoints = [
+            `/api/${currentTable}/${currentEditId}`,
+            `/api/users/${currentEditId}`,
+            `/api/user/${currentEditId}`
+        ];
+        
+        let response;
+        let lastError;
+        
+        // Try different endpoints
+        for (const endpoint of endpoints) {
+            try {
+                response = await fetch(endpoint, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                if (response.ok) break;
+                
+                const errorText = await response.text();
+                lastError = `Endpoint ${endpoint}: ${response.status} - ${errorText}`;
+                console.warn('Failed with endpoint:', endpoint, errorText);
+            } catch (err) {
+                lastError = err.message;
+                console.warn('Error with endpoint:', endpoint, err);
             }
         }
         
-        console.log('Submitting update:', {
-            id: currentEditId,
-            field: currentEditField,
-            newValue: newValue,
-            originalValue: originalValue
-        });
-        
-        // Check if value actually changed
-        if (newValue === originalValue || (newValue === null && originalValue === '')) {
-            showMessage('ℹ️ No changes detected', 'info');
-            closeModal();
-            return;
+        if (!response || !response.ok) {
+            throw new Error(lastError || 'All endpoints failed');
         }
         
-        try {
-            showMessage('🔄 Saving changes...', 'info');
+        const result = await response.json();
+        console.log('Update result:', result);
+        
+        if (result.success) {
+            showMessage('✅ Field updated successfully!', 'success');
             
-            const updateData = {};
-            updateData[currentEditField] = newValue;
-            
-            console.log('Sending update data:', updateData);
-            
-            const response = await fetch(`/api/${currentTable}/${currentEditId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(updateData)
+            // Update the allData array
+            const userIndex = allData.findIndex(user => {
+                // Try multiple possible ID fields
+                const userIds = [
+                    user.id,
+                    user._id,
+                    user.user_id,
+                    user.userId,
+                    user.ID
+                ];
+                return userIds.some(id => id == currentEditId);
             });
             
-            const result = await response.json();
-            console.log('Server response:', result);
-            
-            if (result.success) {
-                showMessage('✅ Config updated successfully!', 'success');
-                
-                // Update the specific cell in the table
-                updateTableCell(currentEditId, currentEditField, newValue);
-                
-                // Update the allData array
-                const configIndex = allData.findIndex(config => config.id == currentEditId);
-                if (configIndex !== -1) {
-                    allData[configIndex][currentEditField] = newValue;
-                    
-                    // Update formatted dates if needed
-                    if (currentEditField === 'created_at') {
-                        allData[configIndex].formatted_created = formatDateForDisplay(newValue);
-                    } else if (currentEditField === 'updated_at') {
-                        allData[configIndex].formatted_updated = formatDateForDisplay(newValue);
-                    }
-                    
-                    // Reapply filters to update stats
-                    applyFilter();
-                }
-                
-                setTimeout(() => {
-                    closeModal();
-                }, 1000);
+            if (userIndex !== -1) {
+                allData[userIndex][currentEditField] = newValue;
+                // Reapply filters to update stats
+                applyFilter();
             } else {
-                showMessage(`❌ Error: ${result.error}`, 'error');
-                console.error('Server error:', result);
+                // If not found, reload data from server
+                console.warn('User not found in local data, reloading from server...');
+                await loadData();
             }
-        } catch (error) {
-            showMessage(`❌ Network error: ${error.message}`, 'error');
-            console.error('Update error:', error);
+            
+            setTimeout(() => {
+                closeModal();
+            }, 1000);
+        } else {
+            throw new Error(result.error || 'Update failed');
         }
-    });
-    
+    } catch (error) {
+        console.error('Update error:', error);
+        showMessage(`❌ Error: ${error.message}`, 'error');
+    }
+});
+
     function updateTableCell(id, field, newValue) {
         // Find and update the specific cell
         const cells = document.querySelectorAll(`td[data-id="${id}"][data-field="${field}"]`);
