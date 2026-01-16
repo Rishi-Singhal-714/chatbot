@@ -380,8 +380,8 @@
         .image-cell {
             position: relative;
             padding: 0 !important;
-            height: 80px;
-            min-width: 100px;
+            height: 200px;
+            min-width: 200px;
         }
         .image-preview {
             width: 100%;
@@ -389,6 +389,17 @@
             object-fit: cover;
             border-radius: 4px;
             cursor: pointer;
+        }
+        .external-link-icon {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
         }
         .image-actions {
             position: absolute;
@@ -683,6 +694,22 @@
         .uploaded-url a:hover {
             text-decoration: underline;
         }
+        .external-link-info {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #2196F3;
+        }
+        .external-link-info h4 {
+            margin: 0 0 5px 0;
+            color: #1565C0;
+        }
+        .external-link-info p {
+            margin: 0;
+            color: #333;
+            font-size: 13px;
+        }
         @media (max-width: 768px) {
             body {
                 margin: 15px;
@@ -853,7 +880,7 @@
         </div>
     </div>
 
-    <!-- Image Upload Modal -->
+    <!-- Image Upload Modal for Server Images -->
     <div id="imageUploadModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -916,6 +943,54 @@
         </div>
     </div>
 
+    <!-- External Link Edit Modal -->
+    <div id="externalLinkModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="externalLinkModalTitle"></h2>
+                <button class="close-modal" onclick="closeExternalLinkModal()">&times;</button>
+            </div>
+            
+            <div class="field-info">
+                <h3 id="externalLinkFieldName"></h3>
+                <p id="externalLinkFieldInfo"></p>
+            </div>
+            
+            <div class="external-link-info">
+                <h4>⚠️ External Link Detected</h4>
+                <p>This is an external link (e.g., Google Drive, Dropbox, etc.). You can edit the URL or delete it, but you cannot upload a new image directly here.</p>
+            </div>
+            
+            <!-- Current Image/Link Preview -->
+            <div id="externalLinkContainer" class="current-image-container">
+                <h4>Current Link</h4>
+                <div style="word-break: break-all; padding: 10px; background: white; border-radius: 5px; margin-bottom: 10px;">
+                    <span id="currentExternalLink"></span>
+                </div>
+                <div id="externalLinkActions" style="margin-top: 10px;">
+                    <button onclick="viewExternalLink()" class="image-action-btn">View Link</button>
+                    <button onclick="deleteExternalLink()" class="image-action-btn delete">Delete Link</button>
+                </div>
+            </div>
+            
+            <!-- Edit URL Form -->
+            <form id="externalLinkForm">
+                <div class="form-group">
+                    <label for="externalLinkUrl">Edit URL:</label>
+                    <input type="url" id="externalLinkUrl" class="form-control" placeholder="https://example.com/image.jpg">
+                    <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                        Enter the full URL of the external image (Google Drive, Dropbox, etc.)
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" onclick="closeExternalLinkModal()">Cancel</button>
+                    <button type="submit" class="save-btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // Global variables
         let allData = [];          // All data from API
@@ -941,6 +1016,11 @@
         let uploadedImageUrl = null;
         let uploadedFile = null;
         
+        // External link variables
+        let currentExternalLinkId = null;
+        let currentExternalLinkField = null;
+        let currentExternalLinkUrl = null;
+        
         // Pagination variables
         let currentPage = 1;
         let pageSize = 50; // Default 50 per page
@@ -963,11 +1043,6 @@
                 return 'https://zulushop.in/' + url;
             }
             
-            // If it's a Google Drive link or other external link, return as is
-            if (url.includes('drive.google.com') || url.includes('api.zulushop.in')) {
-                return url;
-            }
-            
             // Default: prepend base URL
             return 'https://zulushop.in/' + url;
         }
@@ -981,6 +1056,67 @@
                               'main_image', 'thumbnail', 'cover', 'banner'];
             
             return imgFields.includes(fieldName.toLowerCase());
+        }
+
+        // Helper function to check if URL is external (not from zulushop.in)
+        function isExternalLink(url) {
+            if (!url || url.trim() === '') {
+                return false;
+            }
+            
+            // Get full URL for comparison
+            const fullUrl = getFullImageUrl(url);
+            
+            // Check if it's from zulushop.in
+            if (fullUrl.includes('zulushop.in')) {
+                return false;
+            }
+            
+            // Check for common external services
+            const externalDomains = [
+                'drive.google.com',
+                'dropbox.com',
+                'onedrive.live.com',
+                'imgur.com',
+                'flickr.com',
+                'imageshack.com',
+                'postimg.org',
+                'tinypic.com',
+                'photobucket.com',
+                'api.'
+            ];
+            
+            for (const domain of externalDomains) {
+                if (fullUrl.includes(domain)) {
+                    return true;
+                }
+            }
+            
+            // If it's a full URL but not from zulushop.in, consider it external
+            return fullUrl.startsWith('http://') || fullUrl.startsWith('https://');
+        }
+
+        // Helper function to get image preview URL for external links
+        function getImagePreviewUrl(url) {
+            if (!url || url.trim() === '') {
+                return '';
+            }
+            
+            const fullUrl = getFullImageUrl(url);
+            
+            // For Google Drive links, try to get a preview
+            if (fullUrl.includes('drive.google.com')) {
+                if (fullUrl.includes('/file/d/')) {
+                    // Convert Google Drive file link to preview link
+                    const match = fullUrl.match(/\/file\/d\/([^\/]+)/);
+                    if (match) {
+                        return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+                    }
+                }
+            }
+            
+            // For other external links, try to use the URL directly
+            return fullUrl;
         }
 
         async function loadData() {
@@ -1595,21 +1731,44 @@
                     if (isImage) {
                         // For image fields, show thumbnail with action buttons
                         const fullImageUrl = getFullImageUrl(value);
+                        const isExternal = isExternalLink(value);
+                        const previewUrl = getImagePreviewUrl(value);
+                        
                         if (fullImageUrl) {
-                            html += `<td class="image-cell" 
-                                     data-id="${row.id}" 
-                                     data-field="${header}" 
-                                     data-value="${encodeURIComponent(value)}">
-                                <img src="${fullImageUrl}" alt="${header}" class="image-preview" 
-                                     onclick="openImageModal('${row.id}', '${header}', '${encodeURIComponent(value)}')">
-                                <div class="image-actions">
-                                    <button class="image-action-btn" onclick="viewImage('${fullImageUrl}')">View</button>
-                                    <button class="image-action-btn" onclick="openImageModal('${row.id}', '${header}', '${encodeURIComponent(value)}')">Edit</button>
-                                    <button class="image-action-btn delete" onclick="deleteImage('${row.id}', '${header}')">Delete</button>
-                                </div>
-                            </td>`;
+                            // Show image preview with appropriate actions
+                            if (isExternal) {
+                                // External link - show preview and external link icon
+                                html += `<td class="image-cell" 
+                                         data-id="${row.id}" 
+                                         data-field="${header}" 
+                                         data-value="${encodeURIComponent(value)}">
+                                    <img src="${previewUrl}" alt="${header}" class="image-preview" 
+                                         onerror="this.src='https://via.placeholder.com/100x80?text=External+Link'"
+                                         onclick="openExternalLinkModal('${row.id}', '${header}', '${encodeURIComponent(value)}')">
+                                    <div class="external-link-icon" title="External Link">🔗</div>
+                                    <div class="image-actions">
+                                        <button class="image-action-btn" onclick="viewImage('${fullImageUrl}')">View</button>
+                                        <button class="image-action-btn" onclick="openExternalLinkModal('${row.id}', '${header}', '${encodeURIComponent(value)}')">Edit</button>
+                                        <button class="image-action-btn delete" onclick="deleteImage('${row.id}', '${header}')">Delete</button>
+                                    </div>
+                                </td>`;
+                            } else {
+                                // Server image - show upload modal
+                                html += `<td class="image-cell" 
+                                         data-id="${row.id}" 
+                                         data-field="${header}" 
+                                         data-value="${encodeURIComponent(value)}">
+                                    <img src="${fullImageUrl}" alt="${header}" class="image-preview" 
+                                         onclick="openImageModal('${row.id}', '${header}', '${encodeURIComponent(value)}')">
+                                    <div class="image-actions">
+                                        <button class="image-action-btn" onclick="viewImage('${fullImageUrl}')">View</button>
+                                        <button class="image-action-btn" onclick="openImageModal('${row.id}', '${header}', '${encodeURIComponent(value)}')">Edit</button>
+                                        <button class="image-action-btn delete" onclick="deleteImage('${row.id}', '${header}')">Delete</button>
+                                    </div>
+                                </td>`;
+                            }
                         } else {
-                            // No image - show "Add Image" button
+                            // No image - show "Add Image" button (opens upload modal)
                             html += `<td class="image-cell" 
                                      data-id="${row.id}" 
                                      data-field="${header}" 
@@ -1766,7 +1925,11 @@
             
             // Check if this is an image field
             if (isImageField(field)) {
-                openImageModal(id, field, value);
+                if (value && isExternalLink(value)) {
+                    openExternalLinkModal(id, field, value);
+                } else {
+                    openImageModal(id, field, value);
+                }
                 return;
             }
             
@@ -1990,7 +2153,7 @@
             });
         }
         
-        // Image Modal Functions
+        // Image Upload Modal Functions
         function openImageModal(id, field, value) {
             currentImageId = id;
             currentImageField = field;
@@ -2011,6 +2174,9 @@
                 const fullImageUrl = getFullImageUrl(currentImageUrl);
                 currentImagePreview.src = fullImageUrl;
                 currentImagePreview.alt = displayField;
+                currentImagePreview.onerror = function() {
+                    this.src = 'https://via.placeholder.com/200x150?text=Image+Not+Found';
+                };
                 currentImageContainer.style.display = 'block';
                 currentImageActions.style.display = 'block';
             } else {
@@ -2100,101 +2266,115 @@
             }
         }
         
-        function handleFiles(files) {
-            if (files.length === 0) return;
-            
-            const file = files[0];
-            
-            // Validate file type
-            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-            if (!validTypes.includes(file.type)) {
-                showMessage('❌ Please select a valid image file (JPG, PNG, GIF, WEBP)', 'error');
-                return;
-            }
-            
-            // Validate file size (5MB max)
-            if (file.size > 5 * 1024 * 1024) {
-                showMessage('❌ Image size must be less than 5MB', 'error');
-                return;
-            }
-            
-            uploadedFile = file;
-            
-            // Show preview
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const preview = document.getElementById('uploadedImagePreview');
-                preview.src = e.target.result;
-                document.getElementById('imagePreviewContainer').style.display = 'flex';
-                document.getElementById('saveImageBtn').disabled = false;
-            };
-            reader.readAsDataURL(file);
-            
-            // Upload the file
-            uploadImage(file);
-        }
+function handleFiles(files) {
+    if (files.length === 0) return;
+    
+    const file = files[0];
+    
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+        showMessage('❌ Please select a valid image file (JPG, PNG, GIF, WEBP)', 'error');
+        return;
+    }
+    
+    // Validate file size (10MB max - matching App Configs)
+    if (file.size > 10 * 1024 * 1024) {
+        showMessage('❌ Image size must be less than 10MB', 'error');
+        return;
+    }
+    
+    uploadedFile = file;
+    
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const preview = document.getElementById('uploadedImagePreview');
+        preview.src = e.target.result;
+        document.getElementById('imagePreviewContainer').style.display = 'flex';
+        document.getElementById('saveImageBtn').disabled = false;
+    };
+    reader.readAsDataURL(file);
+    
+    // Upload the file
+    uploadImage(file);
+}
         
-        async function uploadImage(file) {
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            // Show progress bar
-            document.getElementById('uploadProgress').style.display = 'block';
-            document.getElementById('progressFill').style.width = '0%';
-            
+      async function uploadImage(file) {
+    try {
+        console.log('📤 Uploading image to Hostinger...', file.name, file.type);
+        
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const response = await fetch('https://api.zulushop.in/api/v1/user/upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const responseText = await response.text();
+        console.log('Upload response text:', responseText);
+        
+        // Update progress bar
+        document.getElementById('progressFill').style.width = '100%';
+        
+        if (response.status >= 200 && response.status < 300) {
+            let jsonRes;
             try {
-                showMessage('🔄 Uploading image...', 'info');
-                
-                const response = await fetch('https://api.zulushop.in/api/v1/user/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const result = await response.json();
-                
-                // Update progress bar
-                document.getElementById('progressFill').style.width = '100%';
-                
-                // Extract URL from response
-                let url = null;
-                
-                // Check for URL in the specified order
-                if (result.url) {
-                    url = result.url;
-                } else if (result.image_url) {
-                    url = result.image_url;
-                } else if (result.data) {
-                    if (typeof result.data === 'string') {
-                        url = result.data;
-                    } else if (result.data.url) {
-                        url = result.data.url;
-                    } else if (result.data.image_url) {
-                        url = result.data.image_url;
+                jsonRes = JSON.parse(responseText);
+            } catch (e) {
+                console.error('Failed to parse JSON response:', e);
+                throw new Error('Invalid response from server');
+            }
+            
+            // Extract URL from response
+            let url;
+            
+            // Try different possible response formats
+            if (jsonRes.url && typeof jsonRes.url === 'string') {
+                url = jsonRes.url;
+            } else if (jsonRes.image_url && typeof jsonRes.image_url === 'string') {
+                url = jsonRes.image_url;
+            } else if (jsonRes.data) {
+                if (typeof jsonRes.data === 'string') {
+                    url = jsonRes.data;
+                } else if (typeof jsonRes.data === 'object') {
+                    if (jsonRes.data.url && typeof jsonRes.data.url === 'string') {
+                        url = jsonRes.data.url;
+                    } else if (jsonRes.data.image_url && typeof jsonRes.data.image_url === 'string') {
+                        url = jsonRes.data.image_url;
                     }
                 }
-                
-                if (url) {
-                    uploadedImageUrl = url;
-                    
-                    // Show uploaded URL
-                    document.getElementById('uploadedUrlText').textContent = url;
-                    document.getElementById('uploadedUrlLink').href = url;
-                    document.getElementById('uploadedUrl').style.display = 'block';
-                    
-                    showMessage('✅ Image uploaded successfully!', 'success');
-                } else if (result.error) {
-                    throw new Error(result.error);
-                } else {
-                    throw new Error('No URL found in response');
-                }
-            } catch (error) {
-                console.error('Upload error:', error);
-                showMessage(`❌ Upload failed: ${error.message}`, 'error');
-                document.getElementById('uploadProgress').style.display = 'none';
-                document.getElementById('imagePreviewContainer').style.display = 'none';
-                document.getElementById('saveImageBtn').disabled = true;
             }
+            
+            if (url) {
+                console.log('✅ Image uploaded successfully. URL:', url);
+                uploadedImageUrl = url;
+                
+                // Show uploaded URL
+                document.getElementById('uploadedUrlText').textContent = url;
+                document.getElementById('uploadedUrlLink').href = url;
+                document.getElementById('uploadedUrl').style.display = 'block';
+                
+                showMessage('✅ Image uploaded successfully!', 'success');
+                return url;
+            } else {
+                console.error('❌ No URL found in response:', jsonRes);
+                throw new Error('No image URL in response');
+            }
+        } else {
+            console.error('❌ Upload failed with status:', response.status);
+            throw new Error(`Upload failed: ${response.status} ${responseText}`);
         }
+    } catch (error) {
+        console.error('❌ Upload error:', error);
+        showMessage(`❌ Upload failed: ${error.message}`, 'error');
+        document.getElementById('uploadProgress').style.display = 'none';
+        document.getElementById('imagePreviewContainer').style.display = 'none';
+        document.getElementById('saveImageBtn').disabled = true;
+        throw error;
+    }
+}
         
         function removeUploadedImage() {
             uploadedImageUrl = null;
@@ -2303,6 +2483,104 @@
             window.open(url, '_blank');
         }
         
+        // External Link Modal Functions
+        function openExternalLinkModal(id, field, value) {
+            currentExternalLinkId = id;
+            currentExternalLinkField = field;
+            currentExternalLinkUrl = decodeURIComponent(value || '');
+            
+            // Set modal title
+            const displayField = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            document.getElementById('externalLinkModalTitle').textContent = `Edit External Link`;
+            document.getElementById('externalLinkFieldName').textContent = displayField;
+            document.getElementById('externalLinkFieldInfo').textContent = `Gallery ID: ${id}`;
+            
+            // Show current link
+            document.getElementById('currentExternalLink').textContent = currentExternalLinkUrl || 'No link';
+            
+            // Set URL input value
+            document.getElementById('externalLinkUrl').value = currentExternalLinkUrl || '';
+            
+            // Show modal
+            document.getElementById('externalLinkModal').style.display = 'block';
+        }
+        
+        function closeExternalLinkModal() {
+            document.getElementById('externalLinkModal').style.display = 'none';
+            currentExternalLinkId = null;
+            currentExternalLinkField = null;
+            currentExternalLinkUrl = null;
+        }
+        
+        function viewExternalLink() {
+            if (currentExternalLinkUrl) {
+                window.open(currentExternalLinkUrl, '_blank');
+            }
+        }
+        
+        function deleteExternalLink() {
+            if (confirm('Are you sure you want to delete this external link?')) {
+                saveExternalLinkToServer('');
+            }
+        }
+        
+        async function saveExternalLinkToServer(url) {
+            try {
+                showMessage('🔄 Saving external link...', 'info');
+                
+                const updateData = {};
+                updateData[currentExternalLinkField] = url;
+                
+                const response = await fetch(`/api/galleries/${currentExternalLinkId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('✅ External link saved successfully!', 'success');
+                    
+                    // Update the allData array
+                    const galleryIndex = allData.findIndex(gallery => gallery.id == currentExternalLinkId);
+                    if (galleryIndex !== -1) {
+                        allData[galleryIndex][currentExternalLinkField] = url;
+                    }
+                    
+                    // Reload data to refresh the table
+                    loadData();
+                    
+                    setTimeout(() => {
+                        closeExternalLinkModal();
+                    }, 1000);
+                } else {
+                    showMessage(`❌ Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ Network error: ${error.message}`, 'error');
+            }
+        }
+        
+        // External link form submission
+        document.getElementById('externalLinkForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const urlInput = document.getElementById('externalLinkUrl');
+            const newUrl = urlInput.value.trim();
+            
+            // Check if value actually changed
+            if (newUrl === currentExternalLinkUrl) {
+                showMessage('ℹ️ No changes detected', 'info');
+                closeExternalLinkModal();
+                return;
+            }
+            
+            await saveExternalLinkToServer(newUrl);
+        });
+        
         function showError(message) {
             const errorDiv = document.getElementById('error');
             errorDiv.style.display = 'block';
@@ -2345,12 +2623,16 @@
         window.onclick = function(event) {
             const editModal = document.getElementById('editModal');
             const imageModal = document.getElementById('imageUploadModal');
+            const externalModal = document.getElementById('externalLinkModal');
             
             if (event.target === editModal) {
                 closeModal();
             }
             if (event.target === imageModal) {
                 closeImageModal();
+            }
+            if (event.target === externalModal) {
+                closeExternalLinkModal();
             }
         };
         
@@ -2359,6 +2641,7 @@
             if (event.key === 'Escape') {
                 closeModal();
                 closeImageModal();
+                closeExternalLinkModal();
             }
         });
         
