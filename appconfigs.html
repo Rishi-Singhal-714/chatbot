@@ -3,7 +3,6 @@
 <head>
     <title>App Configs - Zulu Club</title>
     <style>
-        /* Copy EXACTLY the same CSS from users.html */
         body {
             font-family: Arial, sans-serif;
             margin: 30px;
@@ -11,7 +10,7 @@
         }
         h1 {
             color: #333;
-            border-bottom: 3px solid #FF9800; /* Orange for configs */
+            border-bottom: 3px solid #FF9800;
             padding-bottom: 10px;
         }
         .controls {
@@ -43,7 +42,7 @@
             color: white;
         }
         .refresh-btn {
-            background: #FF9800; /* Orange for configs */
+            background: #FF9800;
             color: white;
         }
         .search-box {
@@ -122,7 +121,7 @@
             border-collapse: collapse;
         }
         th {
-            background: #FF9800; /* Orange for configs */
+            background: #FF9800;
             color: white;
             padding: 12px 15px;
             text-align: left;
@@ -178,7 +177,6 @@
             font-size: 14px;
             color: #e65100;
         }
-        /* Pagination Controls */
         .pagination-controls {
             background: #f8f9fa;
             padding: 15px;
@@ -304,7 +302,6 @@
             padding: 0 2px;
             border-radius: 2px;
         }
-        /* Modal Styles */
         .modal {
             display: none;
             position: fixed;
@@ -438,6 +435,114 @@
         .cancel-btn:hover {
             background: #5a6268;
         }
+        .image-links-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            background: #f8f9fa;
+            margin-bottom: 10px;
+        }
+        .image-link-item {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 8px;
+            margin-bottom: 8px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .image-link-item:hover {
+            border-color: #FF9800;
+            box-shadow: 0 2px 5px rgba(255, 152, 0, 0.1);
+        }
+        .image-link-input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .image-link-input:focus {
+            outline: none;
+            border-color: #FF9800;
+            box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.1);
+        }
+        .remove-link-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .remove-link-btn:hover {
+            background: #d32f2f;
+            transform: scale(1.1);
+        }
+        .add-link-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+        .add-link-btn:hover {
+            background: #388E3C;
+        }
+        .preview-image {
+            max-width: 100%;
+            max-height: 150px;
+            border-radius: 5px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            display: block;
+        }
+        .image-preview-container {
+            margin-top: 10px;
+            padding: 10px;
+            background: #fff;
+            border-radius: 5px;
+            border: 1px solid #eee;
+        }
+        .link-count {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .json-validation {
+            font-size: 11px;
+            color: #666;
+            margin-top: 5px;
+            font-family: monospace;
+            padding: 5px;
+            background: #fff;
+            border-radius: 3px;
+            border-left: 3px solid #4CAF50;
+        }
+        .json-error {
+            border-left-color: #f44336;
+            color: #721c24;
+            background: #f8d7da;
+        }
         @media (max-width: 768px) {
             body {
                 margin: 15px;
@@ -528,7 +633,6 @@
     
     <div id="dataContainer"></div>
 
-    <!-- Edit Modal for Single Field -->
     <div id="editModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -554,8 +658,8 @@
             </form>
         </div>
     </div>
+
 <script>
-    // Global variables for App Configs
     let allData = [];
     let filteredData = [];
     let currentData = [];
@@ -564,11 +668,9 @@
     let currentEditField = null;
     let originalValue = null;
     
-    // Search and Pagination variables
     let searchTerm = '';
     let searchTimeout = null;
     
-    // Pagination variables
     let currentPage = 1;
     let pageSize = 50;
     let totalPages = 1;
@@ -589,13 +691,10 @@
                 if (Array.isArray(data.data)) {
                     allData = data.data;
                     
-                    // Process data for consistent format
                     if (allData.length > 0) {
                         allData = allData.map((config, index) => {
-                            // Ensure id exists
                             if (!config.id) config.id = index + 1;
                             
-                            // Process club_slider_images (if it's JSON string)
                             if (config.club_slider_images) {
                                 try {
                                     if (typeof config.club_slider_images === 'string') {
@@ -606,11 +705,10 @@
                                         }
                                     }
                                 } catch (e) {
-                                    // Not JSON, keep as is
+                                    console.warn('Failed to parse club_slider_images:', e);
                                 }
                             }
                             
-                            // Format dates for display
                             if (config.created_at) {
                                 config.formatted_created = formatDateForDisplay(config.created_at);
                             }
@@ -625,7 +723,6 @@
                     applyFilter();
                     updateStats();
                     
-                    // Show cache info
                     const cacheDiv = document.createElement('div');
                     cacheDiv.className = 'cache-info';
                     cacheDiv.innerHTML = `
@@ -653,48 +750,43 @@
             document.getElementById('loading').style.display = 'none';
         }
     }
-    // Add these helper functions at the top of your script section:
-function escapeHtml(text) {
-    if (text === null || text === undefined) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-function getFieldOptions(field) {
-    const lowerField = field.toLowerCase();
     
-    if (lowerField.includes('gender')) {
-        return [
-            { value: 'male', label: 'Male' },
-            { value: 'female', label: 'Female' },
-            { value: 'other', label: 'Other' },
-            { value: 'prefer_not_to_say', label: 'Prefer not to say' }
-        ];
+    function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
     
-    if (lowerField.includes('role')) {
-        return [
-            { value: 'user', label: 'User' },
-            { value: 'admin', label: 'Admin' },
-            { value: 'moderator', label: 'Moderator' },
-            { value: 'subscriber', label: 'Subscriber' },
-            { value: 'guest', label: 'Guest' }
-        ];
+    function getFieldOptions(field) {
+        const lowerField = field.toLowerCase();
+        
+        if (lowerField.includes('gender')) {
+            return [
+                { value: 'male', label: 'Male' },
+                { value: 'female', label: 'Female' },
+                { value: 'other', label: 'Other' }
+            ];
+        }
+        
+        if (lowerField.includes('role')) {
+            return [
+                { value: 'user', label: 'User' },
+                { value: 'admin', label: 'Admin' },
+                { value: 'moderator', label: 'Moderator' }
+            ];
+        }
+        
+        if (lowerField.includes('status')) {
+            return [
+                { value: 1, label: 'Active' },
+                { value: 0, label: 'Inactive' }
+            ];
+        }
+        
+        return [];
     }
     
-    if (lowerField.includes('status')) {
-        return [
-            { value: 1, label: 'Active' },
-            { value: 0, label: 'Inactive' },
-            { value: 2, label: 'Pending' },
-            { value: 3, label: 'Suspended' }
-        ];
-    }
-    
-    // Default options
-    return [];
-}
     function formatDateForDisplay(dateString) {
         if (!dateString) return '';
         try {
@@ -706,26 +798,12 @@ function getFieldOptions(field) {
         }
     }
     
-    function formatDateForInput(dateString) {
-        if (!dateString) return '';
-        try {
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) return '';
-            // Convert to YYYY-MM-DDTHH:MM format for datetime-local input
-            return date.toISOString().slice(0, 16);
-        } catch (e) {
-            return '';
-        }
-    }
-    
     function applyFilter() {
         filteredData = [...allData];
         
-        // Apply search filter
         if (searchTerm.trim() !== '') {
             const searchLower = searchTerm.toLowerCase();
             filteredData = filteredData.filter(config => {
-                // Search all fields
                 return Object.values(config).some(value => {
                     if (typeof value === 'string') {
                         return value.toLowerCase().includes(searchLower);
@@ -754,12 +832,11 @@ function getFieldOptions(field) {
         
         searchTimeout = setTimeout(() => {
             searchTerm = document.getElementById('searchInput').value;
-            currentPage = 1; // Reset to first page when searching
+            currentPage = 1;
             applyFilter();
-        }, 500); // 500ms delay for smoother experience
+        }, 500);
     }
     
-    // Pagination functions
     function updatePagination() {
         pageSize = parseInt(document.getElementById('pageSize').value) || 50;
         
@@ -779,7 +856,7 @@ function getFieldOptions(field) {
     
     function changePageSize() {
         pageSize = parseInt(document.getElementById('pageSize').value) || 50;
-        currentPage = 1; // Reset to first page
+        currentPage = 1;
         applyFilter();
         showMessage(`Changed page size to ${pageSize === 0 ? 'Show All' : pageSize}`, 'info');
     }
@@ -788,13 +865,11 @@ function getFieldOptions(field) {
         document.getElementById('currentPage').textContent = currentPage;
         document.getElementById('totalPages').textContent = totalPages;
         
-        // Update button states
         document.getElementById('firstPageBtn').disabled = currentPage === 1;
         document.getElementById('prevPageBtn').disabled = currentPage === 1;
         document.getElementById('nextPageBtn').disabled = currentPage === totalPages || totalPages === 0;
         document.getElementById('lastPageBtn').disabled = currentPage === totalPages || totalPages === 0;
         
-        // Update page numbers display
         updatePageNumbers();
     }
     
@@ -802,11 +877,9 @@ function getFieldOptions(field) {
         const pageNumbersDiv = document.getElementById('pageNumbers');
         let pageNumbersHTML = '';
         
-        // Show at most 5 page numbers
         let startPage = Math.max(1, currentPage - 2);
         let endPage = Math.min(totalPages, startPage + 4);
         
-        // Adjust start if we're near the end
         if (endPage - startPage < 4) {
             startPage = Math.max(1, endPage - 4);
         }
@@ -864,7 +937,6 @@ function getFieldOptions(field) {
         let startIndex, endIndex;
         
         if (pageSize === 0) {
-            // Show all
             startIndex = 0;
             endIndex = filteredData.length;
             currentData = filteredData;
@@ -930,7 +1002,6 @@ function getFieldOptions(field) {
             return;
         }
         
-        // Get headers, excluding internal fields
         const headers = Object.keys(firstRow).filter(h => 
             !h.includes('_parsed') && 
             !h.includes('_formatted') && 
@@ -941,7 +1012,6 @@ function getFieldOptions(field) {
         
         let html = '<table>';
         
-        // Create header row - all columns are clickable
         html += '<tr>';
         headers.forEach(header => {
             const displayHeader = header.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -949,7 +1019,6 @@ function getFieldOptions(field) {
         });
         html += '</tr>';
         
-        // Create data rows
         data.forEach((row, index) => {
             html += '<tr>';
             headers.forEach(header => {
@@ -963,12 +1032,10 @@ function getFieldOptions(field) {
                     }
                 }
                 
-                // Format specific fields
                 let displayValue = String(value);
                 let cellStyle = '';
                 let isEditable = true;
                 
-                // Highlight search term in results
                 if (searchTerm.trim() !== '' && typeof value === 'string') {
                     const searchLower = searchTerm.toLowerCase();
                     const valueLower = value.toLowerCase();
@@ -979,31 +1046,23 @@ function getFieldOptions(field) {
                     }
                 }
                 
-                // Style specific fields
                 if (header === 'id') {
                     cellStyle += 'font-weight: bold; color: #2196F3;';
-                    isEditable = false; // ID is not editable
+                    isEditable = false;
                 } else if (header === 'club_slider_images') {
-                    // Format images nicely
-                    if (row.parsed_images) {
-                        if (Array.isArray(row.parsed_images)) {
-                            displayValue = `[${row.parsed_images.length} images]`;
-                            cellStyle += 'color: #673AB7;';
-                        } else if (typeof row.parsed_images === 'object') {
-                            displayValue = `{${Object.keys(row.parsed_images).length} items}`;
-                        }
+                    if (row.parsed_images && Array.isArray(row.parsed_images)) {
+                        displayValue = `[${row.parsed_images.length} images]`;
+                        cellStyle += 'color: #673AB7;';
                     } else if (value && value.length > 50) {
                         displayValue = value.substring(0, 50) + '...';
                     }
                     cellStyle += 'font-family: monospace;';
                 } else if (header === 'announcement1' || header === 'announcement2') {
-                    // Truncate long announcements
                     if (value && value.length > 50) {
                         displayValue = value.substring(0, 50) + '...';
                     }
                     cellStyle += 'color: #333;';
                 } else if (header === 'created_at' || header === 'updated_at') {
-                    // Use formatted date for display
                     const formattedField = header === 'created_at' ? 'formatted_created' : 'formatted_updated';
                     displayValue = row[formattedField] || displayValue;
                     cellStyle += 'color: #666; font-size: 12px;';
@@ -1034,7 +1093,6 @@ function getFieldOptions(field) {
         
         html += '</table>';
         
-        // Keep cache info at top
         const existingCache = container.querySelector('.cache-info');
         if (existingCache) {
             container.innerHTML = '';
@@ -1050,7 +1108,6 @@ function getFieldOptions(field) {
             let aVal = a[column];
             let bVal = b[column];
             
-            // Handle different data types
             if (typeof aVal === 'number' && typeof bVal === 'number') {
                 return aVal - bVal;
             } else if (typeof aVal === 'string' && typeof bVal === 'string') {
@@ -1058,7 +1115,6 @@ function getFieldOptions(field) {
             } else if (aVal instanceof Date && bVal instanceof Date) {
                 return aVal - bVal;
             } else {
-                // Convert to string for comparison
                 return String(aVal || '').localeCompare(String(bVal || ''));
             }
         });
@@ -1069,339 +1125,443 @@ function getFieldOptions(field) {
         updatePaginationControls();
     }
     
- // Replace the openFieldEditModal function with this improved version:
-function openFieldEditModal(cell) {
-    const id = cell.getAttribute('data-id');
-    const field = cell.getAttribute('data-field');
-    const value = decodeURIComponent(cell.getAttribute('data-value') || '');
-    
-    currentEditId = id;
-    currentEditField = field;
-    originalValue = value;
-    
-    // Debug log
-    console.log('Opening edit modal:', { id, field, value });
-    
-    // Set field name and info
-    const displayField = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-    document.getElementById('fieldName').textContent = `Editing ${displayField}`;
-    document.getElementById('fieldLabel').textContent = displayField;
-    document.getElementById('fieldInfo').textContent = `User ID: ${id} | Field: ${field}`;
-    
-    // Create appropriate input based on field type
-    const fieldInput = document.getElementById('fieldInput');
-    fieldInput.innerHTML = '';
-    
-    let inputHtml = '';
-    
-    // Determine input type based on field name and value
-    if (field.toLowerCase().includes('description') || 
-        field.toLowerCase().includes('bio') ||
-        field.toLowerCase().includes('content') ||
-        field.toLowerCase().includes('address') ||
-        field.toLowerCase().includes('note') ||
-        (String(value).length > 100 && !field.toLowerCase().includes('image'))) {
-        // Textarea for long text
-        inputHtml = `
-            <textarea id="editValue" name="${field}" class="form-control" rows="4" 
-                      placeholder="Enter ${displayField.toLowerCase()}...">${escapeHtml(value)}</textarea>
-        `;
-    } else if (field.toLowerCase().includes('toggle') ||
-              field.toLowerCase().includes('status') ||
-              field.toLowerCase().includes('active') ||
-              field.toLowerCase().includes('enabled') ||
-              field.toLowerCase().includes('verified') ||
-              field.toLowerCase().includes('is_')) {
-        // Checkbox for boolean fields
-        const isChecked = value === true || value === 1 || value === '1' || 
-                         String(value).toLowerCase() === 'true' || 
-                         String(value).toLowerCase() === 'yes' ||
-                         String(value).toLowerCase() === 'active' ||
-                         String(value).toLowerCase() === 'on';
-        inputHtml = `
-            <div style="display: flex; align-items: center; gap: 15px; padding: 12px; background: #f8f9fa; border-radius: 5px;">
-                <input type="checkbox" id="editValue" name="${field}" ${isChecked ? 'checked' : ''} 
-                       class="form-control" style="width: auto; transform: scale(1.3);">
-                <span style="color: #666; font-size: 14px;">
-                    ${isChecked ? 'Currently: Active' : 'Currently: Inactive'}
-                </span>
-            </div>
-        `;
-    } else if (field.toLowerCase().includes('image') || 
-              field.toLowerCase().includes('url') ||
-              field.toLowerCase().includes('avatar') ||
-              field.toLowerCase().includes('photo') ||
-              field.toLowerCase().includes('thumbnail') ||
-              field.toLowerCase().includes('link') ||
-              field.toLowerCase().includes('website') ||
-              field.toLowerCase().includes('profile')) {
-        // URL input with preview
-        inputHtml = `
-            <input type="url" id="editValue" name="${field}" value="${escapeHtml(value)}" 
-                   class="form-control" placeholder="https://example.com/image.jpg">
-            ${value ? `<div style="margin-top: 10px; font-size: 12px; color: #666;">
-                <a href="${escapeHtml(value)}" target="_blank" style="color: #2196F3; text-decoration: none;">🔗 Open Link</a>
-            </div>` : ''}
-        `;
-    } else if (field.toLowerCase().includes('email')) {
-        // Email input
-        inputHtml = `
-            <input type="email" id="editValue" name="${field}" value="${escapeHtml(value)}" 
-                   class="form-control" placeholder="user@example.com">
-        `;
-    } else if (field.toLowerCase().includes('phone') ||
-              field.toLowerCase().includes('mobile') ||
-              field.toLowerCase().includes('contact')) {
-        // Phone input
-        inputHtml = `
-            <input type="tel" id="editValue" name="${field}" value="${escapeHtml(value)}" 
-                   class="form-control" placeholder="+91 9876543210">
-        `;
-    } else if (field.toLowerCase().includes('date') ||
-              field.toLowerCase().includes('created') ||
-              field.toLowerCase().includes('updated') ||
-              field.toLowerCase().includes('joined') ||
-              field.toLowerCase().includes('birthday') ||
-              field.toLowerCase().includes('dob')) {
-        // Date input - try to format the date for input
-        let dateValue = value;
-        if (value) {
-            const date = new Date(value);
-            if (!isNaN(date.getTime())) {
-                // Convert to YYYY-MM-DDTHH:mm format for datetime-local
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                dateValue = `${year}-${month}-${day}T${hours}:${minutes}`;
-            }
-        }
-        inputHtml = `
-            <input type="datetime-local" id="editValue" name="${field}" value="${dateValue}" 
-                   class="form-control">
-        `;
-    } else if (field.toLowerCase().includes('password') ||
-              field.toLowerCase().includes('token') ||
-              field.toLowerCase().includes('secret') ||
-              field.toLowerCase().includes('key')) {
-        // Password input for sensitive fields
-        inputHtml = `
-            <input type="password" id="editValue" name="${field}" value="${escapeHtml(value)}" 
-                   class="form-control" placeholder="Enter ${displayField.toLowerCase()}...">
-        `;
-    } else if (field.toLowerCase().includes('gender') ||
-              field.toLowerCase().includes('role') ||
-              field.toLowerCase().includes('type') ||
-              field.toLowerCase().includes('category')) {
-        // Select dropdown for predefined options
-        const options = getFieldOptions(field);
-        let optionsHtml = '';
-        options.forEach(option => {
-            const selected = value == option.value ? 'selected' : '';
-            optionsHtml += `<option value="${option.value}" ${selected}>${option.label}</option>`;
-        });
+    function openFieldEditModal(cell) {
+        const id = cell.getAttribute('data-id');
+        const field = cell.getAttribute('data-field');
+        const value = decodeURIComponent(cell.getAttribute('data-value') || '');
         
-        inputHtml = `
-            <select id="editValue" name="${field}" class="form-control">
-                ${optionsHtml}
-            </select>
-        `;
-    } else {
-        // Default text input
-        inputHtml = `
-            <input type="text" id="editValue" name="${field}" value="${escapeHtml(value)}" 
-                   class="form-control" placeholder="Enter ${displayField.toLowerCase()}...">
-        `;
+        currentEditId = id;
+        currentEditField = field;
+        originalValue = value;
+        
+        const displayField = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        document.getElementById('fieldName').textContent = `Editing ${displayField}`;
+        document.getElementById('fieldLabel').textContent = displayField;
+        document.getElementById('fieldInfo').innerHTML = `Config ID: <strong>${id}</strong> | Field: <code>${field}</code>`;
+        
+        const fieldInput = document.getElementById('fieldInput');
+        fieldInput.innerHTML = '';
+        
+        if (field === 'club_slider_images') {
+            fieldInput.innerHTML = createImageLinksEditor(value);
+        } else {
+            fieldInput.innerHTML = createStandardFieldInput(field, value, displayField);
+        }
+        
+        setTimeout(() => {
+            const input = document.querySelector('#editValue, .image-link-input');
+            if (input) input.focus();
+        }, 100);
+        
+        document.getElementById('editModal').style.display = 'block';
     }
     
-    fieldInput.innerHTML = inputHtml;
+    function createImageLinksEditor(jsonString) {
+        let images = [];
+        let isValidJson = true;
+        
+        try {
+            if (jsonString && jsonString.trim() !== '') {
+                const parsed = JSON.parse(jsonString);
+                if (Array.isArray(parsed)) {
+                    images = parsed;
+                } else if (typeof parsed === 'string') {
+                    const trimmed = parsed.trim();
+                    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+                        images = JSON.parse(trimmed);
+                    } else {
+                        images = [parsed];
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Invalid JSON, treating as plain text:', e);
+            isValidJson = false;
+            if (jsonString && jsonString.trim() !== '') {
+                images = jsonString.split(',').map(url => url.trim()).filter(url => url);
+            }
+        }
+        
+        let html = `
+            <div class="link-count">Currently ${images.length} image link${images.length !== 1 ? 's' : ''}</div>
+            <div class="image-links-container" id="imageLinksContainer">
+        `;
+        
+        images.forEach((url, index) => {
+            html += `
+                <div class="image-link-item" data-index="${index}">
+                    <input type="text" class="image-link-input" 
+                           value="${escapeHtml(url)}" 
+                           placeholder="https://example.com/image.jpg"
+                           onchange="updateImagePreview(this)">
+                    <button type="button" class="remove-link-btn" onclick="removeImageLink(this)">×</button>
+                </div>
+            `;
+        });
+        
+        html += `</div>`;
+        
+        html += `
+            <button type="button" class="add-link-btn" onclick="addImageLink()">
+                <span style="font-size: 16px;">+</span> Add New Image Link
+            </button>
+        `;
+        
+        if (images.length > 0 && images[0]) {
+            html += `
+                <div class="image-preview-container">
+                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Preview (first image):</div>
+                    <img src="${escapeHtml(images[0])}" 
+                         class="preview-image" 
+                         alt="Image Preview"
+                         onerror="this.style.display='none';">
+                    <div style="font-size: 11px; color: #999; margin-top: 5px;">
+                        Click to view: <a href="${escapeHtml(images[0])}" target="_blank">${escapeHtml(images[0].substring(0, 50))}...</a>
+                    </div>
+                </div>
+            `;
+        }
+        
+        html += `
+            <div class="json-validation ${isValidJson ? '' : 'json-error'}">
+                ${isValidJson ? '✓ Valid JSON array format' : '⚠️ Invalid JSON, saving as comma-separated URLs'}
+            </div>
+            <input type="hidden" id="editValue" name="club_slider_images">
+        `;
+        
+        return html;
+    }
     
-    // Focus on the input
-    setTimeout(() => {
-        const input = document.getElementById('editValue');
-        if (input) input.focus();
-    }, 100);
+    function createStandardFieldInput(field, value, displayField) {
+        let inputHtml = '';
+        
+        if (field.toLowerCase().includes('description') || 
+            field.toLowerCase().includes('bio') ||
+            field.toLowerCase().includes('content') ||
+            field.toLowerCase().includes('address') ||
+            field.toLowerCase().includes('note') ||
+            field.toLowerCase().includes('announcement') ||
+            (String(value).length > 100 && !field.toLowerCase().includes('image'))) {
+            inputHtml = `
+                <textarea id="editValue" name="${field}" class="form-control" rows="4" 
+                          placeholder="Enter ${displayField.toLowerCase()}...">${escapeHtml(value)}</textarea>
+            `;
+        } else if (field.toLowerCase().includes('toggle') ||
+                  field.toLowerCase().includes('status') ||
+                  field.toLowerCase().includes('active') ||
+                  field.toLowerCase().includes('enabled') ||
+                  field.toLowerCase().includes('verified') ||
+                  field.toLowerCase().includes('is_')) {
+            const isChecked = value === true || value === 1 || value === '1' || 
+                             String(value).toLowerCase() === 'true' || 
+                             String(value).toLowerCase() === 'yes' ||
+                             String(value).toLowerCase() === 'active' ||
+                             String(value).toLowerCase() === 'on';
+            inputHtml = `
+                <div style="display: flex; align-items: center; gap: 15px; padding: 12px; background: #f8f9fa; border-radius: 5px;">
+                    <input type="checkbox" id="editValue" name="${field}" ${isChecked ? 'checked' : ''} 
+                           class="form-control" style="width: auto; transform: scale(1.3);">
+                    <span style="color: #666; font-size: 14px;">
+                        ${isChecked ? 'Currently: Active/Yes' : 'Currently: Inactive/No'}
+                    </span>
+                </div>
+            `;
+        } else if (field.toLowerCase().includes('image') || 
+                  field.toLowerCase().includes('url') ||
+                  field.toLowerCase().includes('avatar') ||
+                  field.toLowerCase().includes('photo') ||
+                  field.toLowerCase().includes('thumbnail') ||
+                  field.toLowerCase().includes('link') ||
+                  field.toLowerCase().includes('website') ||
+                  field.toLowerCase().includes('profile') ||
+                  (field === 'value' && value && (value.startsWith('http://') || value.startsWith('https://')))) {
+            inputHtml = `
+                <input type="url" id="editValue" name="${field}" value="${escapeHtml(value)}" 
+                       class="form-control" placeholder="https://example.com/image.jpg">
+                ${value ? `<div style="margin-top: 10px; font-size: 12px; color: #666;">
+                    <a href="${escapeHtml(value)}" target="_blank" style="color: #2196F3; text-decoration: none;">🔗 Open Link</a>
+                </div>` : ''}
+            `;
+        } else if (field.toLowerCase().includes('email')) {
+            inputHtml = `
+                <input type="email" id="editValue" name="${field}" value="${escapeHtml(value)}" 
+                       class="form-control" placeholder="user@example.com">
+            `;
+        } else if (field.toLowerCase().includes('phone') ||
+                  field.toLowerCase().includes('mobile') ||
+                  field.toLowerCase().includes('contact')) {
+            inputHtml = `
+                <input type="tel" id="editValue" name="${field}" value="${escapeHtml(value)}" 
+                       class="form-control" placeholder="+91 9876543210">
+            `;
+        } else if (field.toLowerCase().includes('date') ||
+                  field.toLowerCase().includes('created') ||
+                  field.toLowerCase().includes('updated') ||
+                  field.toLowerCase().includes('joined') ||
+                  field.toLowerCase().includes('birthday') ||
+                  field.toLowerCase().includes('dob')) {
+            let dateValue = value;
+            if (value) {
+                const date = new Date(value);
+                if (!isNaN(date.getTime())) {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const hours = String(date.getHours()).padStart(2, '0');
+                    const minutes = String(date.getMinutes()).padStart(2, '0');
+                    dateValue = `${year}-${month}-${day}T${hours}:${minutes}`;
+                }
+            }
+            inputHtml = `
+                <input type="datetime-local" id="editValue" name="${field}" value="${dateValue}" 
+                       class="form-control">
+            `;
+        } else if (field.toLowerCase().includes('password') ||
+                  field.toLowerCase().includes('token') ||
+                  field.toLowerCase().includes('secret') ||
+                  field.toLowerCase().includes('key')) {
+            inputHtml = `
+                <input type="password" id="editValue" name="${field}" value="${escapeHtml(value)}" 
+                       class="form-control" placeholder="Enter ${displayField.toLowerCase()}...">
+            `;
+        } else if (field.toLowerCase().includes('gender') ||
+                  field.toLowerCase().includes('role') ||
+                  field.toLowerCase().includes('type') ||
+                  field.toLowerCase().includes('category')) {
+            const options = getFieldOptions(field);
+            let optionsHtml = '';
+            options.forEach(option => {
+                const selected = value == option.value ? 'selected' : '';
+                optionsHtml += `<option value="${option.value}" ${selected}>${option.label}</option>`;
+            });
+            
+            inputHtml = `
+                <select id="editValue" name="${field}" class="form-control">
+                    ${optionsHtml}
+                </select>
+            `;
+        } else {
+            inputHtml = `
+                <input type="text" id="editValue" name="${field}" value="${escapeHtml(value)}" 
+                       class="form-control" placeholder="Enter ${displayField.toLowerCase()}...">
+            `;
+        }
+        
+        return inputHtml;
+    }
     
-    // Show modal
-    document.getElementById('editModal').style.display = 'block';
-}
+    function addImageLink() {
+        const container = document.getElementById('imageLinksContainer');
+        const index = container.children.length;
+        
+        const newItem = document.createElement('div');
+        newItem.className = 'image-link-item';
+        newItem.setAttribute('data-index', index);
+        newItem.innerHTML = `
+            <input type="text" class="image-link-input" 
+                   value="" 
+                   placeholder="https://example.com/new-image.jpg"
+                   onchange="updateImagePreview(this)">
+            <button type="button" class="remove-link-btn" onclick="removeImageLink(this)">×</button>
+        `;
+        
+        container.appendChild(newItem);
+        
+        const newInput = newItem.querySelector('.image-link-input');
+        if (newInput) newInput.focus();
+        
+        updateLinkCount();
+    }
+    
+    function removeImageLink(button) {
+        const item = button.closest('.image-link-item');
+        if (item) {
+            item.remove();
+            
+            const container = document.getElementById('imageLinksContainer');
+            const items = container.querySelectorAll('.image-link-item');
+            items.forEach((item, index) => {
+                item.setAttribute('data-index', index);
+            });
+            
+            updateLinkCount();
+            updatePreviewForFirstImage();
+        }
+    }
+    
+    function updateImagePreview(input) {
+        const item = input.closest('.image-link-item');
+        if (item && item.getAttribute('data-index') === '0') {
+            updatePreviewForFirstImage();
+        }
+    }
+    
+    function updatePreviewForFirstImage() {
+        const container = document.getElementById('imageLinksContainer');
+        const firstInput = container.querySelector('.image-link-item[data-index="0"] .image-link-input');
+        
+        if (firstInput && firstInput.value) {
+            let previewContainer = document.querySelector('.image-preview-container');
+            if (!previewContainer) {
+                previewContainer = document.createElement('div');
+                previewContainer.className = 'image-preview-container';
+                container.parentNode.insertBefore(previewContainer, container.nextElementSibling);
+            }
+            
+            previewContainer.innerHTML = `
+                <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Preview (first image):</div>
+                <img src="${escapeHtml(firstInput.value)}" 
+                     class="preview-image" 
+                     alt="Image Preview"
+                     onerror="this.style.display='none';">
+                <div style="font-size: 11px; color: #999; margin-top: 5px;">
+                    Click to view: <a href="${escapeHtml(firstInput.value)}" target="_blank">${escapeHtml(firstInput.value.substring(0, 50))}${firstInput.value.length > 50 ? '...' : ''}</a>
+                </div>
+            `;
+        }
+    }
+    
+    function updateLinkCount() {
+        const container = document.getElementById('imageLinksContainer');
+        const count = container.children.length;
+        
+        let countElement = document.querySelector('.link-count');
+        if (!countElement) {
+            countElement = document.createElement('div');
+            countElement.className = 'link-count';
+            container.parentNode.insertBefore(countElement, container);
+        }
+        
+        countElement.textContent = `Currently ${count} image link${count !== 1 ? 's' : ''}`;
+    }
+    
+    document.getElementById('editForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        let newValue;
+        
+        if (currentEditField === 'club_slider_images') {
+            const container = document.getElementById('imageLinksContainer');
+            if (!container) {
+                showMessage('❌ Error: Image links container not found', 'error');
+                return;
+            }
+            
+            const imageLinks = [];
+            const inputs = container.querySelectorAll('.image-link-input');
+            inputs.forEach(input => {
+                if (input.value.trim() !== '') {
+                    imageLinks.push(input.value.trim());
+                }
+            });
+            
+            newValue = JSON.stringify(imageLinks);
+            
+            if (newValue === originalValue) {
+                showMessage('ℹ️ No changes detected', 'info');
+                closeModal();
+                return;
+            }
+        } else {
+            const input = document.getElementById('editValue');
+            if (!input) {
+                showMessage('❌ Error: Input field not found', 'error');
+                return;
+            }
+            
+            if (input.type === 'checkbox') {
+                newValue = input.checked ? 1 : 0;
+            } else {
+                newValue = input.value.trim();
+                
+                if (newValue === '') {
+                    newValue = null;
+                }
+            }
+            
+            if (JSON.stringify(newValue) === JSON.stringify(originalValue)) {
+                showMessage('ℹ️ No changes detected', 'info');
+                closeModal();
+                return;
+            }
+        }
+        
+        try {
+            showMessage('🔄 Saving changes...', 'info');
+            
+            const updateData = {};
+            updateData[currentEditField] = newValue;
+            
+            console.log('Updating config ID:', currentEditId, 'Field:', currentEditField, 'Data:', updateData);
+            
+            const endpoint = `/api/${currentTable}/${currentEditId}`;
+            
+            const response = await fetch(endpoint, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(updateData)
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+            
+            const result = await response.json();
+            console.log('Update result:', result);
+            
+            if (result.success) {
+                showMessage('✅ Field updated successfully!', 'success');
+                
+                const configIndex = allData.findIndex(config => {
+                    const configIds = [
+                        config.id,
+                        config._id,
+                        config.config_id,
+                        config.configId,
+                        config.ID
+                    ];
+                    return configIds.some(id => id == currentEditId);
+                });
+                
+                if (configIndex !== -1) {
+                    allData[configIndex][currentEditField] = newValue;
+                    
+                    if (currentEditField === 'club_slider_images' && newValue) {
+                        try {
+                            allData[configIndex].parsed_images = JSON.parse(newValue);
+                        } catch (e) {
+                            allData[configIndex].parsed_images = null;
+                        }
+                    }
+                    
+                    applyFilter();
+                } else {
+                    console.warn('Config not found in local data, reloading from server...');
+                    await loadData();
+                }
+                
+                setTimeout(() => {
+                    closeModal();
+                }, 1000);
+            } else {
+                throw new Error(result.error || 'Update failed');
+            }
+        } catch (error) {
+            console.error('Update error:', error);
+            showMessage(`❌ Error: ${error.message}`, 'error');
+        }
+    });
     
     function closeModal() {
         document.getElementById('editModal').style.display = 'none';
         currentEditId = null;
         currentEditField = null;
         originalValue = null;
-    }
-    
-   // Replace the entire edit form submit handler with this improved version:
-document.getElementById('editForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const input = document.getElementById('editValue');
-    let newValue;
-    
-    if (input.type === 'checkbox') {
-        newValue = input.checked ? 1 : 0;
-    } else {
-        newValue = input.value.trim();
-        
-        // Convert empty string to null for database
-        if (newValue === '') {
-            newValue = null;
-        }
-    }
-    
-    // Check if value actually changed
-    if (JSON.stringify(newValue) === JSON.stringify(originalValue)) {
-        showMessage('ℹ️ No changes detected', 'info');
-        closeModal();
-        return;
-    }
-    
-    try {
-        showMessage('🔄 Saving changes...', 'info');
-        
-        const updateData = {};
-        updateData[currentEditField] = newValue;
-        
-        // Debug: Log what we're sending
-        console.log('Updating user ID:', currentEditId, 'Field:', currentEditField, 'Data:', updateData);
-        
-        // Try different API endpoints if needed
-        const endpoints = [
-            `/api/${currentTable}/${currentEditId}`,
-            `/api/users/${currentEditId}`,
-            `/api/user/${currentEditId}`
-        ];
-        
-        let response;
-        let lastError;
-        
-        // Try different endpoints
-        for (const endpoint of endpoints) {
-            try {
-                response = await fetch(endpoint, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(updateData)
-                });
-                
-                if (response.ok) break;
-                
-                const errorText = await response.text();
-                lastError = `Endpoint ${endpoint}: ${response.status} - ${errorText}`;
-                console.warn('Failed with endpoint:', endpoint, errorText);
-            } catch (err) {
-                lastError = err.message;
-                console.warn('Error with endpoint:', endpoint, err);
-            }
-        }
-        
-        if (!response || !response.ok) {
-            throw new Error(lastError || 'All endpoints failed');
-        }
-        
-        const result = await response.json();
-        console.log('Update result:', result);
-        
-        if (result.success) {
-            showMessage('✅ Field updated successfully!', 'success');
-            
-            // Update the allData array
-            const userIndex = allData.findIndex(user => {
-                // Try multiple possible ID fields
-                const userIds = [
-                    user.id,
-                    user._id,
-                    user.user_id,
-                    user.userId,
-                    user.ID
-                ];
-                return userIds.some(id => id == currentEditId);
-            });
-            
-            if (userIndex !== -1) {
-                allData[userIndex][currentEditField] = newValue;
-                // Reapply filters to update stats
-                applyFilter();
-            } else {
-                // If not found, reload data from server
-                console.warn('User not found in local data, reloading from server...');
-                await loadData();
-            }
-            
-            setTimeout(() => {
-                closeModal();
-            }, 1000);
-        } else {
-            throw new Error(result.error || 'Update failed');
-        }
-    } catch (error) {
-        console.error('Update error:', error);
-        showMessage(`❌ Error: ${error.message}`, 'error');
-    }
-});
-
-    function updateTableCell(id, field, newValue) {
-        // Find and update the specific cell
-        const cells = document.querySelectorAll(`td[data-id="${id}"][data-field="${field}"]`);
-        cells.forEach(cell => {
-            let displayValue = newValue;
-            if (displayValue === null || displayValue === undefined) displayValue = '';
-            
-            // Format display value based on field type
-            if (field === 'club_slider_images') {
-                try {
-                    if (typeof newValue === 'string') {
-                        const trimmed = newValue.trim();
-                        if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || 
-                            (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
-                            const parsed = JSON.parse(trimmed);
-                            if (Array.isArray(parsed)) {
-                                displayValue = `[${parsed.length} images]`;
-                            } else if (typeof parsed === 'object') {
-                                displayValue = `{${Object.keys(parsed).length} items}`;
-                            }
-                        } else if (newValue && newValue.length > 100) {
-                            displayValue = newValue.substring(0, 100) + '...';
-                        }
-                    }
-                } catch (e) {
-                    // Not JSON, use as is
-                    if (newValue && newValue.length > 100) {
-                        displayValue = newValue.substring(0, 100) + '...';
-                    }
-                }
-            } else if (field === 'created_at' || field === 'updated_at') {
-                displayValue = formatDateForDisplay(newValue);
-            } else if (field === 'announcement1' || field === 'announcement2') {
-                if (newValue && newValue.length > 100) {
-                    displayValue = newValue.substring(0, 100) + '...';
-                }
-            }
-            
-            const truncatedValue = String(displayValue).substring(0, 100);
-            const isTruncated = String(displayValue).length > 100;
-            
-            cell.textContent = truncatedValue + (isTruncated ? '...' : '');
-            if (field !== 'id') {
-                cell.setAttribute('data-value', encodeURIComponent(newValue));
-                cell.setAttribute('title', `${displayValue}\n\nClick to edit ${field}`);
-            }
-            
-            // Add visual feedback
-            cell.style.background = '#d4edda';
-            cell.style.transition = 'background 0.5s';
-            
-            setTimeout(() => {
-                cell.style.background = '';
-            }, 1000);
-        });
     }
     
     function showError(message) {
@@ -1439,7 +1599,6 @@ document.getElementById('editForm').addEventListener('submit', async function(e)
         }, 3000);
     }
     
-    // Close modal when clicking outside
     window.onclick = function(event) {
         const modal = document.getElementById('editModal');
         if (event.target === modal) {
@@ -1447,7 +1606,6 @@ document.getElementById('editForm').addEventListener('submit', async function(e)
         }
     };
     
-    // Close modal with Escape key
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
             closeModal();
@@ -1455,9 +1613,7 @@ document.getElementById('editForm').addEventListener('submit', async function(e)
     });
     
     document.addEventListener('DOMContentLoaded', function() {
-        // Set default states
         document.getElementById('pageSize').value = pageSize;
-        
         loadData();
     });
 </script>
