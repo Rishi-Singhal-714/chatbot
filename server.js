@@ -2592,6 +2592,80 @@ app.get('/api/products', async (req, res) => {
   }
 });
 // Get galleries data
+
+// Products के routes के बाद ये add करें:
+
+// Get appconfigs data
+app.get('/api/appconfigs', async (req, res) => {
+  try {
+    const data = await db.getAppConfigsData();
+    
+    res.json({
+      success: true,
+      data: data,
+      count: data.length
+    });
+  } catch (error) {
+    console.error('❌ Error fetching app configs:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Update appconfigs record
+app.put('/api/appconfigs/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    // Remove id from update data if present
+    delete updateData.id;
+    
+    const result = await db.executeUpdate('appconfigs', id, updateData);
+    
+    res.json({
+      success: true,
+      message: 'App config updated successfully',
+      affectedRows: result.affectedRows
+    });
+  } catch (error) {
+    console.error('Update appconfigs error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get single appconfigs record
+app.get('/api/appconfigs/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const record = await db.getRecordById('appconfigs', id);
+    
+    if (!record) {
+      return res.status(404).json({
+        success: false,
+        error: 'App config record not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: record
+    });
+  } catch (error) {
+    console.error('Get appconfigs record error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 app.get('/api/galleries', async (req, res) => {
   try {
     const data = await db.getCachedData('galleries');
