@@ -2299,29 +2299,35 @@
             // Upload the file
             uploadImage(file);
         }
-        
         async function uploadImage(file) {
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            // Show progress bar
-            document.getElementById('uploadProgress').style.display = 'block';
-            document.getElementById('progressFill').style.width = '0%';
-            
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    // Show progress bar
+    document.getElementById('uploadProgress').style.display = 'block';
+    document.getElementById('progressFill').style.width = '0%';
+    
+    try {
+        showMessage('🔄 Uploading image...', 'info');
+        
+        const response = await fetch('https://api.zulushop.in/upload', {
+            method: 'POST',
+            body: formData
+            // Note: Don't set Content-Type header for FormData, browser sets it automatically with boundary
+        });
+        
+        // Update progress bar
+        document.getElementById('progressFill').style.width = '100%';
+        
+        const body = await response.text();
+        console.log('Upload response:', body);
+        console.log('Status:', response.status);
+        
+        if (response.status >= 200 && response.status < 300) {
             try {
-                showMessage('🔄 Uploading image...', 'info');
+                const result = JSON.parse(body);
                 
-                const response = await fetch('https://api.zulushop.in/api/v1/user/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const result = await response.json();
-                
-                // Update progress bar
-                document.getElementById('progressFill').style.width = '100%';
-                
-                // Extract URL from response
+                // Extract URL from response (same as your Flutter code)
                 let url = null;
                 
                 // Check for URL in the specified order
@@ -2353,14 +2359,23 @@
                 } else {
                     throw new Error('No URL found in response');
                 }
-            } catch (error) {
-                console.error('Upload error:', error);
-                showMessage(`❌ Upload failed: ${error.message}`, 'error');
-                document.getElementById('uploadProgress').style.display = 'none';
-                document.getElementById('imagePreviewContainer').style.display = 'none';
-                document.getElementById('saveImageBtn').disabled = true;
+            } catch (jsonError) {
+                // If it's not valid JSON, show the response for debugging
+                console.error('JSON parse error:', jsonError);
+                console.error('Response body:', body);
+                throw new Error('Invalid JSON response: ' + body.substring(0, 100));
             }
+        } else {
+            throw new Error(`HTTP ${response.status}: ${body.substring(0, 100)}`);
         }
+    } catch (error) {
+        console.error('Upload error:', error);
+        showMessage(`❌ Upload failed: ${error.message}`, 'error');
+        document.getElementById('uploadProgress').style.display = 'none';
+        document.getElementById('imagePreviewContainer').style.display = 'none';
+        document.getElementById('saveImageBtn').disabled = true;
+    }
+}
         
         function removeUploadedImage() {
             uploadedImageUrl = null;
