@@ -435,6 +435,7 @@
         .cancel-btn:hover {
             background: #5a6268;
         }
+        /* Image links editing styles */
         .image-links-container {
             max-height: 300px;
             overflow-y: auto;
@@ -507,6 +508,28 @@
         .add-link-btn:hover {
             background: #388E3C;
         }
+        .upload-image-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 10px;
+            margin-left: 10px;
+            transition: all 0.3s;
+        }
+        .upload-image-btn:hover {
+            background: #1976D2;
+        }
+        .upload-image-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
         .preview-image {
             max-width: 100%;
             max-height: 150px;
@@ -542,6 +565,66 @@
             border-left-color: #f44336;
             color: #721c24;
             background: #f8d7da;
+        }
+        .upload-status {
+            font-size: 12px;
+            margin-top: 5px;
+            padding: 5px;
+            border-radius: 3px;
+            text-align: center;
+        }
+        .upload-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 3px solid #28a745;
+        }
+        .upload-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 3px solid #f44336;
+        }
+        .upload-progress {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 3px solid #17a2b8;
+        }
+        .upload-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            align-items: center;
+        }
+        .image-upload-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .image-upload-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            display: none;
+        }
+        .upload-file-input {
+            display: none;
+        }
+        .file-input-label {
+            background: #6c757d;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .file-input-label:hover {
+            background: #5a6268;
         }
         @media (max-width: 768px) {
             body {
@@ -676,6 +759,12 @@
     let totalPages = 1;
     let totalFilteredItems = 0;
 
+    // Image upload variables
+    let currentUploadFile = null;
+
+    // Image Upload API Configuration
+    const UPLOAD_API_URL = 'https://api.zulushop.in/api/v1/user/upload';
+
     async function loadData() {
         document.getElementById('loading').style.display = 'block';
         document.getElementById('error').style.display = 'none';
@@ -758,35 +847,6 @@
         return div.innerHTML;
     }
     
-    function getFieldOptions(field) {
-        const lowerField = field.toLowerCase();
-        
-        if (lowerField.includes('gender')) {
-            return [
-                { value: 'male', label: 'Male' },
-                { value: 'female', label: 'Female' },
-                { value: 'other', label: 'Other' }
-            ];
-        }
-        
-        if (lowerField.includes('role')) {
-            return [
-                { value: 'user', label: 'User' },
-                { value: 'admin', label: 'Admin' },
-                { value: 'moderator', label: 'Moderator' }
-            ];
-        }
-        
-        if (lowerField.includes('status')) {
-            return [
-                { value: 1, label: 'Active' },
-                { value: 0, label: 'Inactive' }
-            ];
-        }
-        
-        return [];
-    }
-    
     function formatDateForDisplay(dateString) {
         if (!dateString) return '';
         try {
@@ -837,6 +897,7 @@
         }, 500);
     }
     
+    // Pagination functions
     function updatePagination() {
         pageSize = parseInt(document.getElementById('pageSize').value) || 50;
         
@@ -1125,6 +1186,104 @@
         updatePaginationControls();
     }
     
+    // Function to upload image to Hostinger server
+    async function uploadImageToHostinger(file) {
+        try {
+            console.log('📤 Uploading image to Hostinger...', file.name, file.type);
+            
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            const response = await fetch(UPLOAD_API_URL, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            console.log('Upload response:', result);
+            
+            if (result && result.success && result.data && result.data.image_url) {
+                return result.data.image_url;
+            } else {
+                throw new Error(result.message || 'Upload failed');
+            }
+        } catch (error) {
+            console.error('❌ Upload error:', error);
+            throw error;
+        }
+    }
+    
+    // Function to handle image upload
+    async function handleImageUpload() {
+        const fileInput = document.getElementById('imageUploadInput');
+        const uploadBtn = document.getElementById('uploadImageBtn');
+        const uploadStatus = document.getElementById('uploadStatus');
+        const imagePreview = document.getElementById('imageUploadPreview');
+        
+        if (!fileInput.files.length) {
+            uploadStatus.innerHTML = `<div class="upload-error">Please select an image file first</div>`;
+            return;
+        }
+        
+        const file = fileInput.files[0];
+        
+        // Validate file type
+        if (!file.type.match('image.*')) {
+            uploadStatus.innerHTML = `<div class="upload-error">Only image files are allowed (JPEG, PNG, GIF)</div>`;
+            return;
+        }
+        
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            uploadStatus.innerHTML = `<div class="upload-error">Image size should be less than 5MB</div>`;
+            return;
+        }
+        
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imagePreview.src = e.target.result;
+            imagePreview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+        
+        // Disable upload button and show progress
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '⏳ Uploading...';
+        uploadStatus.innerHTML = `<div class="upload-progress">Uploading ${file.name}... Please wait</div>`;
+        
+        try {
+            // Upload to Hostinger
+            const imageUrl = await uploadImageToHostinger(file);
+            
+            // Show success message
+            uploadStatus.innerHTML = `<div class="upload-success">
+                ✅ Image uploaded successfully!<br>
+                URL: <a href="${imageUrl}" target="_blank">${imageUrl}</a>
+            </div>`;
+            
+            // Add the uploaded image URL to the links list
+            addImageLink(imageUrl);
+            
+            // Reset form
+            fileInput.value = '';
+            imagePreview.style.display = 'none';
+            
+        } catch (error) {
+            uploadStatus.innerHTML = `<div class="upload-error">
+                ❌ Upload failed: ${error.message}
+            </div>`;
+        } finally {
+            // Re-enable upload button
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = '📤 Upload Image';
+        }
+    }
+    
+    function triggerImageUpload() {
+        document.getElementById('imageUploadInput').click();
+    }
+    
     function openFieldEditModal(cell) {
         const id = cell.getAttribute('data-id');
         const field = cell.getAttribute('data-field');
@@ -1201,10 +1360,32 @@
         
         html += `</div>`;
         
+        // Add image upload section
         html += `
-            <button type="button" class="add-link-btn" onclick="addImageLink()">
-                <span style="font-size: 16px;">+</span> Add New Image Link
-            </button>
+            <div class="image-upload-container">
+                <div style="font-size: 14px; font-weight: bold; color: #333; margin-bottom: 5px;">
+                    📤 Upload New Image to Hostinger
+                </div>
+                
+                <label class="file-input-label" for="imageUploadInput">
+                    📁 Choose Image File (max 5MB)
+                </label>
+                <input type="file" id="imageUploadInput" class="upload-file-input" 
+                       accept="image/*" onchange="handleImageUpload()">
+                
+                <img id="imageUploadPreview" class="image-upload-preview" alt="Image Preview">
+                
+                <div id="uploadStatus" class="upload-status"></div>
+                
+                <div class="upload-actions">
+                    <button type="button" id="uploadImageBtn" class="upload-image-btn" onclick="handleImageUpload()">
+                        📤 Upload Image
+                    </button>
+                    <button type="button" class="add-link-btn" onclick="addImageLink()">
+                        + Add Empty Link
+                    </button>
+                </div>
+            </div>
         `;
         
         if (images.length > 0 && images[0]) {
@@ -1324,22 +1505,6 @@
                 <input type="password" id="editValue" name="${field}" value="${escapeHtml(value)}" 
                        class="form-control" placeholder="Enter ${displayField.toLowerCase()}...">
             `;
-        } else if (field.toLowerCase().includes('gender') ||
-                  field.toLowerCase().includes('role') ||
-                  field.toLowerCase().includes('type') ||
-                  field.toLowerCase().includes('category')) {
-            const options = getFieldOptions(field);
-            let optionsHtml = '';
-            options.forEach(option => {
-                const selected = value == option.value ? 'selected' : '';
-                optionsHtml += `<option value="${option.value}" ${selected}>${option.label}</option>`;
-            });
-            
-            inputHtml = `
-                <select id="editValue" name="${field}" class="form-control">
-                    ${optionsHtml}
-                </select>
-            `;
         } else {
             inputHtml = `
                 <input type="text" id="editValue" name="${field}" value="${escapeHtml(value)}" 
@@ -1350,7 +1515,7 @@
         return inputHtml;
     }
     
-    function addImageLink() {
+    function addImageLink(url = '') {
         const container = document.getElementById('imageLinksContainer');
         const index = container.children.length;
         
@@ -1359,8 +1524,8 @@
         newItem.setAttribute('data-index', index);
         newItem.innerHTML = `
             <input type="text" class="image-link-input" 
-                   value="" 
-                   placeholder="https://example.com/new-image.jpg"
+                   value="${escapeHtml(url)}" 
+                   placeholder="https://example.com/image.jpg"
                    onchange="updateImagePreview(this)">
             <button type="button" class="remove-link-btn" onclick="removeImageLink(this)">×</button>
         `;
@@ -1368,9 +1533,12 @@
         container.appendChild(newItem);
         
         const newInput = newItem.querySelector('.image-link-input');
-        if (newInput) newInput.focus();
+        if (newInput && !url) newInput.focus();
         
         updateLinkCount();
+        
+        // Scroll to the new item
+        newItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
     
     function removeImageLink(button) {
@@ -1400,12 +1568,14 @@
         const container = document.getElementById('imageLinksContainer');
         const firstInput = container.querySelector('.image-link-item[data-index="0"] .image-link-input');
         
+        let previewContainer = document.querySelector('.image-preview-container');
+        
         if (firstInput && firstInput.value) {
-            let previewContainer = document.querySelector('.image-preview-container');
             if (!previewContainer) {
                 previewContainer = document.createElement('div');
                 previewContainer.className = 'image-preview-container';
-                container.parentNode.insertBefore(previewContainer, container.nextElementSibling);
+                const imageLinksContainer = document.getElementById('imageLinksContainer');
+                imageLinksContainer.parentNode.insertBefore(previewContainer, imageLinksContainer.nextElementSibling);
             }
             
             previewContainer.innerHTML = `
@@ -1418,6 +1588,8 @@
                     Click to view: <a href="${escapeHtml(firstInput.value)}" target="_blank">${escapeHtml(firstInput.value.substring(0, 50))}${firstInput.value.length > 50 ? '...' : ''}</a>
                 </div>
             `;
+        } else if (previewContainer) {
+            previewContainer.remove();
         }
     }
     
@@ -1562,6 +1734,16 @@
         currentEditId = null;
         currentEditField = null;
         originalValue = null;
+        // Reset upload elements
+        const uploadInput = document.getElementById('imageUploadInput');
+        const uploadPreview = document.getElementById('imageUploadPreview');
+        const uploadStatus = document.getElementById('uploadStatus');
+        if (uploadInput) uploadInput.value = '';
+        if (uploadPreview) {
+            uploadPreview.src = '';
+            uploadPreview.style.display = 'none';
+        }
+        if (uploadStatus) uploadStatus.innerHTML = '';
     }
     
     function showError(message) {
