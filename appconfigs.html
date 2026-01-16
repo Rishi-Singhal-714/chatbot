@@ -554,722 +554,766 @@
             </form>
         </div>
     </div>
+<script>
+    // Global variables for App Configs
+    let allData = [];
+    let filteredData = [];
+    let currentData = [];
+    let currentTable = 'appconfigs';
+    let currentEditId = null;
+    let currentEditField = null;
+    let originalValue = null;
+    
+    // Search and Pagination variables
+    let searchTerm = '';
+    let searchTimeout = null;
+    
+    // Pagination variables
+    let currentPage = 1;
+    let pageSize = 50;
+    let totalPages = 1;
+    let totalFilteredItems = 0;
 
-    <script>
-        // Global variables for App Configs
-        let allData = [];
-        let filteredData = [];
-        let currentData = [];
-        let currentTable = 'appconfigs';
-        let currentEditId = null;
-        let currentEditField = null;
-        let originalValue = null;
+    async function loadData() {
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('error').style.display = 'none';
+        document.getElementById('dataContainer').innerHTML = '';
         
-        // Search and Pagination variables
-        let searchTerm = '';
-        let searchTimeout = null;
-        
-        // Pagination variables
-        let currentPage = 1;
-        let pageSize = 50;
-        let totalPages = 1;
-        let totalFilteredItems = 0;
-
-        async function loadData() {
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('error').style.display = 'none';
-            document.getElementById('dataContainer').innerHTML = '';
+        try {
+            const response = await fetch(`/api/${currentTable}`);
+            const data = await response.json();
             
-            try {
-                const response = await fetch(`/api/${currentTable}`);
-                const data = await response.json();
-                
-                console.log('API Response:', data);
-                
-                if (data && data.success) {
-                    if (Array.isArray(data.data)) {
-                        allData = data.data;
-                        
-                        // Process data for consistent format
-                        if (allData.length > 0) {
-                            allData = allData.map((config, index) => {
-                                // Ensure id exists
-                                if (!config.id) config.id = index + 1;
-                                
-                                // Process club_slider_images (if it's JSON string)
-                                if (config.club_slider_images) {
-                                    try {
-                                        if (typeof config.club_slider_images === 'string') {
-                                            const trimmed = config.club_slider_images.trim();
-                                            if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || 
-                                                (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
-                                                config.parsed_images = JSON.parse(trimmed);
-                                            }
+            console.log('API Response:', data);
+            
+            if (data && data.success) {
+                if (Array.isArray(data.data)) {
+                    allData = data.data;
+                    
+                    // Process data for consistent format
+                    if (allData.length > 0) {
+                        allData = allData.map((config, index) => {
+                            // Ensure id exists
+                            if (!config.id) config.id = index + 1;
+                            
+                            // Process club_slider_images (if it's JSON string)
+                            if (config.club_slider_images) {
+                                try {
+                                    if (typeof config.club_slider_images === 'string') {
+                                        const trimmed = config.club_slider_images.trim();
+                                        if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || 
+                                            (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+                                            config.parsed_images = JSON.parse(trimmed);
                                         }
-                                    } catch (e) {
-                                        // Not JSON, keep as is
                                     }
+                                } catch (e) {
+                                    // Not JSON, keep as is
                                 }
-                                
-                                return config;
-                            });
-                        }
-                        
-                        applyFilter();
-                        updateStats();
-                        
-                        // Show cache info
-                        const cacheDiv = document.createElement('div');
-                        cacheDiv.className = 'cache-info';
-                        cacheDiv.innerHTML = `
-                            <strong>Cache Info:</strong> App configs are cached for 2 hours. 
-                            To force fresh data, clear cache from Dashboard.
-                            Database connection closes after 5 minutes of inactivity.
-                        `;
-                        document.getElementById('dataContainer').prepend(cacheDiv);
-                    } else {
-                        console.error('Invalid data format:', data.data);
-                        showError('Invalid data format received from server');
+                            }
+                            
+                            // Format dates for display
+                            if (config.created_at) {
+                                config.formatted_created = formatDateForDisplay(config.created_at);
+                            }
+                            if (config.updated_at) {
+                                config.formatted_updated = formatDateForDisplay(config.updated_at);
+                            }
+                            
+                            return config;
+                        });
                     }
+                    
+                    applyFilter();
+                    updateStats();
+                    
+                    // Show cache info
+                    const cacheDiv = document.createElement('div');
+                    cacheDiv.className = 'cache-info';
+                    cacheDiv.innerHTML = `
+                        <strong>Cache Info:</strong> App configs are cached for 2 hours. 
+                        To force fresh data, clear cache from Dashboard.
+                        Database connection closes after 5 minutes of inactivity.
+                    `;
+                    document.getElementById('dataContainer').prepend(cacheDiv);
                 } else {
-                    console.error('API returned error:', data);
-                    showError(`API Error: ${data ? data.error || 'Unknown error' : 'No response'}`);
+                    console.error('Invalid data format:', data.data);
+                    showError('Invalid data format received from server');
                 }
-            } catch (error) {
-                console.error('Fetch error:', error);
-                document.getElementById('error').style.display = 'block';
-                document.getElementById('error').textContent = 'Error: ' + error.message;
-                showMessage(`Network error: ${error.message}`, 'error');
-                document.getElementById('dataContainer').innerHTML = 
-                    '<div class="empty-state">📡<h3>Network Error</h3><p>Please check your connection and try again.</p><button class="refresh-btn" onclick="loadData()" style="padding: 10px 20px;">Retry</button></div>';
-            } finally {
-                document.getElementById('loading').style.display = 'none';
+            } else {
+                console.error('API returned error:', data);
+                showError(`API Error: ${data ? data.error || 'Unknown error' : 'No response'}`);
             }
+        } catch (error) {
+            console.error('Fetch error:', error);
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').textContent = 'Error: ' + error.message;
+            showMessage(`Network error: ${error.message}`, 'error');
+            document.getElementById('dataContainer').innerHTML = 
+                '<div class="empty-state">📡<h3>Network Error</h3><p>Please check your connection and try again.</p><button class="refresh-btn" onclick="loadData()" style="padding: 10px 20px;">Retry</button></div>';
+        } finally {
+            document.getElementById('loading').style.display = 'none';
         }
+    }
+    
+    function formatDateForDisplay(dateString) {
+        if (!dateString) return '';
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
+            return date.toLocaleDateString('en-IN') + ' ' + date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+        } catch (e) {
+            return dateString;
+        }
+    }
+    
+    function formatDateForInput(dateString) {
+        if (!dateString) return '';
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '';
+            // Convert to YYYY-MM-DDTHH:MM format for datetime-local input
+            return date.toISOString().slice(0, 16);
+        } catch (e) {
+            return '';
+        }
+    }
+    
+    function applyFilter() {
+        filteredData = [...allData];
         
-        function applyFilter() {
-            filteredData = [...allData];
-            
-            // Apply search filter
-            if (searchTerm.trim() !== '') {
-                const searchLower = searchTerm.toLowerCase();
-                filteredData = filteredData.filter(config => {
-                    // Search all fields
-                    return Object.values(config).some(value => {
-                        if (typeof value === 'string') {
-                            return value.toLowerCase().includes(searchLower);
-                        } else if (typeof value === 'number') {
-                            return value.toString().includes(searchTerm);
-                        } else if (typeof value === 'boolean') {
-                            return value.toString().includes(searchLower);
-                        }
-                        return false;
-                    });
+        // Apply search filter
+        if (searchTerm.trim() !== '') {
+            const searchLower = searchTerm.toLowerCase();
+            filteredData = filteredData.filter(config => {
+                // Search all fields
+                return Object.values(config).some(value => {
+                    if (typeof value === 'string') {
+                        return value.toLowerCase().includes(searchLower);
+                    } else if (typeof value === 'number') {
+                        return value.toString().includes(searchTerm);
+                    } else if (typeof value === 'boolean') {
+                        return value.toString().includes(searchLower);
+                    }
+                    return false;
                 });
-            }
-            
-            totalFilteredItems = filteredData.length;
-            
-            updatePagination();
-            displayCurrentPage();
-            updateSearchResults();
-            updateStats();
+            });
         }
         
-        function handleSearch() {
-            if (searchTimeout) {
-                clearTimeout(searchTimeout);
-            }
-            
-            searchTimeout = setTimeout(() => {
-                searchTerm = document.getElementById('searchInput').value;
-                currentPage = 1; // Reset to first page when searching
-                applyFilter();
-            }, 500); // 500ms delay for smoother experience
+        totalFilteredItems = filteredData.length;
+        
+        updatePagination();
+        displayCurrentPage();
+        updateSearchResults();
+        updateStats();
+    }
+    
+    function handleSearch() {
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
         }
         
-        // Pagination functions
-        function updatePagination() {
-            pageSize = parseInt(document.getElementById('pageSize').value) || 50;
-            
-            if (pageSize === 0) {
-                totalPages = 1;
-                currentPage = 1;
-            } else {
-                totalPages = Math.ceil(totalFilteredItems / pageSize);
-                if (currentPage > totalPages) {
-                    currentPage = totalPages || 1;
-                }
-            }
-            
-            updatePaginationControls();
-            updatePageInfo();
-        }
-        
-        function changePageSize() {
-            pageSize = parseInt(document.getElementById('pageSize').value) || 50;
-            currentPage = 1; // Reset to first page
+        searchTimeout = setTimeout(() => {
+            searchTerm = document.getElementById('searchInput').value;
+            currentPage = 1; // Reset to first page when searching
             applyFilter();
-            showMessage(`Changed page size to ${pageSize === 0 ? 'Show All' : pageSize}`, 'info');
-        }
+        }, 500); // 500ms delay for smoother experience
+    }
+    
+    // Pagination functions
+    function updatePagination() {
+        pageSize = parseInt(document.getElementById('pageSize').value) || 50;
         
-        function updatePaginationControls() {
-            document.getElementById('currentPage').textContent = currentPage;
-            document.getElementById('totalPages').textContent = totalPages;
-            
-            // Update button states
-            document.getElementById('firstPageBtn').disabled = currentPage === 1;
-            document.getElementById('prevPageBtn').disabled = currentPage === 1;
-            document.getElementById('nextPageBtn').disabled = currentPage === totalPages || totalPages === 0;
-            document.getElementById('lastPageBtn').disabled = currentPage === totalPages || totalPages === 0;
-            
-            // Update page numbers display
-            updatePageNumbers();
-        }
-        
-        function updatePageNumbers() {
-            const pageNumbersDiv = document.getElementById('pageNumbers');
-            let pageNumbersHTML = '';
-            
-            // Show at most 5 page numbers
-            let startPage = Math.max(1, currentPage - 2);
-            let endPage = Math.min(totalPages, startPage + 4);
-            
-            // Adjust start if we're near the end
-            if (endPage - startPage < 4) {
-                startPage = Math.max(1, endPage - 4);
-            }
-            
-            for (let i = startPage; i <= endPage; i++) {
-                if (i === currentPage) {
-                    pageNumbersHTML += `<span class="page-number">${i}</span>`;
-                } else {
-                    pageNumbersHTML += `<button onclick="goToPage(${i})" style="padding: 8px 12px; border-radius: 5px; background: #6c757d; color: white; border: none; margin: 0 2px;">${i}</button>`;
-                }
-            }
-            
-            pageNumbersDiv.innerHTML = pageNumbersHTML;
-        }
-        
-        function goToPage(page) {
-            if (page >= 1 && page <= totalPages) {
-                currentPage = page;
-                displayCurrentPage();
-                updatePaginationControls();
+        if (pageSize === 0) {
+            totalPages = 1;
+            currentPage = 1;
+        } else {
+            totalPages = Math.ceil(totalFilteredItems / pageSize);
+            if (currentPage > totalPages) {
+                currentPage = totalPages || 1;
             }
         }
         
-        function prevPage() {
-            if (currentPage > 1) {
-                currentPage--;
-                displayCurrentPage();
-                updatePaginationControls();
+        updatePaginationControls();
+        updatePageInfo();
+    }
+    
+    function changePageSize() {
+        pageSize = parseInt(document.getElementById('pageSize').value) || 50;
+        currentPage = 1; // Reset to first page
+        applyFilter();
+        showMessage(`Changed page size to ${pageSize === 0 ? 'Show All' : pageSize}`, 'info');
+    }
+    
+    function updatePaginationControls() {
+        document.getElementById('currentPage').textContent = currentPage;
+        document.getElementById('totalPages').textContent = totalPages;
+        
+        // Update button states
+        document.getElementById('firstPageBtn').disabled = currentPage === 1;
+        document.getElementById('prevPageBtn').disabled = currentPage === 1;
+        document.getElementById('nextPageBtn').disabled = currentPage === totalPages || totalPages === 0;
+        document.getElementById('lastPageBtn').disabled = currentPage === totalPages || totalPages === 0;
+        
+        // Update page numbers display
+        updatePageNumbers();
+    }
+    
+    function updatePageNumbers() {
+        const pageNumbersDiv = document.getElementById('pageNumbers');
+        let pageNumbersHTML = '';
+        
+        // Show at most 5 page numbers
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+        
+        // Adjust start if we're near the end
+        if (endPage - startPage < 4) {
+            startPage = Math.max(1, endPage - 4);
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            if (i === currentPage) {
+                pageNumbersHTML += `<span class="page-number">${i}</span>`;
+            } else {
+                pageNumbersHTML += `<button onclick="goToPage(${i})" style="padding: 8px 12px; border-radius: 5px; background: #6c757d; color: white; border: none; margin: 0 2px;">${i}</button>`;
             }
         }
         
-        function nextPage() {
-            if (currentPage < totalPages) {
-                currentPage++;
-                displayCurrentPage();
-                updatePaginationControls();
-            }
-        }
-        
-        function goToLastPage() {
-            currentPage = totalPages;
+        pageNumbersDiv.innerHTML = pageNumbersHTML;
+    }
+    
+    function goToPage(page) {
+        if (page >= 1 && page <= totalPages) {
+            currentPage = page;
             displayCurrentPage();
             updatePaginationControls();
         }
+    }
+    
+    function prevPage() {
+        if (currentPage > 1) {
+            currentPage--;
+            displayCurrentPage();
+            updatePaginationControls();
+        }
+    }
+    
+    function nextPage() {
+        if (currentPage < totalPages) {
+            currentPage++;
+            displayCurrentPage();
+            updatePaginationControls();
+        }
+    }
+    
+    function goToLastPage() {
+        currentPage = totalPages;
+        displayCurrentPage();
+        updatePaginationControls();
+    }
+    
+    function displayCurrentPage() {
+        const container = document.getElementById('dataContainer');
         
-        function displayCurrentPage() {
-            const container = document.getElementById('dataContainer');
-            
-            if (filteredData.length === 0) {
-                container.innerHTML = 
-                    '<div class="empty-state">⚙️<h3>No Configs Found</h3><p>No app configs match your search criteria. Try adjusting your search terms.</p></div>';
-                return;
-            }
-            
-            let startIndex, endIndex;
-            
-            if (pageSize === 0) {
-                // Show all
-                startIndex = 0;
-                endIndex = filteredData.length;
-                currentData = filteredData;
-            } else {
-                startIndex = (currentPage - 1) * pageSize;
-                endIndex = Math.min(startIndex + pageSize, filteredData.length);
-                currentData = filteredData.slice(startIndex, endIndex);
-            }
-            
-            displayData(currentData);
-            updatePageInfo();
+        if (filteredData.length === 0) {
+            container.innerHTML = 
+                '<div class="empty-state">⚙️<h3>No Configs Found</h3><p>No app configs match your search criteria. Try adjusting your search terms.</p></div>';
+            return;
         }
         
-        function updatePageInfo() {
-            let showingText;
-            if (pageSize === 0) {
-                showingText = `${totalFilteredItems}`;
-            } else {
-                const startIndex = (currentPage - 1) * pageSize + 1;
-                const endIndex = Math.min(currentPage * pageSize, totalFilteredItems);
-                showingText = `${startIndex}-${endIndex} of ${totalFilteredItems}`;
-            }
-            
-            document.getElementById('showingInfo').textContent = showingText;
-            document.getElementById('showingCount').textContent = totalFilteredItems;
+        let startIndex, endIndex;
+        
+        if (pageSize === 0) {
+            // Show all
+            startIndex = 0;
+            endIndex = filteredData.length;
+            currentData = filteredData;
+        } else {
+            startIndex = (currentPage - 1) * pageSize;
+            endIndex = Math.min(startIndex + pageSize, filteredData.length);
+            currentData = filteredData.slice(startIndex, endIndex);
         }
         
-        function updateStats() {
-            if (!allData || !Array.isArray(allData)) {
-                document.getElementById('activeCount').textContent = '0';
-                document.getElementById('inactiveCount').textContent = '0';
-                document.getElementById('totalCount').textContent = '0';
-                document.getElementById('showingCount').textContent = '0';
-                return;
-            }
-            
-            // Since there's no status field, we'll just show counts
-            const totalCount = allData.length;
-            
-            document.getElementById('activeCount').textContent = 'N/A';
-            document.getElementById('inactiveCount').textContent = 'N/A';
-            document.getElementById('totalCount').textContent = totalCount;
-            document.getElementById('showingCount').textContent = totalFilteredItems;
+        displayData(currentData);
+        updatePageInfo();
+    }
+    
+    function updatePageInfo() {
+        let showingText;
+        if (pageSize === 0) {
+            showingText = `${totalFilteredItems}`;
+        } else {
+            const startIndex = (currentPage - 1) * pageSize + 1;
+            const endIndex = Math.min(currentPage * pageSize, totalFilteredItems);
+            showingText = `${startIndex}-${endIndex} of ${totalFilteredItems}`;
         }
         
-        function updateSearchResults() {
-            if (searchTerm.trim() !== '' && totalFilteredItems > 0) {
-                showMessage(`Found ${totalFilteredItems} configs matching "${searchTerm}"`, 'info');
-            }
+        document.getElementById('showingInfo').textContent = showingText;
+        document.getElementById('showingCount').textContent = totalFilteredItems;
+    }
+    
+    function updateStats() {
+        if (!allData || !Array.isArray(allData)) {
+            document.getElementById('activeCount').textContent = '0';
+            document.getElementById('inactiveCount').textContent = '0';
+            document.getElementById('totalCount').textContent = '0';
+            document.getElementById('showingCount').textContent = '0';
+            return;
         }
         
-        function displayData(data) {
-            const container = document.getElementById('dataContainer');
-            
-            if (!data || !Array.isArray(data) || data.length === 0) {
-                container.innerHTML = 
-                    '<div class="empty-state">⚙️<h3>No Configs Found</h3><p>No app configs match your search criteria. Try adjusting your search terms.</p></div>';
-                return;
-            }
-            
-            const firstRow = data[0];
-            if (!firstRow || typeof firstRow !== 'object') {
-                container.innerHTML = '<div class="empty-state">⚠️<h3>Invalid Data</h3><p>Data format is invalid.</p></div>';
-                return;
-            }
-            
-            // Get headers, excluding internal fields
-            const headers = Object.keys(firstRow).filter(h => 
-                !h.includes('_parsed') && h !== 'parsed_images'
-            );
-            
-            let html = '<table>';
-            
-            // Create header row - all columns are clickable
+        const totalCount = allData.length;
+        
+        document.getElementById('activeCount').textContent = 'N/A';
+        document.getElementById('inactiveCount').textContent = 'N/A';
+        document.getElementById('totalCount').textContent = totalCount;
+        document.getElementById('showingCount').textContent = totalFilteredItems;
+    }
+    
+    function updateSearchResults() {
+        if (searchTerm.trim() !== '' && totalFilteredItems > 0) {
+            showMessage(`Found ${totalFilteredItems} configs matching "${searchTerm}"`, 'info');
+        }
+    }
+    
+    function displayData(data) {
+        const container = document.getElementById('dataContainer');
+        
+        if (!data || !Array.isArray(data) || data.length === 0) {
+            container.innerHTML = 
+                '<div class="empty-state">⚙️<h3>No Configs Found</h3><p>No app configs match your search criteria. Try adjusting your search terms.</p></div>';
+            return;
+        }
+        
+        const firstRow = data[0];
+        if (!firstRow || typeof firstRow !== 'object') {
+            container.innerHTML = '<div class="empty-state">⚠️<h3>Invalid Data</h3><p>Data format is invalid.</p></div>';
+            return;
+        }
+        
+        // Get headers, excluding internal fields
+        const headers = Object.keys(firstRow).filter(h => 
+            !h.includes('_parsed') && 
+            !h.includes('_formatted') && 
+            h !== 'parsed_images' &&
+            h !== 'formatted_created' &&
+            h !== 'formatted_updated'
+        );
+        
+        let html = '<table>';
+        
+        // Create header row - all columns are clickable
+        html += '<tr>';
+        headers.forEach(header => {
+            const displayHeader = header.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            html += `<th onclick="sortByColumn('${header}')" title="Click to sort">${displayHeader}</th>`;
+        });
+        html += '</tr>';
+        
+        // Create data rows
+        data.forEach((row, index) => {
             html += '<tr>';
             headers.forEach(header => {
-                const displayHeader = header.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                html += `<th onclick="sortByColumn('${header}')" title="Click to sort">${displayHeader}</th>`;
+                let value = row[header];
+                if (value === null || value === undefined) value = '';
+                if (typeof value === 'object') {
+                    try {
+                        value = JSON.stringify(value);
+                    } catch (e) {
+                        value = String(value);
+                    }
+                }
+                
+                // Format specific fields
+                let displayValue = String(value);
+                let cellStyle = '';
+                let isEditable = true;
+                
+                // Highlight search term in results
+                if (searchTerm.trim() !== '' && typeof value === 'string') {
+                    const searchLower = searchTerm.toLowerCase();
+                    const valueLower = value.toLowerCase();
+                    if (valueLower.includes(searchLower)) {
+                        const regex = new RegExp(`(${searchTerm})`, 'gi');
+                        displayValue = String(value).replace(regex, '<mark>$1</mark>');
+                        cellStyle += 'background: #fff9c4;';
+                    }
+                }
+                
+                // Style specific fields
+                if (header === 'id') {
+                    cellStyle += 'font-weight: bold; color: #2196F3;';
+                    isEditable = false; // ID is not editable
+                } else if (header === 'club_slider_images') {
+                    // Format images nicely
+                    if (row.parsed_images) {
+                        if (Array.isArray(row.parsed_images)) {
+                            displayValue = `[${row.parsed_images.length} images]`;
+                            cellStyle += 'color: #673AB7;';
+                        } else if (typeof row.parsed_images === 'object') {
+                            displayValue = `{${Object.keys(row.parsed_images).length} items}`;
+                        }
+                    } else if (value && value.length > 50) {
+                        displayValue = value.substring(0, 50) + '...';
+                    }
+                    cellStyle += 'font-family: monospace;';
+                } else if (header === 'announcement1' || header === 'announcement2') {
+                    // Truncate long announcements
+                    if (value && value.length > 50) {
+                        displayValue = value.substring(0, 50) + '...';
+                    }
+                    cellStyle += 'color: #333;';
+                } else if (header === 'created_at' || header === 'updated_at') {
+                    // Use formatted date for display
+                    const formattedField = header === 'created_at' ? 'formatted_created' : 'formatted_updated';
+                    displayValue = row[formattedField] || displayValue;
+                    cellStyle += 'color: #666; font-size: 12px;';
+                }
+                
+                const truncatedValue = displayValue.substring(0, 100);
+                const isTruncated = displayValue.length > 100;
+                const titleText = displayValue.length > 100 ? displayValue : '';
+                
+                if (isEditable && header !== 'id') {
+                    html += `<td class="editable" 
+                             title="${titleText}\n\nClick to edit ${header}" 
+                             data-id="${row.id}" 
+                             data-field="${header}" 
+                             data-value="${encodeURIComponent(value)}"
+                             onclick="openFieldEditModal(this)"
+                             style="${cellStyle}">
+                        ${isTruncated ? truncatedValue + '...' : truncatedValue}
+                    </td>`;
+                } else {
+                    html += `<td style="${cellStyle}">
+                        ${isTruncated ? truncatedValue + '...' : truncatedValue}
+                    </td>`;
+                }
             });
             html += '</tr>';
+        });
+        
+        html += '</table>';
+        
+        // Keep cache info at top
+        const existingCache = container.querySelector('.cache-info');
+        if (existingCache) {
+            container.innerHTML = '';
+            container.appendChild(existingCache);
+            container.insertAdjacentHTML('beforeend', html);
+        } else {
+            container.innerHTML = html;
+        }
+    }
+    
+    function sortByColumn(column) {
+        const sortedData = [...filteredData].sort((a, b) => {
+            let aVal = a[column];
+            let bVal = b[column];
             
-            // Create data rows
-            data.forEach((row, index) => {
-                html += '<tr>';
-                headers.forEach(header => {
-                    let value = row[header];
-                    if (value === null || value === undefined) value = '';
-                    if (typeof value === 'object') {
-                        try {
-                            value = JSON.stringify(value);
-                        } catch (e) {
-                            value = String(value);
-                        }
-                    }
-                    
-                    // Format specific fields
-                    let displayValue = String(value);
-                    let cellStyle = '';
-                    let isEditable = true;
-                    
-                    // Highlight search term in results
-                    if (searchTerm.trim() !== '' && typeof value === 'string') {
-                        const searchLower = searchTerm.toLowerCase();
-                        const valueLower = value.toLowerCase();
-                        if (valueLower.includes(searchLower)) {
-                            const regex = new RegExp(`(${searchTerm})`, 'gi');
-                            displayValue = String(value).replace(regex, '<mark>$1</mark>');
-                            cellStyle += 'background: #fff9c4;';
-                        }
-                    }
-                    
-                    // Style specific fields
-                    if (header === 'id') {
-                        cellStyle += 'font-weight: bold; color: #2196F3;';
-                        isEditable = false; // ID is not editable
-                    } else if (header === 'club_slider_images') {
-                        // Format images nicely
-                        if (row.parsed_images) {
-                            if (Array.isArray(row.parsed_images)) {
-                                displayValue = `[${row.parsed_images.length} images] ${JSON.stringify(row.parsed_images).substring(0, 50)}`;
-                                if (JSON.stringify(row.parsed_images).length > 50) {
-                                    displayValue += '...';
-                                }
-                            } else if (typeof row.parsed_images === 'object') {
-                                displayValue = `{${Object.keys(row.parsed_images).length} items}`;
-                            }
-                        } else if (value && value.length > 50) {
-                            displayValue = value.substring(0, 50) + '...';
-                        }
-                        cellStyle += 'font-family: monospace; color: #673AB7;';
-                    } else if (header === 'announcement1' || header === 'announcement2') {
-                        // Truncate long announcements
-                        if (value && value.length > 50) {
-                            displayValue = value.substring(0, 50) + '...';
-                        }
-                        cellStyle += 'color: #333;';
-                    } else if (header === 'created_at' || header === 'updated_at') {
-                        // Format dates
-                        if (value) {
-                            const date = new Date(value);
-                            if (!isNaN(date.getTime())) {
-                                displayValue = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-                            }
-                        }
-                        cellStyle += 'color: #666; font-size: 12px;';
-                    }
-                    
-                    const truncatedValue = displayValue.substring(0, 50);
-                    const isTruncated = displayValue.length > 50;
-                    const titleText = displayValue.length > 50 ? displayValue : '';
-                    
-                    if (isEditable && header !== 'id') {
-                        html += `<td class="editable" 
-                                 title="${titleText}\n\nClick to edit ${header}" 
-                                 data-id="${row.id}" 
-                                 data-field="${header}" 
-                                 data-value="${encodeURIComponent(value)}"
-                                 onclick="openFieldEditModal(this)"
-                                 style="${cellStyle}">
-                            ${isTruncated ? truncatedValue + '...' : truncatedValue}
-                        </td>`;
-                    } else {
-                        html += `<td style="${cellStyle}">
-                            ${isTruncated ? truncatedValue + '...' : truncatedValue}
-                        </td>`;
-                    }
-                });
-                html += '</tr>';
-            });
-            
-            html += '</table>';
-            
-            // Keep cache info at top
-            const existingCache = container.querySelector('.cache-info');
-            if (existingCache) {
-                container.innerHTML = '';
-                container.appendChild(existingCache);
-                container.insertAdjacentHTML('beforeend', html);
+            // Handle different data types
+            if (typeof aVal === 'number' && typeof bVal === 'number') {
+                return aVal - bVal;
+            } else if (typeof aVal === 'string' && typeof bVal === 'string') {
+                return aVal.localeCompare(bVal);
+            } else if (aVal instanceof Date && bVal instanceof Date) {
+                return aVal - bVal;
             } else {
-                container.innerHTML = html;
-            }
-        }
-        
-        function sortByColumn(column) {
-            const sortedData = [...filteredData].sort((a, b) => {
-                let aVal = a[column];
-                let bVal = b[column];
-                
-                // Handle different data types
-                if (typeof aVal === 'number' && typeof bVal === 'number') {
-                    return aVal - bVal;
-                } else if (typeof aVal === 'string' && typeof bVal === 'string') {
-                    return aVal.localeCompare(bVal);
-                } else if (aVal instanceof Date && bVal instanceof Date) {
-                    return aVal - bVal;
-                } else {
-                    // Convert to string for comparison
-                    return String(aVal || '').localeCompare(String(bVal || ''));
-                }
-            });
-            
-            filteredData = sortedData;
-            displayCurrentPage();
-            showMessage(`Sorted by ${column.replace(/_/g, ' ')}`, 'info');
-            updatePaginationControls();
-        }
-        
-        function openFieldEditModal(cell) {
-            const id = cell.getAttribute('data-id');
-            const field = cell.getAttribute('data-field');
-            const value = decodeURIComponent(cell.getAttribute('data-value') || '');
-            
-            currentEditId = id;
-            currentEditField = field;
-            originalValue = value;
-            
-            // Set field name and info
-            const displayField = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-            document.getElementById('fieldName').textContent = `Editing ${displayField}`;
-            document.getElementById('fieldLabel').textContent = displayField;
-            document.getElementById('fieldInfo').textContent = `Config ID: ${id}`;
-            document.getElementById('configId').textContent = id;
-            
-            // Create appropriate input based on field type
-            const fieldInput = document.getElementById('fieldInput');
-            fieldInput.innerHTML = '';
-            
-            let inputHtml = '';
-            
-            // Determine input type based on field name
-            if (field === 'announcement1' || field === 'announcement2') {
-                // Textarea for announcements
-                inputHtml = `
-                    <textarea id="editValue" name="${field}" class="form-control" rows="4" 
-                              placeholder="Enter ${displayField.toLowerCase()}...">${value}</textarea>
-                `;
-            } else if (field === 'club_slider_images') {
-                // Textarea for slider images (could be JSON array or comma separated)
-                inputHtml = `
-                    <textarea id="editValue" name="${field}" class="form-control" rows="6" 
-                              placeholder="Enter club slider images (JSON array or comma separated URLs)...">${value}</textarea>
-                    <div style="margin-top: 10px; font-size: 12px; color: #666;">
-                        <small>Format: ["url1", "url2"] or url1,url2,url3</small>
-                    </div>
-                `;
-            } else if (field === 'created_at' || field === 'updated_at') {
-                // Date time input for timestamps
-                let dateValue = value;
-                if (value) {
-                    const date = new Date(value);
-                    if (!isNaN(date.getTime())) {
-                        // Convert to local datetime string format
-                        dateValue = date.toISOString().slice(0, 16);
-                    }
-                }
-                inputHtml = `
-                    <input type="datetime-local" id="editValue" name="${field}" value="${dateValue}" 
-                           class="form-control">
-                `;
-            } else if (field === 'id') {
-                // ID field - read only
-                inputHtml = `
-                    <input type="text" id="editValue" name="${field}" value="${value}" 
-                           class="form-control" readonly style="background: #f5f5f5;">
-                    <div style="margin-top: 5px; font-size: 12px; color: #666;">
-                        <small>ID cannot be changed</small>
-                    </div>
-                `;
-            } else {
-                // Default text input
-                inputHtml = `
-                    <input type="text" id="editValue" name="${field}" value="${value}" 
-                           class="form-control" placeholder="Enter ${displayField.toLowerCase()}...">
-                `;
-            }
-            
-            fieldInput.innerHTML = inputHtml;
-            
-            // Focus on the input (except for ID)
-            setTimeout(() => {
-                const input = document.getElementById('editValue');
-                if (input && field !== 'id') input.focus();
-            }, 100);
-            
-            // Show modal
-            document.getElementById('editModal').style.display = 'block';
-        }
-        
-        function closeModal() {
-            document.getElementById('editModal').style.display = 'none';
-            currentEditId = null;
-            currentEditField = null;
-            originalValue = null;
-        }
-        
-        document.getElementById('editForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const input = document.getElementById('editValue');
-            let newValue;
-            
-            if (input.type === 'checkbox') {
-                newValue = input.checked ? 1 : 0;
-            } else if (input.type === 'select-one') {
-                newValue = input.value;
-            } else {
-                newValue = input.value.trim();
-                
-                // Convert empty string to null for database
-                if (newValue === '') {
-                    newValue = null;
-                }
-            }
-            
-            // Check if value actually changed
-            if (JSON.stringify(newValue) === JSON.stringify(originalValue)) {
-                showMessage('ℹ️ No changes detected', 'info');
-                closeModal();
-                return;
-            }
-            
-            try {
-                showMessage('🔄 Saving changes...', 'info');
-                
-                const updateData = {};
-                updateData[currentEditField] = newValue;
-                
-                const response = await fetch(`/api/${currentTable}/${currentEditId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(updateData)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    showMessage('✅ Config updated successfully!', 'success');
-                    
-                    // Update the specific cell in the table
-                    updateTableCell(currentEditId, currentEditField, newValue);
-                    
-                    // Update the allData array
-                    const configIndex = allData.findIndex(config => config.id == currentEditId);
-                    if (configIndex !== -1) {
-                        allData[configIndex][currentEditField] = newValue;
-                        // Reapply filters to update stats
-                        applyFilter();
-                    }
-                    
-                    setTimeout(() => {
-                        closeModal();
-                    }, 1000);
-                } else {
-                    showMessage(`❌ Error: ${result.error}`, 'error');
-                }
-            } catch (error) {
-                showMessage(`❌ Network error: ${error.message}`, 'error');
+                // Convert to string for comparison
+                return String(aVal || '').localeCompare(String(bVal || ''));
             }
         });
         
-        function updateTableCell(id, field, newValue) {
-            // Find and update the specific cell
-            const cells = document.querySelectorAll(`td[data-id="${id}"][data-field="${field}"]`);
-            cells.forEach(cell => {
-                let displayValue = newValue;
-                if (displayValue === null || displayValue === undefined) displayValue = '';
-                if (typeof displayValue === 'object') {
-                    try {
-                        displayValue = JSON.stringify(displayValue);
-                    } catch (e) {
-                        displayValue = String(displayValue);
-                    }
-                }
-                
-                // Format display value based on field type
-                if (field === 'club_slider_images') {
-                    try {
-                        if (typeof newValue === 'string') {
-                            const trimmed = newValue.trim();
-                            if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || 
-                                (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
-                                const parsed = JSON.parse(trimmed);
-                                if (Array.isArray(parsed)) {
-                                    displayValue = `[${parsed.length} images]`;
-                                } else if (typeof parsed === 'object') {
-                                    displayValue = `{${Object.keys(parsed).length} items}`;
-                                }
-                            }
-                        }
-                    } catch (e) {
-                        // Not JSON, use as is
-                    }
-                } else if ((field === 'created_at' || field === 'updated_at') && displayValue) {
-                    const date = new Date(displayValue);
-                    if (!isNaN(date.getTime())) {
-                        displayValue = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-                    }
-                }
-                
-                const truncatedValue = String(displayValue).substring(0, 50);
-                const isTruncated = String(displayValue).length > 50;
-                
-                cell.textContent = truncatedValue + (isTruncated ? '...' : '');
-                if (field !== 'id') {
-                    cell.setAttribute('data-value', encodeURIComponent(newValue));
-                    cell.setAttribute('title', `${displayValue}\n\nClick to edit ${field}`);
-                }
-                
-                // Add visual feedback
-                cell.style.background = '#d4edda';
-                cell.style.transition = 'background 0.5s';
-                
-                setTimeout(() => {
-                    cell.style.background = '';
-                }, 1000);
-            });
-        }
+        filteredData = sortedData;
+        displayCurrentPage();
+        showMessage(`Sorted by ${column.replace(/_/g, ' ')}`, 'info');
+        updatePaginationControls();
+    }
+    
+    function openFieldEditModal(cell) {
+        const id = cell.getAttribute('data-id');
+        const field = cell.getAttribute('data-field');
+        const value = decodeURIComponent(cell.getAttribute('data-value') || '');
         
-        function showError(message) {
-            const errorDiv = document.getElementById('error');
-            errorDiv.style.display = 'block';
-            errorDiv.innerHTML = `
-                <div style="display: flex; align-items: center; justify-content: center; gap: 15px;">
-                    <span style="font-size: 24px;">⚠️</span>
-                    <div>${message}</div>
+        currentEditId = id;
+        currentEditField = field;
+        originalValue = value;
+        
+        // Set field name and info
+        const displayField = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        document.getElementById('fieldName').textContent = `Editing ${displayField}`;
+        document.getElementById('fieldLabel').textContent = displayField;
+        document.getElementById('fieldInfo').textContent = `Config ID: ${id}`;
+        document.getElementById('configId').textContent = id;
+        
+        // Create appropriate input based on field type
+        const fieldInput = document.getElementById('fieldInput');
+        fieldInput.innerHTML = '';
+        
+        let inputHtml = '';
+        
+        // Determine input type based on field name
+        if (field === 'announcement1' || field === 'announcement2') {
+            // Textarea for announcements
+            inputHtml = `
+                <textarea id="editValue" name="${field}" class="form-control" rows="4" 
+                          placeholder="Enter ${displayField.toLowerCase()}...">${value}</textarea>
+            `;
+        } else if (field === 'club_slider_images') {
+            // Textarea for slider images (could be JSON array or comma separated)
+            inputHtml = `
+                <textarea id="editValue" name="${field}" class="form-control" rows="6" 
+                          placeholder="Enter club slider images (JSON array or comma separated URLs)...">${value}</textarea>
+                <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                    <small>Format: ["url1", "url2"] or url1,url2,url3</small>
                 </div>
+            `;
+        } else if (field === 'created_at' || field === 'updated_at') {
+            // Date time input for timestamps
+            const dateValue = formatDateForInput(value);
+            inputHtml = `
+                <input type="datetime-local" id="editValue" name="${field}" value="${dateValue}" 
+                       class="form-control">
+                <div style="margin-top: 5px; font-size: 12px; color: #666;">
+                    <small>Current value: ${value || 'Empty'}</small>
+                </div>
+            `;
+        } else if (field === 'id') {
+            // ID field - read only
+            inputHtml = `
+                <input type="text" id="editValue" name="${field}" value="${value}" 
+                       class="form-control" readonly style="background: #f5f5f5;">
+                <div style="margin-top: 5px; font-size: 12px; color: #666;">
+                    <small>ID cannot be changed</small>
+                </div>
+            `;
+        } else {
+            // Default text input
+            inputHtml = `
+                <input type="text" id="editValue" name="${field}" value="${value}" 
+                       class="form-control" placeholder="Enter ${displayField.toLowerCase()}...">
             `;
         }
         
-        function showMessage(text, type = 'success') {
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = text;
+        fieldInput.innerHTML = inputHtml;
+        
+        // Focus on the input (except for ID)
+        setTimeout(() => {
+            const input = document.getElementById('editValue');
+            if (input && field !== 'id') input.focus();
+        }, 100);
+        
+        // Show modal
+        document.getElementById('editModal').style.display = 'block';
+    }
+    
+    function closeModal() {
+        document.getElementById('editModal').style.display = 'none';
+        currentEditId = null;
+        currentEditField = null;
+        originalValue = null;
+    }
+    
+    document.getElementById('editForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const input = document.getElementById('editValue');
+        let newValue;
+        
+        if (input.tagName === 'SELECT') {
+            newValue = input.value;
+        } else if (input.type === 'datetime-local') {
+            newValue = input.value;
+            // If empty, set to null
+            if (newValue === '') newValue = null;
+        } else {
+            newValue = input.value.trim();
             
-            const colors = {
-                success: { bg: '#d4edda', text: '#155724', border: '#c3e6cb' },
-                error: { bg: '#f8d7da', text: '#721c24', border: '#f5c6cb' },
-                info: { bg: '#fff3cd', text: '#856404', border: '#ffeaa7' }
-            };
-            
-            const color = colors[type] || colors.success;
-            messageDiv.style.background = color.bg;
-            messageDiv.style.color = color.text;
-            messageDiv.style.border = `1px solid ${color.border}`;
-            messageDiv.style.opacity = '1';
-            
-            setTimeout(() => {
-                messageDiv.style.opacity = '0';
-                setTimeout(() => {
-                    messageDiv.textContent = '';
-                }, 300);
-            }, 3000);
+            // Convert empty string to null for database
+            if (newValue === '') {
+                newValue = null;
+            }
         }
         
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('editModal');
-            if (event.target === modal) {
-                closeModal();
+        console.log('Submitting update:', {
+            id: currentEditId,
+            field: currentEditField,
+            newValue: newValue,
+            originalValue: originalValue
+        });
+        
+        // Check if value actually changed
+        if (newValue === originalValue || (newValue === null && originalValue === '')) {
+            showMessage('ℹ️ No changes detected', 'info');
+            closeModal();
+            return;
+        }
+        
+        try {
+            showMessage('🔄 Saving changes...', 'info');
+            
+            const updateData = {};
+            updateData[currentEditField] = newValue;
+            
+            console.log('Sending update data:', updateData);
+            
+            const response = await fetch(`/api/${currentTable}/${currentEditId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updateData)
+            });
+            
+            const result = await response.json();
+            console.log('Server response:', result);
+            
+            if (result.success) {
+                showMessage('✅ Config updated successfully!', 'success');
+                
+                // Update the specific cell in the table
+                updateTableCell(currentEditId, currentEditField, newValue);
+                
+                // Update the allData array
+                const configIndex = allData.findIndex(config => config.id == currentEditId);
+                if (configIndex !== -1) {
+                    allData[configIndex][currentEditField] = newValue;
+                    
+                    // Update formatted dates if needed
+                    if (currentEditField === 'created_at') {
+                        allData[configIndex].formatted_created = formatDateForDisplay(newValue);
+                    } else if (currentEditField === 'updated_at') {
+                        allData[configIndex].formatted_updated = formatDateForDisplay(newValue);
+                    }
+                    
+                    // Reapply filters to update stats
+                    applyFilter();
+                }
+                
+                setTimeout(() => {
+                    closeModal();
+                }, 1000);
+            } else {
+                showMessage(`❌ Error: ${result.error}`, 'error');
+                console.error('Server error:', result);
             }
+        } catch (error) {
+            showMessage(`❌ Network error: ${error.message}`, 'error');
+            console.error('Update error:', error);
+        }
+    });
+    
+    function updateTableCell(id, field, newValue) {
+        // Find and update the specific cell
+        const cells = document.querySelectorAll(`td[data-id="${id}"][data-field="${field}"]`);
+        cells.forEach(cell => {
+            let displayValue = newValue;
+            if (displayValue === null || displayValue === undefined) displayValue = '';
+            
+            // Format display value based on field type
+            if (field === 'club_slider_images') {
+                try {
+                    if (typeof newValue === 'string') {
+                        const trimmed = newValue.trim();
+                        if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || 
+                            (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+                            const parsed = JSON.parse(trimmed);
+                            if (Array.isArray(parsed)) {
+                                displayValue = `[${parsed.length} images]`;
+                            } else if (typeof parsed === 'object') {
+                                displayValue = `{${Object.keys(parsed).length} items}`;
+                            }
+                        } else if (newValue && newValue.length > 100) {
+                            displayValue = newValue.substring(0, 100) + '...';
+                        }
+                    }
+                } catch (e) {
+                    // Not JSON, use as is
+                    if (newValue && newValue.length > 100) {
+                        displayValue = newValue.substring(0, 100) + '...';
+                    }
+                }
+            } else if (field === 'created_at' || field === 'updated_at') {
+                displayValue = formatDateForDisplay(newValue);
+            } else if (field === 'announcement1' || field === 'announcement2') {
+                if (newValue && newValue.length > 100) {
+                    displayValue = newValue.substring(0, 100) + '...';
+                }
+            }
+            
+            const truncatedValue = String(displayValue).substring(0, 100);
+            const isTruncated = String(displayValue).length > 100;
+            
+            cell.textContent = truncatedValue + (isTruncated ? '...' : '');
+            if (field !== 'id') {
+                cell.setAttribute('data-value', encodeURIComponent(newValue));
+                cell.setAttribute('title', `${displayValue}\n\nClick to edit ${field}`);
+            }
+            
+            // Add visual feedback
+            cell.style.background = '#d4edda';
+            cell.style.transition = 'background 0.5s';
+            
+            setTimeout(() => {
+                cell.style.background = '';
+            }, 1000);
+        });
+    }
+    
+    function showError(message) {
+        const errorDiv = document.getElementById('error');
+        errorDiv.style.display = 'block';
+        errorDiv.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; gap: 15px;">
+                <span style="font-size: 24px;">⚠️</span>
+                <div>${message}</div>
+            </div>
+        `;
+    }
+    
+    function showMessage(text, type = 'success') {
+        const messageDiv = document.getElementById('message');
+        messageDiv.textContent = text;
+        
+        const colors = {
+            success: { bg: '#d4edda', text: '#155724', border: '#c3e6cb' },
+            error: { bg: '#f8d7da', text: '#721c24', border: '#f5c6cb' },
+            info: { bg: '#fff3cd', text: '#856404', border: '#ffeaa7' }
         };
         
-        // Close modal with Escape key
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeModal();
-            }
-        });
+        const color = colors[type] || colors.success;
+        messageDiv.style.background = color.bg;
+        messageDiv.style.color = color.text;
+        messageDiv.style.border = `1px solid ${color.border}`;
+        messageDiv.style.opacity = '1';
         
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set default states
-            document.getElementById('pageSize').value = pageSize;
-            
-            loadData();
-        });
-    </script>
+        setTimeout(() => {
+            messageDiv.style.opacity = '0';
+            setTimeout(() => {
+                messageDiv.textContent = '';
+            }, 300);
+        }, 3000);
+    }
+    
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('editModal');
+        if (event.target === modal) {
+            closeModal();
+        }
+    };
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeModal();
+        }
+    });
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set default states
+        document.getElementById('pageSize').value = pageSize;
+        
+        loadData();
+    });
+</script>
 </body>
 </html>
