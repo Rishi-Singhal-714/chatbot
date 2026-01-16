@@ -718,20 +718,31 @@
                                 // Ensure id exists
                                 if (!gallery.id) gallery.id = index + 1;
                                 
-                                // Process status field
+                                // Process status field - keep as string but add isActive flag
                                 if (gallery.status !== undefined) {
                                     let status = gallery.status;
                                     if (typeof status === 'string') {
                                         const statusStr = status.toLowerCase().trim();
-                                        if (statusStr === 'on' || statusStr === 'active' || statusStr === 'true' || statusStr === '1' || statusStr === 'yes') {
-                                            status = 1;
-                                        } else if (statusStr === 'off' || statusStr === 'inactive' || statusStr === 'false' || statusStr === '0' || statusStr === 'no') {
-                                            status = 0;
-                                        } else {
-                                            status = 0; // Default to inactive
-                                        }
+                                        // Add isActive flag for filtering
+                                        gallery.isActive = (
+                                            statusStr === 'on' || 
+                                            statusStr === 'active' || 
+                                            statusStr === 'true' || 
+                                            statusStr === '1' || 
+                                            statusStr === 'yes' ||
+                                            statusStr === 'enabled'
+                                        );
+                                        // Keep original status string
+                                        gallery.status = status;
+                                    } else {
+                                        // If it's not a string, convert to string
+                                        gallery.status = String(status);
+                                        gallery.isActive = (status === 1 || status === true);
                                     }
-                                    gallery.status = Number(status) || 0;
+                                } else {
+                                    // If no status, default to inactive
+                                    gallery.status = 'inactive';
+                                    gallery.isActive = false;
                                 }
                                 
                                 // Get priority value and classify (1-10 normal, others outliers)
@@ -747,7 +758,6 @@
                                     priority: priority,
                                     isOutlier: isOutlier,
                                     original_priority: gallery.priority, // Keep original for display
-                                    status: Number(status) || 0,
                                     id: gallery.id || index + 1
                                 };
                             });
@@ -791,14 +801,14 @@
         function applyFilter() {
             filteredData = [...allData];
             
-            // Apply status filter
+            // Apply status filter - check isActive flag
             if (statusFilter === 'active') {
                 filteredData = filteredData.filter(gallery => {
-                    return Number(gallery.status) === 1;
+                    return gallery.isActive === true;
                 });
             } else if (statusFilter === 'inactive') {
                 filteredData = filteredData.filter(gallery => {
-                    return Number(gallery.status) === 0;
+                    return gallery.isActive === false;
                 });
             }
             
@@ -1128,11 +1138,11 @@
             }
             
             const activeCount = allData.filter(gallery => {
-                return Number(gallery.status) === 1;
+                return gallery.isActive === true;
             }).length;
             
             const inactiveCount = allData.filter(gallery => {
-                return Number(gallery.status) === 0;
+                return gallery.isActive === false;
             }).length;
             
             document.getElementById('activeCount').textContent = activeCount;
@@ -1232,7 +1242,7 @@
             
             // Get headers, excluding internal fields
             const headers = Object.keys(firstRow).filter(header => 
-                header !== 'isOutlier' && header !== 'original_priority'
+                header !== 'isOutlier' && header !== 'original_priority' && header !== 'isActive'
             );
             
             let html = '<table>';
@@ -1250,8 +1260,8 @@
             
             // Create data rows
             data.forEach((row, index) => {
+                const isActive = row.isActive;
                 const status = row.status;
-                const isActive = Number(status) === 1;
                 const priority = Number(row.priority) || 0;
                 const isOutlier = row.isOutlier;
                 const originalPriority = row.original_priority;
@@ -1296,10 +1306,10 @@
                     if (header === 'status') {
                         if (isActive) {
                             cellStyle = 'color: #4CAF50; font-weight: bold;';
-                            displayValue = `${value}`;
+                            displayValue = `${value} (Active)`;
                         } else {
                             cellStyle = 'color: #f44336; font-weight: bold;';
-                            displayValue = `${value}`;
+                            displayValue = `${value} (Inactive)`;
                         }
                     } else if (header === 'priority') {
                         // Show original priority if it's an outlier
@@ -1378,11 +1388,11 @@
                 displayCurrentPage();
                 showMessage('Sorted by ID (descending)', 'info');
             } else if (column === 'status') {
-                // Sort by status (active first, then inactive)
+                // Sort by status (active first, then inactive) - use isActive flag
                 const sortedData = [...filteredData].sort((a, b) => {
-                    const aStatus = Number(a.status) || 0;
-                    const bStatus = Number(b.status) || 0;
-                    return bStatus - aStatus; // active first
+                    const aActive = a.isActive === true ? 1 : 0;
+                    const bActive = b.isActive === true ? 1 : 0;
+                    return bActive - aActive; // active first
                 });
                 filteredData = sortedData;
                 displayCurrentPage();
@@ -1435,19 +1445,25 @@
                               placeholder="Enter ${displayField.toLowerCase()}...">${value}</textarea>
                 `;
             } else if (field.toLowerCase().includes('status')) {
-                // Checkbox for status field
-                const isActive = value === true || value === 1 || value === '1' || 
-                                 String(value).toLowerCase() === 'true' || 
-                                 String(value).toLowerCase() === 'yes' ||
-                                 String(value).toLowerCase() === 'active' ||
-                                 String(value).toLowerCase() === 'on';
+                // Select dropdown for status with common string values
+                const statusOptions = [
+                    'active', 'inactive', 'enabled', 'disabled', 
+                    'on', 'off', 'yes', 'no', 'true', 'false'
+                ];
+                let optionsHtml = '';
+                statusOptions.forEach(option => {
+                    const selected = value.toLowerCase() === option ? 'selected' : '';
+                    const displayOption = option.charAt(0).toUpperCase() + option.slice(1);
+                    optionsHtml += `<option value="${option}" ${selected}>${displayOption}</option>`;
+                });
+                
                 inputHtml = `
-                    <div style="display: flex; align-items: center; gap: 15px; padding: 12px; background: #f8f9fa; border-radius: 5px;">
-                        <input type="checkbox" id="editValue" name="${field}" ${isActive ? 'checked' : ''} 
-                               class="form-control" style="width: auto; transform: scale(1.3);">
-                        <span style="color: #666; font-size: 14px;">
-                            ${isActive ? 'Currently: Active' : 'Currently: Inactive'}
-                        </span>
+                    <select id="editValue" name="${field}" class="form-control">
+                        ${optionsHtml}
+                        <option value="" ${!value ? 'selected' : ''}>-- Select Status --</option>
+                    </select>
+                    <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                        Note: Common active values: active, enabled, on, yes, true
                     </div>
                 `;
             } else if (field.toLowerCase().includes('priority')) {
@@ -1517,23 +1533,11 @@
             e.preventDefault();
             
             const input = document.getElementById('editValue');
-            let newValue;
+            let newValue = input.value.trim();
             
-            if (input.type === 'checkbox') {
-                newValue = input.checked ? 1 : 0;
-            } else if (input.type === 'number') {
-                newValue = parseInt(input.value) || 1;
-                // Clamp priority between 1-10
-                if (currentEditField.toLowerCase().includes('priority')) {
-                    newValue = Math.max(1, Math.min(10, newValue));
-                }
-            } else {
-                newValue = input.value.trim();
-                
-                // Convert empty string to null for database
-                if (newValue === '') {
-                    newValue = null;
-                }
+            // Convert empty string to null for database
+            if (newValue === '') {
+                newValue = null;
             }
             
             // Check if value actually changed
@@ -1570,9 +1574,17 @@
                     if (galleryIndex !== -1) {
                         allData[galleryIndex][currentEditField] = newValue;
                         
-                        // If updating status or priority, update the processed fields
+                        // If updating status, update isActive flag
                         if (currentEditField === 'status') {
-                            allData[galleryIndex].status = Number(newValue) || 0;
+                            const statusStr = String(newValue || '').toLowerCase().trim();
+                            allData[galleryIndex].isActive = (
+                                statusStr === 'on' || 
+                                statusStr === 'active' || 
+                                statusStr === 'true' || 
+                                statusStr === '1' || 
+                                statusStr === 'yes' ||
+                                statusStr === 'enabled'
+                            );
                         } else if (currentEditField === 'priority') {
                             const priority = Number(newValue) || 1;
                             const isOutlier = priority < 1 || priority > 10;
@@ -1613,7 +1625,16 @@
                 
                 // Format display value based on field type
                 if (field === 'status') {
-                    displayValue = Number(displayValue) === 1 ? 'Active' : 'Inactive';
+                    const statusStr = String(displayValue).toLowerCase().trim();
+                    const isActive = (
+                        statusStr === 'on' || 
+                        statusStr === 'active' || 
+                        statusStr === 'true' || 
+                        statusStr === '1' || 
+                        statusStr === 'yes' ||
+                        statusStr === 'enabled'
+                    );
+                    displayValue = `${displayValue} (${isActive ? 'Active' : 'Inactive'})`;
                 } else if (field === 'priority') {
                     const priority = Number(displayValue) || 1;
                     if (priority < 1 || priority > 10) {
