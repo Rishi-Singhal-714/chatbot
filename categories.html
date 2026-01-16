@@ -1047,11 +1047,34 @@
             return 'https://zulushop.in/' + url;
         }
 
-        // Helper function to check if field is an image field
-        function isImageField(fieldName) {
-            const imgFields = ['image', 'banner', 'banner1', 'banner2', 'IMAGE1', 'IMAGE2'];
-            return imgFields.includes(fieldName.toUpperCase());
+// Helper function to check if field is an image field
+function isImageField(fieldName) {
+    if (!fieldName) return false;
+    
+    const imgFields = [
+        'image', 'banner', 'banner1', 'banner2', 
+        'IMAGE1', 'IMAGE2', 'IMAGE', 'BANNER',
+        'image1', 'image2', 'banner_one', 'banner_two',
+        'thumbnail', 'cover', 'icon', 'logo'
+    ];
+    
+    const fieldUpper = fieldName.toUpperCase();
+    
+    // Direct match
+    if (imgFields.includes(fieldUpper)) {
+        return true;
+    }
+    
+    // Check if field contains image-related keywords
+    const imageKeywords = ['IMAGE', 'BANNER', 'PIC', 'PHOTO', 'THUMB', 'COVER', 'ICON', 'LOGO'];
+    for (const keyword of imageKeywords) {
+        if (fieldUpper.includes(keyword)) {
+            return true;
         }
+    }
+    
+    return false;
+}
 
         // Helper function to check if URL is external (not from zulushop.in)
         function isExternalLink(url) {
