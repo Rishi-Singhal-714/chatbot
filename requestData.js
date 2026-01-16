@@ -58,6 +58,10 @@ const columnMapping = {
     'cat1_names', 'shopable_video_ids', 'business_id', 'priority', 'version', 
     'tracking_bar', 'show_title', 'show_subtitle', 'showBanner', 'showVideos', 
     'showProducts'
+  ],
+  'appconfigs': [
+    'id', 'announcement1', 'announcement2', 'created_at', 
+    'updated_at', 'club_slider_images'
   ]
 };
 
@@ -110,6 +114,17 @@ const cache = {
       SELECT
         ${columnMapping.galleries.join(',\n        ')}
       FROM u130660877_zulu.galleries
+    `
+  },
+
+    appconfigs: {
+    data: null,
+    timestamp: 0,
+    query: `
+      SELECT
+        id, announcement1, announcement2, created_at, 
+        updated_at, club_slider_images
+      FROM u130660877_zulu.app_configs
     `
   }
 };
@@ -494,11 +509,14 @@ async function getProductStatsByUpdater() {
     });
   });
 }
-
+async function getAppConfigsData() {
+  return await getCachedData('appconfigs');
+}
 // Export all functions
 module.exports = {
   getCachedData,
   getProductStatsByUpdater,
+  getAppConfigsData,
   executeUpdate,
   getRecordById,
   clearCache,
