@@ -24,7 +24,9 @@ const tableMapping = {
   'users': 'users',
   'videos': 'shop_able_videos',
   'galleries': 'galleries',
-  'appconfigs': 'app_configs'
+  'appconfigs': 'app_configs',
+  'categories': 'categories'
+
 };
 
 // Column mapping for each table - ONLY the columns we want to fetch and edit
@@ -63,6 +65,11 @@ const columnMapping = {
   'appconfigs': [
     'id', 'announcement1', 'announcement2', 'created_at', 
     'updated_at', 'club_slider_images'
+  ],
+    'categories': [
+    'id', 'name', 'parent_id', 'slug', 'image', 'banner', 'banner1', 'banner2',
+    'row_order', 'priority', 'relevant', 'category', 'sub_sub_category',
+    'business', 'status', 'clicks', 'by_default', 'IMAGE1', 'IMAGE2'
   ]
 };
 
@@ -126,6 +133,17 @@ const cache = {
         id, announcement1, announcement2, created_at, 
         updated_at, club_slider_images
       FROM u130660877_zulu.app_configs
+    `
+  },
+    'categories': {
+    data: null,
+    timestamp: 0,
+    query: `
+      SELECT
+        id, name, parent_id, slug, image, banner, banner1, banner2,
+        row_order, priority, relevant, category, sub_sub_category,
+        business, status, clicks, by_default, IMAGE1, IMAGE2
+      FROM u130660877_zulu.categories
     `
   }
 };
