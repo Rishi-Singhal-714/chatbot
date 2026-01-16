@@ -409,7 +409,7 @@
             background: #5a6268;
         }
         
-        /* New Clean Image Gallery Styles */
+        /* Clean Image Gallery Styles */
         .image-gallery-container {
             margin-bottom: 20px;
         }
@@ -538,27 +538,7 @@
             gap: 8px;
         }
         
-        .edit-btn {
-            flex: 1;
-            background: #FF9800;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 6px 10px;
-            font-size: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            transition: all 0.3s;
-        }
-        
-        .edit-btn:hover {
-            background: #F57C00;
-        }
-        
-        .replace-btn {
+        .view-btn {
             flex: 1;
             background: #2196F3;
             color: white;
@@ -574,8 +554,28 @@
             transition: all 0.3s;
         }
         
-        .replace-btn:hover {
+        .view-btn:hover {
             background: #1976D2;
+        }
+        
+        .replace-btn {
+            flex: 1;
+            background: #FF9800;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: all 0.3s;
+        }
+        
+        .replace-btn:hover {
+            background: #F57C00;
         }
         
         .delete-btn {
@@ -821,7 +821,7 @@
             background: #5a6268;
         }
         
-        /* Image Viewer Modal */
+        /* Enhanced Image Viewer Modal with Edit Options */
         .image-viewer-modal {
             display: none;
             position: fixed;
@@ -857,6 +857,37 @@
         .viewer-header h2 {
             margin: 0;
             font-size: 1.3rem;
+        }
+        
+        .viewer-header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .viewer-action-btn {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s;
+        }
+        
+        .viewer-action-btn:hover {
+            background: rgba(255, 152, 0, 0.5);
+        }
+        
+        .viewer-action-btn.edit-btn {
+            background: rgba(255, 152, 0, 0.3);
+        }
+        
+        .viewer-action-btn.edit-btn:hover {
+            background: rgba(255, 152, 0, 0.7);
         }
         
         .close-viewer {
@@ -932,6 +963,51 @@
             text-align: center;
         }
         
+        .image-info-panel {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 400px;
+        }
+        
+        .image-info-panel h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+        }
+        
+        .image-url-viewer {
+            font-size: 12px;
+            font-family: monospace;
+            word-break: break-all;
+            margin-bottom: 10px;
+            opacity: 0.8;
+        }
+        
+        .image-actions-viewer {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .action-btn-small {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 5px 10px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .action-btn-small:hover {
+            background: rgba(255, 152, 0, 0.5);
+        }
+        
         @media (max-width: 768px) {
             body {
                 margin: 15px;
@@ -975,8 +1051,14 @@
             .image-actions {
                 flex-wrap: wrap;
             }
-            .edit-btn, .replace-btn {
+            .view-btn, .replace-btn {
                 min-width: 60px;
+            }
+            .image-info-panel {
+                left: 20px;
+                right: 20px;
+                bottom: 100px;
+                max-width: none;
             }
         }
     </style>
@@ -1103,12 +1185,17 @@
         </div>
     </div>
 
-    <!-- Image Viewer Modal -->
+    <!-- Enhanced Image Viewer Modal with Edit Options -->
     <div id="imageViewerModal" class="image-viewer-modal">
         <div class="viewer-content">
             <div class="viewer-header">
-                <h2>Image Viewer</h2>
-                <button class="close-viewer" onclick="closeImageViewer()">&times;</button>
+                <h2 id="viewerTitle">Image Viewer</h2>
+                <div class="viewer-header-actions">
+                    <button class="viewer-action-btn edit-btn" onclick="replaceCurrentImage()">
+                        ✏️ Edit This Image
+                    </button>
+                    <button class="close-viewer" onclick="closeImageViewer()">&times;</button>
+                </div>
             </div>
             
             <div class="viewer-main">
@@ -1119,6 +1206,22 @@
                 <button class="control-btn" onclick="prevImage()" title="Previous Image">◀</button>
                 <div class="image-counter" id="imageCounter">1 / 0</div>
                 <button class="control-btn" onclick="nextImage()" title="Next Image">▶</button>
+            </div>
+            
+            <div class="image-info-panel" id="imageInfoPanel">
+                <h4>Image Information</h4>
+                <div class="image-url-viewer" id="imageUrlViewer">-</div>
+                <div class="image-actions-viewer">
+                    <button class="action-btn-small" onclick="copyImageUrl()">
+                        📋 Copy URL
+                    </button>
+                    <button class="action-btn-small" onclick="openImageInNewTab()">
+                        ↗ Open in New Tab
+                    </button>
+                    <button class="action-btn-small" onclick="downloadCurrentImage()">
+                        ⬇ Download
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1644,11 +1747,11 @@
                                 ${escapeHtml(shortUrl)}
                             </div>
                             <div class="image-actions">
-                                <button class="edit-btn" onclick="editImage(${index}, event)">
-                                    ✏️ Edit
+                                <button class="view-btn" onclick="viewImage(${index}, ${JSON.stringify(images)}, event)">
+                                    👁️ View
                                 </button>
                                 <button class="replace-btn" onclick="replaceImage(${index}, event)">
-                                    🔄 Replace
+                                    ✏️ Replace
                                 </button>
                                 <button class="delete-btn" onclick="deleteImage(${index})" title="Delete">
                                     🗑️
@@ -1785,9 +1888,18 @@
     }
     
     // Image Gallery Functions
-    function editImage(index, event) {
-        event.stopPropagation();
-        viewImage(index, currentImages);
+    function viewImage(index, images, event) {
+        if (event) {
+            event.stopPropagation();
+        }
+        
+        // Parse images if it's a string
+        if (typeof images === 'string') {
+            images = JSON.parse(images);
+        }
+        
+        const imageObjects = images.map((url, idx) => ({ url, index: idx }));
+        openImageViewer(imageObjects, index);
     }
     
     function replaceImage(index, event) {
@@ -1804,12 +1916,12 @@
         }
     }
     
-    function viewImage(index, images) {
-        const imageObjects = images.map((url, index) => ({ url, index }));
-        openImageViewer(imageObjects, index);
-    }
-    
     function viewAllImages(images) {
+        // Parse images if it's a string
+        if (typeof images === 'string') {
+            images = JSON.parse(images);
+        }
+        
         const imageObjects = images.map((url, index) => ({ url, index }));
         openImageViewer(imageObjects, 0);
     }
@@ -1850,11 +1962,11 @@
                             ${escapeHtml(shortUrl)}
                         </div>
                         <div class="image-actions">
-                            <button class="edit-btn" onclick="editImage(${index}, event)">
-                                ✏️ Edit
+                            <button class="view-btn" onclick="viewImage(${index}, ${JSON.stringify(currentImages)}, event)">
+                                👁️ View
                             </button>
                             <button class="replace-btn" onclick="replaceImage(${index}, event)">
-                                🔄 Replace
+                                ✏️ Replace
                             </button>
                             <button class="delete-btn" onclick="deleteImage(${index})" title="Delete">
                                 🗑️
@@ -2126,7 +2238,7 @@
         }
     }
     
-    // Image Viewer Functions
+    // Enhanced Image Viewer Functions
     function openImageViewer(images, startIndex = 0) {
         viewerImages = images;
         currentViewerIndex = startIndex;
@@ -2154,6 +2266,8 @@
         const image = viewerImages[currentViewerIndex];
         const mainImg = document.getElementById('mainViewerImage');
         const imageCounter = document.getElementById('imageCounter');
+        const imageUrlViewer = document.getElementById('imageUrlViewer');
+        const viewerTitle = document.getElementById('viewerTitle');
         
         // Update main image
         mainImg.src = image.url;
@@ -2161,6 +2275,12 @@
         
         // Update counter
         imageCounter.textContent = `${currentViewerIndex + 1} / ${viewerImages.length}`;
+        
+        // Update URL display
+        imageUrlViewer.textContent = image.url;
+        
+        // Update title
+        viewerTitle.textContent = `Image Viewer - #${currentViewerIndex + 1}`;
     }
     
     function nextImage() {
@@ -2180,6 +2300,50 @@
             currentViewerIndex = index;
             updateViewer();
         }
+    }
+    
+    // Image viewer action functions
+    function replaceCurrentImage() {
+        closeImageViewer();
+        openUploadModal('replace', currentViewerIndex);
+    }
+    
+    function copyImageUrl() {
+        if (viewerImages.length === 0) return;
+        
+        const url = viewerImages[currentViewerIndex].url;
+        navigator.clipboard.writeText(url)
+            .then(() => {
+                showMessage('✅ Image URL copied to clipboard!', 'success');
+            })
+            .catch(err => {
+                console.error('Failed to copy URL:', err);
+                showMessage('❌ Failed to copy URL', 'error');
+            });
+    }
+    
+    function openImageInNewTab() {
+        if (viewerImages.length === 0) return;
+        
+        const url = viewerImages[currentViewerIndex].url;
+        window.open(url, '_blank');
+    }
+    
+    function downloadCurrentImage() {
+        if (viewerImages.length === 0) return;
+        
+        const url = viewerImages[currentViewerIndex].url;
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `image_${currentViewerIndex + 1}_${Date.now()}.${getFileExtension(url)}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    
+    function getFileExtension(url) {
+        const match = url.match(/\.([a-z0-9]+)(?:[?#]|$)/i);
+        return match ? match[1].toLowerCase() : 'jpg';
     }
     
     // Main Modal Functions
