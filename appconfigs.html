@@ -320,9 +320,9 @@
             background: white;
             padding: 30px;
             border-radius: 10px;
-            max-width: 500px;
+            max-width: 600px;
             width: 90%;
-            max-height: 80vh;
+            max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         }
@@ -626,6 +626,19 @@
         .file-input-label:hover {
             background: #5a6268;
         }
+        .upload-progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .upload-progress-fill {
+            height: 100%;
+            background: #28a745;
+            transition: width 0.3s;
+        }
         @media (max-width: 768px) {
             body {
                 margin: 15px;
@@ -743,6 +756,7 @@
     </div>
 
 <script>
+    // Global variables
     let allData = [];
     let filteredData = [];
     let currentData = [];
@@ -751,19 +765,43 @@
     let currentEditField = null;
     let originalValue = null;
     
+    // Search and Pagination variables
     let searchTerm = '';
     let searchTimeout = null;
     
+    // Pagination variables
     let currentPage = 1;
     let pageSize = 50;
     let totalPages = 1;
     let totalFilteredItems = 0;
 
-    // Image upload variables
-    let currentUploadFile = null;
+    // Upload configuration
+    let UPLOAD_CONFIG = {
+        uploadApiUrl: '',
+        maxFileSize: 5 * 1024 * 1024, // 5MB
+        allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    };
 
-    // Image Upload API Configuration
-    const UPLOAD_API_URL = 'https://api.zulushop.in/api/v1/user/upload';
+    // Initialize function
+    async function init() {
+        try {
+            // Load upload configuration
+            const configResponse = await fetch('/api/upload-config');
+            const configData = await configResponse.json();
+            if (configData.success) {
+                UPLOAD_CONFIG = {
+                    ...UPLOAD_CONFIG,
+                    ...configData
+                };
+                console.log('✅ Upload config loaded:', UPLOAD_CONFIG);
+            }
+        } catch (error) {
+            console.warn('⚠️ Failed to load upload config, using defaults:', error);
+        }
+        
+        // Load initial data
+        loadData();
+    }
 
     async function loadData() {
         document.getElementById('loading').style.display = 'block';
@@ -1186,27 +1224,56 @@
         updatePaginationControls();
     }
     
-    // Function to upload image to Hostinger server
+    // Function to upload image using server endpoint
     async function uploadImageToHostinger(file) {
         try {
-            console.log('📤 Uploading image to Hostinger...', file.name, file.type);
+            console.log('📤 Uploading image:', file.name, file.type, `${(file.size / 1024).toFixed(2)} KB`);
             
-            const formData = new FormData();
-            formData.append('image', file);
+            // Validate file
+            if (!UPLOAD_CONFIG.allowedTypes.includes(file.type)) {
+                throw new Error(`File type not allowed. Allowed types: ${UPLOAD_CONFIG.allowedTypes.join(', ')}`);
+            }
             
-            const response = await fetch(UPLOAD_API_URL, {
-                method: 'POST',
-                body: formData
+            if (file.size > UPLOAD_CONFIG.maxFileSize) {
+                throw new Error(`File too large. Max size: ${(UPLOAD_CONFIG.maxFileSize / 1024 / 1024).toFixed(2)} MB`);
+            }
+            
+            // Convert file to base64
+            const reader = new FileReader();
+            return new Promise((resolve, reject) => {
+                reader.onload = async (e) => {
+                    try {
+                        const base64Data = e.target.result;
+                        
+                        // Upload via server endpoint
+                        const response = await fetch('/api/upload-image', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                imageData: base64Data,
+                                fileName: file.name
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        console.log('Server upload response:', result);
+                        
+                        if (result.success && result.imageUrl) {
+                            resolve(result.imageUrl);
+                        } else {
+                            reject(new Error(result.error || 'Upload failed'));
+                        }
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                
+                reader.onerror = () => reject(new Error('Failed to read file'));
+                reader.readAsDataURL(file);
             });
             
-            const result = await response.json();
-            console.log('Upload response:', result);
-            
-            if (result && result.success && result.data && result.data.image_url) {
-                return result.data.image_url;
-            } else {
-                throw new Error(result.message || 'Upload failed');
-            }
         } catch (error) {
             console.error('❌ Upload error:', error);
             throw error;
@@ -1219,6 +1286,7 @@
         const uploadBtn = document.getElementById('uploadImageBtn');
         const uploadStatus = document.getElementById('uploadStatus');
         const imagePreview = document.getElementById('imageUploadPreview');
+        const progressBar = document.getElementById('uploadProgressBar');
         
         if (!fileInput.files.length) {
             uploadStatus.innerHTML = `<div class="upload-error">Please select an image file first</div>`;
@@ -1226,18 +1294,6 @@
         }
         
         const file = fileInput.files[0];
-        
-        // Validate file type
-        if (!file.type.match('image.*')) {
-            uploadStatus.innerHTML = `<div class="upload-error">Only image files are allowed (JPEG, PNG, GIF)</div>`;
-            return;
-        }
-        
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            uploadStatus.innerHTML = `<div class="upload-error">Image size should be less than 5MB</div>`;
-            return;
-        }
         
         // Show preview
         const reader = new FileReader();
@@ -1250,16 +1306,43 @@
         // Disable upload button and show progress
         uploadBtn.disabled = true;
         uploadBtn.innerHTML = '⏳ Uploading...';
-        uploadStatus.innerHTML = `<div class="upload-progress">Uploading ${file.name}... Please wait</div>`;
+        uploadStatus.innerHTML = `<div class="upload-progress">Uploading ${file.name}...</div>`;
+        
+        // Show progress bar
+        if (progressBar) {
+            progressBar.style.width = '0%';
+            progressBar.style.display = 'block';
+            
+            // Simulate progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 10;
+                progressBar.style.width = `${progress}%`;
+                if (progress >= 90) clearInterval(progressInterval);
+            }, 200);
+        }
         
         try {
-            // Upload to Hostinger
+            // Upload to Hostinger via server
             const imageUrl = await uploadImageToHostinger(file);
+            
+            // Complete progress
+            if (progressBar) {
+                progressBar.style.width = '100%';
+                setTimeout(() => {
+                    progressBar.style.display = 'none';
+                }, 1000);
+            }
             
             // Show success message
             uploadStatus.innerHTML = `<div class="upload-success">
                 ✅ Image uploaded successfully!<br>
-                URL: <a href="${imageUrl}" target="_blank">${imageUrl}</a>
+                URL: <a href="${imageUrl}" target="_blank">${escapeHtml(imageUrl.substring(0, 80))}...</a>
+                <div style="font-size: 11px; margin-top: 5px;">
+                    <button onclick="copyToClipboard('${imageUrl}')" style="background: #6c757d; color: white; border: none; padding: 3px 8px; border-radius: 3px; font-size: 11px; cursor: pointer;">
+                        📋 Copy URL
+                    </button>
+                </div>
             </div>`;
             
             // Add the uploaded image URL to the links list
@@ -1270,6 +1353,11 @@
             imagePreview.style.display = 'none';
             
         } catch (error) {
+            // Hide progress bar
+            if (progressBar) {
+                progressBar.style.display = 'none';
+            }
+            
             uploadStatus.innerHTML = `<div class="upload-error">
                 ❌ Upload failed: ${error.message}
             </div>`;
@@ -1278,6 +1366,14 @@
             uploadBtn.disabled = false;
             uploadBtn.innerHTML = '📤 Upload Image';
         }
+    }
+    
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            showMessage('📋 URL copied to clipboard!', 'success');
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+        });
     }
     
     function triggerImageUpload() {
@@ -1297,6 +1393,7 @@
         document.getElementById('fieldName').textContent = `Editing ${displayField}`;
         document.getElementById('fieldLabel').textContent = displayField;
         document.getElementById('fieldInfo').innerHTML = `Config ID: <strong>${id}</strong> | Field: <code>${field}</code>`;
+        document.getElementById('configId').textContent = id;
         
         const fieldInput = document.getElementById('fieldInput');
         fieldInput.innerHTML = '';
@@ -1366,14 +1463,21 @@
                 <div style="font-size: 14px; font-weight: bold; color: #333; margin-bottom: 5px;">
                     📤 Upload New Image to Hostinger
                 </div>
+                <div style="font-size: 12px; color: #666; margin-bottom: 10px;">
+                    Max file size: ${(UPLOAD_CONFIG.maxFileSize / 1024 / 1024).toFixed(2)} MB
+                </div>
                 
                 <label class="file-input-label" for="imageUploadInput">
-                    📁 Choose Image File (max 5MB)
+                    📁 Choose Image File
                 </label>
                 <input type="file" id="imageUploadInput" class="upload-file-input" 
                        accept="image/*" onchange="handleImageUpload()">
                 
                 <img id="imageUploadPreview" class="image-upload-preview" alt="Image Preview">
+                
+                <div id="uploadProgressBar" class="upload-progress-bar" style="display: none;">
+                    <div class="upload-progress-fill"></div>
+                </div>
                 
                 <div id="uploadStatus" class="upload-status"></div>
                 
@@ -1738,12 +1842,14 @@
         const uploadInput = document.getElementById('imageUploadInput');
         const uploadPreview = document.getElementById('imageUploadPreview');
         const uploadStatus = document.getElementById('uploadStatus');
+        const progressBar = document.getElementById('uploadProgressBar');
         if (uploadInput) uploadInput.value = '';
         if (uploadPreview) {
             uploadPreview.src = '';
             uploadPreview.style.display = 'none';
         }
         if (uploadStatus) uploadStatus.innerHTML = '';
+        if (progressBar) progressBar.style.display = 'none';
     }
     
     function showError(message) {
@@ -1794,9 +1900,10 @@
         }
     });
     
+    // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('pageSize').value = pageSize;
-        loadData();
+        init();
     });
 </script>
 </body>
