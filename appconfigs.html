@@ -64,24 +64,6 @@
             border-color: #FF9800;
             box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
         }
-        .search-options {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 5px;
-            font-size: 12px;
-            color: #666;
-        }
-        .search-options label {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            cursor: pointer;
-        }
-        .search-options input[type="checkbox"] {
-            margin: 0;
-            cursor: pointer;
-        }
         #message {
             padding: 15px;
             border-radius: 5px;
@@ -248,9 +230,6 @@
             margin: 0 2px;
             cursor: default;
         }
-        .page-number:hover {
-            background: #F57C00;
-        }
         .stats-info {
             background: #fff3e0;
             padding: 12px 20px;
@@ -272,12 +251,6 @@
         }
         .stats-info .showing {
             color: #FF9800;
-        }
-        .stats-info .active {
-            color: #4CAF50;
-        }
-        .stats-info .inactive {
-            color: #f44336;
         }
         .empty-state {
             text-align: center;
@@ -320,9 +293,9 @@
             background: white;
             padding: 30px;
             border-radius: 10px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
+            max-width: 800px;
+            width: 95%;
+            max-height: 85vh;
             overflow-y: auto;
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         }
@@ -626,6 +599,480 @@
         .file-input-label:hover {
             background: #5a6268;
         }
+        
+        /* Image Gallery Styles */
+        .image-gallery-container {
+            margin-bottom: 20px;
+        }
+        
+        .gallery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .gallery-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .gallery-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .view-all-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s;
+        }
+        
+        .view-all-btn:hover {
+            background: #1976D2;
+        }
+        
+        .image-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #FF9800;
+        }
+        
+        .stats-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .stats-value {
+            font-weight: bold;
+            font-size: 16px;
+            color: #FF9800;
+        }
+        
+        .stats-label {
+            font-size: 11px;
+            color: #666;
+        }
+        
+        .compact-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        
+        .compact-thumbnail {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 5px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .compact-thumbnail:hover {
+            transform: scale(1.05);
+            border-color: #FF9800;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .compact-thumbnail.active {
+            border-color: #FF9800;
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
+        }
+        
+        .compact-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .compact-index {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        
+        .main-preview-section {
+            margin-bottom: 20px;
+        }
+        
+        .main-preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .main-preview-title {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .preview-navigation {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .nav-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .nav-btn:hover {
+            background: #5a6268;
+        }
+        
+        .main-preview-img {
+            width: 100%;
+            max-height: 250px;
+            object-fit: contain;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: #f8f9fa;
+        }
+        
+        .preview-info {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .preview-url {
+            word-break: break-all;
+            font-family: monospace;
+            background: #f5f5f5;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 5px 0;
+        }
+        
+        .preview-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .preview-action-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        
+        .preview-action-btn:hover {
+            background: #1976D2;
+        }
+        
+        .no-images-placeholder {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px dashed #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .no-images-placeholder .emoji {
+            font-size: 40px;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
+        
+        .no-images-placeholder h4 {
+            margin: 0 0 10px 0;
+            color: #666;
+        }
+        
+        .no-images-placeholder p {
+            margin: 0;
+            font-size: 13px;
+        }
+        
+        /* Image Viewer Modal */
+        .image-viewer-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            overflow: hidden;
+        }
+        
+        .viewer-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .viewer-header {
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .viewer-header h2 {
+            margin: 0;
+            font-size: 1.3rem;
+        }
+        
+        .close-viewer {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: white;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+        
+        .close-viewer:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .viewer-main {
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .main-image-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+        
+        .main-viewer-image {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            transition: transform 0.3s;
+        }
+        
+        .thumbnail-sidebar {
+            width: 200px;
+            background: rgba(0,0,0,0.8);
+            border-left: 1px solid rgba(255,255,255,0.1);
+            overflow-y: auto;
+            padding: 20px 10px;
+        }
+        
+        .thumbnail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .thumbnail-item {
+            position: relative;
+            cursor: pointer;
+            border-radius: 5px;
+            overflow: hidden;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .thumbnail-item:hover {
+            transform: scale(1.05);
+            border-color: rgba(255, 152, 0, 0.5);
+        }
+        
+        .thumbnail-item.active {
+            border-color: #FF9800;
+        }
+        
+        .thumbnail-img {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .thumbnail-index {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        
+        .viewer-controls {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            background: rgba(0,0,0,0.7);
+            padding: 15px 30px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .control-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255, 152, 0, 0.2);
+        }
+        
+        .image-counter {
+            color: white;
+            font-size: 14px;
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        .image-info {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 400px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .image-url {
+            font-size: 12px;
+            font-family: monospace;
+            word-break: break-all;
+            margin-top: 5px;
+            opacity: 0.8;
+        }
+        
+        .copy-url-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 5px 10px;
+            font-size: 11px;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.3s;
+        }
+        
+        .copy-url-btn:hover {
+            background: #1976D2;
+        }
+        
+        .viewer-footer {
+            background: rgba(0,0,0,0.9);
+            padding: 15px 20px;
+            color: #aaa;
+            font-size: 12px;
+            text-align: center;
+            z-index: 10;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .image-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+        
+        .action-btn {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 5px 10px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .action-btn:hover {
+            background: rgba(255, 152, 0, 0.5);
+        }
+        
         @media (max-width: 768px) {
             body {
                 margin: 15px;
@@ -662,6 +1109,24 @@
             .modal-actions {
                 flex-direction: column;
             }
+            .compact-gallery {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            }
+            .thumbnail-sidebar {
+                width: 150px;
+            }
+            .thumbnail-grid {
+                grid-template-columns: 1fr;
+            }
+            .viewer-controls {
+                bottom: 20px;
+                padding: 10px 20px;
+            }
+            .image-info {
+                left: 20px;
+                right: 20px;
+                max-width: none;
+            }
         }
     </style>
 </head>
@@ -679,8 +1144,6 @@
     <div class="stats-info">
         <span class="total">Total Configs: <span id="totalCount">0</span></span>
         <span class="showing">Showing: <span id="showingCount">0</span></span>
-        <span class="active">Active: <span id="activeCount">0</span></span>
-        <span class="inactive">Inactive: <span id="inactiveCount">0</span></span>
     </div>
     
     <div class="pagination-controls">
@@ -716,6 +1179,7 @@
     
     <div id="dataContainer"></div>
 
+    <!-- Edit Modal -->
     <div id="editModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -742,6 +1206,52 @@
         </div>
     </div>
 
+    <!-- Image Viewer Modal -->
+    <div id="imageViewerModal" class="image-viewer-modal">
+        <div class="viewer-content">
+            <div class="viewer-header">
+                <h2>Image Gallery Viewer</h2>
+                <button class="close-viewer" onclick="closeImageViewer()">&times;</button>
+            </div>
+            
+            <div class="viewer-main">
+                <div class="main-image-container">
+                    <img id="mainViewerImage" class="main-viewer-image" alt="Main Image">
+                </div>
+                
+                <div class="thumbnail-sidebar" id="thumbnailSidebar">
+                    <!-- Thumbnails will be populated here -->
+                </div>
+            </div>
+            
+            <div class="viewer-controls">
+                <button class="control-btn" onclick="prevImage()" title="Previous Image">◀</button>
+                <div class="image-counter" id="imageCounter">1 / 0</div>
+                <button class="control-btn" onclick="nextImage()" title="Next Image">▶</button>
+            </div>
+            
+            <div class="image-info" id="imageInfo">
+                <div id="imageName">No image selected</div>
+                <div class="image-url" id="imageUrl">-</div>
+                <button class="copy-url-btn" onclick="copyImageUrl()" title="Copy URL to clipboard">
+                    📋 Copy URL
+                </button>
+                <div class="image-actions">
+                    <button class="action-btn" onclick="openImageInNewTab()" title="Open in new tab">
+                        ↗ Open
+                    </button>
+                    <button class="action-btn" onclick="downloadImage()" title="Download image">
+                        ⬇ Download
+                    </button>
+                </div>
+            </div>
+            
+            <div class="viewer-footer">
+                <div>Use arrow keys or buttons to navigate • Press ESC to close • Click thumbnail to select</div>
+            </div>
+        </div>
+    </div>
+
 <script>
     // Global variables
     let allData = [];
@@ -760,8 +1270,10 @@
     let totalPages = 1;
     let totalFilteredItems = 0;
 
-    // Image upload variables
-    let currentUploadFile = null;
+    // Image viewer variables
+    let viewerImages = [];
+    let currentViewerIndex = 0;
+    let isViewerOpen = false;
 
     // Image Upload API Configuration
     const UPLOAD_API_URL = 'https://api.zulushop.in/api/v1/user/upload';
@@ -1028,8 +1540,6 @@
     
     function updateStats() {
         if (!allData || !Array.isArray(allData)) {
-            document.getElementById('activeCount').textContent = '0';
-            document.getElementById('inactiveCount').textContent = '0';
             document.getElementById('totalCount').textContent = '0';
             document.getElementById('showingCount').textContent = '0';
             return;
@@ -1037,8 +1547,6 @@
         
         const totalCount = allData.length;
         
-        document.getElementById('activeCount').textContent = 'N/A';
-        document.getElementById('inactiveCount').textContent = 'N/A';
         document.getElementById('totalCount').textContent = totalCount;
         document.getElementById('showingCount').textContent = totalFilteredItems;
     }
@@ -1187,7 +1695,7 @@
         updatePaginationControls();
     }
     
-    // Function to upload image to Hostinger server - UPDATED BASED ON FLUTTER CODE
+    // Function to upload image to Hostinger server
     async function uploadImageToHostinger(file) {
         try {
             console.log('📤 Uploading image to Hostinger...', file.name, file.type);
@@ -1212,7 +1720,7 @@
                     throw new Error('Invalid response from server');
                 }
                 
-                // Extract URL from response (based on Flutter code logic)
+                // Extract URL from response
                 let url;
                 
                 // Try different possible response formats
@@ -1390,7 +1898,107 @@
         }
         
         let html = `
-            <div class="link-count">Currently ${images.length} image link${images.length !== 1 ? 's' : ''}</div>
+            <div class="image-gallery-container">
+                <div class="gallery-header">
+                    <div class="gallery-title">
+                        📸 Image Gallery Editor
+                    </div>
+                    ${images.length > 0 ? `
+                    <div class="gallery-actions">
+                        <button type="button" class="view-all-btn" onclick="viewAllImages(${JSON.stringify(images)})">
+                            👁️ View All Images
+                        </button>
+                    </div>
+                    ` : ''}
+                </div>
+        `;
+        
+        if (images.length > 0) {
+            // Image stats
+            html += `
+                <div class="image-stats">
+                    <div class="stats-item">
+                        <div class="stats-value">${images.length}</div>
+                        <div class="stats-label">Total Images</div>
+                    </div>
+                    <div class="stats-item">
+                        <div class="stats-value">${images.length}</div>
+                        <div class="stats-label">Active Links</div>
+                    </div>
+                    <div class="stats-item">
+                        <div class="stats-value">${isValidJson ? '✓' : '⚠️'}</div>
+                        <div class="stats-label">JSON Format</div>
+                    </div>
+                </div>
+            `;
+            
+            // Compact gallery
+            html += `
+                <div class="compact-gallery" id="compactGallery">
+            `;
+            
+            images.forEach((url, index) => {
+                html += `
+                    <div class="compact-thumbnail ${index === 0 ? 'active' : ''}" 
+                         onclick="previewImageInGallery(${index}, ${JSON.stringify(images)})" 
+                         title="Click to preview • ${url.substring(0, 50)}...">
+                        <img src="${escapeHtml(url)}" 
+                             class="compact-img" 
+                             alt="Image ${index + 1}"
+                             onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNlZGVkZWQiIHJ4PSI1Ii8+PHBhdGggZD0iTTMwIDQwTDUwIDYwTDcwIDQwIiBzdHJva2U9IiM5OTkiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PGNpcmNsZSBjeD0iNTAiIGN5PSIzNSIgcj0iMTAiIHN0cm9rZT0iIzk5OSIgc3Ryb2tlLXdpZHRoPSIyIi8+PC9zdmc+'">
+                        <div class="compact-index">${index + 1}</div>
+                    </div>
+                `;
+            });
+            
+            html += `</div>`;
+            
+            // Main preview section
+            html += `
+                <div class="main-preview-section">
+                    <div class="main-preview-header">
+                        <div class="main-preview-title">Current Image Preview</div>
+                        ${images.length > 1 ? `
+                        <div class="preview-navigation">
+                            <button class="nav-btn" onclick="navigatePreview(-1, ${JSON.stringify(images)})">◀ Prev</button>
+                            <span style="font-size: 12px; color: #666;">1 / ${images.length}</span>
+                            <button class="nav-btn" onclick="navigatePreview(1, ${JSON.stringify(images)})">Next ▶</button>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <img src="${escapeHtml(images[0])}" 
+                         id="mainPreviewImg" 
+                         class="main-preview-img" 
+                         alt="Main Preview"
+                         onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNlZGVkZWQiIHJ4PSI1Ii8+PHBhdGggZD0iTTMwIDQwTDUwIDYwTDcwIDQwIiBzdHJva2U9IiM5OTkiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PGNpcmNsZSBjeD0iNTAiIGN5PSIzNSIgcj0iMTAiIHN0cm9rZT0iIzk5OSIgc3Ryb2tlLXdpZHRoPSIyIi8+PHRleHQgeD0iNTAiIHk9IjgwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiM2NjYiPkltYWdlIG5vdCBmb3VuZDwvdGV4dD48L3N2Zz4=';">
+                    <div class="preview-info">
+                        <div><strong>Image 1</strong> of ${images.length}</div>
+                        <div class="preview-url">${escapeHtml(images[0].substring(0, 100))}${images[0].length > 100 ? '...' : ''}</div>
+                        <div class="preview-actions">
+                            <button class="preview-action-btn" onclick="copyImageLink('${escapeHtml(images[0])}')">
+                                📋 Copy URL
+                            </button>
+                            <button class="preview-action-btn" onclick="window.open('${escapeHtml(images[0])}', '_blank')">
+                                ↗ Open in New Tab
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="no-images-placeholder">
+                    <div class="emoji">🖼️</div>
+                    <h4>No Images Found</h4>
+                    <p>This field currently contains no image links.</p>
+                    <p><small>Add your first image link below or upload a new image</small></p>
+                </div>
+            `;
+        }
+        
+        // Image links editor
+        html += `
+            <div class="link-count" style="margin: 20px 0 10px 0;">Currently ${images.length} image link${images.length !== 1 ? 's' : ''}</div>
             <div class="image-links-container" id="imageLinksContainer">
         `;
         
@@ -1400,7 +2008,7 @@
                     <input type="text" class="image-link-input" 
                            value="${escapeHtml(url)}" 
                            placeholder="https://example.com/image.jpg"
-                           onchange="updateImagePreview(this)">
+                           onchange="updateImagePreview(this, ${JSON.stringify(images)})">
                     <button type="button" class="remove-link-btn" onclick="removeImageLink(this)">×</button>
                 </div>
             `;
@@ -1408,7 +2016,7 @@
         
         html += `</div>`;
         
-        // Add image upload section
+        // Image upload section
         html += `
             <div class="image-upload-container">
                 <div style="font-size: 14px; font-weight: bold; color: #333; margin-bottom: 5px;">
@@ -1436,27 +2044,14 @@
             </div>
         `;
         
-        if (images.length > 0 && images[0]) {
-            html += `
-                <div class="image-preview-container">
-                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Preview (first image):</div>
-                    <img src="${escapeHtml(images[0])}" 
-                         class="preview-image" 
-                         alt="Image Preview"
-                         onerror="this.style.display='none';">
-                    <div style="font-size: 11px; color: #999; margin-top: 5px;">
-                        Click to view: <a href="${escapeHtml(images[0])}" target="_blank">${escapeHtml(images[0].substring(0, 50))}...</a>
-                    </div>
-                </div>
-            `;
-        }
-        
         html += `
             <div class="json-validation ${isValidJson ? '' : 'json-error'}">
                 ${isValidJson ? '✓ Valid JSON array format' : '⚠️ Invalid JSON, saving as comma-separated URLs'}
             </div>
             <input type="hidden" id="editValue" name="club_slider_images">
         `;
+        
+        html += `</div>`; // Close image-gallery-container
         
         return html;
     }
@@ -1563,8 +2158,220 @@
         return inputHtml;
     }
     
+    // Image gallery functions
+    function viewAllImages(images) {
+        const imageObjects = images.map((url, index) => ({ url, index }));
+        openImageViewer(imageObjects, 0);
+    }
+    
+    function previewImageInGallery(index, images) {
+        const mainPreviewImg = document.getElementById('mainPreviewImg');
+        const compactGallery = document.getElementById('compactGallery');
+        
+        if (!mainPreviewImg || !compactGallery) return;
+        
+        // Update main preview
+        mainPreviewImg.src = images[index];
+        
+        // Update navigation text
+        const previewNav = document.querySelector('.preview-navigation');
+        if (previewNav) {
+            const navText = previewNav.querySelector('span');
+            if (navText) {
+                navText.textContent = `${index + 1} / ${images.length}`;
+            }
+        }
+        
+        // Update preview info
+        const previewInfo = document.querySelector('.preview-info');
+        if (previewInfo) {
+            const imageNumber = previewInfo.querySelector('div strong');
+            const previewUrl = previewInfo.querySelector('.preview-url');
+            const copyBtn = previewInfo.querySelector('.preview-action-btn[onclick*="copyImageLink"]');
+            const openBtn = previewInfo.querySelector('.preview-action-btn[onclick*="window.open"]');
+            
+            if (imageNumber) {
+                imageNumber.parentElement.innerHTML = `<strong>Image ${index + 1}</strong> of ${images.length}`;
+            }
+            if (previewUrl) {
+                previewUrl.textContent = images[index].substring(0, 100) + (images[index].length > 100 ? '...' : '');
+            }
+            if (copyBtn) {
+                copyBtn.onclick = () => copyImageLink(images[index]);
+            }
+            if (openBtn) {
+                openBtn.onclick = () => window.open(images[index], '_blank');
+            }
+        }
+        
+        // Update active thumbnail
+        const thumbnails = compactGallery.querySelectorAll('.compact-thumbnail');
+        thumbnails.forEach((thumb, i) => {
+            if (i === index) {
+                thumb.classList.add('active');
+            } else {
+                thumb.classList.remove('active');
+            }
+        });
+    }
+    
+    function navigatePreview(direction, images) {
+        const compactGallery = document.getElementById('compactGallery');
+        if (!compactGallery) return;
+        
+        const thumbnails = compactGallery.querySelectorAll('.compact-thumbnail');
+        let currentIndex = -1;
+        
+        thumbnails.forEach((thumb, index) => {
+            if (thumb.classList.contains('active')) {
+                currentIndex = index;
+            }
+        });
+        
+        if (currentIndex === -1) currentIndex = 0;
+        
+        let newIndex = currentIndex + direction;
+        if (newIndex < 0) newIndex = images.length - 1;
+        if (newIndex >= images.length) newIndex = 0;
+        
+        previewImageInGallery(newIndex, images);
+    }
+    
+    function copyImageLink(url) {
+        navigator.clipboard.writeText(url)
+            .then(() => {
+                showMessage('✅ Image URL copied to clipboard!', 'success');
+            })
+            .catch(err => {
+                console.error('Failed to copy URL:', err);
+                showMessage('❌ Failed to copy URL', 'error');
+            });
+    }
+    
+    // Image viewer functions
+    function openImageViewer(images, startIndex = 0) {
+        viewerImages = images;
+        currentViewerIndex = startIndex;
+        isViewerOpen = true;
+        
+        document.getElementById('imageViewerModal').style.display = 'block';
+        updateViewer();
+        
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeImageViewer() {
+        document.getElementById('imageViewerModal').style.display = 'none';
+        isViewerOpen = false;
+        viewerImages = [];
+        
+        // Restore body scroll
+        document.body.style.overflow = 'auto';
+    }
+    
+    function updateViewer() {
+        if (viewerImages.length === 0) return;
+        
+        const image = viewerImages[currentViewerIndex];
+        const mainImg = document.getElementById('mainViewerImage');
+        const imageCounter = document.getElementById('imageCounter');
+        const imageInfo = document.getElementById('imageInfo');
+        const thumbnailSidebar = document.getElementById('thumbnailSidebar');
+        
+        // Update main image
+        mainImg.src = image.url;
+        mainImg.alt = `Image ${currentViewerIndex + 1}`;
+        
+        // Update counter
+        imageCounter.textContent = `${currentViewerIndex + 1} / ${viewerImages.length}`;
+        
+        // Update info
+        document.getElementById('imageName').textContent = `Image ${currentViewerIndex + 1}`;
+        document.getElementById('imageUrl').textContent = image.url;
+        
+        // Update thumbnails
+        thumbnailSidebar.innerHTML = '';
+        viewerImages.forEach((img, index) => {
+            const thumbnail = document.createElement('div');
+            thumbnail.className = `thumbnail-item ${index === currentViewerIndex ? 'active' : ''}`;
+            thumbnail.innerHTML = `
+                <img src="${img.url}" class="thumbnail-img" alt="Thumbnail ${index + 1}">
+                <div class="thumbnail-index">${index + 1}</div>
+            `;
+            thumbnail.onclick = () => goToImage(index);
+            thumbnailSidebar.appendChild(thumbnail);
+        });
+        
+        // Scroll active thumbnail into view
+        const activeThumbnail = thumbnailSidebar.querySelector('.thumbnail-item.active');
+        if (activeThumbnail) {
+            activeThumbnail.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+    
+    function nextImage() {
+        if (viewerImages.length === 0) return;
+        currentViewerIndex = (currentViewerIndex + 1) % viewerImages.length;
+        updateViewer();
+    }
+    
+    function prevImage() {
+        if (viewerImages.length === 0) return;
+        currentViewerIndex = (currentViewerIndex - 1 + viewerImages.length) % viewerImages.length;
+        updateViewer();
+    }
+    
+    function goToImage(index) {
+        if (index >= 0 && index < viewerImages.length) {
+            currentViewerIndex = index;
+            updateViewer();
+        }
+    }
+    
+    function copyImageUrl() {
+        if (viewerImages.length === 0) return;
+        
+        const url = viewerImages[currentViewerIndex].url;
+        navigator.clipboard.writeText(url)
+            .then(() => {
+                showMessage('✅ Image URL copied to clipboard!', 'success');
+            })
+            .catch(err => {
+                console.error('Failed to copy URL:', err);
+                showMessage('❌ Failed to copy URL', 'error');
+            });
+    }
+    
+    function openImageInNewTab() {
+        if (viewerImages.length === 0) return;
+        
+        const url = viewerImages[currentViewerIndex].url;
+        window.open(url, '_blank');
+    }
+    
+    function downloadImage() {
+        if (viewerImages.length === 0) return;
+        
+        const url = viewerImages[currentViewerIndex].url;
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `image_${currentViewerIndex + 1}_${Date.now()}.${getFileExtension(url)}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    
+    function getFileExtension(url) {
+        const match = url.match(/\.([a-z0-9]+)(?:[?#]|$)/i);
+        return match ? match[1].toLowerCase() : 'jpg';
+    }
+    
+    // Image link management functions
     function addImageLink(url = '') {
         const container = document.getElementById('imageLinksContainer');
+        if (!container) return;
+        
         const index = container.children.length;
         
         const newItem = document.createElement('div');
@@ -1584,6 +2391,7 @@
         if (newInput && !url) newInput.focus();
         
         updateLinkCount();
+        updateGalleryAfterChange();
         
         // Scroll to the new item
         newItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1601,48 +2409,21 @@
             });
             
             updateLinkCount();
-            updatePreviewForFirstImage();
+            updateGalleryAfterChange();
         }
     }
     
     function updateImagePreview(input) {
         const item = input.closest('.image-link-item');
-        if (item && item.getAttribute('data-index') === '0') {
-            updatePreviewForFirstImage();
-        }
-    }
-    
-    function updatePreviewForFirstImage() {
-        const container = document.getElementById('imageLinksContainer');
-        const firstInput = container.querySelector('.image-link-item[data-index="0"] .image-link-input');
-        
-        let previewContainer = document.querySelector('.image-preview-container');
-        
-        if (firstInput && firstInput.value) {
-            if (!previewContainer) {
-                previewContainer = document.createElement('div');
-                previewContainer.className = 'image-preview-container';
-                const imageLinksContainer = document.getElementById('imageLinksContainer');
-                imageLinksContainer.parentNode.insertBefore(previewContainer, imageLinksContainer.nextElementSibling);
-            }
-            
-            previewContainer.innerHTML = `
-                <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Preview (first image):</div>
-                <img src="${escapeHtml(firstInput.value)}" 
-                     class="preview-image" 
-                     alt="Image Preview"
-                     onerror="this.style.display='none';">
-                <div style="font-size: 11px; color: #999; margin-top: 5px;">
-                    Click to view: <a href="${escapeHtml(firstInput.value)}" target="_blank">${escapeHtml(firstInput.value.substring(0, 50))}${firstInput.value.length > 50 ? '...' : ''}</a>
-                </div>
-            `;
-        } else if (previewContainer) {
-            previewContainer.remove();
+        if (item) {
+            updateGalleryAfterChange();
         }
     }
     
     function updateLinkCount() {
         const container = document.getElementById('imageLinksContainer');
+        if (!container) return;
+        
         const count = container.children.length;
         
         let countElement = document.querySelector('.link-count');
@@ -1653,6 +2434,106 @@
         }
         
         countElement.textContent = `Currently ${count} image link${count !== 1 ? 's' : ''}`;
+    }
+    
+    function updateGalleryAfterChange() {
+        const container = document.getElementById('imageLinksContainer');
+        if (!container) return;
+        
+        const inputs = container.querySelectorAll('.image-link-input');
+        const images = Array.from(inputs).map(input => input.value.trim()).filter(url => url);
+        
+        // Update stats
+        const statsElements = document.querySelectorAll('.stats-value');
+        if (statsElements.length >= 2) {
+            statsElements[0].textContent = images.length;
+            statsElements[1].textContent = images.length;
+        }
+        
+        // Update link count
+        const linkCountElement = document.querySelector('.link-count');
+        if (linkCountElement) {
+            linkCountElement.textContent = `Currently ${images.length} image link${images.length !== 1 ? 's' : ''}`;
+        }
+        
+        // Update view all button
+        const viewAllBtn = document.querySelector('.view-all-btn');
+        if (viewAllBtn && images.length > 0) {
+            viewAllBtn.style.display = 'flex';
+            viewAllBtn.onclick = () => viewAllImages(images);
+        } else if (viewAllBtn) {
+            viewAllBtn.style.display = 'none';
+        }
+        
+        // Rebuild compact gallery if it exists
+        const compactGallery = document.getElementById('compactGallery');
+        if (compactGallery) {
+            compactGallery.innerHTML = '';
+            images.forEach((url, index) => {
+                const thumbnail = document.createElement('div');
+                thumbnail.className = `compact-thumbnail ${index === 0 ? 'active' : ''}`;
+                thumbnail.onclick = () => previewImageInGallery(index, images);
+                thumbnail.title = `Click to preview • ${url.substring(0, 50)}...`;
+                thumbnail.innerHTML = `
+                    <img src="${escapeHtml(url)}" 
+                         class="compact-img" 
+                         alt="Image ${index + 1}"
+                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNlZGVkZWQiIHJ4PSI1Ii8+PHBhdGggZD0iTTMwIDQwTDUwIDYwTDcwIDQwIiBzdHJva2U9IiM5OTkiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PGNpcmNsZSBjeD0iNTAiIGN5PSIzNSIgcj0iMTAiIHN0cm9rZT0iIzk5OSIgc3Ryb2tlLXdpZHRoPSIyIi8+PC9zdmc+'">
+                    <div class="compact-index">${index + 1}</div>
+                `;
+                compactGallery.appendChild(thumbnail);
+            });
+            
+            // Update main preview
+            if (images.length > 0) {
+                const mainPreviewImg = document.getElementById('mainPreviewImg');
+                if (mainPreviewImg) {
+                    mainPreviewImg.src = images[0];
+                }
+                
+                // Update preview info
+                const previewInfo = document.querySelector('.preview-info');
+                if (previewInfo) {
+                    const imageNumber = previewInfo.querySelector('div strong');
+                    const previewUrl = previewInfo.querySelector('.preview-url');
+                    
+                    if (imageNumber) {
+                        imageNumber.parentElement.innerHTML = `<strong>Image 1</strong> of ${images.length}`;
+                    }
+                    if (previewUrl) {
+                        previewUrl.textContent = images[0].substring(0, 100) + (images[0].length > 100 ? '...' : '');
+                    }
+                }
+                
+                // Update navigation
+                const previewNav = document.querySelector('.preview-navigation');
+                if (previewNav) {
+                    const navText = previewNav.querySelector('span');
+                    if (navText) {
+                        navText.textContent = `1 / ${images.length}`;
+                    }
+                    if (images.length > 1) {
+                        previewNav.style.display = 'flex';
+                    } else {
+                        previewNav.style.display = 'none';
+                    }
+                }
+            }
+        }
+        
+        // Show/hide no images placeholder
+        const noImagesPlaceholder = document.querySelector('.no-images-placeholder');
+        if (noImagesPlaceholder) {
+            noImagesPlaceholder.style.display = images.length === 0 ? 'block' : 'none';
+        }
+        
+        // Show/hide gallery sections
+        const gallerySections = document.querySelectorAll('.image-stats, .compact-gallery, .main-preview-section');
+        gallerySections.forEach(section => {
+            if (section) {
+                section.style.display = images.length > 0 ? 'block' : 'none';
+            }
+        });
     }
     
     document.getElementById('editForm').addEventListener('submit', async function(e) {
@@ -1829,16 +2710,43 @@
         }, 3000);
     }
     
+    // Event listeners
     window.onclick = function(event) {
         const modal = document.getElementById('editModal');
         if (event.target === modal) {
             closeModal();
         }
+        
+        const viewerModal = document.getElementById('imageViewerModal');
+        if (event.target === viewerModal) {
+            closeImageViewer();
+        }
     };
     
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
-            closeModal();
+            if (isViewerOpen) {
+                closeImageViewer();
+            } else {
+                closeModal();
+            }
+        }
+        
+        // Image viewer navigation
+        if (isViewerOpen) {
+            switch(event.key) {
+                case 'ArrowLeft':
+                    prevImage();
+                    event.preventDefault();
+                    break;
+                case 'ArrowRight':
+                    nextImage();
+                    event.preventDefault();
+                    break;
+                case ' ':
+                    event.preventDefault();
+                    break;
+            }
         }
     });
     
