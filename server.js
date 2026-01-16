@@ -2773,7 +2773,9 @@ app.get('/home', (req, res) => {
 app.get('/products', (req, res) => {
   res.sendFile(__dirname + '/products.html');
 });
-
+app.get('/appconfigs', (req, res) => {
+  res.sendFile(__dirname + '/appconfigs.html');
+});
 app.get('/sellers', (req, res) => {
   res.sendFile(__dirname + '/sellers.html');
 });
