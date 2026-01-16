@@ -18,6 +18,7 @@
             gap: 10px;
             margin: 20px 0;
             flex-wrap: wrap;
+            align-items: center;
         }
         button {
             padding: 10px 20px;
@@ -26,6 +27,15 @@
             border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
+            transition: all 0.3s;
+        }
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         .back-btn {
             background: #6c757d;
@@ -56,6 +66,8 @@
             margin: 15px 0;
             font-weight: bold;
             text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
         }
         #loading {
             padding: 20px;
@@ -93,11 +105,10 @@
             text-align: left;
             position: sticky;
             top: 0;
-        }
-        th.sortable {
             cursor: pointer;
+            transition: background 0.3s;
         }
-        th.sortable:hover {
+        th:hover {
             background: #5D4037;
         }
         td {
@@ -107,8 +118,30 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
         }
-        tr:hover {
+        td.editable:hover {
+            background: #f0f8ff;
+            transform: scale(1.02);
+            box-shadow: 0 2px 8px rgba(121, 85, 72, 0.1);
+            z-index: 1;
+        }
+        td.editable::after {
+            content: '✏️';
+            position: absolute;
+            top: 50%;
+            right: 5px;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 10px;
+        }
+        td.editable:hover::after {
+            opacity: 1;
+        }
+        tr:hover td {
             background: #f9f9f9;
         }
         tr:nth-child(even) {
@@ -253,53 +286,229 @@
         .search-box input {
             width: 100%;
             padding: 8px 15px;
-            border: 1px solid #ddd;
+            border: 2px solid #ddd;
             border-radius: 5px;
             font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.3s;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: #795548;
+            box-shadow: 0 0 0 3px rgba(121, 85, 72, 0.1);
         }
         .pagination-controls {
             background: #f8f9fa;
-            padding: 10px;
-            border-radius: 5px;
-            margin: 15px 0;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
+            gap: 15px;
+            border: 1px solid #dee2e6;
         }
         .page-size-selector {
             display: flex;
             align-items: center;
             gap: 10px;
+            font-weight: bold;
+            color: #333;
         }
         .page-size-selector select {
-            padding: 5px 10px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: 2px solid #ddd;
+            background: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .page-size-selector select:focus {
+            outline: none;
+            border-color: #795548;
+        }
+        .page-info {
+            font-weight: bold;
+            color: #333;
+            text-align: center;
         }
         .pagination-buttons {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            flex-wrap: wrap;
         }
         .pagination-buttons button {
-            padding: 5px 10px;
+            padding: 8px 15px;
+            font-size: 14px;
             background: #795548;
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
+            transition: all 0.3s;
+        }
+        .pagination-buttons button:hover:not(:disabled) {
+            background: #5D4037;
+            transform: translateY(-2px);
         }
         .pagination-buttons button:disabled {
             background: #cccccc;
             cursor: not-allowed;
+            transform: none;
         }
-        .page-info {
+        .page-number {
+            padding: 8px 12px;
+            background: #795548;
+            color: white;
+            border-radius: 5px;
             font-weight: bold;
+            margin: 0 2px;
+            cursor: default;
+        }
+        .page-number:hover {
+            background: #5D4037;
         }
         mark {
             background-color: yellow;
             padding: 0 2px;
+            border-radius: 2px;
+        }
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+        .modal-header h2 {
+            margin: 0;
+            color: #333;
+            font-size: 1.5rem;
+        }
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #666;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+        .close-modal:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+        .field-info {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #795548;
+        }
+        .field-info h3 {
+            margin: 0 0 5px 0;
+            color: #333;
+            font-size: 16px;
+        }
+        .field-info p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+            font-size: 14px;
+        }
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.3s;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #795548;
+            box-shadow: 0 0 0 3px rgba(121, 85, 72, 0.1);
+        }
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+            font-family: inherit;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+        .save-btn {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+        .save-btn:hover {
+            background: #218838;
+        }
+        .cancel-btn {
+            background: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+        .cancel-btn:hover {
+            background: #5a6268;
         }
         @media (max-width: 768px) {
             body {
@@ -308,7 +517,7 @@
             .controls {
                 flex-direction: column;
             }
-            button {
+            .controls button {
                 width: 100%;
             }
             .search-box {
@@ -324,6 +533,13 @@
             th, td {
                 padding: 8px 10px;
             }
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+            .modal-actions {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -332,6 +548,7 @@
     
     <div class="controls">
         <button class="back-btn" onclick="location.href='/home'">← Back to Dashboard</button>
+        <button class="refresh-btn" onclick="loadData()">🔄 Refresh Data</button>
         <button class="filter-btn" id="toggleStatusFilterBtn" onclick="toggleStatusFilter()">Active Galleries Only</button>
         <button class="sort-btn" id="toggleSortBtn" onclick="toggleSort()">Sort by Priority</button>
         <div class="search-box">
@@ -363,7 +580,7 @@
     <div class="sort-controls">
         <div style="display: flex; align-items: center; gap: 10px;">
             <span style="font-weight: bold;">Sort Order:</span>
-            <select id="priorityOrder" onchange="applySorting()" style="padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+            <select id="priorityOrder" onchange="applySorting()" style="padding: 8px; border-radius: 5px; border: 2px solid #ddd;">
                 <option value="asc">Highest First (1→10)</option>
                 <option value="desc">Lowest First (10→1)</option>
                 <option value="outliers">Outliers First</option>
@@ -374,7 +591,7 @@
             <label>
                 <input type="checkbox" id="showOutliers" checked onchange="toggleOutliers()"> Show Outliers
             </label>
-            <select id="priorityFilter" onchange="applyPriorityFilter()" style="padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+            <select id="priorityFilter" onchange="applyPriorityFilter()" style="padding: 8px; border-radius: 5px; border: 2px solid #ddd;">
                 <option value="all">All Priorities (1-10)</option>
                 <option value="1">Priority 1 (Highest)</option>
                 <option value="2">Priority 2</option>
@@ -415,11 +632,11 @@
         </div>
         
         <div class="pagination-buttons">
-            <button id="firstPageBtn" onclick="goToPage(1)">First</button>
-            <button id="prevPageBtn" onclick="prevPage()">Previous</button>
+            <button id="firstPageBtn" onclick="goToPage(1)">« First</button>
+            <button id="prevPageBtn" onclick="prevPage()">‹ Previous</button>
             <span id="pageNumbers"></span>
-            <button id="nextPageBtn" onclick="nextPage()">Next</button>
-            <button id="lastPageBtn" onclick="goToLastPage()">Last</button>
+            <button id="nextPageBtn" onclick="nextPage()">Next ›</button>
+            <button id="lastPageBtn" onclick="goToLastPage()">Last »</button>
         </div>
     </div>
     
@@ -428,6 +645,33 @@
     <div id="error" style="display: none;"></div>
     
     <div id="dataContainer"></div>
+
+    <!-- Edit Modal for Single Field -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Field</h2>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            
+            <div class="field-info">
+                <h3 id="fieldName"></h3>
+                <p id="fieldInfo">Editing single field value</p>
+            </div>
+            
+            <form id="editForm">
+                <div class="form-group">
+                    <label id="fieldLabel"></label>
+                    <div id="fieldInput"></div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="save-btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script>
         // Global variables
@@ -441,6 +685,11 @@
         let priorityFilter = 'all';
         let searchTerm = '';
         let searchTimeout = null;
+        
+        // Edit functionality variables
+        let currentEditId = null;
+        let currentEditField = null;
+        let originalValue = null;
         
         // Pagination variables
         let currentPage = 1;
@@ -463,21 +712,26 @@
                     if (Array.isArray(data.data)) {
                         allData = data.data;
                         
-                        // Process priority values (1-10 normal, others outliers)
+                        // Process data for consistent format
                         if (allData.length > 0) {
                             allData = allData.map((gallery, index) => {
-                                // Handle status - could be string or number
-                                let status = gallery.status;
-                                if (typeof status === 'string') {
-                                    // Handle various string formats
-                                    const statusStr = status.toLowerCase().trim();
-                                    if (statusStr === 'on' || statusStr === 'active' || statusStr === 'true' || statusStr === '1' || statusStr === 'yes') {
-                                        status = 1;
-                                    } else if (statusStr === 'off' || statusStr === 'inactive' || statusStr === 'false' || statusStr === '0' || statusStr === 'no') {
-                                        status = 0;
-                                    } else {
-                                        status = 0; // Default to inactive for unknown values
+                                // Ensure id exists
+                                if (!gallery.id) gallery.id = index + 1;
+                                
+                                // Process status field
+                                if (gallery.status !== undefined) {
+                                    let status = gallery.status;
+                                    if (typeof status === 'string') {
+                                        const statusStr = status.toLowerCase().trim();
+                                        if (statusStr === 'on' || statusStr === 'active' || statusStr === 'true' || statusStr === '1' || statusStr === 'yes') {
+                                            status = 1;
+                                        } else if (statusStr === 'off' || statusStr === 'inactive' || statusStr === 'false' || statusStr === '0' || statusStr === 'no') {
+                                            status = 0;
+                                        } else {
+                                            status = 0; // Default to inactive
+                                        }
                                     }
+                                    gallery.status = Number(status) || 0;
                                 }
                                 
                                 // Get priority value and classify (1-10 normal, others outliers)
@@ -651,7 +905,7 @@
             searchTimeout = setTimeout(() => {
                 searchTerm = document.getElementById('searchInput').value;
                 applyFilter();
-            }, 1500); // 1.5 second delay
+            }, 500); // 500ms delay for smoother experience
         }
         
         function setStatusFilter(type) {
@@ -742,9 +996,9 @@
             
             for (let i = startPage; i <= endPage; i++) {
                 if (i === currentPage) {
-                    pageNumbersHTML += `<button style="background: #4E342E; padding: 5px 10px; border-radius: 4px; color: white; border: none; margin: 0 2px;">${i}</button>`;
+                    pageNumbersHTML += `<span class="page-number">${i}</span>`;
                 } else {
-                    pageNumbersHTML += `<button onclick="goToPage(${i})" style="padding: 5px 10px; border-radius: 4px; background: #795548; color: white; border: none; margin: 0 2px;">${i}</button>`;
+                    pageNumbersHTML += `<button onclick="goToPage(${i})" style="padding: 8px 12px; border-radius: 5px; background: #6c757d; color: white; border: none; margin: 0 2px;">${i}</button>`;
                 }
             }
             
@@ -782,8 +1036,10 @@
         }
         
         function displayCurrentPage() {
+            const container = document.getElementById('dataContainer');
+            
             if (filteredData.length === 0) {
-                document.getElementById('dataContainer').innerHTML = 
+                container.innerHTML = 
                     '<div style="padding: 40px; text-align: center; color: #666;">No galleries found matching your criteria</div>';
                 return;
             }
@@ -1080,7 +1336,15 @@
                     const isTruncated = displayValue.length > 50;
                     const titleText = displayValue.length > 50 ? displayValue : '';
                     
-                    html += `<td title="${titleText}" style="${cellStyle}">${truncatedValue}${isTruncated ? '...' : ''}</td>`;
+                    html += `<td class="editable" 
+                             title="${titleText}\n\nClick to edit ${header}" 
+                             data-id="${row.id}" 
+                             data-field="${header}" 
+                             data-value="${encodeURIComponent(value)}"
+                             onclick="openFieldEditModal(this)"
+                             style="${cellStyle}">
+                        ${isTruncated ? truncatedValue + '...' : truncatedValue}
+                    </td>`;
                 });
                 html += '</tr>';
             });
@@ -1138,6 +1402,244 @@
             updatePaginationControls();
         }
         
+        // Edit Modal Functions
+        function openFieldEditModal(cell) {
+            const id = cell.getAttribute('data-id');
+            const field = cell.getAttribute('data-field');
+            const value = decodeURIComponent(cell.getAttribute('data-value') || '');
+            
+            currentEditId = id;
+            currentEditField = field;
+            originalValue = value;
+            
+            // Set field name and info
+            const displayField = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            document.getElementById('fieldName').textContent = `Editing ${displayField}`;
+            document.getElementById('fieldLabel').textContent = displayField;
+            document.getElementById('fieldInfo').textContent = `Gallery ID: ${id}`;
+            
+            // Create appropriate input based on field type
+            const fieldInput = document.getElementById('fieldInput');
+            fieldInput.innerHTML = '';
+            
+            let inputHtml = '';
+            
+            // Determine input type based on field name and value
+            if (field.toLowerCase().includes('description') || 
+                field.toLowerCase().includes('bio') ||
+                field.toLowerCase().includes('content') ||
+                (String(value).length > 100 && !field.toLowerCase().includes('image'))) {
+                // Textarea for long text
+                inputHtml = `
+                    <textarea id="editValue" name="${field}" class="form-control" rows="4" 
+                              placeholder="Enter ${displayField.toLowerCase()}...">${value}</textarea>
+                `;
+            } else if (field.toLowerCase().includes('status')) {
+                // Checkbox for status field
+                const isActive = value === true || value === 1 || value === '1' || 
+                                 String(value).toLowerCase() === 'true' || 
+                                 String(value).toLowerCase() === 'yes' ||
+                                 String(value).toLowerCase() === 'active' ||
+                                 String(value).toLowerCase() === 'on';
+                inputHtml = `
+                    <div style="display: flex; align-items: center; gap: 15px; padding: 12px; background: #f8f9fa; border-radius: 5px;">
+                        <input type="checkbox" id="editValue" name="${field}" ${isActive ? 'checked' : ''} 
+                               class="form-control" style="width: auto; transform: scale(1.3);">
+                        <span style="color: #666; font-size: 14px;">
+                            ${isActive ? 'Currently: Active' : 'Currently: Inactive'}
+                        </span>
+                    </div>
+                `;
+            } else if (field.toLowerCase().includes('priority')) {
+                // Number input for priority (1-10)
+                const priorityValue = parseInt(value) || 1;
+                inputHtml = `
+                    <input type="number" id="editValue" name="${field}" value="${priorityValue}" 
+                           class="form-control" min="1" max="10" step="1">
+                    <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                        <div>Priority 1-3: <span style="color: #2E7D32;">High</span></div>
+                        <div>Priority 4-6: <span style="color: #2196F3;">Medium</span></div>
+                        <div>Priority 7-9: <span style="color: #FF9800;">Low</span></div>
+                        <div>Priority 10: <span style="color: #757575;">Lowest</span></div>
+                    </div>
+                `;
+            } else if (field.toLowerCase().includes('image') || 
+                      field.toLowerCase().includes('url') ||
+                      field.toLowerCase().includes('avatar') ||
+                      field.toLowerCase().includes('photo') ||
+                      field.toLowerCase().includes('thumbnail') ||
+                      field.toLowerCase().includes('link')) {
+                // URL input with preview
+                inputHtml = `
+                    <input type="url" id="editValue" name="${field}" value="${value}" 
+                           class="form-control" placeholder="https://example.com/image.jpg">
+                    ${value ? `<div style="margin-top: 10px; font-size: 12px; color: #666;">
+                        <a href="${value}" target="_blank" style="color: #2196F3;">🔗 Open Link</a>
+                    </div>` : ''}
+                `;
+            } else if (field.toLowerCase().includes('date') ||
+                      field.toLowerCase().includes('created') ||
+                      field.toLowerCase().includes('updated') ||
+                      field.toLowerCase().includes('joined')) {
+                // Date input
+                inputHtml = `
+                    <input type="datetime-local" id="editValue" name="${field}" value="${value}" 
+                           class="form-control">
+                `;
+            } else {
+                // Default text input
+                inputHtml = `
+                    <input type="text" id="editValue" name="${field}" value="${value}" 
+                           class="form-control" placeholder="Enter ${displayField.toLowerCase()}...">
+                `;
+            }
+            
+            fieldInput.innerHTML = inputHtml;
+            
+            // Focus on the input
+            setTimeout(() => {
+                const input = document.getElementById('editValue');
+                if (input) input.focus();
+            }, 100);
+            
+            // Show modal
+            document.getElementById('editModal').style.display = 'block';
+        }
+        
+        function closeModal() {
+            document.getElementById('editModal').style.display = 'none';
+            currentEditId = null;
+            currentEditField = null;
+            originalValue = null;
+        }
+        
+        async function handleEditSubmit(e) {
+            e.preventDefault();
+            
+            const input = document.getElementById('editValue');
+            let newValue;
+            
+            if (input.type === 'checkbox') {
+                newValue = input.checked ? 1 : 0;
+            } else if (input.type === 'number') {
+                newValue = parseInt(input.value) || 1;
+                // Clamp priority between 1-10
+                if (currentEditField.toLowerCase().includes('priority')) {
+                    newValue = Math.max(1, Math.min(10, newValue));
+                }
+            } else {
+                newValue = input.value.trim();
+                
+                // Convert empty string to null for database
+                if (newValue === '') {
+                    newValue = null;
+                }
+            }
+            
+            // Check if value actually changed
+            if (JSON.stringify(newValue) === JSON.stringify(originalValue)) {
+                showMessage('ℹ️ No changes detected', 'info');
+                closeModal();
+                return;
+            }
+            
+            try {
+                showMessage('🔄 Saving changes...', 'info');
+                
+                const updateData = {};
+                updateData[currentEditField] = newValue;
+                
+                const response = await fetch(`/api/galleries/${currentEditId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('✅ Field updated successfully!', 'success');
+                    
+                    // Update the specific cell in the table
+                    updateTableCell(currentEditId, currentEditField, newValue);
+                    
+                    // Update the allData array
+                    const galleryIndex = allData.findIndex(gallery => gallery.id == currentEditId);
+                    if (galleryIndex !== -1) {
+                        allData[galleryIndex][currentEditField] = newValue;
+                        
+                        // If updating status or priority, update the processed fields
+                        if (currentEditField === 'status') {
+                            allData[galleryIndex].status = Number(newValue) || 0;
+                        } else if (currentEditField === 'priority') {
+                            const priority = Number(newValue) || 1;
+                            const isOutlier = priority < 1 || priority > 10;
+                            allData[galleryIndex].priority = priority;
+                            allData[galleryIndex].isOutlier = isOutlier;
+                        }
+                        
+                        // Reapply filters to update stats
+                        applyFilter();
+                        updateStats();
+                        updatePriorityStats();
+                    }
+                    
+                    setTimeout(() => {
+                        closeModal();
+                    }, 1000);
+                } else {
+                    showMessage(`❌ Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ Network error: ${error.message}`, 'error');
+            }
+        }
+        
+        function updateTableCell(id, field, newValue) {
+            // Find and update the specific cell
+            const cells = document.querySelectorAll(`td[data-id="${id}"][data-field="${field}"]`);
+            cells.forEach(cell => {
+                let displayValue = newValue;
+                if (displayValue === null || displayValue === undefined) displayValue = '';
+                if (typeof displayValue === 'object') {
+                    try {
+                        displayValue = JSON.stringify(displayValue);
+                    } catch (e) {
+                        displayValue = String(displayValue);
+                    }
+                }
+                
+                // Format display value based on field type
+                if (field === 'status') {
+                    displayValue = Number(displayValue) === 1 ? 'Active' : 'Inactive';
+                } else if (field === 'priority') {
+                    const priority = Number(displayValue) || 1;
+                    if (priority < 1 || priority > 10) {
+                        displayValue = `${priority} (Outlier)`;
+                    } else {
+                        displayValue = `${priority}`;
+                    }
+                }
+                
+                const truncatedValue = String(displayValue).substring(0, 50);
+                const isTruncated = String(displayValue).length > 50;
+                
+                cell.textContent = truncatedValue + (isTruncated ? '...' : '');
+                cell.setAttribute('data-value', encodeURIComponent(newValue));
+                cell.setAttribute('title', `${displayValue}\n\nClick to edit ${field}`);
+                
+                // Add visual feedback
+                cell.style.background = '#d4edda';
+                cell.style.transition = 'background 0.5s';
+                
+                setTimeout(() => {
+                    cell.style.background = '';
+                }, 1000);
+            });
+        }
+        
         function showError(message) {
             const errorDiv = document.getElementById('error');
             errorDiv.style.display = 'block';
@@ -1163,15 +1665,33 @@
             messageDiv.style.background = color.bg;
             messageDiv.style.color = color.text;
             messageDiv.style.border = `1px solid ${color.border}`;
-            messageDiv.style.display = 'block';
+            messageDiv.style.opacity = '1';
             
             setTimeout(() => {
-                messageDiv.style.display = 'none';
-                messageDiv.textContent = '';
-                messageDiv.style.background = '';
-                messageDiv.style.border = 'none';
-            }, 5000);
+                messageDiv.style.opacity = '0';
+                setTimeout(() => {
+                    messageDiv.textContent = '';
+                }, 300);
+            }, 3000);
         }
+        
+        // Add event listener for edit form submission
+        document.getElementById('editForm').addEventListener('submit', handleEditSubmit);
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('editModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        };
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
         
         document.addEventListener('DOMContentLoaded', function() {
             // Set default states
