@@ -961,6 +961,174 @@
             color: rgba(255, 255, 255, 0.8);
         }
 
+        /* Structured Response Styles */
+        .structured-response {
+            max-width: 95% !important;
+            width: 100%;
+        }
+
+        .structured-text {
+            margin-bottom: 20px;
+            line-height: 1.5;
+            color: #e1e8ed;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 20px 0 12px 0;
+            color: #fff;
+        }
+
+        /* Slider Styles */
+        .products-slider,
+        .galleries-slider {
+            position: relative;
+            width: 100%;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .slider-track {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding: 10px 5px;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+
+        .slider-track::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+
+        .slider-item {
+            flex: 0 0 auto;
+            width: 150px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #2d3746;
+            transition: all 0.3s ease;
+        }
+
+        .slider-item:hover {
+            transform: translateY(-4px);
+            border-color: #0084ff;
+            box-shadow: 0 8px 25px rgba(0, 132, 255, 0.2);
+        }
+
+        .slider-image-container {
+            position: relative;
+            width: 100%;
+            height: 200px; /* Fixed height for 9:16 ratio */
+            overflow: hidden;
+            background: #0a1014;
+        }
+
+        .slider-image-container.portrait {
+            aspect-ratio: 9/16;
+        }
+
+        .slider-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.4s ease;
+        }
+
+        .slider-image-container:hover .slider-image {
+            transform: scale(1.05);
+        }
+
+        .slider-info {
+            padding: 12px;
+            background: rgba(10, 16, 20, 0.95);
+        }
+
+        .slider-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 6px;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .slider-price {
+            font-size: 14px;
+            font-weight: 700;
+            color: #00b894;
+            margin-bottom: 8px;
+        }
+
+        .slider-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 6px;
+        }
+
+        .tag {
+            background: rgba(0, 132, 255, 0.1);
+            color: #0084ff;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+        }
+
+        .slider-link,
+        .seller-link {
+            display: inline-block;
+            color: #0084ff;
+            text-decoration: none;
+            font-size: 12px;
+            margin-top: 6px;
+            padding: 4px 8px;
+            background: rgba(0, 132, 255, 0.1);
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+
+        .slider-link:hover,
+        .seller-link:hover {
+            background: rgba(0, 132, 255, 0.2);
+            text-decoration: none;
+        }
+
+        /* Sellers List Styles */
+        .sellers-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .seller-item {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid #2d3746;
+            transition: all 0.3s ease;
+        }
+
+        .seller-item:hover {
+            border-color: #0084ff;
+            background: rgba(0, 132, 255, 0.05);
+        }
+
+        .seller-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
         /* Utility Classes */
         .hidden {
             display: none !important;
@@ -1058,6 +1226,15 @@
             .image-container {
                 min-height: 150px;
             }
+
+            /* Responsive slider for mobile */
+            .slider-item {
+                width: 130px;
+            }
+            
+            .slider-image-container {
+                height: 173px;
+            }
         }
 
         /* For very small screens */
@@ -1071,6 +1248,14 @@
                 max-width: 200px;
                 max-height: 300px;
             }
+
+            .slider-item {
+                width: 110px;
+            }
+            
+            .slider-image-container {
+                height: 147px;
+            }
         }
 
         /* Auto-resize textarea */
@@ -1078,198 +1263,6 @@
             min-height: 24px;
             max-height: 120px;
         }
-
-        /* Add these styles to the existing CSS in the <style> section */
-
-/* Structured Response Styles */
-.structured-response {
-    max-width: 95% !important;
-    width: 100%;
-}
-
-.structured-text {
-    margin-bottom: 20px;
-    line-height: 1.5;
-    color: #e1e8ed;
-}
-
-.section-title {
-    font-size: 16px;
-    font-weight: 600;
-    margin: 20px 0 12px 0;
-    color: #fff;
-}
-
-/* Slider Styles */
-.products-slider,
-.galleries-slider {
-    position: relative;
-    width: 100%;
-    margin: 15px 0;
-    overflow: hidden;
-}
-
-.slider-track {
-    display: flex;
-    gap: 15px;
-    overflow-x: auto;
-    scroll-behavior: smooth;
-    padding: 10px 5px;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE and Edge */
-}
-
-.slider-track::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
-}
-
-.slider-item {
-    flex: 0 0 auto;
-    width: 150px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid #2d3746;
-    transition: all 0.3s ease;
-}
-
-.slider-item:hover {
-    transform: translateY(-4px);
-    border-color: #0084ff;
-    box-shadow: 0 8px 25px rgba(0, 132, 255, 0.2);
-}
-
-.slider-image-container {
-    position: relative;
-    width: 100%;
-    height: 200px; /* Fixed height for 9:16 ratio (150 * 16/9 ≈ 267, but using 200 for better fit) */
-    overflow: hidden;
-    background: #0a1014;
-}
-
-.slider-image-container.portrait {
-    aspect-ratio: 9/16;
-}
-
-.slider-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    transition: transform 0.4s ease;
-}
-
-.slider-image-container:hover .slider-image {
-    transform: scale(1.05);
-}
-
-.slider-info {
-    padding: 12px;
-    background: rgba(10, 16, 20, 0.95);
-}
-
-.slider-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: #fff;
-    margin-bottom: 6px;
-    line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.slider-price {
-    font-size: 14px;
-    font-weight: 700;
-    color: #00b894;
-    margin-bottom: 8px;
-}
-
-.slider-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-top: 6px;
-}
-
-.tag {
-    background: rgba(0, 132, 255, 0.1);
-    color: #0084ff;
-    padding: 2px 6px;
-    border-radius: 10px;
-    font-size: 10px;
-}
-
-.slider-link,
-.seller-link {
-    display: inline-block;
-    color: #0084ff;
-    text-decoration: none;
-    font-size: 12px;
-    margin-top: 6px;
-    padding: 4px 8px;
-    background: rgba(0, 132, 255, 0.1);
-    border-radius: 6px;
-    transition: all 0.3s;
-}
-
-.slider-link:hover,
-.seller-link:hover {
-    background: rgba(0, 132, 255, 0.2);
-    text-decoration: none;
-}
-
-/* Sellers List Styles */
-.sellers-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin: 15px 0;
-}
-
-.seller-item {
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    border: 1px solid #2d3746;
-    transition: all 0.3s ease;
-}
-
-.seller-item:hover {
-    border-color: #0084ff;
-    background: rgba(0, 132, 255, 0.05);
-}
-
-.seller-name {
-    font-size: 14px;
-    font-weight: 600;
-    color: #fff;
-    margin-bottom: 6px;
-}
-
-/* Auto-slider animation */
-@keyframes slide {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(calc(-150px * 5 - 15px * 4)); }
-}
-
-/* Auto-slider for mobile */
-@media (max-width: 768px) {
-    .slider-item {
-        width: 130px;
-    }
-    
-    .slider-image-container {
-        height: 173px; /* 130 * 16/9 ≈ 231, but using 173 for better fit */
-    }
-    
-    @keyframes slide {
-        0% { transform: translateX(0); }
-        100% { transform: translateX(calc(-130px * 5 - 15px * 4)); }
-    }
-}
     </style>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -1665,169 +1658,7 @@
                 console.error('Error sending OTP:', error);
             }
         }
-// Add this function after the displayMessage function
-function displayStructuredMessage(structuredData, sender) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${sender}`;
-    
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content structured-response';
-    
-    const now = new Date();
-    const messageDisplayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    
-    // Start building the HTML content
-    let htmlContent = '';
-    
-    // Add the text message
-    if (structuredData.text) {
-        htmlContent += `<div class="structured-text">${structuredData.text.replace(/\n/g, '<br>')}</div>`;
-    }
-    
-    // Add Products section if available
-    if (structuredData.products && structuredData.products.length > 0) {
-        htmlContent += `<div class="section-title">🛍️ Products</div>`;
-        htmlContent += `<div class="products-slider">`;
-        htmlContent += `<div class="slider-track" id="productsSliderTrack">`;
-        
-        structuredData.products.forEach((product, index) => {
-            const productImage = product.image || 'https://via.placeholder.com/150x267/1a2733/a0b3c5?text=Product+Image';
-            htmlContent += `
-                <div class="slider-item product-item">
-                    <div class="slider-image-container portrait">
-                        <img src="${productImage}" 
-                             alt="${product.name}" 
-                             class="slider-image"
-                             loading="lazy"
-                             onload="detectImageOrientation(this)">
-                    </div>
-                    <div class="slider-info">
-                        <div class="slider-title">${product.name}</div>
-                        <div class="slider-price">${product.price}</div>
-                        ${product.tags && product.tags.length > 0 ? 
-                            `<div class="slider-tags">${product.tags.slice(0, 3).map(tag => `<span class="tag">${tag}</span>`).join(' ')}</div>` : ''}
-                    </div>
-                </div>
-            `;
-        });
-        
-        htmlContent += `</div></div>`;
-    }
-    
-    // Add Galleries section if available
-    if (structuredData.galleries && structuredData.galleries.length > 0) {
-        htmlContent += `<div class="section-title">🎨 Galleries</div>`;
-        htmlContent += `<div class="galleries-slider">`;
-        htmlContent += `<div class="slider-track" id="galleriesSliderTrack">`;
-        
-        structuredData.galleries.forEach((gallery, index) => {
-            const galleryImage = gallery.image || 'https://via.placeholder.com/150x267/1a2733/a0b3c5?text=Gallery+Image';
-            htmlContent += `
-                <div class="slider-item gallery-item">
-                    <div class="slider-image-container portrait">
-                        <img src="${galleryImage}" 
-                             alt="${gallery.name}" 
-                             class="slider-image"
-                             loading="lazy"
-                             onload="detectImageOrientation(this)">
-                    </div>
-                    <div class="slider-info">
-                        <div class="slider-title">${gallery.name}</div>
-                        ${gallery.link ? `<a href="${gallery.link}" target="_blank" class="slider-link">View Gallery</a>` : ''}
-                    </div>
-                </div>
-            `;
-        });
-        
-        htmlContent += `</div></div>`;
-    }
-    
-    // Add Sellers section if available
-    if (structuredData.sellers && structuredData.sellers.length > 0) {
-        htmlContent += `<div class="section-title">👥 Sellers</div>`;
-        htmlContent += `<div class="sellers-list">`;
-        
-        structuredData.sellers.forEach((seller, index) => {
-            htmlContent += `
-                <div class="seller-item">
-                    <div class="seller-name">${seller.name}</div>
-                    ${seller.link ? `<a href="${seller.link}" target="_blank" class="seller-link">View Seller Profile</a>` : ''}
-                </div>
-            `;
-        });
-        
-        htmlContent += `</div>`;
-    }
-    
-    // Add timestamp
-    htmlContent += `<br><span class="message-time">${messageDisplayTime}</span>`;
-    
-    contentDiv.innerHTML = htmlContent;
-    messageDiv.appendChild(contentDiv);
-    chatMessages.appendChild(messageDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-    
-    // Initialize auto-sliders for products and galleries
-    setTimeout(() => {
-        if (structuredData.products && structuredData.products.length > 0) {
-            initAutoSlider('productsSliderTrack');
-        }
-        if (structuredData.galleries && structuredData.galleries.length > 0) {
-            initAutoSlider('galleriesSliderTrack');
-        }
-    }, 100);
-    
-    return messageDiv;
-}
-// Add this function after displayStructuredMessage
-function initAutoSlider(sliderId) {
-    const sliderTrack = document.getElementById(sliderId);
-    if (!sliderTrack) return;
-    
-    const items = sliderTrack.children;
-    if (items.length <= 1) return; // No need to auto-slide if only one item
-    
-    let currentPosition = 0;
-    const itemWidth = 150; // Width of slider item + gap
-    const slideInterval = 3000; // 3 seconds
-    
-    function slideNext() {
-        currentPosition -= itemWidth;
-        const maxScroll = sliderTrack.scrollWidth - sliderTrack.clientWidth;
-        
-        // If we've scrolled past all items, reset to start
-        if (currentPosition < -maxScroll) {
-            currentPosition = 0;
-            sliderTrack.scrollTo({ left: 0, behavior: 'instant' });
-        } else {
-            sliderTrack.scrollTo({ 
-                left: -currentPosition, 
-                behavior: 'smooth' 
-            });
-        }
-    }
-    
-    // Start auto-sliding
-    const slideTimer = setInterval(slideNext, slideInterval);
-    
-    // Pause on hover
-    sliderTrack.addEventListener('mouseenter', () => {
-        clearInterval(slideTimer);
-    });
-    
-    sliderTrack.addEventListener('mouseleave', () => {
-        slideTimer = setInterval(slideNext, slideInterval);
-    });
-    
-    // Also handle touch devices
-    sliderTrack.addEventListener('touchstart', () => {
-        clearInterval(slideTimer);
-    }, { passive: true });
-    
-    sliderTrack.addEventListener('touchend', () => {
-        slideTimer = setInterval(slideNext, slideInterval);
-    }, { passive: true });
-}
+
         // Verify OTP
         async function verifyOtp() {
             const otp = otp1.value + otp2.value + otp3.value + otp4.value;
@@ -2021,108 +1852,108 @@ Try asking: "Tell me about Zulu Club" or "Show me home decor items"`;
             displayMessage(welcomeText, 'assistant');
             welcomeMessageShown = true;
         }
-// Replace the entire sendMessage function with this updated version:
-async function sendMessage() {
-    const message = messageInput.value.trim();
-    if (!message) return;
-    
-    // Display user message
-    displayMessage(message, 'user');
-    
-    // Clear input
-    messageInput.value = '';
-    messageInput.style.height = 'auto';
-    sendBtn.disabled = true;
-    
-    // Show typing indicator
-    showTyping();
-    
-    try {
-        console.log('Sending message:', message, 'Session ID:', currentSessionId, 'Authenticated:', isAuthenticated);
-        const response = await fetch('/chat/message', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                sessionId: currentSessionId,
-                message: message,
-                phoneNumber: isAuthenticated ? currentSessionId : null
-            })
-        });
+
+        // Send message function
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
             
-        const data = await response.json();
-        console.log('Response from server:', data);
-        
-        // Hide typing indicator
-        hideTyping();
-        
-        if (data.success) {
-            // Check response type
-            if (data.responseType === 'structured') {
-                // Handle structured response (products search)
-                displayStructuredMessage(data.response, 'assistant');
-            } else {
-                // Handle text response
-                displayMessage(data.response.text, 'assistant');
+            // Display user message
+            displayMessage(message, 'user');
+            
+            // Clear input
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            sendBtn.disabled = true;
+            
+            // Show typing indicator
+            showTyping();
+            
+            try {
+                console.log('Sending message:', message, 'Session ID:', currentSessionId, 'Authenticated:', isAuthenticated);
+                const response = await fetch('/chat/message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sessionId: currentSessionId,
+                        message: message,
+                        phoneNumber: isAuthenticated ? currentSessionId : null
+                    })
+                });
+                    
+                const data = await response.json();
+                console.log('Response from server:', data);
+                
+                // Hide typing indicator
+                hideTyping();
+                
+                if (data.success) {
+                    // Check response type
+                    if (data.responseType === 'structured') {
+                        // Handle structured response (products search)
+                        displayStructuredMessage(data.response, 'assistant');
+                    } else {
+                        // Handle text response
+                        displayMessage(data.response.text, 'assistant');
+                    }
+                } else {
+                    if (data.error === 'Invalid session') {
+                        console.log('Session invalid during message send, creating new session...');
+                        await createSession();
+                        sendMessageWithRetry(message);
+                    } else {
+                        displayMessage('Error: ' + (data.error || 'Unknown error'), 'assistant');
+                    }
+                }
+            } catch (error) {
+                hideTyping();
+                console.error('Error sending message:', error);
+                displayMessage('Network error. Please check your connection.', 'assistant');
             }
-        } else {
-            if (data.error === 'Invalid session') {
-                console.log('Session invalid during message send, creating new session...');
-                await createSession();
-                sendMessageWithRetry(message);
-            } else {
-                displayMessage('Error: ' + (data.error || 'Unknown error'), 'assistant');
-            }
+            
+            sendBtn.disabled = !messageInput.value.trim();
+            messageInput.focus();
         }
-    } catch (error) {
-        hideTyping();
-        console.error('Error sending message:', error);
-        displayMessage('Network error. Please check your connection.', 'assistant');
-    }
-    
-    sendBtn.disabled = !messageInput.value.trim();
-    messageInput.focus();
-}
 
         // Send message with retry
-        // Update the sendMessageWithRetry function
-async function sendMessageWithRetry(message) {
-    showTyping();
-    
-    try {
-        console.log('Retrying message:', message, 'Session ID:', currentSessionId);
-        const response = await fetch('/chat/message', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                sessionId: currentSessionId,
-                message: message
-            })
-        });
-        
-        const data = await response.json();
-        console.log('Retry response from server:', data);
-        
-        hideTyping();
-        
-        if (data.success) {
-            if (data.responseType === 'structured') {
-                displayStructuredMessage(data.response, 'assistant');
-            } else {
-                displayMessage(data.response.text, 'assistant');
+        async function sendMessageWithRetry(message) {
+            showTyping();
+            
+            try {
+                console.log('Retrying message:', message, 'Session ID:', currentSessionId);
+                const response = await fetch('/chat/message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sessionId: currentSessionId,
+                        message: message
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Retry response from server:', data);
+                
+                hideTyping();
+                
+                if (data.success) {
+                    if (data.responseType === 'structured') {
+                        displayStructuredMessage(data.response, 'assistant');
+                    } else {
+                        displayMessage(data.response.text, 'assistant');
+                    }
+                } else {
+                    displayMessage('Error: ' + (data.error || 'Unknown error'), 'assistant');
+                }
+            } catch (error) {
+                hideTyping();
+                console.error('Error retrying message:', error);
+                displayMessage('Network error. Please check your connection.', 'assistant');
             }
-        } else {
-            displayMessage('Error: ' + (data.error || 'Unknown error'), 'assistant');
         }
-    } catch (error) {
-        hideTyping();
-        console.error('Error retrying message:', error);
-        displayMessage('Network error. Please check your connection.', 'assistant');
-    }
-}
 
         // Convert links and images to clickable elements
         function convertLinksToClickable(text) {
@@ -2281,6 +2112,20 @@ async function sendMessageWithRetry(message) {
                     img.style.maxWidth = '300px'; // Square
                 }
             }
+            
+            // Also handle slider images
+            if (img.classList.contains('slider-image')) {
+                const sliderContainer = img.parentElement;
+                if (sliderContainer && sliderContainer.classList.contains('slider-image-container')) {
+                    if (orientationClass === 'portrait') {
+                        sliderContainer.style.height = '200px';
+                    } else if (orientationClass === 'landscape') {
+                        sliderContainer.style.height = '120px';
+                    } else {
+                        sliderContainer.style.height = '150px';
+                    }
+                }
+            }
         }
 
         // Display message in chat
@@ -2321,6 +2166,172 @@ async function sendMessageWithRetry(message) {
             }, 100);
             
             return messageDiv;
+        }
+
+        // Display structured message with sliders
+        function displayStructuredMessage(structuredData, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content structured-response';
+            
+            const now = new Date();
+            const messageDisplayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            // Start building the HTML content
+            let htmlContent = '';
+            
+            // Add the text message
+            if (structuredData.text) {
+                htmlContent += `<div class="structured-text">${structuredData.text.replace(/\n/g, '<br>')}</div>`;
+            }
+            
+            // Add Products section if available
+            if (structuredData.products && structuredData.products.length > 0) {
+                htmlContent += `<div class="section-title">🛍️ Products</div>`;
+                htmlContent += `<div class="products-slider">`;
+                htmlContent += `<div class="slider-track" id="productsSliderTrack">`;
+                
+                structuredData.products.forEach((product, index) => {
+                    const productImage = product.image || 'https://via.placeholder.com/150x267/1a2733/a0b3c5?text=Product+Image';
+                    htmlContent += `
+                        <div class="slider-item product-item">
+                            <div class="slider-image-container portrait">
+                                <img src="${productImage}" 
+                                     alt="${product.name}" 
+                                     class="slider-image"
+                                     loading="lazy"
+                                     onload="detectImageOrientation(this)">
+                            </div>
+                            <div class="slider-info">
+                                <div class="slider-title">${product.name}</div>
+                                <div class="slider-price">${product.price}</div>
+                                ${product.tags && product.tags.length > 0 ? 
+                                    `<div class="slider-tags">${product.tags.slice(0, 3).map(tag => `<span class="tag">${tag}</span>`).join(' ')}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                htmlContent += `</div></div>`;
+            }
+            
+            // Add Galleries section if available
+            if (structuredData.galleries && structuredData.galleries.length > 0) {
+                htmlContent += `<div class="section-title">🎨 Galleries</div>`;
+                htmlContent += `<div class="galleries-slider">`;
+                htmlContent += `<div class="slider-track" id="galleriesSliderTrack">`;
+                
+                structuredData.galleries.forEach((gallery, index) => {
+                    const galleryImage = gallery.image || 'https://via.placeholder.com/150x267/1a2733/a0b3c5?text=Gallery+Image';
+                    htmlContent += `
+                        <div class="slider-item gallery-item">
+                            <div class="slider-image-container portrait">
+                                <img src="${galleryImage}" 
+                                     alt="${gallery.name}" 
+                                     class="slider-image"
+                                     loading="lazy"
+                                     onload="detectImageOrientation(this)">
+                            </div>
+                            <div class="slider-info">
+                                <div class="slider-title">${gallery.name}</div>
+                                ${gallery.link ? `<a href="${gallery.link}" target="_blank" class="slider-link">View Gallery</a>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                htmlContent += `</div></div>`;
+            }
+            
+            // Add Sellers section if available
+            if (structuredData.sellers && structuredData.sellers.length > 0) {
+                htmlContent += `<div class="section-title">👥 Sellers</div>`;
+                htmlContent += `<div class="sellers-list">`;
+                
+                structuredData.sellers.forEach((seller, index) => {
+                    htmlContent += `
+                        <div class="seller-item">
+                            <div class="seller-name">${seller.name}</div>
+                            ${seller.link ? `<a href="${seller.link}" target="_blank" class="seller-link">View Seller Profile</a>` : ''}
+                        </div>
+                    `;
+                });
+                
+                htmlContent += `</div>`;
+            }
+            
+            // Add timestamp
+            htmlContent += `<br><span class="message-time">${messageDisplayTime}</span>`;
+            
+            contentDiv.innerHTML = htmlContent;
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Initialize auto-sliders for products and galleries
+            setTimeout(() => {
+                if (structuredData.products && structuredData.products.length > 0) {
+                    initAutoSlider('productsSliderTrack');
+                }
+                if (structuredData.galleries && structuredData.galleries.length > 0) {
+                    initAutoSlider('galleriesSliderTrack');
+                }
+            }, 100);
+            
+            return messageDiv;
+        }
+
+        // Initialize auto-slider
+        function initAutoSlider(sliderId) {
+            const sliderTrack = document.getElementById(sliderId);
+            if (!sliderTrack) return;
+            
+            const items = sliderTrack.children;
+            if (items.length <= 1) return; // No need to auto-slide if only one item
+            
+            let currentPosition = 0;
+            const itemWidth = 150; // Width of slider item + gap
+            const slideInterval = 3000; // 3 seconds
+            let slideTimer;
+            
+            function slideNext() {
+                currentPosition += itemWidth;
+                const maxScroll = sliderTrack.scrollWidth - sliderTrack.clientWidth;
+                
+                // If we've scrolled past all items, reset to start
+                if (currentPosition > maxScroll) {
+                    currentPosition = 0;
+                    sliderTrack.scrollTo({ left: 0, behavior: 'smooth' });
+                } else {
+                    sliderTrack.scrollTo({ 
+                        left: currentPosition, 
+                        behavior: 'smooth' 
+                    });
+                }
+            }
+            
+            // Start auto-sliding
+            slideTimer = setInterval(slideNext, slideInterval);
+            
+            // Pause on hover
+            sliderTrack.addEventListener('mouseenter', () => {
+                clearInterval(slideTimer);
+            });
+            
+            sliderTrack.addEventListener('mouseleave', () => {
+                slideTimer = setInterval(slideNext, slideInterval);
+            });
+            
+            // Also handle touch devices
+            sliderTrack.addEventListener('touchstart', () => {
+                clearInterval(slideTimer);
+            }, { passive: true });
+            
+            sliderTrack.addEventListener('touchend', () => {
+                slideTimer = setInterval(slideNext, slideInterval);
+            }, { passive: true });
         }
 
         // Show image in modal
@@ -2503,28 +2514,28 @@ async function sendMessageWithRetry(message) {
                     
                     // Display all messages from history
                     if (data.history && data.history.length > 0) {
-    data.history.forEach(msg => {
-        if (msg.role === 'user' || msg.role === 'assistant') {
-            // Check if the content is structured JSON or plain text
-            try {
-                const parsed = JSON.parse(msg.content);
-                if (parsed.type === 'structured') {
-                    displayStructuredMessage(parsed, msg.role === 'user' ? 'user' : 'assistant');
-                } else {
-                    displayMessage(parsed.text || msg.content, msg.role === 'user' ? 'user' : 'assistant');
-                }
-            } catch (e) {
-                // If it's not JSON, treat it as plain text
-                displayMessage(msg.content, msg.role === 'user' ? 'user' : 'assistant');
-            }
-        }
-    });
-} else {
-    // If no history and welcome message hasn't been shown, show it
-    if (!welcomeMessageShown) {
-        loadWelcomeMessage();
-    }
-}
+                        data.history.forEach(msg => {
+                            if (msg.role === 'user' || msg.role === 'assistant') {
+                                // Check if the content is structured JSON or plain text
+                                try {
+                                    const parsed = JSON.parse(msg.content);
+                                    if (parsed.type === 'structured') {
+                                        displayStructuredMessage(parsed, msg.role === 'user' ? 'user' : 'assistant');
+                                    } else {
+                                        displayMessage(parsed.text || msg.content, msg.role === 'user' ? 'user' : 'assistant');
+                                    }
+                                } catch (e) {
+                                    // If it's not JSON, treat it as plain text
+                                    displayMessage(msg.content, msg.role === 'user' ? 'user' : 'assistant');
+                                }
+                            }
+                        });
+                    } else {
+                        // If no history and welcome message hasn't been shown, show it
+                        if (!welcomeMessageShown) {
+                            loadWelcomeMessage();
+                        }
+                    }
                 } else {
                     console.error('Failed to load chat history:', data.error);
                     
