@@ -309,6 +309,7 @@
             border-radius: 8px;
             font-size: 13px;
             color: #a0b3c5;
+            min-height: 48px;
         }
 
         .feature-icon {
@@ -725,6 +726,9 @@
             background: rgba(255, 255, 255, 0.05);
             transition: all 0.3s ease;
             border: 1px solid #2d3746;
+            display: flex;
+            flex-direction: column;
+            height: 320px;
         }
 
         .gallery-item:hover {
@@ -740,6 +744,8 @@
             overflow: hidden;
             background: #0a1014;
             cursor: pointer;
+            flex-shrink: 0;
+            height: 200px;
         }
 
         /* Default for landscape (16:9) */
@@ -783,7 +789,11 @@
         .image-info {
             padding: 12px;
             background: rgba(10, 16, 20, 0.95);
-            border-top: 1px solid #2d3746;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 120px;
         }
 
         .image-title {
@@ -794,6 +804,7 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            flex-shrink: 0;
         }
 
         .image-description {
@@ -804,6 +815,8 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            flex: 1;
+            margin-bottom: 8px;
         }
 
         /* Loading placeholder for images */
@@ -978,6 +991,10 @@
             font-weight: 600;
             margin: 20px 0 12px 0;
             color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #2d3746;
+            padding-bottom: 8px;
         }
 
         /* Slider Styles */
@@ -995,12 +1012,12 @@
             overflow-x: auto;
             scroll-behavior: smooth;
             padding: 10px 5px;
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
 
         .slider-track::-webkit-scrollbar {
-            display: none; /* Chrome, Safari, Opera */
+            display: none;
         }
 
         .slider-item {
@@ -1011,6 +1028,9 @@
             overflow: hidden;
             border: 1px solid #2d3746;
             transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            height: 320px;
         }
 
         .slider-item:hover {
@@ -1022,9 +1042,10 @@
         .slider-image-container {
             position: relative;
             width: 100%;
-            height: 200px; /* Fixed height for 9:16 ratio */
+            height: 200px;
             overflow: hidden;
             background: #0a1014;
+            flex-shrink: 0;
         }
 
         .slider-image-container.portrait {
@@ -1046,6 +1067,11 @@
         .slider-info {
             padding: 12px;
             background: rgba(10, 16, 20, 0.95);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 120px;
         }
 
         .slider-title {
@@ -1058,6 +1084,7 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            flex-shrink: 0;
         }
 
         .slider-price {
@@ -1065,21 +1092,25 @@
             font-weight: 700;
             color: #00b894;
             margin-bottom: 8px;
+            flex-shrink: 0;
         }
 
         .slider-tags {
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
-            margin-top: 6px;
+            margin-bottom: 8px;
+            flex-shrink: 0;
         }
 
         .tag {
             background: rgba(0, 132, 255, 0.1);
             color: #0084ff;
-            padding: 2px 6px;
+            padding: 4px 8px;
             border-radius: 10px;
-            font-size: 10px;
+            font-size: 11px;
+            display: inline-block;
+            line-height: 1;
         }
 
         .slider-link,
@@ -1088,11 +1119,13 @@
             color: #0084ff;
             text-decoration: none;
             font-size: 12px;
-            margin-top: 6px;
-            padding: 4px 8px;
+            padding: 6px 10px;
             background: rgba(0, 132, 255, 0.1);
             border-radius: 6px;
             transition: all 0.3s;
+            text-align: center;
+            margin-top: auto;
+            align-self: flex-start;
         }
 
         .slider-link:hover,
@@ -1115,6 +1148,8 @@
             border-radius: 8px;
             border: 1px solid #2d3746;
             transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
         }
 
         .seller-item:hover {
@@ -1126,7 +1161,13 @@
             font-size: 14px;
             font-weight: 600;
             color: #fff;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+
+        .seller-link {
+            margin-top: auto;
+            align-self: flex-start;
         }
 
         /* Utility Classes */
@@ -1193,47 +1234,23 @@
                 gap: 10px;
             }
             
-            .image-container.landscape {
-                aspect-ratio: 16/9;
-            }
-            
-            .image-container.portrait {
-                aspect-ratio: 3/4; /* Slightly adjust for mobile */
-            }
-            
-            .image-info {
-                padding: 10px;
-            }
-            
-            .image-title {
-                font-size: 12px;
-            }
-            
-            .image-description {
-                font-size: 10px;
-            }
-
-            .single-image {
-                max-width: 250px;
-                max-height: 350px;
-            }
-
-            /* Touch-friendly image sizes for mobile */
-            .gallery-image {
-                object-fit: cover;
-            }
-            
-            .image-container {
-                min-height: 150px;
-            }
-
-            /* Responsive slider for mobile */
             .slider-item {
                 width: 130px;
+                height: 300px;
             }
             
+            .image-container,
             .slider-image-container {
-                height: 173px;
+                height: 180px;
+            }
+            
+            .slider-info,
+            .image-info {
+                min-height: 100px;
+            }
+            
+            .gallery-item {
+                height: 300px;
             }
         }
 
@@ -1244,17 +1261,18 @@
                 gap: 8px;
             }
             
-            .single-image {
-                max-width: 200px;
-                max-height: 300px;
-            }
-
             .slider-item {
                 width: 110px;
+                height: 280px;
             }
             
+            .image-container,
             .slider-image-container {
-                height: 147px;
+                height: 160px;
+            }
+            
+            .gallery-item {
+                height: 280px;
             }
         }
 
@@ -1303,7 +1321,7 @@
 
         <!-- Status Banner -->
         <div class="status-banner" id="statusBanner">
-            <span id="statusMessage">🎉 Unlimited access to Company & Product features</span>
+            <span id="statusMessage">Unlimited access to Company & Product features</span>
         </div>
 
         <!-- Chat Container -->
@@ -1547,7 +1565,7 @@
         function updateUI() {
             if (isAuthenticated) {
                 statusBanner.className = 'status-banner verified';
-                statusMessage.innerHTML = '✅ Verified • Full Access to All Features';
+                statusMessage.innerHTML = 'Verified • Full Access to All Features';
                 profileName.innerHTML = 'Verified User <span class="verified-badge">Verified</span>';
                 profileAvatar.textContent = '✓';
                 profileAvatar.style.background = 'linear-gradient(135deg, #00b894 0%, #00cec9 100%)';
@@ -1555,7 +1573,7 @@
                 logoutBtn.classList.remove('hidden');
             } else {
                 statusBanner.className = 'status-banner';
-                statusMessage.innerHTML = '🎉 Unlimited access to Company & Product features';
+                statusMessage.innerHTML = 'Unlimited access to Company & Product features';
                 profileName.textContent = 'Guest User';
                 profileAvatar.textContent = 'ZC';
                 profileAvatar.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
@@ -1838,7 +1856,7 @@
             
             const welcomeText = `Welcome to Zulu Club${isAuthenticated ? ' (Verified)' : ''}!
 
-${isAuthenticated ? '✅ You have full access to all features!' : '🎉 You have unlimited access to company info and product browsing!'}
+${isAuthenticated ? 'You have full access to all features!' : 'You have unlimited access to company info and product browsing!'}
 
 I can help you with:
 • Company details and information
@@ -2018,7 +2036,7 @@ Try asking: "Tell me about Zulu Club" or "Show me home decor items"`;
                                 <div class="image-info">
                                     <div class="image-title">${title}</div>
                                     ${description ? `<div class="image-description">${description}</div>` : ''}
-                                    ${linkUrl ? `<a href="${linkUrl}" target="_blank" style="color: #0084ff; font-size: 11px; margin-top: 4px; display: block;">View Product</a>` : ''}
+                                    ${linkUrl ? `<a href="${linkUrl}" target="_blank" style="color: #0084ff; font-size: 11px; margin-top: auto; display: block;">View Product</a>` : ''}
                                 </div>
                             </div>
                         `;
@@ -2189,7 +2207,7 @@ Try asking: "Tell me about Zulu Club" or "Show me home decor items"`;
             
             // Add Products section if available
             if (structuredData.products && structuredData.products.length > 0) {
-                htmlContent += `<div class="section-title">🛍️ Products</div>`;
+                htmlContent += `<div class="section-title">Products</div>`;
                 htmlContent += `<div class="products-slider">`;
                 htmlContent += `<div class="slider-track" id="productsSliderTrack">`;
                 
@@ -2209,6 +2227,7 @@ Try asking: "Tell me about Zulu Club" or "Show me home decor items"`;
                                 <div class="slider-price">${product.price}</div>
                                 ${product.tags && product.tags.length > 0 ? 
                                     `<div class="slider-tags">${product.tags.slice(0, 3).map(tag => `<span class="tag">${tag}</span>`).join(' ')}</div>` : ''}
+                                ${product.link ? `<a href="${product.link}" target="_blank" class="slider-link">View Product</a>` : ''}
                             </div>
                         </div>
                     `;
@@ -2219,7 +2238,7 @@ Try asking: "Tell me about Zulu Club" or "Show me home decor items"`;
             
             // Add Galleries section if available
             if (structuredData.galleries && structuredData.galleries.length > 0) {
-                htmlContent += `<div class="section-title">🎨 Galleries</div>`;
+                htmlContent += `<div class="section-title">Galleries</div>`;
                 htmlContent += `<div class="galleries-slider">`;
                 htmlContent += `<div class="slider-track" id="galleriesSliderTrack">`;
                 
@@ -2247,7 +2266,7 @@ Try asking: "Tell me about Zulu Club" or "Show me home decor items"`;
             
             // Add Sellers section if available
             if (structuredData.sellers && structuredData.sellers.length > 0) {
-                htmlContent += `<div class="section-title">👥 Sellers</div>`;
+                htmlContent += `<div class="section-title">Sellers</div>`;
                 htmlContent += `<div class="sellers-list">`;
                 
                 structuredData.sellers.forEach((seller, index) => {
