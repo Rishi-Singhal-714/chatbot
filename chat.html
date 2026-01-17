@@ -728,7 +728,8 @@
             border: 1px solid #2d3746;
             display: flex;
             flex-direction: column;
-            height: 320px;
+            height: auto;
+            min-height: 300px;
         }
 
         .gallery-item:hover {
@@ -745,7 +746,8 @@
             background: #0a1014;
             cursor: pointer;
             flex-shrink: 0;
-            height: 200px;
+            height: auto;
+            aspect-ratio: 4 / 3;
         }
 
         /* Default for landscape (16:9) */
@@ -793,7 +795,8 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            min-height: 120px;
+            min-height: unset;
+            flex-grow: 1;
         }
 
         .image-title {
@@ -1250,7 +1253,8 @@
             }
             
             .gallery-item {
-                height: 300px;
+                height: auto;
+                min-height: 280px;
             }
         }
 
@@ -1269,10 +1273,6 @@
             .image-container,
             .slider-image-container {
                 height: 160px;
-            }
-            
-            .gallery-item {
-                height: 280px;
             }
         }
 
