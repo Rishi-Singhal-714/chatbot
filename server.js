@@ -75,10 +75,10 @@ const openai = new OpenAI({
 // -------------------------
 // PERSISTED DATA: conversations, csvs
 // -------------------------
-let conversations = {}; // sessionId -> { history: [{role, content, ts}], lastActive, isAuthenticated: boolean }
-let verifiedUsers = {}; // phoneNumber -> { verified: boolean, isAdmin: boolean, verifiedAt: timestamp }
+let conversations = {}; 
 let galleriesData = [];
-let sellersData = []; // sellers CSV data
+let sellersData = []; 
+let productsData = []; 
 
 // -------------------------
 // OTP Authentication Functions
@@ -709,9 +709,68 @@ placement in Zulu showrooms, homepage visibility, or popup features.
 `;
 
 // -------------------------
-// CSV loaders: galleries + sellers
+// CSV loaders: products + galleries + sellers
 // -------------------------
-// Replace the existing loadGalleriesData function with this:
+// Update the loadProductsData function with proper field mappings
+async function loadProductsData() {
+  try {
+    console.log('📥 Loading products CSV data...');
+    const response = await axios.get('https://raw.githubusercontent.com/Rishi-Singhal-714/chatbot/main/products.csv', {
+      timeout: 60000 
+    });
+    
+    return new Promise((resolve, reject) => {
+      const results = [];
+      if (!response.data || response.data.trim().length === 0) {
+        console.log('❌ Empty products CSV received');
+        resolve([]);
+        return;
+      }
+      
+      const stream = Readable.from(response.data);  
+      stream
+        .pipe(csv())
+        .on('data', (data) => {
+          // Map CSV columns to consistent field names
+          const mappedData = {
+            id: data.id || data.ID || '',
+            name: data.name || data.Name || data.NAME || '',
+            special_price: data.special_price || data.specialPrice || data.SPECIAL_PRICE || '',
+            image: data.image || data.Image || data.IMAGE || '',
+            // Tags might be in different columns, try all possibilities
+            tags: data.tags || data.TAGS || data.Tags || data.tag || data.TAG || ''
+          };      
+          
+          // Only include if we have basic info
+          if (mappedData.name && (mappedData.image || mappedData.tags)) {
+            // Clean up tags - remove extra spaces and convert to array
+            if (mappedData.tags) {
+              mappedData.tagsArray = mappedData.tags
+                .split(',')
+                .map(tag => tag.trim().toLowerCase())
+                .filter(tag => tag.length > 0);
+            } else {
+              mappedData.tagsArray = [];
+            }
+            
+            results.push(mappedData);
+          }
+        })
+        .on('end', () => {
+          console.log(`✅ Loaded ${results.length} products from CSV`);
+          resolve(results);
+        })
+        .on('error', (error) => {
+          console.error('❌ Error parsing products CSV:', error);
+          reject(error);
+        });
+    });
+  } catch (error) {
+    console.error('❌ Error loading products CSV:', error.message);
+    return [];
+  }
+}
+
 async function loadGalleriesData() {
   try {
     console.log('📥 Loading galleries CSV data...');
@@ -808,7 +867,7 @@ async function loadSellersData() {
   }
 }
 
-// initialize both CSVs
+// initialize all CSVs - update the async initialization section
 (async () => {
   try {
     galleriesData = await loadGalleriesData();
@@ -822,6 +881,13 @@ async function loadSellersData() {
   } catch (e) {
     console.error('Failed loading sellers:', e);
     sellersData = [];
+  }
+
+  try {
+    productsData = await loadProductsData(); // Add this
+  } catch (e) {
+    console.error('Failed loading products:', e);
+    productsData = [];
   }
 })();
 
@@ -1408,10 +1474,128 @@ function urlEncodeType2(t) {
   return encodeURIComponent(t.trim().replace(/\s+/g, ' ')).replace(/%20/g, '%20');
 }
 
-function buildConciseResponse(userMessage, galleryMatches = [], sellersObj = {}) {
-  const galleries = (galleryMatches && galleryMatches.length) ? galleryMatches.slice(0,5) : galleriesData.slice(0,5);
-  const sellersList = [];
+// Add this function after the findSellersForQuery function
+
+// Update the searchProductsForQuery function to prioritize tags
+function searchProductsForQuery(userMessage) {
+  if (!userMessage || !productsData.length) return [];
   
+  const searchTerms = userMessage
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .split(/\s+/)
+    .filter(term => term.length > 1 && !STOPWORDS.has(term))
+    .map(t => singularize(normalizeToken(t)))
+    .filter(t => t.length > 1);
+  
+  if (searchTerms.length === 0) return [];
+  
+  const matches = [];
+  
+  productsData.forEach(product => {
+    let score = 0;
+    let matchedFields = [];
+    
+    // Search in tags (highest priority)
+    if (product.tagsArray && product.tagsArray.length > 0) {
+      searchTerms.forEach(term => {
+        // Check each tag for match
+        product.tagsArray.forEach(tag => {
+          if (tag.includes(term) || term.includes(tag)) {
+            score += 0.5; // Higher weight for tag matches
+            if (!matchedFields.includes('tags')) matchedFields.push('tags');
+          }
+        });
+      });
+    }
+    
+    // Search in product name
+    const name = normalizeToken(product.name);
+    searchTerms.forEach(term => {
+      if (name.includes(term)) {
+        score += 0.3;
+        if (!matchedFields.includes('name')) matchedFields.push('name');
+      }
+    });
+    
+    // If no matches yet, try fuzzy matching
+    if (score === 0) {
+      searchTerms.forEach(term => {
+        product.tagsArray.forEach(tag => {
+          const sim = smartSimilarity(tag, term);
+          if (sim >= 0.7) {
+            score += sim * 0.4;
+            if (!matchedFields.includes('tags_fuzzy')) matchedFields.push('tags_fuzzy');
+          }
+        });
+        
+        const nameSim = smartSimilarity(name, term);
+        if (nameSim >= 0.7) {
+          score += nameSim * 0.3;
+          if (!matchedFields.includes('name_fuzzy')) matchedFields.push('name_fuzzy');
+        }
+      });
+    }
+    
+    if (score > 0.3) {
+      matches.push({
+        ...product,
+        score,
+        matchedFields: [...new Set(matchedFields)],
+        displayScore: Math.min(score, 1.0)
+      });
+    }
+  });
+  
+  // Sort by score and return top 5
+  return matches
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
+}
+// Replace the existing buildConciseResponse function with this updated version:
+
+// Replace the buildConciseResponse function with this new version that returns structured data
+
+function buildConciseResponse(userMessage, galleryMatches = [], sellersObj = {}, productMatches = []) {
+  // Prepare products data for response
+  const products = productMatches.slice(0, 5).map((product, index) => ({
+    id: product.id || `product-${index}`,
+    name: product.name || 'Product',
+    price: product.special_price ? `₹${product.special_price}` : 'Price on request',
+    image: product.image && product.image.trim() !== '' ? 
+      (product.image.startsWith('/') ? `https://zulushop.in${product.image}` : product.image) : 
+      null,
+    tags: product.tagsArray || [],
+    score: product.score || 0
+  }));
+  
+  // Prepare galleries data for response
+  const galleries = galleryMatches.slice(0, 5).map((gallery, index) => {
+    const galleryId = gallery.id || '';
+    let link = '';
+    
+    if (galleryId) {
+      link = `https://app.zulu.club/gallery/id=${galleryId}`;
+    } else if (gallery.type2) {
+      link = `https://app.zulu.club/${urlEncodeType2(gallery.type2)}`;
+    } else if (gallery.name) {
+      link = `https://app.zulu.club/${urlEncodeType2(gallery.name)}`;
+    }
+    
+    return {
+      id: gallery.id || `gallery-${index}`,
+      name: gallery.type2 || gallery.name || 'Gallery',
+      link: link,
+      image: gallery.image1 && gallery.image1.trim() !== '' ? 
+        (gallery.image1.startsWith('/') ? `https://zulushop.in${gallery.image1}` : gallery.image1) : 
+        null,
+      type: gallery.type2 || '',
+      category: gallery.cat1 || ''
+    };
+  });
+  
+  // Prepare sellers data for response
+  const sellersList = [];
   const addSeller = (s) => {
     if (!s) return;
     const id = s.user_id || s.seller_id || '';
@@ -1423,96 +1607,36 @@ function buildConciseResponse(userMessage, galleryMatches = [], sellersObj = {})
   (sellersObj.by_category || []).forEach(addSeller);
   (sellersObj.by_gpt || []).forEach(item => addSeller(item.seller));
   
-  const sellersToShow = sellersList.slice(0,5);
-  let msg = `Based on your interest in "${userMessage}":\n\n`;
-
-  if (galleries.length) {
-    msg += `🎨 *Galleries*:\n`;
-    galleries.slice(0,5).forEach((g, i) => {
-      // Use id for link, type2 for display text, fallback to name
-      const displayText = g.type2 || g.name || 'Product';
-      const galleryId = g.id || '';
-      
-      if (galleryId) {
-        // Use the new link format: https://app.zulu.club/gallery/id=493
-        const link = `https://app.zulu.club/gallery/id=${galleryId}`;
-        msg += `${i+1}. *${displayText}*\n`;
-        msg += `   🔗 ${link}\n`;
-        
-        // Only add image if available and valid
-        if (g.image1 && g.image1.trim() !== '') {
-          let imageUrl = g.image1.trim();
-          // Handle relative URLs
-          if (imageUrl.startsWith('/')) {
-            imageUrl = `https://zulushop.in${imageUrl}`;
-          }
-          // Check if it's a valid URL
-          if (imageUrl.startsWith('http')) {
-            msg += `   📷 ${imageUrl}\n`;
-          }
-        }
-      } else if (g.type2) {
-        // Fallback to old format if no id
-        const link = `https://app.zulu.club/${urlEncodeType2(g.type2)}`;
-        msg += `${i+1}. *${g.type2}*\n`;
-        msg += `   🔗 ${link}\n`;
-        
-        // Only add image if available and valid
-        if (g.image1 && g.image1.trim() !== '') {
-          let imageUrl = g.image1.trim();
-          if (imageUrl.startsWith('/')) {
-            imageUrl = `https://zulushop.in${imageUrl}`;
-          }
-          // Check if it's a valid URL
-          if (imageUrl.startsWith('http')) {
-            msg += `   📷 ${imageUrl}\n`;
-          }
-        }
-      } else if (g.name) {
-        // If no type2 but has name
-        const link = `https://app.zulu.club/${urlEncodeType2(g.name)}`;
-        msg += `${i+1}. *${g.name}*\n`;
-        msg += `   🔗 ${link}\n`;
-        
-        // Only add image if available and valid
-        if (g.image1 && g.image1.trim() !== '') {
-          let imageUrl = g.image1.trim();
-          if (imageUrl.startsWith('/')) {
-            imageUrl = `https://zulushop.in${imageUrl}`;
-          }
-          // Check if it's a valid URL
-          if (imageUrl.startsWith('http')) {
-            msg += `   📷 ${imageUrl}\n`;
-          }
-        }
-      } else {
-        msg += `${i+1}. Product — No link available\n`;
-      }
-      
-      // Add a blank line between items for readability
-      if (i < galleries.length - 1) msg += '\n';
-    });
+  const sellers = sellersList.slice(0, 5).map((seller, index) => ({
+    id: seller.user_id || seller.seller_id || `seller-${index}`,
+    name: seller.store_name || `Seller ${index + 1}`,
+    link: (seller.user_id || seller.seller_id) ? 
+      `https://app.zulu.club/sellerassets/${seller.user_id || seller.seller_id}` : 
+      '',
+    categories: seller.category_ids_array || []
+  }));
+  
+  // Create a fallback text response (for backward compatibility)
+  let textResponse = `Based on your interest in "${userMessage}":\n\n`;
+  
+  if (products.length > 0) {
+    textResponse += `🛍️ Found ${products.length} products\n`;
+    textResponse += `🎨 Found ${galleries.length} galleries\n`;
+    textResponse += `👥 Found ${sellers.length} sellers\n\n`;
+    textResponse += `View the results above with images and details.`;
   } else {
-    msg += `🎨 *Galleries*:\nNone found\n`;
+    textResponse += `No products found for "${userMessage}". Try searching with different keywords.`;
   }
   
-  msg += `\n👥 *Sellers*:\n`;
-  if (sellersToShow.length) {
-    sellersToShow.forEach((s, i) => {
-      const name = s.store_name || s.seller_id || `Seller ${i+1}`;
-      const id = s.user_id || s.seller_id || '';
-      const link = id ? `https://app.zulu.club/sellerassets/${id}` : '';
-      msg += `${i+1}. *${name}*`;
-      if (link) {
-        msg += `\n   🔗 ${link}`;
-      }
-      if (i < sellersToShow.length - 1) msg += '\n\n';
-    });
-  } else {
-    msg += `None found\n`;
-  }
-
-  return msg.trim();
+  // Return structured response that frontend can parse
+  return {
+    type: 'structured',
+    text: textResponse,
+    products: products,
+    galleries: galleries,
+    sellers: sellers,
+    query: userMessage
+  };
 }
 
 async function findGptMatchedCategories(userMessage, conversationHistory = []) {
@@ -2064,6 +2188,9 @@ For more details, please contact our support team.`;
     }
     
     // In the getChatGPTResponse function, update the product handling section:
+// In the getChatGPTResponse function, find the product intent section and update it:
+
+// In the getChatGPTResponse function, update the product intent section:
 if (intent === 'product' && galleriesData.length > 0) {
   if (session.lastDetectedIntent !== 'product') {
     session.lastDetectedIntent = 'product';
@@ -2075,14 +2202,12 @@ if (intent === 'product' && galleriesData.length > 0) {
   let matchedCategories = [];
   
   if (matchedIds.length > 0) {
-    // Try to match by id first
     matchedCategories = matchedIds
       .map(id => galleriesData.find(g => String(g.id).trim() === String(id).trim()))
       .filter(Boolean);
   }
   
   if (matchedCategories.length === 0 && matchedType2s.length > 0) {
-    // Fallback to type2 matching
     matchedCategories = matchedType2s
       .map(t => galleriesData.find(g => String(g.type2).trim() === String(t).trim()))
       .filter(Boolean)
@@ -2126,7 +2251,10 @@ if (intent === 'product' && galleriesData.length > 0) {
   const detectedGender = inferGenderFromCategories(matchedCategories);
   const sellers = await findSellersForQuery(userMessage, matchedCategories, detectedGender);
   
-  return buildConciseResponse(userMessage, matchedCategories, sellers);
+  // Search for products based on user query
+  const products = searchProductsForQuery(userMessage);
+  
+  return buildConciseResponse(userMessage, matchedCategories, sellers, products);
 }
     
     // Default: company response
@@ -2168,29 +2296,65 @@ async function handleMessage(sessionId, userMessage, isAuthenticated = false) {
     // 4) Get response
     const aiResponse = await getChatGPTResponse(sessionId, userMessage, isAuthenticated);
     
-    // 5) Save AI response back into session history
-    appendToSessionHistory(sessionId, 'assistant', aiResponse);
+    // 5) Check if response is structured (for products) or plain text
+    let finalResponse;
+    let responseType = 'text';
+    let responseText;
+
+    if (aiResponse && typeof aiResponse === 'object' && aiResponse.type === 'structured') {
+      // Structured response for products
+      finalResponse = aiResponse;
+      responseType = 'structured';
+      responseText = aiResponse.text;
+    } else {
+      // Plain text response for other intents
+      finalResponse = {
+        type: 'text',
+        text: aiResponse
+      };
+      responseText = aiResponse;
+    }
     
-    // 6) Log assistant response (only for authenticated users)
+    // 6) Save AI response back into session history
+    appendToSessionHistory(sessionId, 'assistant', responseText);
+    
+    // 7) Log assistant response (only for authenticated users)
     if (isAuthenticated && sessionId.match(/^\d{10}[AU]?$/)) {
       try {
-        await appendUnderColumn(sessionId, `ASSISTANT: ${aiResponse}`);
+        await appendUnderColumn(sessionId, `ASSISTANT: ${responseText}`);
       } catch (e) {
         console.error('sheet log assistant failed', e);
       }
     }
     
-    // 7) update lastActive
+    // 8) update lastActive
     if (conversations[sessionId]) conversations[sessionId].lastActive = nowMs();
     
-    // 8) return the assistant reply
-    return aiResponse;
-  } catch (error) {
+    // 9) return the assistant reply with type information
+    return {
+      success: true,
+      response: finalResponse,
+      responseType: responseType,
+      timestamp: new Date().toISOString(),
+      isAuthenticated: isAuthenticated,
+      sessionId: sessionId
+    };
+  } 
+  catch (error) {
     console.error('❌ Error handling message:', error);
-    return `⚠️ Sorry, I encountered an error. Please try again.`;
+    return {
+      success: false,
+      response: {
+        type: 'text',
+        text: '⚠️ Sorry, I encountered an error. Please try again.'
+      },
+      responseType: 'text',
+      timestamp: new Date().toISOString(),
+      isAuthenticated: isAuthenticated,
+      sessionId: sessionId
+    };
   }
 }
-
 // -------------------------
 // OTP Authentication Endpoints
 // -------------------------
@@ -2349,10 +2513,10 @@ app.get('/chat', (req, res) => {
 });
 
 // API endpoint for sending messages
+// Update the /chat/message endpoint
 app.post('/chat/message', checkAuthentication, async (req, res) => {
   try {
-    // Use the sessionId from the middleware
-    const sessionId = req.sessionId; // This should be set by checkAuthentication middleware
+    const sessionId = req.sessionId;
     const isAuthenticated = req.isAuthenticated;
     const { message } = req.body;
     
@@ -2373,17 +2537,11 @@ app.post('/chat/message', checkAuthentication, async (req, res) => {
       });
     }
     
-    // Process the message
-    const response = await handleMessage(sessionId, message, isAuthenticated);
+    // Process the message using handleMessage which now returns structured data
+    const result = await handleMessage(sessionId, message, isAuthenticated);
     
-    // Return the response with authentication info
-    return res.json({
-      success: true,
-      response: response,
-      timestamp: new Date().toISOString(),
-      isAuthenticated: isAuthenticated,
-      sessionId: sessionId
-    });
+    // Return the response
+    return res.json(result);
     
   } catch (error) {
     console.error('💥 Chat API error:', error.message);
