@@ -1,0 +1,2929 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Videos - Card View</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 30px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #9C27B0;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            font-size: 28px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        h1:before {
+            content: "🎬";
+            font-size: 32px;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin: 25px 0;
+            flex-wrap: wrap;
+            align-items: center;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .back-btn {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: white;
+        }
+        .refresh-btn {
+            background: linear-gradient(135deg, #2196F3 0%, #0b7dda 100%);
+            color: white;
+        }
+        .search-box {
+            flex-grow: 1;
+            max-width: 400px;
+            position: relative;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 12px 45px 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: #9C27B0;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+        .search-box:after {
+            content: "🔍";
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7f8c8d;
+        }
+        
+        /* Filters with Counts */
+        .filters-container {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 25px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid #e8e8e8;
+        }
+        .filters-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .filter-group {
+            position: relative;
+        }
+        .filter-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .filter-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237f8c8d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 15px;
+        }
+        .filter-group select:focus {
+            outline: none;
+            border-color: #9C27B0;
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+        .filter-count {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 4px 10px;
+            background: #9C27B0;
+            color: white;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 30px;
+            text-align: center;
+        }
+        
+        #message {
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: 600;
+            text-align: center;
+            display: none;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        #loading {
+            padding: 30px;
+            text-align: center;
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 2px solid #ffeaa7;
+            border-radius: 10px;
+            margin: 25px 0;
+            color: #856404;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        #loading:before {
+            content: "⏳";
+            font-size: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #error {
+            padding: 25px;
+            text-align: center;
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border: 2px solid #f5c6cb;
+            border-radius: 10px;
+            margin: 25px 0;
+            color: #721c24;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+        
+        /* Videos Grid */
+        .videos-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            margin-top: 25px;
+        }
+        
+        @media (max-width: 1400px) {
+            .videos-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (max-width: 1000px) {
+            .videos-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .videos-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Video Card */
+        .video-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            border: 1px solid #f0f0f0;
+        }
+        
+        .video-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        
+        .card-media {
+            width: 100%;
+            height: 220px;
+            background: linear-gradient(135deg, #673AB7 0%, #9C27B0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        
+        .play-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .card-media:hover .play-overlay {
+            opacity: 1;
+        }
+        
+        .play-button {
+            width: 60px;
+            height: 60px;
+            background: rgba(156, 39, 176, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .play-button:hover {
+            background: #9C27B0;
+            transform: scale(1.1);
+        }
+        
+        .card-thumbnail {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: all 0.5s ease;
+            background: linear-gradient(135deg, #673AB7 0%, #9C27B0 100%);
+        }
+        
+        .thumbnail-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48px;
+            background: linear-gradient(135deg, #673AB7 0%, #9C27B0 100%);
+        }
+        
+        .card-actions {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        
+        .video-card:hover .card-actions {
+            opacity: 1;
+        }
+        
+        .action-btn {
+            background: rgba(255,255,255,0.95);
+            color: #2c3e50;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .action-btn:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .action-btn.edit-details {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .action-btn.edit-thumbnail {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .card-content {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 44px;
+        }
+        
+        .card-id {
+            font-size: 12px;
+            color: #7f8c8d;
+            background: #f8f9fa;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 12px;
+            display: inline-block;
+            border: 1px solid #e8e8e8;
+        }
+        
+        /* Info Tags */
+        .card-info {
+            margin-top: 15px;
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .info-tag {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #1565c0;
+            padding: 6px 12px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            transition: all 0.3s;
+            border: 1px solid rgba(21, 101, 192, 0.1);
+            font-weight: 600;
+        }
+        
+        .info-tag:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .info-tag.seller {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            color: #2e7d32;
+        }
+        
+        .info-tag.category {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            color: #7b1fa2;
+        }
+        
+        .info-tag.priority {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            color: #ef6c00;
+        }
+        
+        .info-tag.sub-category {
+            background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+            color: #00695c;
+        }
+        
+        .info-tag.status.active {
+            background: linear-gradient(135deg, #4CAF50 0%, #388e3c 100%);
+            color: white;
+        }
+        
+        .info-tag.status.inactive {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+        }
+        
+        /* Video Player Modal */
+        .video-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .video-modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: transparent;
+            width: 90%;
+            max-width: 1200px;
+            max-height: 90vh;
+            border-radius: 16px;
+            overflow: hidden;
+            animation: modalSlideIn 0.4s ease;
+        }
+        
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            background: #000;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 16px;
+        }
+        
+        .close-video-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            font-size: 32px;
+            cursor: pointer;
+            color: white;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+        
+        .close-video-modal:hover {
+            background: rgba(255,255,255,0.3);
+            transform: rotate(90deg);
+        }
+        
+        /* Edit Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 0;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: modalSlideIn 0.4s ease;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px 30px;
+            border-bottom: 2px solid #f0f0f0;
+            background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
+            color: white;
+            border-radius: 16px 16px 0 0;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            color: white;
+            font-size: 22px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .modal-header h2:before {
+            content: "✏️";
+            font-size: 24px;
+        }
+        
+        .close-modal {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            font-size: 32px;
+            cursor: pointer;
+            color: white;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+        
+        .close-modal:hover {
+            background: rgba(255,255,255,0.3);
+            transform: rotate(90deg);
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        .form-section {
+            margin-bottom: 25px;
+        }
+        
+        .form-section h3 {
+            margin: 0 0 15px 0;
+            color: #2c3e50;
+            font-size: 18px;
+            font-weight: 600;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #9C27B0;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.3s;
+            background: white;
+            font-family: inherit;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #9C27B0;
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+        
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237f8c8d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 15px;
+            padding-right: 45px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            padding: 25px 30px;
+            border-top: 2px solid #f0f0f0;
+            background: #f8f9fa;
+            border-radius: 0 0 16px 16px;
+        }
+        
+        .save-btn {
+            background: linear-gradient(135deg, #27ae60 0%, #219653 100%);
+            color: white;
+            padding: 12px 24px;
+            font-size: 14px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .save-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #219653 0%, #1e874b 100%);
+        }
+        
+        .cancel-btn {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            color: white;
+            padding: 12px 24px;
+            font-size: 14px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Thumbnail Upload Modal Specific */
+        .current-image-container {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px dashed #ddd;
+        }
+        
+        .current-image {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .upload-container {
+            border: 2px dashed #2196F3;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px;
+            background: #f8f9fa;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+        
+        .upload-container.dragover {
+            border-color: #4CAF50;
+            background: #e8f5e9;
+        }
+        
+        .upload-btn {
+            background: #2196F3;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .upload-btn:hover {
+            background: #0b7dda;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            max-height: 250px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 30px;
+            color: #7f8c8d;
+            font-size: 18px;
+            grid-column: 1 / -1;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 2px dashed #e0e0e0;
+        }
+        
+        .empty-state:before {
+            content: "🎬";
+            font-size: 48px;
+            display: block;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        /* Active filters info */
+        .active-filters {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #bbdefb;
+        }
+        
+        .active-filters h4 {
+            margin: 0 0 10px 0;
+            color: #1565c0;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .active-filters h4:before {
+            content: "⚡";
+        }
+        
+        .filter-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .filter-tag {
+            background: #1565c0;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .filter-tag button {
+            background: none;
+            border: none;
+            color: white;
+            padding: 0;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        
+        /* Custom Dropdown Styles */
+        .custom-select-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        
+        .select-header {
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .select-header:hover {
+            border-color: #9C27B0;
+        }
+        
+        .select-header .dropdown-arrow {
+            color: #7f8c8d;
+            font-size: 12px;
+            transition: transform 0.3s;
+        }
+        
+        .custom-select-wrapper.open .select-header .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+        
+        .custom-select-wrapper.open .select-header {
+            border-color: #9C27B0;
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+        
+        .select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            margin-top: 5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 100;
+            display: none;
+            max-height: 350px;
+            overflow: hidden;
+        }
+        
+        .custom-select-wrapper.open .select-dropdown {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .dropdown-search {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            background: #f8f9fa;
+        }
+        
+        .dropdown-search-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        
+        .dropdown-search-input:focus {
+            outline: none;
+            border-color: #9C27B0;
+            box-shadow: 0 0 0 2px rgba(156, 39, 176, 0.1);
+        }
+        
+        .dropdown-options {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        
+        .dropdown-option {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .dropdown-option:hover {
+            background: #f8f9fa;
+        }
+        
+        .dropdown-option.selected {
+            background: #e3f2fd;
+            color: #1565c0;
+            font-weight: 600;
+        }
+        
+        .dropdown-option.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f8f9fa;
+        }
+        
+        .dropdown-option.disabled:hover {
+            background: #f8f9fa;
+        }
+        
+        /* Multi-select specific styles */
+        .multi-select .dropdown-option {
+            display: flex;
+            align-items: center;
+            padding: 8px 15px;
+        }
+        
+        .multi-select .dropdown-option input[type="checkbox"] {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        
+        .multi-select .dropdown-option label {
+            cursor: pointer;
+            flex: 1;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .dropdown-actions {
+            padding: 10px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            background: #f8f9fa;
+        }
+        
+        .select-all-btn, .clear-all-btn {
+            flex: 1;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .select-all-btn {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .select-all-btn:hover {
+            background: #0b7dda;
+        }
+        
+        .clear-all-btn {
+            background: #f44336;
+            color: white;
+        }
+        
+        .clear-all-btn:hover {
+            background: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <h1>Videos - Card View</h1>
+    
+    <div class="controls">
+        <button class="back-btn" onclick="location.href='/home'">← Back to Dashboard</button>
+        <button class="refresh-btn" onclick="loadVideos()">🔄 Refresh</button>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search videos...">
+        </div>
+    </div>
+    
+    <!-- Filters with Counts -->
+    <div class="filters-container">
+        <div class="filters-row">
+            <!-- Status Filter -->
+            <div class="filter-group">
+                <label>Status <span class="filter-count" id="statusCount">0</span></label>
+                <select id="statusFilter">
+                    <option value="all">All Status</option>
+                    <option value="1">Active</option>
+                    <option value="0">Inactive</option>
+                </select>
+            </div>
+            
+            <!-- Priority Filter -->
+            <div class="filter-group">
+                <label>Priority <span class="filter-count" id="priorityCount">0</span></label>
+                <select id="priorityFilter">
+                    <option value="all">All Priorities</option>
+                    <option value="1">1 (Highest)</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10 (Lowest)</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="filters-row">
+            <!-- Category Filter with Custom Dropdown -->
+            <div class="filter-group">
+                <label>Category <span class="filter-count" id="categoryCount">0</span></label>
+                <div class="custom-select-wrapper" id="categoryFilterWrapper">
+                    <div class="select-header" id="categorySelectHeader">
+                        <span>All Categories</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="select-dropdown" id="categoryDropdown">
+                        <div class="dropdown-search">
+                            <input type="text" id="searchCategoryFilter" 
+                                   class="dropdown-search-input" 
+                                   placeholder="Search category by name or ID...">
+                        </div>
+                        <div class="dropdown-options" id="categoryOptions">
+                            <div class="dropdown-option selected" data-value="all">All Categories</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sub Category Filter with Custom Dropdown -->
+            <div class="filter-group">
+                <label>Sub Category <span class="filter-count" id="subCategoryCount">0</span></label>
+                <div class="custom-select-wrapper" id="subCategoryFilterWrapper">
+                    <div class="select-header" id="subCategorySelectHeader">
+                        <span>All Sub Categories</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="select-dropdown" id="subCategoryDropdown">
+                        <div class="dropdown-search">
+                            <input type="text" id="searchSubCategoryFilter" 
+                                   class="dropdown-search-input" 
+                                   placeholder="Search sub category by name or ID...">
+                        </div>
+                        <div class="dropdown-options" id="subCategoryOptions">
+                            <div class="dropdown-option selected" data-value="all">All Sub Categories</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Seller Filter with Custom Dropdown -->
+            <div class="filter-group">
+                <label>Seller <span class="filter-count" id="sellerCount">0</span></label>
+                <div class="custom-select-wrapper" id="sellerFilterWrapper">
+                    <div class="select-header" id="sellerSelectHeader">
+                        <span>All Sellers</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="select-dropdown" id="sellerDropdown">
+                        <div class="dropdown-search">
+                            <input type="text" id="searchSellerFilter" 
+                                   class="dropdown-search-input" 
+                                   placeholder="Search seller by name or ID...">
+                        </div>
+                        <div class="dropdown-options" id="sellerOptions">
+                            <div class="dropdown-option selected" data-value="all">All Sellers</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Active Filters Display -->
+        <div class="active-filters" id="activeFilters" style="display: none;">
+            <h4>Active Filters</h4>
+            <div class="filter-tags" id="filterTags"></div>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+            <div id="statsInfo" style="color: #666; font-size: 14px;">
+                Total: <span id="totalCount">0</span> | Showing: <span id="showingCount">0</span>
+                | Active: <span id="activeCount">0</span> | Inactive: <span id="inactiveCount">0</span>
+            </div>
+            <button onclick="resetFilters()" style="background: #f44336; color: white; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600;">
+                ❌ Clear All Filters
+            </button>
+        </div>
+    </div>
+    
+    <div id="message"></div>
+    <div id="loading">Loading videos...</div>
+    <div id="error"></div>
+    
+    <div id="videosContainer" class="videos-grid"></div>
+
+    <!-- Video Player Modal -->
+    <div id="videoPlayerModal" class="video-modal">
+        <div class="video-modal-content">
+            <button class="close-video-modal" onclick="closeVideoPlayer()">&times;</button>
+            <div class="video-container">
+                <iframe id="videoPlayer" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Video Details Modal -->
+    <div id="editVideoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Video Details</h2>
+                <button class="close-modal" onclick="closeEditVideoModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="form-section">
+                    <h3>Basic Information</h3>
+                    <form id="editVideoForm">
+                        <div class="form-group">
+                            <label>Video Name</label>
+                            <input type="text" id="editName" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select id="editStatus" class="form-control" required>
+                                <option value="">-- Select --</option>
+                                <option value="1">Active</option>
+                                <option value="0">Inactive</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Video URL</label>
+                            <input type="url" id="editVideoUrl" class="form-control" placeholder="YouTube or direct video URL" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Thumbnail URL</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="url" id="editThumbnail" class="form-control" placeholder="Thumbnail image URL">
+                                <button type="button" onclick="testThumbnail()" style="background: #2196F3; color: white; padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer; white-space: nowrap;">
+                                    Test
+                                </button>
+                            </div>
+                            <div id="thumbnailPreviewContainer" style="margin-top: 10px; display: none;">
+                                <img id="thumbnailPreview" style="max-width: 200px; max-height: 150px; border-radius: 8px;">
+                            </div>
+                        </div>
+                        
+                        <!-- Category Custom Dropdown -->
+                        <div class="form-group">
+                            <label>Category</label>
+                            <div class="custom-select-wrapper" id="editCategoryWrapper">
+                                <div class="select-header" id="editCategorySelectHeader">
+                                    <span>-- Select Category --</span>
+                                    <span class="dropdown-arrow">▼</span>
+                                </div>
+                                <div class="select-dropdown" id="editCategoryDropdown">
+                                    <div class="dropdown-search">
+                                        <input type="text" id="searchCategoryEdit" 
+                                               class="dropdown-search-input" 
+                                               placeholder="Search category by name or ID...">
+                                    </div>
+                                    <div class="dropdown-options" id="editCategoryOptions">
+                                        <div class="dropdown-option" data-value="">-- Select Category --</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Sub Categories Multi-Select Custom Dropdown -->
+                        <div class="form-group">
+                            <label>Sub Categories</label>
+                            <div class="custom-select-wrapper multi-select" id="editSubCategoriesWrapper">
+                                <div class="select-header" id="editSubCategoriesSelectHeader">
+                                    <span>Select sub categories</span>
+                                    <span class="dropdown-arrow">▼</span>
+                                </div>
+                                <div class="select-dropdown" id="editSubCategoriesDropdown">
+                                    <div class="dropdown-search">
+                                        <input type="text" id="searchSubCategoriesEdit" 
+                                               class="dropdown-search-input" 
+                                               placeholder="Search sub category by name or ID...">
+                                    </div>
+                                    <div class="dropdown-options multi-options" id="editSubCategoriesOptions">
+                                        <!-- Checkboxes will be added dynamically -->
+                                    </div>
+                                    <div class="dropdown-actions">
+                                        <button type="button" class="select-all-btn" onclick="selectAllSubCategories()">Select All</button>
+                                        <button type="button" class="clear-all-btn" onclick="clearAllSubCategories()">Clear All</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <small style="color: #666; margin-top: 5px;">Select multiple sub categories</small>
+                        </div>
+                        
+                        <!-- Seller Custom Dropdown -->
+                        <div class="form-group">
+                            <label>Seller</label>
+                            <div class="custom-select-wrapper" id="editSellerWrapper">
+                                <div class="select-header" id="editSellerSelectHeader">
+                                    <span>-- Select Seller --</span>
+                                    <span class="dropdown-arrow">▼</span>
+                                </div>
+                                <div class="select-dropdown" id="editSellerDropdown">
+                                    <div class="dropdown-search">
+                                        <input type="text" id="searchSellerEdit" 
+                                               class="dropdown-search-input" 
+                                               placeholder="Search seller by name or ID...">
+                                    </div>
+                                    <div class="dropdown-options" id="editSellerOptions">
+                                        <div class="dropdown-option" data-value="">-- Select Seller --</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Priority (1-10)</label>
+                            <select id="editPriority" class="form-control">
+                                <option value="">-- Select --</option>
+                                <option value="1">1 (Highest)</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10 (Lowest)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Product ID (optional)</label>
+                            <input type="number" id="editProductId" class="form-control" placeholder="Linked product ID">
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="cancel-btn" onclick="closeEditVideoModal()">
+                    ✕ Cancel
+                </button>
+                <button type="button" class="save-btn" onclick="saveVideoDetails()">
+                    💾 Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thumbnail Upload Modal -->
+    <div id="thumbnailUploadModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Upload Thumbnail</h2>
+                <button class="close-modal" onclick="closeThumbnailModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="current-image-container" id="currentThumbnailContainer">
+                    <h4>Current Thumbnail</h4>
+                    <img id="currentThumbnail" class="current-image" src="" alt="Current Thumbnail">
+                    <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
+                        <button onclick="viewCurrentThumbnail()" class="action-btn">👁️ View</button>
+                        <button onclick="deleteCurrentThumbnail()" class="action-btn" style="background: #f44336; color: white;">🗑️ Delete</button>
+                    </div>
+                </div>
+                
+                <div class="upload-container" id="uploadContainer">
+                    <input type="file" id="thumbnailFileInput" class="file-input" accept="image/*">
+                    <button type="button" class="upload-btn" onclick="document.getElementById('thumbnailFileInput').click()">
+                        📁 Choose Image
+                    </button>
+                    <p style="margin: 15px 0; color: #666;">or drag and drop image here</p>
+                    <div style="font-size: 13px; color: #7f8c8d; margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.5); border-radius: 6px;">
+                        <strong>Supported formats:</strong> JPG, PNG, GIF, WEBP<br>
+                        <strong>Maximum file size:</strong> 5MB<br>
+                        <strong>Recommended:</strong> 800×600px or larger
+                    </div>
+                </div>
+                
+                <div id="thumbnailPreviewContainer2" style="display: none; text-align: center; margin: 25px 0; padding: 20px; background: #f8f9fa; border-radius: 10px; border: 2px solid #e0e0e0;">
+                    <h4 style="margin: 0 0 15px 0; color: #2c3e50;">Uploaded Image</h4>
+                    <img id="uploadedThumbnailPreview" style="max-width: 100%; max-height: 250px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" src="" alt="Uploaded Thumbnail">
+                    <div style="margin-top: 15px; color: #27ae60; font-weight: 600;">
+                        ✅ Ready to save
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="cancel-btn" onclick="closeThumbnailModal()">
+                    ✕ Cancel
+                </button>
+                <button type="button" class="save-btn" id="saveThumbnailBtn" onclick="saveThumbnail()" disabled>
+                    💾 Save Thumbnail
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allVideos = [];
+        let filteredVideos = [];
+        let categoriesList = [];
+        let sellersList = [];
+        let currentEditVideoId = null;
+        let currentThumbnailVideoId = null;
+        
+        // Thumbnail upload variables
+        let uploadedThumbnailUrl = null;
+        let uploadedThumbnailFile = null;
+        
+        // Filter state
+        let activeFilters = {
+            status: 'all',
+            category: 'all',
+            subCategory: 'all',
+            seller: 'all',
+            priority: 'all'
+        };
+        
+        // Filter counts
+        let filterCounts = {
+            status: { all: 0, '1': 0, '0': 0 },
+            category: {},
+            subCategory: {},
+            seller: {},
+            priority: { all: 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, '10': 0 }
+        };
+        
+        // Edit form state
+        let editFormState = {
+            category: '',
+            subCategories: [],
+            seller: ''
+        };
+        
+        // Custom dropdown state
+        let dropdownsState = {
+            category: { open: false },
+            subCategory: { open: false },
+            seller: { open: false },
+            editCategory: { open: false },
+            editSubCategories: { open: false },
+            editSeller: { open: false }
+        };
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadVideos();
+            
+            // Setup search
+            document.getElementById('searchInput').addEventListener('input', function() {
+                applyFilters();
+            });
+            
+            // Setup filter change events
+            document.getElementById('statusFilter').addEventListener('change', function() {
+                activeFilters.status = this.value;
+                updateFilterOptions();
+                applyFilters();
+            });
+            
+            document.getElementById('priorityFilter').addEventListener('change', function() {
+                activeFilters.priority = this.value;
+                updateFilterOptions();
+                applyFilters();
+            });
+            
+            // Setup custom dropdowns
+            setupCustomDropdowns();
+            
+            // Setup thumbnail preview
+            document.getElementById('editThumbnail').addEventListener('input', function() {
+                const url = this.value.trim();
+                const preview = document.getElementById('thumbnailPreview');
+                const container = document.getElementById('thumbnailPreviewContainer');
+                
+                if (url) {
+                    preview.src = url;
+                    preview.onload = () => container.style.display = 'block';
+                    preview.onerror = () => container.style.display = 'none';
+                } else {
+                    container.style.display = 'none';
+                }
+            });
+            
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', function(e) {
+                // Filter dropdowns
+                ['category', 'subCategory', 'seller'].forEach(type => {
+                    const wrapper = document.getElementById(`${type}FilterWrapper`);
+                    const dropdown = document.getElementById(`${type}Dropdown`);
+                    if (wrapper && dropdown && !wrapper.contains(e.target) && !dropdown.contains(e.target)) {
+                        wrapper.classList.remove('open');
+                        dropdownsState[type].open = false;
+                    }
+                });
+                
+                // Edit form dropdowns
+                ['editCategory', 'editSubCategories', 'editSeller'].forEach(type => {
+                    const wrapper = document.getElementById(`${type}Wrapper`);
+                    const dropdown = document.getElementById(`${type}Dropdown`);
+                    if (wrapper && dropdown && !wrapper.contains(e.target) && !dropdown.contains(e.target)) {
+                        wrapper.classList.remove('open');
+                        dropdownsState[type].open = false;
+                    }
+                });
+            });
+            
+            // Close dropdowns with Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeAllDropdowns();
+                }
+            });
+        });
+        
+        // Setup custom dropdowns
+        function setupCustomDropdowns() {
+            // Filter dropdowns
+            setupFilterDropdown('category');
+            setupFilterDropdown('subCategory');
+            setupFilterDropdown('seller');
+            
+            // Edit form dropdowns
+            setupEditFormDropdown('editCategory');
+            setupEditFormDropdown('editSeller');
+            setupMultiSelectDropdown('editSubCategories');
+        }
+        
+        // Setup filter dropdown
+        function setupFilterDropdown(type) {
+            const wrapper = document.getElementById(`${type}FilterWrapper`);
+            const header = document.getElementById(`${type}SelectHeader`);
+            const dropdown = document.getElementById(`${type}Dropdown`);
+            const searchInput = document.getElementById(`search${type.charAt(0).toUpperCase() + type.slice(1)}Filter`);
+            const optionsContainer = document.getElementById(`${type}Options`);
+            
+            if (!wrapper || !header || !dropdown || !optionsContainer) return;
+            
+            // Toggle dropdown on header click
+            header.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleDropdown(wrapper, type);
+            });
+            
+            // Search functionality
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    filterDropdownOptions(type, this.value.toLowerCase());
+                });
+                
+                searchInput.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+            
+            // Handle option selection
+            optionsContainer.addEventListener('click', function(e) {
+                const option = e.target.closest('.dropdown-option');
+                if (option && !option.classList.contains('disabled')) {
+                    const value = option.getAttribute('data-value');
+                    const text = option.textContent;
+                    
+                    // Update header
+                    header.querySelector('span:first-child').textContent = text;
+                    
+                    // Update selected state
+                    optionsContainer.querySelectorAll('.dropdown-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    option.classList.add('selected');
+                    
+                    // Update active filters
+                    activeFilters[type] = value;
+                    
+                    // Close dropdown
+                    wrapper.classList.remove('open');
+                    dropdownsState[type].open = false;
+                    
+                    // Update other filters and apply
+                    updateFilterOptions();
+                    applyFilters();
+                }
+            });
+        }
+        
+        // Setup edit form dropdown - FIXED
+        function setupEditFormDropdown(type) {
+            const wrapper = document.getElementById(`${type}Wrapper`);
+            const header = document.getElementById(`${type}SelectHeader`);
+            const dropdown = document.getElementById(`${type}Dropdown`);
+            const searchInput = document.getElementById(`search${type.replace('edit', '')}Edit`);
+            const optionsContainer = document.getElementById(`${type}Options`);
+            
+            if (!wrapper || !header || !dropdown || !optionsContainer) return;
+            
+            // Toggle dropdown on header click
+            header.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleDropdown(wrapper, type);
+            });
+            
+            // Search functionality - FIXED
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    e.stopPropagation();
+                    const searchTerm = this.value.toLowerCase();
+                    const options = optionsContainer.querySelectorAll('.dropdown-option');
+                    
+                    options.forEach(option => {
+                        const text = option.textContent.toLowerCase();
+                        if (searchTerm === '' || text.includes(searchTerm)) {
+                            option.style.display = '';
+                        } else {
+                            option.style.display = 'none';
+                        }
+                    });
+                });
+                
+                searchInput.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+            
+            // Handle option selection
+            optionsContainer.addEventListener('click', function(e) {
+                const option = e.target.closest('.dropdown-option');
+                if (option) {
+                    const value = option.getAttribute('data-value');
+                    const text = option.textContent;
+                    
+                    // Update header
+                    header.querySelector('span:first-child').textContent = text;
+                    
+                    // Update selected state
+                    optionsContainer.querySelectorAll('.dropdown-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    option.classList.add('selected');
+                    
+                    // Update edit form state
+                    if (type === 'editCategory') {
+                        editFormState.category = value;
+                    } else if (type === 'editSeller') {
+                        editFormState.seller = value;
+                    }
+                    
+                    // Close dropdown
+                    wrapper.classList.remove('open');
+                    dropdownsState[type].open = false;
+                    
+                    // Clear search input
+                    if (searchInput) searchInput.value = '';
+                }
+            });
+        }
+        
+        // Setup multi-select dropdown - FIXED
+        function setupMultiSelectDropdown(type) {
+            const wrapper = document.getElementById(`${type}Wrapper`);
+            const header = document.getElementById(`${type}SelectHeader`);
+            const dropdown = document.getElementById(`${type}Dropdown`);
+            const searchInput = document.getElementById(`search${type.replace('edit', '')}Edit`);
+            const optionsContainer = document.getElementById(`${type}Options`);
+            
+            if (!wrapper || !header || !dropdown || !optionsContainer) return;
+            
+            // Toggle dropdown on header click
+            header.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleDropdown(wrapper, type);
+            });
+            
+            // Search functionality - FIXED
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    e.stopPropagation();
+                    const searchTerm = this.value.toLowerCase();
+                    const options = optionsContainer.querySelectorAll('.dropdown-option');
+                    
+                    options.forEach(option => {
+                        const text = option.textContent.toLowerCase();
+                        if (searchTerm === '' || text.includes(searchTerm)) {
+                            option.style.display = '';
+                        } else {
+                            option.style.display = 'none';
+                        }
+                    });
+                });
+                
+                searchInput.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+            
+            // Handle checkbox selection
+            optionsContainer.addEventListener('change', function(e) {
+                if (e.target.type === 'checkbox') {
+                    updateMultiSelectHeader();
+                }
+            });
+            
+            // Reset search when dropdown closes
+            wrapper.addEventListener('click', function(e) {
+                if (e.target.classList.contains('select-all-btn') || e.target.classList.contains('clear-all-btn')) {
+                    if (searchInput) searchInput.value = '';
+                }
+            });
+        }
+        
+        // Toggle dropdown
+        function toggleDropdown(wrapper, type) {
+            // Close all other dropdowns
+            closeAllDropdowns();
+            
+            // Toggle current dropdown
+            wrapper.classList.toggle('open');
+            dropdownsState[type].open = wrapper.classList.contains('open');
+        }
+        
+        // Close all dropdowns
+        function closeAllDropdowns() {
+            // Filter dropdowns
+            ['category', 'subCategory', 'seller'].forEach(type => {
+                const wrapper = document.getElementById(`${type}FilterWrapper`);
+                if (wrapper) {
+                    wrapper.classList.remove('open');
+                    dropdownsState[type].open = false;
+                }
+            });
+            
+            // Edit form dropdowns
+            ['editCategory', 'editSubCategories', 'editSeller'].forEach(type => {
+                const wrapper = document.getElementById(`${type}Wrapper`);
+                if (wrapper) {
+                    wrapper.classList.remove('open');
+                    dropdownsState[type].open = false;
+                }
+            });
+        }
+        
+        // Filter dropdown options
+        function filterDropdownOptions(type, searchTerm) {
+            const optionsContainer = document.getElementById(`${type}Options`);
+            const options = optionsContainer.querySelectorAll('.dropdown-option');
+            
+            options.forEach(option => {
+                const text = option.textContent.toLowerCase();
+                if (searchTerm === '' || text.includes(searchTerm)) {
+                    option.style.display = '';
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+        }
+        
+        // Update multi-select header
+        function updateMultiSelectHeader() {
+            const header = document.getElementById('editSubCategoriesSelectHeader');
+            const optionsContainer = document.getElementById('editSubCategoriesOptions');
+            const selectedCheckboxes = optionsContainer.querySelectorAll('input[type="checkbox"]:checked');
+            const selectedValues = Array.from(selectedCheckboxes).map(cb => cb.value);
+            
+            editFormState.subCategories = selectedValues;
+            
+            if (selectedValues.length === 0) {
+                header.querySelector('span:first-child').textContent = 'Select sub categories';
+            } else if (selectedValues.length === 1) {
+                const selectedOption = optionsContainer.querySelector('.dropdown-option input[type="checkbox"]:checked');
+                if (selectedOption) {
+                    const label = selectedOption.nextElementSibling.textContent;
+                    header.querySelector('span:first-child').textContent = label;
+                }
+            } else {
+                header.querySelector('span:first-child').textContent = `${selectedValues.length} selected`;
+            }
+        }
+        
+        // Select all sub categories
+        function selectAllSubCategories() {
+            const optionsContainer = document.getElementById('editSubCategoriesOptions');
+            const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            
+            updateMultiSelectHeader();
+        }
+        
+        // Clear all sub categories
+        function clearAllSubCategories() {
+            const optionsContainer = document.getElementById('editSubCategoriesOptions');
+            const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            updateMultiSelectHeader();
+        }
+        
+        // Load videos with enhanced data
+        async function loadVideos() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('videosContainer').innerHTML = '';
+            
+            try {
+                // Load enhanced videos data
+                const response = await fetch('/api/videosenhanced');
+                const data = await response.json();
+                
+                if (data && data.success && Array.isArray(data.data)) {
+                    allVideos = data.data;
+                    categoriesList = data.categories || [];
+                    sellersList = data.sellers || [];
+                    
+                    // Calculate initial filter counts
+                    calculateFilterCounts();
+                    
+                    // Populate filters
+                    populateFilters();
+                    
+                    showMessage(`✅ Loaded ${allVideos.length} videos`, 'success');
+                    applyFilters();
+                } else {
+                    throw new Error('Invalid videos data format');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = 'Error loading videos: ' + error.message;
+                showMessage('❌ Failed to load videos', 'error');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+        
+        // Calculate filter counts
+        function calculateFilterCounts() {
+            // Reset counts
+            filterCounts = {
+                status: { all: allVideos.length, '1': 0, '0': 0 },
+                category: {},
+                subCategory: {},
+                seller: {},
+                priority: { all: allVideos.length, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, '10': 0 }
+            };
+            
+            // Calculate counts from all videos
+            allVideos.forEach(video => {
+                // Status counts
+                if (video.status == 1) {
+                    filterCounts.status['1']++;
+                } else {
+                    filterCounts.status['0']++;
+                }
+                
+                // Category counts
+                if (video.category_id) {
+                    const catId = String(video.category_id);
+                    if (!filterCounts.category[catId]) {
+                        filterCounts.category[catId] = 0;
+                    }
+                    filterCounts.category[catId]++;
+                }
+                
+                // Sub category counts (flatten from sub_category_ids)
+                if (video.sub_category_ids && video.sub_category_ids.length > 0) {
+                    video.sub_category_ids.forEach(id => {
+                        const subId = String(id);
+                        if (!filterCounts.subCategory[subId]) {
+                            filterCounts.subCategory[subId] = 0;
+                        }
+                        filterCounts.subCategory[subId]++;
+                    });
+                }
+                
+                // Seller counts
+                if (video.seller_id) {
+                    const sellerId = String(video.seller_id);
+                    if (!filterCounts.seller[sellerId]) {
+                        filterCounts.seller[sellerId] = 0;
+                    }
+                    filterCounts.seller[sellerId]++;
+                }
+                
+                // Priority counts
+                if (video.priority && video.priority >= 1 && video.priority <= 10) {
+                    filterCounts.priority[String(video.priority)]++;
+                }
+            });
+        }
+        
+        // Populate filters with counts and IDs
+        function populateFilters() {
+            // Category filter
+            const categoryOptions = document.getElementById('categoryOptions');
+            categoryOptions.innerHTML = '<div class="dropdown-option selected" data-value="all">All Categories</div>';
+            
+            Object.keys(filterCounts.category).sort((a, b) => filterCounts.category[b] - filterCounts.category[a]).forEach(catId => {
+                const category = categoriesList.find(c => c.id == catId);
+                const name = category ? `${category.name} (${catId})` : `Category ${catId}`;
+                const count = filterCounts.category[catId];
+                const option = document.createElement('div');
+                option.className = 'dropdown-option';
+                option.setAttribute('data-value', catId);
+                option.textContent = `${name} - ${count}`;
+                categoryOptions.appendChild(option);
+            });
+            
+            // Sub Category filter
+            const subCategoryOptions = document.getElementById('subCategoryOptions');
+            subCategoryOptions.innerHTML = '<div class="dropdown-option selected" data-value="all">All Sub Categories</div>';
+            
+            Object.keys(filterCounts.subCategory).sort((a, b) => filterCounts.subCategory[b] - filterCounts.subCategory[a]).forEach(subId => {
+                const category = categoriesList.find(c => c.id == subId);
+                const name = category ? `${category.name} (${subId})` : `Sub ${subId}`;
+                const count = filterCounts.subCategory[subId];
+                const option = document.createElement('div');
+                option.className = 'dropdown-option';
+                option.setAttribute('data-value', subId);
+                option.textContent = `${name} - ${count}`;
+                subCategoryOptions.appendChild(option);
+            });
+            
+            // Seller filter
+            const sellerOptions = document.getElementById('sellerOptions');
+            sellerOptions.innerHTML = '<div class="dropdown-option selected" data-value="all">All Sellers</div>';
+            
+            Object.keys(filterCounts.seller).sort((a, b) => filterCounts.seller[b] - filterCounts.seller[a]).forEach(sellerId => {
+                const seller = sellersList.find(s => s.user_id == sellerId);
+                const name = seller ? `${seller.store_name} (${sellerId})` : `Seller ${sellerId}`;
+                const count = filterCounts.seller[sellerId];
+                const option = document.createElement('div');
+                option.className = 'dropdown-option';
+                option.setAttribute('data-value', sellerId);
+                option.textContent = `${name} - ${count}`;
+                sellerOptions.appendChild(option);
+            });
+            
+            // Reset search boxes
+            const searchCategoryFilter = document.getElementById('searchCategoryFilter');
+            const searchSubCategoryFilter = document.getElementById('searchSubCategoryFilter');
+            const searchSellerFilter = document.getElementById('searchSellerFilter');
+            
+            if (searchCategoryFilter) searchCategoryFilter.value = '';
+            if (searchSubCategoryFilter) searchSubCategoryFilter.value = '';
+            if (searchSellerFilter) searchSellerFilter.value = '';
+            
+            // Update count badges
+            updateFilterCountBadges();
+        }
+        
+        // Update filter options based on current selections (with auto-adjust)
+        function updateFilterOptions() {
+            // First get videos filtered by current selections
+            let tempVideos = [...allVideos];
+            
+            // Apply current filters
+            if (activeFilters.status !== 'all') {
+                tempVideos = tempVideos.filter(v => String(v.status) === activeFilters.status);
+            }
+            
+            if (activeFilters.category !== 'all') {
+                tempVideos = tempVideos.filter(v => String(v.category_id) === activeFilters.category);
+            }
+            
+            if (activeFilters.subCategory !== 'all') {
+                tempVideos = tempVideos.filter(v => {
+                    if (!v.sub_category_ids || v.sub_category_ids.length === 0) return false;
+                    return v.sub_category_ids.includes(activeFilters.subCategory);
+                });
+            }
+            
+            if (activeFilters.seller !== 'all') {
+                tempVideos = tempVideos.filter(v => String(v.seller_id) === activeFilters.seller);
+            }
+            
+            if (activeFilters.priority !== 'all') {
+                tempVideos = tempVideos.filter(v => String(v.priority) === activeFilters.priority);
+            }
+            
+            // Calculate fresh counts for tempVideos
+            const tempCounts = {
+                category: {},
+                subCategory: {},
+                seller: {},
+                priority: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, '10': 0 }
+            };
+            
+            tempVideos.forEach(video => {
+                // Category counts
+                if (video.category_id) {
+                    const catId = String(video.category_id);
+                    if (!tempCounts.category[catId]) tempCounts.category[catId] = 0;
+                    tempCounts.category[catId]++;
+                }
+                
+                // Sub category counts
+                if (video.sub_category_ids && video.sub_category_ids.length > 0) {
+                    video.sub_category_ids.forEach(id => {
+                        const subId = String(id);
+                        if (!tempCounts.subCategory[subId]) tempCounts.subCategory[subId] = 0;
+                        tempCounts.subCategory[subId]++;
+                    });
+                }
+                
+                // Seller counts
+                if (video.seller_id) {
+                    const sellerId = String(video.seller_id);
+                    if (!tempCounts.seller[sellerId]) tempCounts.seller[sellerId] = 0;
+                    tempCounts.seller[sellerId]++;
+                }
+                
+                // Priority counts
+                if (video.priority && video.priority >= 1 && video.priority <= 10) {
+                    tempCounts.priority[String(video.priority)]++;
+                }
+            });
+            
+            // Update dropdowns with fresh temp counts and auto-adjust
+            updateFilterDropdown('category', tempCounts.category);
+            updateFilterDropdown('subCategory', tempCounts.subCategory);
+            updateFilterDropdown('seller', tempCounts.seller);
+            
+            // Update count badges
+            updateFilterCountBadges();
+        }
+        
+        // Update a specific filter dropdown with auto-adjust
+        function updateFilterDropdown(type, tempCounts) {
+            const optionsContainer = document.getElementById(`${type}Options`);
+            const options = optionsContainer.querySelectorAll('.dropdown-option');
+            const currentSelected = activeFilters[type];
+            
+            // Update options based on temp counts
+            options.forEach(option => {
+                const value = option.getAttribute('data-value');
+                
+                if (value === 'all') {
+                    // Always enable "All" option
+                    option.classList.remove('disabled');
+                    const count = Object.values(tempCounts).reduce((a, b) => a + b, 0);
+                    option.textContent = `All ${type === 'category' ? 'Categories' : type === 'subCategory' ? 'Sub Categories' : 'Sellers'}`;
+                } else {
+                    const count = tempCounts[value] || 0;
+                    
+                    // Get display name
+                    let displayName = '';
+                    if (type === 'category' || type === 'subCategory') {
+                        const category = categoriesList.find(c => c.id == value);
+                        displayName = category ? `${category.name} (${value})` : `${type === 'category' ? 'Category' : 'Sub'} ${value}`;
+                    } else if (type === 'seller') {
+                        const seller = sellersList.find(s => s.user_id == value);
+                        displayName = seller ? `${seller.store_name} (${value})` : `Seller ${value}`;
+                    }
+                    
+                    if (count > 0) {
+                        option.classList.remove('disabled');
+                        option.textContent = `${displayName} - ${count}`;
+                    } else {
+                        option.classList.add('disabled');
+                        option.textContent = `${displayName} - 0`;
+                    }
+                }
+                
+                // Update selected state
+                if (value === currentSelected) {
+                    option.classList.add('selected');
+                    
+                    // Update header if selected option is disabled
+                    if (option.classList.contains('disabled') && value !== 'all') {
+                        // Auto-adjust: Reset to "all"
+                        activeFilters[type] = 'all';
+                        const header = document.getElementById(`${type}SelectHeader`);
+                        const allOption = optionsContainer.querySelector('.dropdown-option[data-value="all"]');
+                        if (allOption) {
+                            header.querySelector('span:first-child').textContent = allOption.textContent;
+                            allOption.classList.add('selected');
+                        }
+                        option.classList.remove('selected');
+                    }
+                } else {
+                    option.classList.remove('selected');
+                }
+            });
+            
+            // Update header if current selection is not in options
+            if (currentSelected !== 'all' && !tempCounts[currentSelected]) {
+                const header = document.getElementById(`${type}SelectHeader`);
+                const allOption = optionsContainer.querySelector('.dropdown-option[data-value="all"]');
+                if (allOption) {
+                    header.querySelector('span:first-child').textContent = allOption.textContent;
+                    allOption.classList.add('selected');
+                }
+                activeFilters[type] = 'all';
+            }
+        }
+        
+        // Update filter count badges
+        function updateFilterCountBadges() {
+            const showing = filteredVideos.length;
+            
+            // Update all count badges
+            document.getElementById('statusCount').textContent = showing;
+            document.getElementById('categoryCount').textContent = showing;
+            document.getElementById('subCategoryCount').textContent = showing;
+            document.getElementById('sellerCount').textContent = showing;
+            document.getElementById('priorityCount').textContent = showing;
+            
+            // Update stats
+            const activeVideos = filteredVideos.filter(v => v.status == 1).length;
+            const inactiveVideos = filteredVideos.filter(v => v.status == 0).length;
+            
+            document.getElementById('totalCount').textContent = allVideos.length;
+            document.getElementById('showingCount').textContent = showing;
+            document.getElementById('activeCount').textContent = activeVideos;
+            document.getElementById('inactiveCount').textContent = inactiveVideos;
+            
+            // Update active filters display
+            updateActiveFiltersDisplay();
+        }
+        
+        // Update active filters display
+        function updateActiveFiltersDisplay() {
+            const activeFiltersDiv = document.getElementById('activeFilters');
+            const filterTagsDiv = document.getElementById('filterTags');
+            
+            const activeFiltersList = [];
+            
+            // Collect active filters with IDs
+            if (activeFilters.status !== 'all') {
+                activeFiltersList.push({
+                    type: 'status',
+                    value: activeFilters.status,
+                    label: `Status: ${activeFilters.status === '1' ? 'Active' : 'Inactive'}`
+                });
+            }
+            
+            if (activeFilters.category !== 'all') {
+                const category = categoriesList.find(c => c.id == activeFilters.category);
+                activeFiltersList.push({
+                    type: 'category',
+                    value: activeFilters.category,
+                    label: `Category: ${category ? `${category.name} (${activeFilters.category})` : `ID: ${activeFilters.category}`}`
+                });
+            }
+            
+            if (activeFilters.subCategory !== 'all') {
+                const subCategory = categoriesList.find(c => c.id == activeFilters.subCategory);
+                activeFiltersList.push({
+                    type: 'subCategory',
+                    value: activeFilters.subCategory,
+                    label: `Sub Category: ${subCategory ? `${subCategory.name} (${activeFilters.subCategory})` : `ID: ${activeFilters.subCategory}`}`
+                });
+            }
+            
+            if (activeFilters.seller !== 'all') {
+                const seller = sellersList.find(s => s.user_id == activeFilters.seller);
+                activeFiltersList.push({
+                    type: 'seller',
+                    value: activeFilters.seller,
+                    label: `Seller: ${seller ? `${seller.store_name} (${activeFilters.seller})` : `ID: ${activeFilters.seller}`}`
+                });
+            }
+            
+            if (activeFilters.priority !== 'all') {
+                activeFiltersList.push({
+                    type: 'priority',
+                    value: activeFilters.priority,
+                    label: `Priority: ${activeFilters.priority}`
+                });
+            }
+            
+            // Update display
+            if (activeFiltersList.length > 0) {
+                activeFiltersDiv.style.display = 'block';
+                filterTagsDiv.innerHTML = '';
+                
+                activeFiltersList.forEach(filter => {
+                    const tag = document.createElement('div');
+                    tag.className = 'filter-tag';
+                    tag.innerHTML = `
+                        ${filter.label}
+                        <button onclick="removeFilter('${filter.type}')">×</button>
+                    `;
+                    filterTagsDiv.appendChild(tag);
+                });
+            } else {
+                activeFiltersDiv.style.display = 'none';
+            }
+        }
+        
+        // Remove specific filter
+        function removeFilter(filterType) {
+            if (filterType === 'status') {
+                document.getElementById('statusFilter').value = 'all';
+                activeFilters.status = 'all';
+            } else if (filterType === 'category') {
+                const header = document.getElementById('categorySelectHeader');
+                const options = document.getElementById('categoryOptions');
+                const allOption = options.querySelector('.dropdown-option[data-value="all"]');
+                
+                header.querySelector('span:first-child').textContent = allOption.textContent;
+                options.querySelectorAll('.dropdown-option').forEach(opt => opt.classList.remove('selected'));
+                allOption.classList.add('selected');
+                activeFilters.category = 'all';
+            } else if (filterType === 'subCategory') {
+                const header = document.getElementById('subCategorySelectHeader');
+                const options = document.getElementById('subCategoryOptions');
+                const allOption = options.querySelector('.dropdown-option[data-value="all"]');
+                
+                header.querySelector('span:first-child').textContent = allOption.textContent;
+                options.querySelectorAll('.dropdown-option').forEach(opt => opt.classList.remove('selected'));
+                allOption.classList.add('selected');
+                activeFilters.subCategory = 'all';
+            } else if (filterType === 'seller') {
+                const header = document.getElementById('sellerSelectHeader');
+                const options = document.getElementById('sellerOptions');
+                const allOption = options.querySelector('.dropdown-option[data-value="all"]');
+                
+                header.querySelector('span:first-child').textContent = allOption.textContent;
+                options.querySelectorAll('.dropdown-option').forEach(opt => opt.classList.remove('selected'));
+                allOption.classList.add('selected');
+                activeFilters.seller = 'all';
+            } else if (filterType === 'priority') {
+                document.getElementById('priorityFilter').value = 'all';
+                activeFilters.priority = 'all';
+            }
+            
+            updateFilterOptions();
+            applyFilters();
+        }
+        
+        // Reset all filters
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('statusFilter').value = 'all';
+            document.getElementById('priorityFilter').value = 'all';
+            
+            // Reset custom dropdowns
+            ['category', 'subCategory', 'seller'].forEach(type => {
+                const header = document.getElementById(`${type}SelectHeader`);
+                const options = document.getElementById(`${type}Options`);
+                const allOption = options.querySelector('.dropdown-option[data-value="all"]');
+                
+                if (header && allOption) {
+                    header.querySelector('span:first-child').textContent = allOption.textContent;
+                    options.querySelectorAll('.dropdown-option').forEach(opt => opt.classList.remove('selected'));
+                    allOption.classList.add('selected');
+                }
+                
+                activeFilters[type] = 'all';
+            });
+            
+            // Reset search boxes
+            const searchCategoryFilter = document.getElementById('searchCategoryFilter');
+            const searchSubCategoryFilter = document.getElementById('searchSubCategoryFilter');
+            const searchSellerFilter = document.getElementById('searchSellerFilter');
+            
+            if (searchCategoryFilter) searchCategoryFilter.value = '';
+            if (searchSubCategoryFilter) searchSubCategoryFilter.value = '';
+            if (searchSellerFilter) searchSellerFilter.value = '';
+            
+            // Reset active filters
+            activeFilters = {
+                status: 'all',
+                category: 'all',
+                subCategory: 'all',
+                seller: 'all',
+                priority: 'all'
+            };
+            
+            populateFilters();
+            applyFilters();
+        }
+        
+        // Apply filters
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            filteredVideos = allVideos.filter(video => {
+                // Search filter
+                if (searchTerm) {
+                    const searchable = [
+                        video.name,
+                        video.id.toString(),
+                        video.category_name || '',
+                        video.seller_name || '',
+                        video.sub_category_display || ''
+                    ].join(' ').toLowerCase();
+                    
+                    if (!searchable.includes(searchTerm)) {
+                        return false;
+                    }
+                }
+                
+                // Status filter
+                if (activeFilters.status !== 'all') {
+                    if (String(video.status) !== activeFilters.status) {
+                        return false;
+                    }
+                }
+                
+                // Category filter
+                if (activeFilters.category !== 'all') {
+                    if (String(video.category_id) !== activeFilters.category) {
+                        return false;
+                    }
+                }
+                
+                // Sub category filter - handle multiple IDs
+                if (activeFilters.subCategory !== 'all') {
+                    if (!video.sub_category_ids || video.sub_category_ids.length === 0) {
+                        return false;
+                    }
+                    // Check if any of the video's sub categories match the filter
+                    const hasMatchingSubCategory = video.sub_category_ids.some(id => 
+                        String(id) === activeFilters.subCategory
+                    );
+                    if (!hasMatchingSubCategory) {
+                        return false;
+                    }
+                }
+                
+                // Seller filter
+                if (activeFilters.seller !== 'all') {
+                    if (String(video.seller_id) !== activeFilters.seller) {
+                        return false;
+                    }
+                }
+                
+                // Priority filter
+                if (activeFilters.priority !== 'all') {
+                    if (String(video.priority) !== activeFilters.priority) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            displayVideos();
+            updateFilterCountBadges();
+        }
+        
+        // Display videos
+        function displayVideos() {
+            const container = document.getElementById('videosContainer');
+            
+            if (filteredVideos.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div>🎬</div>
+                        <div style="font-size: 20px; font-weight: 600; margin: 10px 0; color: #2c3e50;">No Videos Found</div>
+                        <div style="color: #7f8c8d;">Try different search or filters</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            filteredVideos.forEach(video => {
+                const isActive = video.status == 1;
+                const thumbnailUrl = video.thumbnail_url || '';
+                const videoUrl = video.video || '';
+                
+                // Generate sub category tags (show up to 3)
+                let subCategoryTags = '';
+                if (video.sub_category_names && video.sub_category_names.length > 0) {
+                    const displayedSubCats = video.sub_category_names.slice(0, 3);
+                    displayedSubCats.forEach((name, index) => {
+                        const subCatId = video.sub_category_ids[index];
+                        subCategoryTags += `<span class="info-tag sub-category" onclick="setFilter('subCategoryFilter', '${subCatId}')">📚 ${name}</span>`;
+                    });
+                    if (video.sub_category_names.length > 3) {
+                        subCategoryTags += `<span class="info-tag sub-category">+${video.sub_category_names.length - 3} more</span>`;
+                    }
+                }
+                
+                html += `
+                <div class="video-card">
+                    <div class="card-media" onclick="playVideo('${videoUrl}', '${video.name.replace(/'/g, "\\'")}')">
+                        ${thumbnailUrl ? `
+                            <img src="${thumbnailUrl}" alt="${video.name}" class="card-thumbnail" 
+                                 onerror="this.src='https://via.placeholder.com/300x200/9C27B0/FFFFFF?text=No+Thumbnail'">
+                        ` : `
+                            <div class="thumbnail-placeholder">
+                                🎬
+                            </div>
+                        `}
+                        <div class="play-overlay">
+                            <button class="play-button">
+                                ▶
+                            </button>
+                        </div>
+                        <div class="card-actions">
+                            <button class="action-btn edit-details" onclick="openEditVideoModal(${video.id}); event.stopPropagation();">
+                                ✏️ Edit
+                            </button>
+                            <button class="action-btn edit-thumbnail" onclick="openThumbnailModal(${video.id}); event.stopPropagation();">
+                                🖼️ Thumbnail
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-title">${video.name}</div>
+                        <div class="card-id">ID: ${video.id} | Priority: ${video.priority_display}</div>
+                        <div class="card-info">
+                            ${video.category_name ? `<span class="info-tag category" onclick="setFilter('categoryFilter', '${video.category_id}')">📂 ${video.category_name}</span>` : ''}
+                            ${subCategoryTags}
+                            ${video.seller_name ? `<span class="info-tag seller" onclick="setFilter('sellerFilter', '${video.seller_id}')">👤 ${video.seller_name}</span>` : ''}
+                            <span class="info-tag status ${isActive ? 'active' : 'inactive'}" onclick="setFilter('statusFilter', '${video.status}')">
+                                ${isActive ? '✅ Active' : '❌ Inactive'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Set filter from click on tag
+        function setFilter(filterType, value) {
+            if (filterType === 'statusFilter') {
+                document.getElementById('statusFilter').value = value;
+                activeFilters.status = value;
+            } else if (filterType === 'priorityFilter') {
+                document.getElementById('priorityFilter').value = value;
+                activeFilters.priority = value;
+            } else {
+                // For custom dropdowns
+                const header = document.getElementById(`${filterType}SelectHeader`);
+                const options = document.getElementById(`${filterType}Options`);
+                const selectedOption = options.querySelector(`.dropdown-option[data-value="${value}"]`);
+                
+                if (selectedOption && !selectedOption.classList.contains('disabled')) {
+                    header.querySelector('span:first-child').textContent = selectedOption.textContent;
+                    options.querySelectorAll('.dropdown-option').forEach(opt => opt.classList.remove('selected'));
+                    selectedOption.classList.add('selected');
+                    activeFilters[filterType] = value;
+                }
+            }
+            
+            updateFilterOptions();
+            applyFilters();
+        }
+        
+        // Play video
+        function playVideo(videoUrl, videoTitle) {
+            const videoPlayer = document.getElementById('videoPlayer');
+            
+            // Convert YouTube URL to embed URL
+            let embedUrl = videoUrl;
+            const youtubeMatch = videoUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+            if (youtubeMatch) {
+                embedUrl = `https://www.youtube.com/embed/${youtubeMatch[1]}?autoplay=1`;
+            }
+            
+            videoPlayer.src = embedUrl;
+            document.getElementById('videoPlayerModal').style.display = 'block';
+        }
+        
+        function closeVideoPlayer() {
+            const videoPlayer = document.getElementById('videoPlayer');
+            videoPlayer.src = '';
+            document.getElementById('videoPlayerModal').style.display = 'none';
+        }
+        
+        // Open edit video modal with custom dropdowns
+        function openEditVideoModal(videoId) {
+            const video = allVideos.find(v => v.id == videoId);
+            if (!video) {
+                showMessage('❌ Video not found', 'error');
+                return;
+            }
+            
+            currentEditVideoId = videoId;
+            
+            // Reset edit form state
+            editFormState = {
+                category: String(video.category_id || ''),
+                subCategories: video.sub_category_ids ? video.sub_category_ids.map(String) : [],
+                seller: String(video.seller_id || '')
+            };
+            
+            // Populate category dropdown
+            const editCategoryOptions = document.getElementById('editCategoryOptions');
+            editCategoryOptions.innerHTML = '<div class="dropdown-option" data-value="">-- Select Category --</div>';
+            
+            categoriesList.forEach(cat => {
+                const option = document.createElement('div');
+                option.className = 'dropdown-option';
+                option.setAttribute('data-value', cat.id);
+                option.textContent = `${cat.name} (${cat.id})`;
+                if (String(cat.id) === editFormState.category) {
+                    option.classList.add('selected');
+                    document.getElementById('editCategorySelectHeader').querySelector('span:first-child').textContent = option.textContent;
+                }
+                editCategoryOptions.appendChild(option);
+            });
+            
+            // Populate seller dropdown
+            const editSellerOptions = document.getElementById('editSellerOptions');
+            editSellerOptions.innerHTML = '<div class="dropdown-option" data-value="">-- Select Seller --</div>';
+            
+            sellersList.forEach(seller => {
+                const option = document.createElement('div');
+                option.className = 'dropdown-option';
+                option.setAttribute('data-value', seller.user_id);
+                option.textContent = `${seller.store_name} (${seller.user_id})`;
+                if (String(seller.user_id) === editFormState.seller) {
+                    option.classList.add('selected');
+                    document.getElementById('editSellerSelectHeader').querySelector('span:first-child').textContent = option.textContent;
+                }
+                editSellerOptions.appendChild(option);
+            });
+            
+            // Populate sub categories as checkboxes
+            const editSubCategoriesOptions = document.getElementById('editSubCategoriesOptions');
+            editSubCategoriesOptions.innerHTML = '';
+            
+            categoriesList.forEach(cat => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'dropdown-option';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = cat.id;
+                checkbox.id = `subCat_${cat.id}`;
+                checkbox.checked = editFormState.subCategories.includes(String(cat.id));
+                
+                const label = document.createElement('label');
+                label.htmlFor = `subCat_${cat.id}`;
+                label.textContent = `${cat.name} (${cat.id})`;
+                
+                optionDiv.appendChild(checkbox);
+                optionDiv.appendChild(label);
+                editSubCategoriesOptions.appendChild(optionDiv);
+            });
+            
+            // Update sub categories header
+            updateMultiSelectHeader();
+            
+            // Reset search boxes and show all options
+            const searchCategoryEdit = document.getElementById('searchCategoryEdit');
+            const searchSubCategoriesEdit = document.getElementById('searchSubCategoriesEdit');
+            const searchSellerEdit = document.getElementById('searchSellerEdit');
+            
+            if (searchCategoryEdit) {
+                searchCategoryEdit.value = '';
+                // Show all category options
+                const catOptions = document.querySelectorAll('#editCategoryOptions .dropdown-option');
+                catOptions.forEach(opt => opt.style.display = '');
+            }
+            
+            if (searchSubCategoriesEdit) {
+                searchSubCategoriesEdit.value = '';
+                // Show all sub category options
+                const subCatOptions = document.querySelectorAll('#editSubCategoriesOptions .dropdown-option');
+                subCatOptions.forEach(opt => opt.style.display = '');
+            }
+            
+            if (searchSellerEdit) {
+                searchSellerEdit.value = '';
+                // Show all seller options
+                const sellerOptions = document.querySelectorAll('#editSellerOptions .dropdown-option');
+                sellerOptions.forEach(opt => opt.style.display = '');
+            }
+            
+            // Set values for other fields
+            document.getElementById('editName').value = video.name || '';
+            document.getElementById('editStatus').value = video.status || '';
+            document.getElementById('editVideoUrl').value = video.video || '';
+            document.getElementById('editThumbnail').value = video.thumbnail || '';
+            document.getElementById('editPriority').value = video.priority || '';
+            document.getElementById('editProductId').value = video.product_id || '';
+            
+            // Close any open dropdowns
+            closeAllDropdowns();
+            
+            // Show modal
+            document.getElementById('editVideoModal').style.display = 'block';
+        }
+        
+        // Close edit video modal
+        function closeEditVideoModal() {
+            // Reset edit form state
+            editFormState = {
+                category: '',
+                subCategories: [],
+                seller: ''
+            };
+            
+            // Reset headers
+            document.getElementById('editCategorySelectHeader').querySelector('span:first-child').textContent = '-- Select Category --';
+            document.getElementById('editSubCategoriesSelectHeader').querySelector('span:first-child').textContent = 'Select sub categories';
+            document.getElementById('editSellerSelectHeader').querySelector('span:first-child').textContent = '-- Select Seller --';
+            
+            // Reset search boxes and show all options
+            const searchCategoryEdit = document.getElementById('searchCategoryEdit');
+            const searchSubCategoriesEdit = document.getElementById('searchSubCategoriesEdit');
+            const searchSellerEdit = document.getElementById('searchSellerEdit');
+            
+            if (searchCategoryEdit) {
+                searchCategoryEdit.value = '';
+                const catOptions = document.querySelectorAll('#editCategoryOptions .dropdown-option');
+                catOptions.forEach(opt => opt.style.display = '');
+            }
+            
+            if (searchSubCategoriesEdit) {
+                searchSubCategoriesEdit.value = '';
+                const subCatOptions = document.querySelectorAll('#editSubCategoriesOptions .dropdown-option');
+                subCatOptions.forEach(opt => opt.style.display = '');
+            }
+            
+            if (searchSellerEdit) {
+                searchSellerEdit.value = '';
+                const sellerOptions = document.querySelectorAll('#editSellerOptions .dropdown-option');
+                sellerOptions.forEach(opt => opt.style.display = '');
+            }
+            
+            // Close any open dropdowns
+            closeAllDropdowns();
+            
+            document.getElementById('editVideoModal').style.display = 'none';
+            currentEditVideoId = null;
+        }
+        
+        // Test thumbnail
+        function testThumbnail() {
+            const url = document.getElementById('editThumbnail').value.trim();
+            const preview = document.getElementById('thumbnailPreview');
+            const container = document.getElementById('thumbnailPreviewContainer');
+            
+            if (!url) {
+                showMessage('❌ Please enter a thumbnail URL', 'error');
+                return;
+            }
+            
+            preview.src = url;
+            preview.onload = () => {
+                container.style.display = 'block';
+                showMessage('✅ Thumbnail loaded successfully', 'success');
+            };
+            preview.onerror = () => {
+                container.style.display = 'none';
+                showMessage('❌ Failed to load thumbnail', 'error');
+            };
+        }
+        
+        // Save video details
+        async function saveVideoDetails() {
+            if (!currentEditVideoId) return;
+            
+            const updateData = {
+                name: document.getElementById('editName').value,
+                status: document.getElementById('editStatus').value,
+                video: document.getElementById('editVideoUrl').value,
+                thumbnail: document.getElementById('editThumbnail').value || null,
+                category_id: editFormState.category || null,
+                sub_sub_category: editFormState.subCategories.length > 0 ? editFormState.subCategories.join(',') : null,
+                seller_id: editFormState.seller || null,
+                priority: document.getElementById('editPriority').value || null,
+                product_id: document.getElementById('editProductId').value || null
+            };
+            
+            // Remove empty values
+            Object.keys(updateData).forEach(key => {
+                if (updateData[key] === null || updateData[key] === '') {
+                    delete updateData[key];
+                }
+            });
+            
+            if (Object.keys(updateData).length === 0) {
+                showMessage('ℹ️ No changes to save', 'info');
+                return;
+            }
+            
+            try {
+                showMessage('🔄 Saving...', 'info');
+                
+                const response = await fetch(`/api/videos/${currentEditVideoId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('✅ Video updated successfully', 'success');
+                    
+                    // Reload videos to get updated data
+                    loadVideos();
+                    closeEditVideoModal();
+                } else {
+                    showMessage(`❌ ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ ${error.message}`, 'error');
+            }
+        }
+        
+        // Thumbnail modal functions (same as before)
+        function openThumbnailModal(videoId) {
+            const video = allVideos.find(v => v.id == videoId);
+            if (!video) {
+                showMessage('❌ Video not found', 'error');
+                return;
+            }
+            
+            currentThumbnailVideoId = videoId;
+            
+            // Show current thumbnail
+            const currentThumbnail = document.getElementById('currentThumbnail');
+            const currentContainer = document.getElementById('currentThumbnailContainer');
+            
+            if (video.thumbnail_url) {
+                currentThumbnail.src = video.thumbnail_url;
+                currentThumbnail.onerror = () => {
+                    currentThumbnail.src = 'https://via.placeholder.com/300x200/9C27B0/FFFFFF?text=No+Thumbnail';
+                };
+                currentContainer.style.display = 'block';
+            } else {
+                currentContainer.style.display = 'none';
+            }
+            
+            // Reset upload section
+            document.getElementById('thumbnailPreviewContainer2').style.display = 'none';
+            document.getElementById('saveThumbnailBtn').disabled = true;
+            uploadedThumbnailUrl = null;
+            uploadedThumbnailFile = null;
+            
+            // Setup drag and drop
+            setupThumbnailDragDrop();
+            
+            // Show modal
+            document.getElementById('thumbnailUploadModal').style.display = 'block';
+        }
+        
+        function closeThumbnailModal() {
+            document.getElementById('thumbnailUploadModal').style.display = 'none';
+            currentThumbnailVideoId = null;
+            uploadedThumbnailUrl = null;
+            uploadedThumbnailFile = null;
+        }
+        
+        function setupThumbnailDragDrop() {
+            const uploadContainer = document.getElementById('uploadContainer');
+            const fileInput = document.getElementById('thumbnailFileInput');
+            
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            // Highlight drop zone
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, unhighlight, false);
+            });
+            
+            // Handle dropped files
+            uploadContainer.addEventListener('drop', handleDrop, false);
+            fileInput.addEventListener('change', handleFileSelect, false);
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            function highlight() {
+                uploadContainer.classList.add('dragover');
+            }
+            
+            function unhighlight() {
+                uploadContainer.classList.remove('dragover');
+            }
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleThumbnailFiles(files);
+            }
+            
+            function handleFileSelect(e) {
+                const files = e.target.files;
+                handleThumbnailFiles(files);
+            }
+        }
+        
+        function handleThumbnailFiles(files) {
+            if (files.length === 0) return;
+            
+            const file = files[0];
+            
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                showMessage('❌ Please select a valid image file', 'error');
+                return;
+            }
+            
+            // Validate file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                showMessage('❌ Image size must be less than 5MB', 'error');
+                return;
+            }
+            
+            uploadedThumbnailFile = file;
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('uploadedThumbnailPreview');
+                preview.src = e.target.result;
+                document.getElementById('thumbnailPreviewContainer2').style.display = 'block';
+                document.getElementById('saveThumbnailBtn').disabled = false;
+            };
+            reader.readAsDataURL(file);
+            
+            // Upload the file
+            uploadThumbnail(file);
+        }
+        
+        async function uploadThumbnail(file) {
+            try {
+                showMessage('🔄 Uploading thumbnail...', 'info');
+                
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                const response = await fetch('https://api.zulushop.in/api/v1/user/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.url) {
+                    uploadedThumbnailUrl = result.url;
+                    showMessage('✅ Thumbnail uploaded successfully', 'success');
+                } else if (result.image_url) {
+                    uploadedThumbnailUrl = result.image_url;
+                    showMessage('✅ Thumbnail uploaded successfully', 'success');
+                } else {
+                    throw new Error('No URL in response');
+                }
+            } catch (error) {
+                showMessage(`❌ Upload failed: ${error.message}`, 'error');
+                document.getElementById('saveThumbnailBtn').disabled = true;
+            }
+        }
+        
+        function saveThumbnail() {
+            if (!uploadedThumbnailUrl) {
+                showMessage('❌ Please upload a thumbnail first', 'error');
+                return;
+            }
+            
+            updateThumbnail(uploadedThumbnailUrl);
+        }
+        
+        async function updateThumbnail(thumbnailUrl) {
+            try {
+                showMessage('🔄 Saving thumbnail...', 'info');
+                
+                const response = await fetch(`/api/videos/${currentThumbnailVideoId}/upload-thumbnail`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ thumbnailUrl })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('✅ Thumbnail saved successfully', 'success');
+                    
+                    // Reload videos to get updated data
+                    loadVideos();
+                    closeThumbnailModal();
+                } else {
+                    showMessage(`❌ ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ ${error.message}`, 'error');
+            }
+        }
+        
+        function viewCurrentThumbnail() {
+            const video = allVideos.find(v => v.id == currentThumbnailVideoId);
+            if (video && video.thumbnail_url) {
+                window.open(video.thumbnail_url, '_blank');
+            }
+        }
+        
+        async function deleteCurrentThumbnail() {
+            if (!confirm('Are you sure you want to delete this thumbnail?')) return;
+            
+            try {
+                showMessage('🔄 Deleting thumbnail...', 'info');
+                
+                const response = await fetch(`/api/videos/${currentThumbnailVideoId}/upload-thumbnail`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ thumbnailUrl: '' })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('✅ Thumbnail deleted successfully', 'success');
+                    
+                    // Reload videos to get updated data
+                    loadVideos();
+                    closeThumbnailModal();
+                } else {
+                    showMessage(`❌ ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ ${error.message}`, 'error');
+            }
+        }
+        
+        function showMessage(text, type = 'success') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            
+            const colors = {
+                success: { bg: '#d4edda', text: '#155724' },
+                error: { bg: '#f8d7da', text: '#721c24' },
+                info: { bg: '#d1ecf1', text: '#0c5460' }
+            };
+            
+            const color = colors[type] || colors.success;
+            messageDiv.style.background = color.bg;
+            messageDiv.style.color = color.text;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const modals = ['videoPlayerModal', 'editVideoModal', 'thumbnailUploadModal'];
+            modals.forEach(modalId => {
+                const modal = document.getElementById(modalId);
+                if (event.target === modal) {
+                    if (modalId === 'videoPlayerModal') closeVideoPlayer();
+                    if (modalId === 'editVideoModal') closeEditVideoModal();
+                    if (modalId === 'thumbnailUploadModal') closeThumbnailModal();
+                }
+            });
+        };
+        
+        // Close modals with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeVideoPlayer();
+                closeEditVideoModal();
+                closeThumbnailModal();
+                closeAllDropdowns();
+            }
+        });
+    </script>
+</body>
+</html>

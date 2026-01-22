@@ -2957,10 +2957,6 @@ app.get('/chat/history/:sessionId', async (req, res) => {
 // -------------------------
 // New Database Endpoints
 // -------------------------
-// Main server file - Add this endpoint
-// Add these endpoints with the other API endpoints in server.js
-
-// Get categories data
 app.get('/api/categories', async (req, res) => {
   try {
     const data = await db.getCachedData('categories');
@@ -3325,6 +3321,170 @@ app.get('/api/cache-status', (req, res) => {
     cacheStatus: status
   });
 });
+
+// Enhanced videos endpoint with category names
+app.get('/api/videosenhanced', async (req, res) => {
+  try {
+    // Get all necessary data
+    const videos = await db.getCachedData('videos');
+    const categories = await db.getCachedData('categories');
+    const sellers = await db.getCachedData('sellers');
+    
+    // Create lookup maps
+    const categoryMap = {};
+    categories.forEach(cat => {
+      categoryMap[cat.id] = {
+        name: cat.name,
+        parent_id: cat.parent_id
+      };
+    });
+    
+    const sellerMap = {};
+    sellers.forEach(seller => {
+      sellerMap[seller.user_id] = seller.store_name;
+    });
+    
+    // Enhance videos with names and process sub_sub_category
+    const enhancedVideos = videos.map(video => {
+      // Get main category name
+      const categoryInfo = categoryMap[video.category_id];
+      const categoryName = categoryInfo ? categoryInfo.name : '';
+      
+      // Get seller name
+      const sellerName = sellerMap[video.seller_id] || '';
+      
+      // Process sub_sub_category (could be JSON array, comma-separated, or single value)
+      let subCategoryIds = [];
+      let subCategoryNames = [];
+      
+      if (video.sub_sub_category) {
+        try {
+          // Try to parse as JSON array
+          const parsed = JSON.parse(video.sub_sub_category);
+          if (Array.isArray(parsed)) {
+            subCategoryIds = parsed.map(id => String(id).trim());
+          } else if (typeof parsed === 'string') {
+            subCategoryIds = parsed.split(',').map(id => String(id).trim());
+          } else if (typeof parsed === 'number') {
+            subCategoryIds = [String(parsed)];
+          }
+        } catch (e) {
+          // If not JSON, try comma-separated or single value
+          const strVal = String(video.sub_sub_category);
+          if (strVal.includes(',')) {
+            subCategoryIds = strVal.split(',').map(id => String(id).trim());
+          } else {
+            subCategoryIds = [strVal.trim()];
+          }
+        }
+        
+        // Get names for sub categories
+        subCategoryNames = subCategoryIds.map(id => {
+          const cat = categories.find(c => String(c.id) === id);
+          return cat ? cat.name : `Sub Cat ${id}`;
+        });
+      }
+      
+      return {
+        ...video,
+        id: video.id,
+        category_name: categoryName,
+        seller_name: sellerName,
+        sub_category_ids: subCategoryIds,
+        sub_category_names: subCategoryNames,
+        sub_category_display: subCategoryNames.join(', '),
+        status_display: video.status == 1 ? 'Active' : 'Inactive',
+        priority_display: video.priority ? `P${video.priority}` : 'P1',
+        has_thumbnail: !!video.thumbnail,
+        thumbnail_url: video.thumbnail ? getFullMediaUrl(video.thumbnail) : ''
+      };
+    });
+    
+    res.json({
+      success: true,
+      data: enhancedVideos,
+      categories: categories,
+      sellers: sellers,
+      count: enhancedVideos.length
+    });
+  } catch (error) {
+    console.error('❌ Error fetching enhanced videos:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Helper function for media URLs
+function getFullMediaUrl(url) {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  if (url.startsWith('/')) return `https://zulushop.in${url}`;
+  return `https://zulushop.in/${url}`;
+}
+
+// Thumbnail upload endpoint (keep existing)
+app.post('/api/videos/:id/upload-thumbnail', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { thumbnailUrl } = req.body;
+    
+    if (!thumbnailUrl) {
+      return res.status(400).json({
+        success: false,
+        error: 'Thumbnail URL is required'
+      });
+    }
+    
+    const updateData = {
+      thumbnail: thumbnailUrl
+    };
+    
+    const result = await db.executeUpdate('videos', id, updateData);
+    
+    res.json({
+      success: true,
+      message: 'Thumbnail updated successfully',
+      data: {
+        id: id,
+        thumbnail: thumbnailUrl
+      }
+    });
+    
+  } catch (error) {
+    console.error('Thumbnail upload error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Also add direct video update endpoint
+app.put('/api/videos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    // Remove id from update data if present
+    delete updateData.id;
+    
+    const result = await db.executeUpdate('videos', id, updateData);
+    
+    res.json({
+      success: true,
+      message: 'Video updated successfully',
+      affectedRows: result.affectedRows
+    });
+  } catch (error) {
+    console.error('Update videos error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 // -------------------------
 // HTML Pages
 // -------------------------
@@ -3337,17 +3497,19 @@ app.get('/productscards', (req, res) => {
 app.get('/products', (req, res) => {
   res.sendFile(__dirname + '/products.html');
 });
+
 app.get('/appconfigs', (req, res) => {
   res.sendFile(__dirname + '/appconfigs.html');
 });
 app.get('/sellers', (req, res) => {
   res.sendFile(__dirname + '/sellers.html');
 });
-
 app.get('/videos', (req, res) => {
   res.sendFile(__dirname + '/videos.html');
 });
-
+app.get('/videoscards', (req, res) => {
+  res.sendFile(__dirname + '/videoscards.html');
+});
 app.get('/users', (req, res) => {
   res.sendFile(__dirname + '/users.html');
 });
@@ -3463,8 +3625,6 @@ app.get('/debug/products', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-// Add enhanced products endpoint with category and seller names
-
 // Add enhanced products endpoint with category and seller names
 app.get('/api/productsenhanced', async (req, res) => {
   try {
