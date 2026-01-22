@@ -1,0 +1,2489 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>App Configs - Zulu Club</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #FF9800;
+            padding-bottom: 10px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .back-btn {
+            background: #6c757d;
+            color: white;
+        }
+        .refresh-btn {
+            background: #FF9800;
+            color: white;
+        }
+        .search-box {
+            flex-grow: 1;
+            max-width: 400px;
+            margin-left: auto;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.3s;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: #FF9800;
+            box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
+        }
+        #message {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-weight: bold;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        #loading {
+            padding: 20px;
+            text-align: center;
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            margin: 20px 0;
+            color: #856404;
+        }
+        #error {
+            padding: 20px;
+            text-align: center;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            margin: 20px 0;
+            color: #721c24;
+        }
+        #dataContainer {
+            overflow-x: auto;
+            margin-top: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #FF9800;
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        th:hover {
+            background: #F57C00;
+        }
+        td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #ddd;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        td.editable:hover {
+            background: #fff3e0;
+            transform: scale(1.02);
+            box-shadow: 0 2px 8px rgba(255, 152, 0, 0.1);
+            z-index: 1;
+        }
+        td.editable::after {
+            content: '✏️';
+            position: absolute;
+            top: 50%;
+            right: 5px;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 10px;
+        }
+        td.editable:hover::after {
+            opacity: 1;
+        }
+        tr:hover td {
+            background: #f9f9f9;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        .cache-info {
+            background: #fff3e0;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 14px;
+            color: #e65100;
+        }
+        .pagination-controls {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            border: 1px solid #dee2e6;
+        }
+        .page-size-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+        .page-size-selector select {
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: 2px solid #ddd;
+            background: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .page-size-selector select:focus {
+            outline: none;
+            border-color: #FF9800;
+        }
+        .page-info {
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+        }
+        .pagination-buttons {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .pagination-buttons button {
+            padding: 8px 15px;
+            font-size: 14px;
+            background: #FF9800;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .pagination-buttons button:hover:not(:disabled) {
+            background: #F57C00;
+            transform: translateY(-2px);
+        }
+        .pagination-buttons button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .page-number {
+            padding: 8px 12px;
+            background: #FF9800;
+            color: white;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 0 2px;
+            cursor: default;
+        }
+        .stats-info {
+            background: #fff3e0;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 14px;
+            color: #333;
+            border-left: 4px solid #FF9800;
+        }
+        .stats-info span {
+            font-weight: bold;
+        }
+        .stats-info .total {
+            color: #FF9800;
+        }
+        .stats-info .showing {
+            color: #FF9800;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        .empty-state .emoji {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .empty-state h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .empty-state p {
+            margin: 0 0 20px 0;
+            max-width: 500px;
+            margin: 0 auto 20px;
+        }
+        mark {
+            background-color: #fff9c4;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 800px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+        .modal-header h2 {
+            margin: 0;
+            color: #333;
+            font-size: 1.5rem;
+        }
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #666;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+        .close-modal:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+        .field-info {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #FF9800;
+        }
+        .field-info h3 {
+            margin: 0 0 5px 0;
+            color: #333;
+            font-size: 16px;
+        }
+        .field-info p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+            font-size: 14px;
+        }
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.3s;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #FF9800;
+            box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
+        }
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+            font-family: inherit;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+        .save-btn {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+        .save-btn:hover {
+            background: #218838;
+        }
+        .cancel-btn {
+            background: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+        .cancel-btn:hover {
+            background: #5a6268;
+        }
+        
+        /* New Clean Image Gallery Styles */
+        .image-gallery-container {
+            margin-bottom: 20px;
+        }
+        
+        .gallery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .gallery-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .image-count-badge {
+            background: #FF9800;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .gallery-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .add-new-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s;
+        }
+        
+        .add-new-btn:hover {
+            background: #218838;
+        }
+        
+        .view-all-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s;
+        }
+        
+        .view-all-btn:hover {
+            background: #1976D2;
+        }
+        
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .image-card {
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .image-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+        
+        .image-preview {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .image-info {
+            padding: 12px;
+        }
+        
+        .image-index {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .image-url {
+            font-size: 11px;
+            color: #999;
+            word-break: break-all;
+            margin-bottom: 10px;
+            font-family: monospace;
+            max-height: 40px;
+            overflow: hidden;
+        }
+        
+        .image-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .edit-btn {
+            flex: 1;
+            background: #FF9800;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: all 0.3s;
+        }
+        
+        .edit-btn:hover {
+            background: #F57C00;
+        }
+        
+        .replace-btn {
+            flex: 1;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: all 0.3s;
+        }
+        
+        .replace-btn:hover {
+            background: #1976D2;
+        }
+        
+        .delete-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .delete-btn:hover {
+            background: #d32f2f;
+        }
+        
+        .no-images-placeholder {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px dashed #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .no-images-placeholder .emoji {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        .no-images-placeholder h4 {
+            margin: 0 0 10px 0;
+            color: #666;
+        }
+        
+        .no-images-placeholder p {
+            margin: 0 0 20px 0;
+            font-size: 14px;
+        }
+        
+        /* Image Upload Modal */
+        .upload-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+        }
+        
+        .upload-modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .upload-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .upload-modal-header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 1.3rem;
+        }
+        
+        .close-upload-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+        
+        .close-upload-modal:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .upload-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .upload-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .file-upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+        
+        .file-upload-area:hover {
+            border-color: #FF9800;
+            background: #fff9e6;
+        }
+        
+        .file-upload-area.dragover {
+            border-color: #FF9800;
+            background: #fff3e0;
+        }
+        
+        .upload-icon {
+            font-size: 40px;
+            color: #FF9800;
+            margin-bottom: 10px;
+        }
+        
+        .upload-text {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .upload-subtext {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .upload-preview {
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+        
+        .upload-status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+        
+        .upload-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        
+        .upload-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #f44336;
+        }
+        
+        .upload-progress {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .upload-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .upload-btn {
+            flex: 1;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        
+        .upload-btn:hover:not(:disabled) {
+            background: #218838;
+        }
+        
+        .upload-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .cancel-upload-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .cancel-upload-btn:hover {
+            background: #5a6268;
+        }
+        
+        /* Image Viewer Modal */
+        .image-viewer-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            overflow: hidden;
+        }
+        
+        .viewer-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .viewer-header {
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        .viewer-header h2 {
+            margin: 0;
+            font-size: 1.3rem;
+        }
+        
+        .close-viewer {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: white;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+        
+        .close-viewer:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .viewer-main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+        
+        .main-viewer-image {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+        
+        .viewer-controls {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            background: rgba(0,0,0,0.7);
+            padding: 15px 30px;
+            border-radius: 50px;
+        }
+        
+        .control-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255, 152, 0, 0.2);
+        }
+        
+        .image-counter {
+            color: white;
+            font-size: 14px;
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                margin: 15px;
+            }
+            .controls {
+                flex-direction: column;
+            }
+            .controls button {
+                width: 100%;
+            }
+            .search-box {
+                max-width: 100%;
+                margin-left: 0;
+            }
+            .pagination-controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .stats-info {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            table {
+                font-size: 12px;
+            }
+            th, td {
+                padding: 8px 10px;
+            }
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+            .modal-actions {
+                flex-direction: column;
+            }
+            .image-gallery {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 15px;
+            }
+            .image-actions {
+                flex-wrap: wrap;
+            }
+            .edit-btn, .replace-btn {
+                min-width: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>⚙️ App Configs</h1>
+    
+    <div class="controls">
+        <button class="back-btn" onclick="location.href='/home'">← Back to Dashboard</button>
+        <button class="refresh-btn" onclick="loadData()">🔄 Refresh Configs</button>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search configs by key, value, or description..." onkeyup="handleSearch()">
+        </div>
+    </div>
+    
+    <div class="stats-info">
+        <span class="total">Total Configs: <span id="totalCount">0</span></span>
+        <span class="showing">Showing: <span id="showingCount">0</span></span>
+    </div>
+    
+    <div class="pagination-controls">
+        <div class="page-size-selector">
+            <span>Show:</span>
+            <select id="pageSize" onchange="changePageSize()">
+                <option value="10">10 per page</option>
+                <option value="25">25 per page</option>
+                <option value="50" selected>50 per page</option>
+                <option value="100">100 per page</option>
+                <option value="500">500 per page</option>
+                <option value="0">Show All</option>
+            </select>
+        </div>
+        
+        <div class="page-info">
+            Page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+            (<span id="showingInfo">0</span> configs)
+        </div>
+        
+        <div class="pagination-buttons">
+            <button id="firstPageBtn" onclick="goToPage(1)" title="First Page">« First</button>
+            <button id="prevPageBtn" onclick="prevPage()" title="Previous Page">‹ Previous</button>
+            <span id="pageNumbers"></span>
+            <button id="nextPageBtn" onclick="nextPage()" title="Next Page">Next ›</button>
+            <button id="lastPageBtn" onclick="goToLastPage()" title="Last Page">Last »</button>
+        </div>
+    </div>
+    
+    <div id="message"></div>
+    <div id="loading">Loading app configs...</div>
+    <div id="error" style="display: none;"></div>
+    
+    <div id="dataContainer"></div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit App Config</h2>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            
+            <div class="field-info">
+                <h3 id="fieldName"></h3>
+                <p id="fieldInfo">Config ID: <span id="configId"></span></p>
+            </div>
+            
+            <form id="editForm">
+                <div class="form-group">
+                    <label id="fieldLabel"></label>
+                    <div id="fieldInput"></div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="save-btn">Save Config</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Image Upload Modal -->
+    <div id="uploadModal" class="upload-modal">
+        <div class="upload-modal-content">
+            <div class="upload-modal-header">
+                <h3 id="uploadModalTitle">Upload Image</h3>
+                <button class="close-upload-modal" onclick="closeUploadModal()">&times;</button>
+            </div>
+            
+            <div class="upload-section">
+                <div class="upload-title" id="uploadActionTitle">
+                    <span id="uploadActionIcon">📤</span>
+                    <span id="uploadActionText">Upload New Image</span>
+                </div>
+                
+                <div class="file-upload-area" id="fileUploadArea" 
+                     onclick="document.getElementById('imageFileInput').click()"
+                     ondrop="handleDrop(event)"
+                     ondragover="handleDragOver(event)"
+                     ondragleave="handleDragLeave(event)">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Click to select or drag & drop</div>
+                    <div class="upload-subtext">JPEG, PNG, GIF (max 10MB)</div>
+                </div>
+                
+                <input type="file" id="imageFileInput" class="upload-file-input" 
+                       accept="image/*" onchange="handleFileSelect(event)" style="display: none;">
+                
+                <div class="upload-preview" id="uploadPreview">
+                    <!-- Preview will be inserted here -->
+                </div>
+                
+                <div id="uploadStatus" class="upload-status"></div>
+                
+                <div class="upload-actions">
+                    <button type="button" id="cancelUploadBtn" class="cancel-upload-btn" onclick="closeUploadModal()">
+                        Cancel
+                    </button>
+                    <button type="button" id="uploadBtn" class="upload-btn" onclick="processUpload()">
+                        <span id="uploadBtnIcon">📤</span>
+                        <span id="uploadBtnText">Upload Image</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Viewer Modal -->
+    <div id="imageViewerModal" class="image-viewer-modal">
+        <div class="viewer-content">
+            <div class="viewer-header">
+                <h2>Image Viewer</h2>
+                <button class="close-viewer" onclick="closeImageViewer()">&times;</button>
+            </div>
+            
+            <div class="viewer-main">
+                <img id="mainViewerImage" class="main-viewer-image" alt="Main Image">
+            </div>
+            
+            <div class="viewer-controls">
+                <button class="control-btn" onclick="prevImage()" title="Previous Image">◀</button>
+                <div class="image-counter" id="imageCounter">1 / 0</div>
+                <button class="control-btn" onclick="nextImage()" title="Next Image">▶</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // Global variables
+    let allData = [];
+    let filteredData = [];
+    let currentData = [];
+    let currentTable = 'appconfigs';
+    let currentEditId = null;
+    let currentEditField = null;
+    let originalValue = null;
+    
+    let searchTerm = '';
+    let searchTimeout = null;
+    
+    let currentPage = 1;
+    let pageSize = 50;
+    let totalPages = 1;
+    let totalFilteredItems = 0;
+
+    // Image management variables
+    let currentImages = [];
+    let currentUploadFile = null;
+    let currentUploadIndex = null; // null for new image, index for replace
+    let currentUploadType = 'add'; // 'add' or 'replace'
+    
+    // Image viewer variables
+    let viewerImages = [];
+    let currentViewerIndex = 0;
+    let isViewerOpen = false;
+
+    // Image Upload API Configuration
+    const UPLOAD_API_URL = 'https://api.zulushop.in/api/v1/user/upload';
+
+    async function loadData() {
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('error').style.display = 'none';
+        document.getElementById('dataContainer').innerHTML = '';
+        
+        try {
+            const response = await fetch(`/api/${currentTable}`);
+            const data = await response.json();
+            
+            console.log('API Response:', data);
+            
+            if (data && data.success) {
+                if (Array.isArray(data.data)) {
+                    allData = data.data;
+                    
+                    if (allData.length > 0) {
+                        allData = allData.map((config, index) => {
+                            if (!config.id) config.id = index + 1;
+                            
+                            if (config.club_slider_images) {
+                                try {
+                                    if (typeof config.club_slider_images === 'string') {
+                                        const trimmed = config.club_slider_images.trim();
+                                        if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || 
+                                            (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+                                            config.parsed_images = JSON.parse(trimmed);
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.warn('Failed to parse club_slider_images:', e);
+                                }
+                            }
+                            
+                            if (config.created_at) {
+                                config.formatted_created = formatDateForDisplay(config.created_at);
+                            }
+                            if (config.updated_at) {
+                                config.formatted_updated = formatDateForDisplay(config.updated_at);
+                            }
+                            
+                            return config;
+                        });
+                    }
+                    
+                    applyFilter();
+                    updateStats();
+                    
+                    const cacheDiv = document.createElement('div');
+                    cacheDiv.className = 'cache-info';
+                    cacheDiv.innerHTML = `
+                        <strong>Cache Info:</strong> App configs are cached for 2 hours. 
+                        To force fresh data, clear cache from Dashboard.
+                        Database connection closes after 5 minutes of inactivity.
+                    `;
+                    document.getElementById('dataContainer').prepend(cacheDiv);
+                } else {
+                    console.error('Invalid data format:', data.data);
+                    showError('Invalid data format received from server');
+                }
+            } else {
+                console.error('API returned error:', data);
+                showError(`API Error: ${data ? data.error || 'Unknown error' : 'No response'}`);
+            }
+        } catch (error) {
+            console.error('Fetch error:', error);
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').textContent = 'Error: ' + error.message;
+            showMessage(`Network error: ${error.message}`, 'error');
+            document.getElementById('dataContainer').innerHTML = 
+                '<div class="empty-state">📡<h3>Network Error</h3><p>Please check your connection and try again.</p><button class="refresh-btn" onclick="loadData()" style="padding: 10px 20px;">Retry</button></div>';
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+        }
+    }
+    
+    function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    function formatDateForDisplay(dateString) {
+        if (!dateString) return '';
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
+            return date.toLocaleDateString('en-IN') + ' ' + date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+        } catch (e) {
+            return dateString;
+        }
+    }
+    
+    function applyFilter() {
+        filteredData = [...allData];
+        
+        if (searchTerm.trim() !== '') {
+            const searchLower = searchTerm.toLowerCase();
+            filteredData = filteredData.filter(config => {
+                return Object.values(config).some(value => {
+                    if (typeof value === 'string') {
+                        return value.toLowerCase().includes(searchLower);
+                    } else if (typeof value === 'number') {
+                        return value.toString().includes(searchTerm);
+                    } else if (typeof value === 'boolean') {
+                        return value.toString().includes(searchLower);
+                    }
+                    return false;
+                });
+            });
+        }
+        
+        totalFilteredItems = filteredData.length;
+        
+        updatePagination();
+        displayCurrentPage();
+        updateSearchResults();
+        updateStats();
+    }
+    
+    function handleSearch() {
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
+        
+        searchTimeout = setTimeout(() => {
+            searchTerm = document.getElementById('searchInput').value;
+            currentPage = 1;
+            applyFilter();
+        }, 500);
+    }
+    
+    // Pagination functions
+    function updatePagination() {
+        pageSize = parseInt(document.getElementById('pageSize').value) || 50;
+        
+        if (pageSize === 0) {
+            totalPages = 1;
+            currentPage = 1;
+        } else {
+            totalPages = Math.ceil(totalFilteredItems / pageSize);
+            if (currentPage > totalPages) {
+                currentPage = totalPages || 1;
+            }
+        }
+        
+        updatePaginationControls();
+        updatePageInfo();
+    }
+    
+    function changePageSize() {
+        pageSize = parseInt(document.getElementById('pageSize').value) || 50;
+        currentPage = 1;
+        applyFilter();
+        showMessage(`Changed page size to ${pageSize === 0 ? 'Show All' : pageSize}`, 'info');
+    }
+    
+    function updatePaginationControls() {
+        document.getElementById('currentPage').textContent = currentPage;
+        document.getElementById('totalPages').textContent = totalPages;
+        
+        document.getElementById('firstPageBtn').disabled = currentPage === 1;
+        document.getElementById('prevPageBtn').disabled = currentPage === 1;
+        document.getElementById('nextPageBtn').disabled = currentPage === totalPages || totalPages === 0;
+        document.getElementById('lastPageBtn').disabled = currentPage === totalPages || totalPages === 0;
+        
+        updatePageNumbers();
+    }
+    
+    function updatePageNumbers() {
+        const pageNumbersDiv = document.getElementById('pageNumbers');
+        let pageNumbersHTML = '';
+        
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+        
+        if (endPage - startPage < 4) {
+            startPage = Math.max(1, endPage - 4);
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            if (i === currentPage) {
+                pageNumbersHTML += `<span class="page-number">${i}</span>`;
+            } else {
+                pageNumbersHTML += `<button onclick="goToPage(${i})" style="padding: 8px 12px; border-radius: 5px; background: #6c757d; color: white; border: none; margin: 0 2px;">${i}</button>`;
+            }
+        }
+        
+        pageNumbersDiv.innerHTML = pageNumbersHTML;
+    }
+    
+    function goToPage(page) {
+        if (page >= 1 && page <= totalPages) {
+            currentPage = page;
+            displayCurrentPage();
+            updatePaginationControls();
+        }
+    }
+    
+    function prevPage() {
+        if (currentPage > 1) {
+            currentPage--;
+            displayCurrentPage();
+            updatePaginationControls();
+        }
+    }
+    
+    function nextPage() {
+        if (currentPage < totalPages) {
+            currentPage++;
+            displayCurrentPage();
+            updatePaginationControls();
+        }
+    }
+    
+    function goToLastPage() {
+        currentPage = totalPages;
+        displayCurrentPage();
+        updatePaginationControls();
+    }
+    
+    function displayCurrentPage() {
+        const container = document.getElementById('dataContainer');
+        
+        if (filteredData.length === 0) {
+            container.innerHTML = 
+                '<div class="empty-state">⚙️<h3>No Configs Found</h3><p>No app configs match your search criteria. Try adjusting your search terms.</p></div>';
+            return;
+        }
+        
+        let startIndex, endIndex;
+        
+        if (pageSize === 0) {
+            startIndex = 0;
+            endIndex = filteredData.length;
+            currentData = filteredData;
+        } else {
+            startIndex = (currentPage - 1) * pageSize;
+            endIndex = Math.min(startIndex + pageSize, filteredData.length);
+            currentData = filteredData.slice(startIndex, endIndex);
+        }
+        
+        displayData(currentData);
+        updatePageInfo();
+    }
+    
+    function updatePageInfo() {
+        let showingText;
+        if (pageSize === 0) {
+            showingText = `${totalFilteredItems}`;
+        } else {
+            const startIndex = (currentPage - 1) * pageSize + 1;
+            const endIndex = Math.min(currentPage * pageSize, totalFilteredItems);
+            showingText = `${startIndex}-${endIndex} of ${totalFilteredItems}`;
+        }
+        
+        document.getElementById('showingInfo').textContent = showingText;
+        document.getElementById('showingCount').textContent = totalFilteredItems;
+    }
+    
+    function updateStats() {
+        if (!allData || !Array.isArray(allData)) {
+            document.getElementById('totalCount').textContent = '0';
+            document.getElementById('showingCount').textContent = '0';
+            return;
+        }
+        
+        const totalCount = allData.length;
+        
+        document.getElementById('totalCount').textContent = totalCount;
+        document.getElementById('showingCount').textContent = totalFilteredItems;
+    }
+    
+    function updateSearchResults() {
+        if (searchTerm.trim() !== '' && totalFilteredItems > 0) {
+            showMessage(`Found ${totalFilteredItems} configs matching "${searchTerm}"`, 'info');
+        }
+    }
+    
+    function displayData(data) {
+        const container = document.getElementById('dataContainer');
+        
+        if (!data || !Array.isArray(data) || data.length === 0) {
+            container.innerHTML = 
+                '<div class="empty-state">⚙️<h3>No Configs Found</h3><p>No app configs match your search criteria. Try adjusting your search terms.</p></div>';
+            return;
+        }
+        
+        const firstRow = data[0];
+        if (!firstRow || typeof firstRow !== 'object') {
+            container.innerHTML = '<div class="empty-state">⚠️<h3>Invalid Data</h3><p>Data format is invalid.</p></div>';
+            return;
+        }
+        
+        const headers = Object.keys(firstRow).filter(h => 
+            !h.includes('_parsed') && 
+            !h.includes('_formatted') && 
+            h !== 'parsed_images' &&
+            h !== 'formatted_created' &&
+            h !== 'formatted_updated'
+        );
+        
+        let html = '<table>';
+        
+        html += '<tr>';
+        headers.forEach(header => {
+            const displayHeader = header.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            html += `<th onclick="sortByColumn('${header}')" title="Click to sort">${displayHeader}</th>`;
+        });
+        html += '</tr>';
+        
+        data.forEach((row, index) => {
+            html += '<tr>';
+            headers.forEach(header => {
+                let value = row[header];
+                if (value === null || value === undefined) value = '';
+                if (typeof value === 'object') {
+                    try {
+                        value = JSON.stringify(value);
+                    } catch (e) {
+                        value = String(value);
+                    }
+                }
+                
+                let displayValue = String(value);
+                let cellStyle = '';
+                let isEditable = true;
+                
+                if (searchTerm.trim() !== '' && typeof value === 'string') {
+                    const searchLower = searchTerm.toLowerCase();
+                    const valueLower = value.toLowerCase();
+                    if (valueLower.includes(searchLower)) {
+                        const regex = new RegExp(`(${searchTerm})`, 'gi');
+                        displayValue = String(value).replace(regex, '<mark>$1</mark>');
+                        cellStyle += 'background: #fff9c4;';
+                    }
+                }
+                
+                if (header === 'id') {
+                    cellStyle += 'font-weight: bold; color: #2196F3;';
+                    isEditable = false;
+                } else if (header === 'club_slider_images') {
+                    if (row.parsed_images && Array.isArray(row.parsed_images)) {
+                        displayValue = `[${row.parsed_images.length} images]`;
+                        cellStyle += 'color: #673AB7;';
+                    } else if (value && value.length > 50) {
+                        displayValue = value.substring(0, 50) + '...';
+                    }
+                    cellStyle += 'font-family: monospace;';
+                } else if (header === 'announcement1' || header === 'announcement2') {
+                    if (value && value.length > 50) {
+                        displayValue = value.substring(0, 50) + '...';
+                    }
+                    cellStyle += 'color: #333;';
+                } else if (header === 'created_at' || header === 'updated_at') {
+                    const formattedField = header === 'created_at' ? 'formatted_created' : 'formatted_updated';
+                    displayValue = row[formattedField] || displayValue;
+                    cellStyle += 'color: #666; font-size: 12px;';
+                }
+                
+                const truncatedValue = displayValue.substring(0, 100);
+                const isTruncated = displayValue.length > 100;
+                const titleText = displayValue.length > 100 ? displayValue : '';
+                
+                if (isEditable && header !== 'id') {
+                    html += `<td class="editable" 
+                             title="${titleText}\n\nClick to edit ${header}" 
+                             data-id="${row.id}" 
+                             data-field="${header}" 
+                             data-value="${encodeURIComponent(value)}"
+                             onclick="openFieldEditModal(this)"
+                             style="${cellStyle}">
+                        ${isTruncated ? truncatedValue + '...' : truncatedValue}
+                    </td>`;
+                } else {
+                    html += `<td style="${cellStyle}">
+                        ${isTruncated ? truncatedValue + '...' : truncatedValue}
+                    </td>`;
+                }
+            });
+            html += '</tr>';
+        });
+        
+        html += '</table>';
+        
+        const existingCache = container.querySelector('.cache-info');
+        if (existingCache) {
+            container.innerHTML = '';
+            container.appendChild(existingCache);
+            container.insertAdjacentHTML('beforeend', html);
+        } else {
+            container.innerHTML = html;
+        }
+    }
+    
+    function sortByColumn(column) {
+        const sortedData = [...filteredData].sort((a, b) => {
+            let aVal = a[column];
+            let bVal = b[column];
+            
+            if (typeof aVal === 'number' && typeof bVal === 'number') {
+                return aVal - bVal;
+            } else if (typeof aVal === 'string' && typeof bVal === 'string') {
+                return aVal.localeCompare(bVal);
+            } else if (aVal instanceof Date && bVal instanceof Date) {
+                return aVal - bVal;
+            } else {
+                return String(aVal || '').localeCompare(String(bVal || ''));
+            }
+        });
+        
+        filteredData = sortedData;
+        displayCurrentPage();
+        showMessage(`Sorted by ${column.replace(/_/g, ' ')}`, 'info');
+        updatePaginationControls();
+    }
+    
+    // New Clean Image Editor
+    function createImageLinksEditor(jsonString) {
+        let images = [];
+        let isValidJson = true;
+        
+        try {
+            if (jsonString && jsonString.trim() !== '') {
+                const parsed = JSON.parse(jsonString);
+                if (Array.isArray(parsed)) {
+                    images = parsed;
+                } else if (typeof parsed === 'string') {
+                    const trimmed = parsed.trim();
+                    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+                        images = JSON.parse(trimmed);
+                    } else {
+                        images = [parsed];
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Invalid JSON, treating as plain text:', e);
+            isValidJson = false;
+            if (jsonString && jsonString.trim() !== '') {
+                images = jsonString.split(',').map(url => url.trim()).filter(url => url);
+            }
+        }
+        
+        currentImages = images;
+        
+        let html = `
+            <div class="image-gallery-container">
+                <div class="gallery-header">
+                    <div class="gallery-title">
+                        📸 Image Gallery
+                        <span class="image-count-badge">${images.length} images</span>
+                    </div>
+                    <div class="gallery-actions">
+                        ${images.length > 0 ? `
+                        <button type="button" class="view-all-btn" onclick="viewAllImages(${JSON.stringify(images)})">
+                            👁️ View All
+                        </button>
+                        ` : ''}
+                        <button type="button" class="add-new-btn" onclick="openUploadModal('add')">
+                            ➕ Add New
+                        </button>
+                    </div>
+                </div>
+        `;
+        
+        if (images.length > 0) {
+            html += `
+                <div class="image-gallery" id="imageGallery">
+            `;
+            
+            images.forEach((url, index) => {
+                const shortUrl = url.length > 50 ? url.substring(0, 50) + '...' : url;
+                html += `
+                    <div class="image-card">
+                        <img src="${escapeHtml(url)}" 
+                             class="image-preview" 
+                             alt="Image ${index + 1}"
+                             onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxNTAiIGZpbGw9IiNlZGVkZWQiIHJ4PSIxMCIvPjxwYXRoIGQ9Ik02MCA2MEwxMDAgMTAwTDE0MCA2MCIgc3Ryb2tlPSIjOTk5IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxjaXJjbGUgY3g9IjEwMCIgY3k9IjQwIiByPSIyMCIgc3Ryb2tlPSIjOTk5IiBzdHJva2Utd2lkdGg9IjIiLz48L3N2Zz4='"
+                             onclick="viewImage(${index}, ${JSON.stringify(images)})"
+                             style="cursor: pointer;">
+                        <div class="image-info">
+                            <div class="image-index">
+                                <span>#${index + 1}</span>
+                            </div>
+                            <div class="image-url" title="${escapeHtml(url)}">
+                                ${escapeHtml(shortUrl)}
+                            </div>
+                            <div class="image-actions">
+                                <button type="button" class="edit-btn" onclick="event.stopPropagation(); viewImage(${index}, ${JSON.stringify(images)})">
+                                    👁️ View
+                                </button>
+                                <button type="button" class="replace-btn" onclick="event.stopPropagation(); replaceImage(${index})">
+                                    🔄 Replace
+                                </button>
+                                <button type="button" class="delete-btn" onclick="event.stopPropagation(); deleteImage(${index})" title="Delete">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `</div>`;
+        } else {
+            html += `
+                <div class="no-images-placeholder">
+                    <div class="emoji">🖼️</div>
+                    <h4>No Images Found</h4>
+                    <p>This gallery is empty. Add your first image!</p>
+                </div>
+            `;
+        }
+        
+        // Add hidden input to store the images array
+        html += `
+            <input type="hidden" id="editValue" name="club_slider_images" value='${escapeHtml(JSON.stringify(images))}'>
+            <div class="json-validation ${isValidJson ? '' : 'json-error'}" style="margin-top: 20px;">
+                ${isValidJson ? '✓ Valid JSON format' : '⚠️ Invalid JSON format'}
+            </div>
+        `;
+        
+        html += `</div>`;
+        
+        return html;
+    }
+    
+    function createStandardFieldInput(field, value, displayField) {
+        let inputHtml = '';
+        
+        if (field.toLowerCase().includes('description') || 
+            field.toLowerCase().includes('bio') ||
+            field.toLowerCase().includes('content') ||
+            field.toLowerCase().includes('address') ||
+            field.toLowerCase().includes('note') ||
+            field.toLowerCase().includes('announcement') ||
+            (String(value).length > 100 && !field.toLowerCase().includes('image'))) {
+            inputHtml = `
+                <textarea id="editValue" name="${field}" class="form-control" rows="4" 
+                          placeholder="Enter ${displayField.toLowerCase()}...">${escapeHtml(value)}</textarea>
+            `;
+        } else if (field.toLowerCase().includes('toggle') ||
+                  field.toLowerCase().includes('status') ||
+                  field.toLowerCase().includes('active') ||
+                  field.toLowerCase().includes('enabled') ||
+                  field.toLowerCase().includes('verified') ||
+                  field.toLowerCase().includes('is_')) {
+            const isChecked = value === true || value === 1 || value === '1' || 
+                             String(value).toLowerCase() === 'true' || 
+                             String(value).toLowerCase() === 'yes' ||
+                             String(value).toLowerCase() === 'active' ||
+                             String(value).toLowerCase() === 'on';
+            inputHtml = `
+                <div style="display: flex; align-items: center; gap: 15px; padding: 12px; background: #f8f9fa; border-radius: 5px;">
+                    <input type="checkbox" id="editValue" name="${field}" ${isChecked ? 'checked' : ''} 
+                           class="form-control" style="width: auto; transform: scale(1.3);">
+                    <span style="color: #666; font-size: 14px;">
+                        ${isChecked ? 'Currently: Active/Yes' : 'Currently: Inactive/No'}
+                    </span>
+                </div>
+            `;
+        } else if (field.toLowerCase().includes('image') || 
+                  field.toLowerCase().includes('url') ||
+                  field.toLowerCase().includes('avatar') ||
+                  field.toLowerCase().includes('photo') ||
+                  field.toLowerCase().includes('thumbnail') ||
+                  field.toLowerCase().includes('link') ||
+                  field.toLowerCase().includes('website') ||
+                  field.toLowerCase().includes('profile') ||
+                  (field === 'value' && value && (value.startsWith('http://') || value.startsWith('https://')))) {
+            inputHtml = `
+                <input type="url" id="editValue" name="${field}" value="${escapeHtml(value)}" 
+                       class="form-control" placeholder="https://example.com/image.jpg">
+                ${value ? `<div style="margin-top: 10px; font-size: 12px; color: #666;">
+                    <a href="${escapeHtml(value)}" target="_blank" style="color: #2196F3; text-decoration: none;">🔗 Open Link</a>
+                </div>` : ''}
+            `;
+        } else if (field.toLowerCase().includes('email')) {
+            inputHtml = `
+                <input type="email" id="editValue" name="${field}" value="${escapeHtml(value)}" 
+                       class="form-control" placeholder="user@example.com">
+            `;
+        } else if (field.toLowerCase().includes('phone') ||
+                  field.toLowerCase().includes('mobile') ||
+                  field.toLowerCase().includes('contact')) {
+            inputHtml = `
+                <input type="tel" id="editValue" name="${field}" value="${escapeHtml(value)}" 
+                       class="form-control" placeholder="+91 9876543210">
+            `;
+        } else if (field.toLowerCase().includes('date') ||
+                  field.toLowerCase().includes('created') ||
+                  field.toLowerCase().includes('updated') ||
+                  field.toLowerCase().includes('joined') ||
+                  field.toLowerCase().includes('birthday') ||
+                  field.toLowerCase().includes('dob')) {
+            let dateValue = value;
+            if (value) {
+                const date = new Date(value);
+                if (!isNaN(date.getTime())) {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const hours = String(date.getHours()).padStart(2, '0');
+                    const minutes = String(date.getMinutes()).padStart(2, '0');
+                    dateValue = `${year}-${month}-${day}T${hours}:${minutes}`;
+                }
+            }
+            inputHtml = `
+                <input type="datetime-local" id="editValue" name="${field}" value="${dateValue}" 
+                       class="form-control">
+            `;
+        } else if (field.toLowerCase().includes('password') ||
+                  field.toLowerCase().includes('token') ||
+                  field.toLowerCase().includes('secret') ||
+                  field.toLowerCase().includes('key')) {
+            inputHtml = `
+                <input type="password" id="editValue" name="${field}" value="${escapeHtml(value)}" 
+                       class="form-control" placeholder="Enter ${displayField.toLowerCase()}...">
+            `;
+        } else {
+            inputHtml = `
+                <input type="text" id="editValue" name="${field}" value="${escapeHtml(value)}" 
+                       class="form-control" placeholder="Enter ${displayField.toLowerCase()}...">
+            `;
+        }
+        
+        return inputHtml;
+    }
+    
+    // Image Gallery Functions
+    function viewImage(index, images) {
+        const imageObjects = images.map((url, index) => ({ url, index }));
+        openImageViewer(imageObjects, index);
+    }
+    
+    function replaceImage(index) {
+        openUploadModal('replace', index);
+    }
+    
+    function deleteImage(index) {
+        if (confirm(`Are you sure you want to delete image #${index + 1}?`)) {
+            currentImages.splice(index, 1);
+            updateImageGallery();
+            updateHiddenInput();
+            showMessage('✅ Image deleted successfully!', 'success');
+        }
+    }
+    
+    function viewAllImages(images) {
+        const imageObjects = images.map((url, index) => ({ url, index }));
+        openImageViewer(imageObjects, 0);
+    }
+    
+    function updateImageGallery() {
+        const gallery = document.getElementById('imageGallery');
+        if (!gallery) return;
+        
+        if (currentImages.length === 0) {
+            gallery.innerHTML = '';
+            const placeholder = document.querySelector('.no-images-placeholder');
+            if (placeholder) {
+                placeholder.style.display = 'block';
+            }
+            const viewAllBtn = document.querySelector('.view-all-btn');
+            if (viewAllBtn) {
+                viewAllBtn.style.display = 'none';
+            }
+            return;
+        }
+        
+        let html = '';
+        currentImages.forEach((url, index) => {
+            const shortUrl = url.length > 50 ? url.substring(0, 50) + '...' : url;
+            html += `
+                <div class="image-card">
+                    <img src="${escapeHtml(url)}" 
+                         class="image-preview" 
+                         alt="Image ${index + 1}"
+                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxNTAiIGZpbGw9IiNlZGVkZWQiIHJ4PSIxMCIvPjxwYXRoIGQ9Ik02MCA2MEwxMDAgMTAwTDE0MCA2MCIgc3Ryb2tlPSIjOTk5IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxjaXJjbGUgY3g9IjEwMCIgY3k9IjQwIiByPSIyMCIgc3Ryb2tlPSIjOTk5IiBzdHJva2Utd2lkdGg9IjIiLz48L3N2Zz4='"
+                         onclick="viewImage(${index}, ${JSON.stringify(currentImages)})"
+                         style="cursor: pointer;">
+                    <div class="image-info">
+                        <div class="image-index">
+                            <span>#${index + 1}</span>
+                        </div>
+                        <div class="image-url" title="${escapeHtml(url)}">
+                            ${escapeHtml(shortUrl)}
+                        </div>
+                        <div class="image-actions">
+                            <button type="button" class="edit-btn" onclick="event.stopPropagation(); viewImage(${index}, ${JSON.stringify(currentImages)})">
+                                👁️ View
+                            </button>
+                            <button type="button" class="replace-btn" onclick="event.stopPropagation(); replaceImage(${index})">
+                                🔄 Replace
+                            </button>
+                            <button type="button" class="delete-btn" onclick="event.stopPropagation(); deleteImage(${index})" title="Delete">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        gallery.innerHTML = html;
+        
+        // Update count badge
+        const countBadge = document.querySelector('.image-count-badge');
+        if (countBadge) {
+            countBadge.textContent = `${currentImages.length} images`;
+        }
+        
+        // Update view all button
+        const viewAllBtn = document.querySelector('.view-all-btn');
+        if (viewAllBtn) {
+            viewAllBtn.onclick = () => viewAllImages(currentImages);
+            viewAllBtn.style.display = 'flex';
+        }
+        
+        // Hide placeholder
+        const placeholder = document.querySelector('.no-images-placeholder');
+        if (placeholder) {
+            placeholder.style.display = 'none';
+        }
+    }
+    
+    function updateHiddenInput() {
+        const hiddenInput = document.getElementById('editValue');
+        if (hiddenInput) {
+            hiddenInput.value = JSON.stringify(currentImages);
+            console.log('Hidden input updated to:', hiddenInput.value);
+        }
+    }
+    
+    // Upload Modal Functions
+    function openUploadModal(type, index = null) {
+        currentUploadType = type;
+        currentUploadIndex = index;
+        currentUploadFile = null;
+        
+        const modalTitle = document.getElementById('uploadModalTitle');
+        const actionTitle = document.getElementById('uploadActionText');
+        const actionIcon = document.getElementById('uploadActionIcon');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadBtnText = document.getElementById('uploadBtnText');
+        const uploadBtnIcon = document.getElementById('uploadBtnIcon');
+        
+        if (type === 'replace') {
+            modalTitle.textContent = `Replace Image #${index + 1}`;
+            actionTitle.textContent = `Replace Image #${index + 1}`;
+            actionIcon.textContent = '🔄';
+            uploadBtnText.textContent = 'Replace Image';
+            uploadBtnIcon.textContent = '🔄';
+        } else {
+            modalTitle.textContent = 'Add New Image';
+            actionTitle.textContent = 'Upload New Image';
+            actionIcon.textContent = '📤';
+            uploadBtnText.textContent = 'Upload Image';
+            uploadBtnIcon.textContent = '📤';
+        }
+        
+        // Reset upload area
+        document.getElementById('fileUploadArea').classList.remove('dragover');
+        document.getElementById('uploadPreview').innerHTML = '';
+        document.getElementById('uploadStatus').innerHTML = '';
+        document.getElementById('uploadBtn').disabled = true;
+        
+        document.getElementById('uploadModal').style.display = 'block';
+    }
+    
+    function closeUploadModal() {
+        document.getElementById('uploadModal').style.display = 'none';
+        currentUploadFile = null;
+        currentUploadIndex = null;
+        currentUploadType = 'add';
+    }
+    
+    function handleDragOver(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        document.getElementById('fileUploadArea').classList.add('dragover');
+    }
+    
+    function handleDragLeave(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        document.getElementById('fileUploadArea').classList.remove('dragover');
+    }
+    
+    function handleDrop(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        document.getElementById('fileUploadArea').classList.remove('dragover');
+        
+        const files = event.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileSelect({ target: { files: files } });
+        }
+    }
+    
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        // Validate file type
+        if (!file.type.match('image.*')) {
+            showUploadStatus('❌ Only image files are allowed (JPEG, PNG, GIF)', 'error');
+            return;
+        }
+        
+        // Validate file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            showUploadStatus('❌ Image size should be less than 10MB', 'error');
+            return;
+        }
+        
+        currentUploadFile = file;
+        
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('uploadPreview');
+            preview.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 10px;">Preview:</div>
+                <img src="${e.target.result}" class="preview-image" alt="Image Preview">
+                <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                    ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)
+                </div>
+            `;
+            document.getElementById('uploadBtn').disabled = false;
+        };
+        reader.readAsDataURL(file);
+        
+        showUploadStatus('✅ Image selected. Click "Upload Image" to proceed.', 'success');
+    }
+    
+    function showUploadStatus(message, type) {
+        const statusDiv = document.getElementById('uploadStatus');
+        statusDiv.innerHTML = `<div class="upload-${type}">${message}</div>`;
+    }
+    
+    // Function to upload image to Hostinger server
+    async function uploadImageToHostinger(file) {
+        try {
+            console.log('📤 Uploading image to Hostinger...', file.name, file.type);
+            
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            const response = await fetch(UPLOAD_API_URL, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const responseText = await response.text();
+            console.log('Upload response text:', responseText);
+            
+            if (response.status >= 200 && response.status < 300) {
+                let jsonRes;
+                try {
+                    jsonRes = JSON.parse(responseText);
+                } catch (e) {
+                    console.error('Failed to parse JSON response:', e);
+                    throw new Error('Invalid response from server');
+                }
+                
+                // Extract URL from response
+                let url;
+                
+                // Try different possible response formats
+                if (jsonRes.url && typeof jsonRes.url === 'string') {
+                    url = jsonRes.url;
+                } else if (jsonRes.image_url && typeof jsonRes.image_url === 'string') {
+                    url = jsonRes.image_url;
+                } else if (jsonRes.data) {
+                    if (typeof jsonRes.data === 'string') {
+                        url = jsonRes.data;
+                    } else if (typeof jsonRes.data === 'object') {
+                        if (jsonRes.data.url && typeof jsonRes.data.url === 'string') {
+                            url = jsonRes.data.url;
+                        } else if (jsonRes.data.image_url && typeof jsonRes.data.image_url === 'string') {
+                            url = jsonRes.data.image_url;
+                        }
+                    }
+                }
+                
+                if (url) {
+                    console.log('✅ Image uploaded successfully. URL:', url);
+                    return url;
+                } else {
+                    console.error('❌ No URL found in response:', jsonRes);
+                    throw new Error('No image URL in response');
+                }
+            } else {
+                console.error('❌ Upload failed with status:', response.status);
+                throw new Error(`Upload failed: ${response.status} ${responseText}`);
+            }
+        } catch (error) {
+            console.error('❌ Upload error:', error);
+            throw error;
+        }
+    }
+    
+    async function processUpload() {
+        if (!currentUploadFile) {
+            showUploadStatus('❌ Please select an image file first', 'error');
+            return;
+        }
+        
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadBtnText = document.getElementById('uploadBtnText');
+        const uploadBtnIcon = document.getElementById('uploadBtnIcon');
+        
+        // Disable upload button and show progress
+        uploadBtn.disabled = true;
+        uploadBtnText.textContent = 'Uploading...';
+        uploadBtnIcon.textContent = '⏳';
+        
+        showUploadStatus('🔄 Uploading image... Please wait', 'progress');
+        
+        try {
+            // Upload to Hostinger
+            const imageUrl = await uploadImageToHostinger(currentUploadFile);
+            
+            // Update images array based on upload type
+            if (currentUploadType === 'replace' && currentUploadIndex !== null) {
+                // Replace existing image
+                currentImages[currentUploadIndex] = imageUrl;
+                showMessage(`✅ Image #${currentUploadIndex + 1} replaced successfully!`, 'success');
+            } else {
+                // Add new image
+                currentImages.push(imageUrl);
+                showMessage('✅ New image added successfully!', 'success');
+            }
+            
+            // Update gallery and hidden input
+            updateImageGallery();
+            updateHiddenInput();
+            
+            // Show success message
+            showUploadStatus(`✅ Image uploaded successfully! URL: ${imageUrl.substring(0, 100)}...`, 'success');
+            
+            // Auto-copy URL to clipboard
+            setTimeout(() => {
+                navigator.clipboard.writeText(imageUrl)
+                    .then(() => {
+                        showMessage('✅ Image URL copied to clipboard!', 'success');
+                    })
+                    .catch(err => {
+                        console.error('Failed to copy URL:', err);
+                    });
+            }, 500);
+            
+            // Close modal after delay
+            setTimeout(() => {
+                closeUploadModal();
+            }, 1500);
+            
+        } catch (error) {
+            showUploadStatus(`❌ Upload failed: ${error.message}`, 'error');
+            
+            // Re-enable upload button
+            uploadBtn.disabled = false;
+            uploadBtnText.textContent = currentUploadType === 'replace' ? 'Replace Image' : 'Upload Image';
+            uploadBtnIcon.textContent = currentUploadType === 'replace' ? '🔄' : '📤';
+        }
+    }
+    
+    // Image Viewer Functions
+    function openImageViewer(images, startIndex = 0) {
+        viewerImages = images;
+        currentViewerIndex = startIndex;
+        isViewerOpen = true;
+        
+        document.getElementById('imageViewerModal').style.display = 'block';
+        updateViewer();
+        
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeImageViewer() {
+        document.getElementById('imageViewerModal').style.display = 'none';
+        isViewerOpen = false;
+        viewerImages = [];
+        
+        // Restore body scroll
+        document.body.style.overflow = 'auto';
+    }
+    
+    function updateViewer() {
+        if (viewerImages.length === 0) return;
+        
+        const image = viewerImages[currentViewerIndex];
+        const mainImg = document.getElementById('mainViewerImage');
+        const imageCounter = document.getElementById('imageCounter');
+        
+        // Update main image
+        mainImg.src = image.url;
+        mainImg.alt = `Image ${currentViewerIndex + 1}`;
+        
+        // Update counter
+        imageCounter.textContent = `${currentViewerIndex + 1} / ${viewerImages.length}`;
+    }
+    
+    function nextImage() {
+        if (viewerImages.length === 0) return;
+        currentViewerIndex = (currentViewerIndex + 1) % viewerImages.length;
+        updateViewer();
+    }
+    
+    function prevImage() {
+        if (viewerImages.length === 0) return;
+        currentViewerIndex = (currentViewerIndex - 1 + viewerImages.length) % viewerImages.length;
+        updateViewer();
+    }
+    
+    // Main Modal Functions
+    function openFieldEditModal(cell) {
+        const id = cell.getAttribute('data-id');
+        const field = cell.getAttribute('data-field');
+        const value = decodeURIComponent(cell.getAttribute('data-value') || '');
+        
+        currentEditId = id;
+        currentEditField = field;
+        originalValue = value;
+        
+        const displayField = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        document.getElementById('fieldName').textContent = `Editing ${displayField}`;
+        document.getElementById('fieldLabel').textContent = displayField;
+        document.getElementById('fieldInfo').innerHTML = `Config ID: <strong>${id}</strong> | Field: <code>${field}</code>`;
+        
+        const fieldInput = document.getElementById('fieldInput');
+        fieldInput.innerHTML = '';
+        
+        if (field === 'club_slider_images') {
+            fieldInput.innerHTML = createImageLinksEditor(value);
+        } else {
+            fieldInput.innerHTML = createStandardFieldInput(field, value, displayField);
+        }
+        
+        document.getElementById('editModal').style.display = 'block';
+    }
+    
+    document.getElementById('editForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        let newValue;
+        
+        if (currentEditField === 'club_slider_images') {
+            const hiddenInput = document.getElementById('editValue');
+            if (!hiddenInput) {
+                showMessage('❌ Error: Image data not found', 'error');
+                return;
+            }
+            
+            newValue = hiddenInput.value;
+            
+            // Parse both values to compare properly
+            try {
+                const originalParsed = JSON.parse(originalValue || '[]');
+                const newParsed = JSON.parse(newValue || '[]');
+                
+                // Compare stringified versions
+                if (JSON.stringify(originalParsed) === JSON.stringify(newParsed)) {
+                    showMessage('ℹ️ No changes detected', 'info');
+                    closeModal();
+                    return;
+                }
+            } catch (e) {
+                // If parsing fails, compare raw strings
+                if (newValue === originalValue) {
+                    showMessage('ℹ️ No changes detected', 'info');
+                    closeModal();
+                    return;
+                }
+            }
+        } else {
+            const input = document.getElementById('editValue');
+            if (!input) {
+                showMessage('❌ Error: Input field not found', 'error');
+                return;
+            }
+            
+            if (input.type === 'checkbox') {
+                newValue = input.checked ? 1 : 0;
+            } else {
+                newValue = input.value.trim();
+                
+                if (newValue === '') {
+                    newValue = null;
+                }
+            }
+            
+            if (JSON.stringify(newValue) === JSON.stringify(originalValue)) {
+                showMessage('ℹ️ No changes detected', 'info');
+                closeModal();
+                return;
+            }
+        }
+        
+        try {
+            showMessage('🔄 Saving changes...', 'info');
+            
+            const updateData = {};
+            updateData[currentEditField] = newValue;
+            
+            console.log('Updating config ID:', currentEditId, 'Field:', currentEditField, 'Data:', updateData);
+            
+            const endpoint = `/api/${currentTable}/${currentEditId}`;
+            
+            const response = await fetch(endpoint, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(updateData)
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+            
+            const result = await response.json();
+            console.log('Update result:', result);
+            
+            if (result.success) {
+                showMessage('✅ Field updated successfully!', 'success');
+                
+                const configIndex = allData.findIndex(config => {
+                    const configIds = [
+                        config.id,
+                        config._id,
+                        config.config_id,
+                        config.configId,
+                        config.ID
+                    ];
+                    return configIds.some(id => id == currentEditId);
+                });
+                
+                if (configIndex !== -1) {
+                    allData[configIndex][currentEditField] = newValue;
+                    
+                    if (currentEditField === 'club_slider_images' && newValue) {
+                        try {
+                            allData[configIndex].parsed_images = JSON.parse(newValue);
+                        } catch (e) {
+                            allData[configIndex].parsed_images = null;
+                        }
+                    }
+                    
+                    applyFilter();
+                } else {
+                    console.warn('Config not found in local data, reloading from server...');
+                    await loadData();
+                }
+                
+                setTimeout(() => {
+                    closeModal();
+                }, 1000);
+            } else {
+                throw new Error(result.error || 'Update failed');
+            }
+        } catch (error) {
+            console.error('Update error:', error);
+            showMessage(`❌ Error: ${error.message}`, 'error');
+        }
+    });
+    
+    function closeModal() {
+        document.getElementById('editModal').style.display = 'none';
+        currentEditId = null;
+        currentEditField = null;
+        originalValue = null;
+        currentImages = [];
+    }
+    
+    function showError(message) {
+        const errorDiv = document.getElementById('error');
+        errorDiv.style.display = 'block';
+        errorDiv.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; gap: 15px;">
+                <span style="font-size: 24px;">⚠️</span>
+                <div>${message}</div>
+            </div>
+        `;
+    }
+    
+    function showMessage(text, type = 'success') {
+        const messageDiv = document.getElementById('message');
+        messageDiv.textContent = text;
+        
+        const colors = {
+            success: { bg: '#d4edda', text: '#155724', border: '#c3e6cb' },
+            error: { bg: '#f8d7da', text: '#721c24', border: '#f5c6cb' },
+            info: { bg: '#fff3cd', text: '#856404', border: '#ffeaa7' }
+        };
+        
+        const color = colors[type] || colors.success;
+        messageDiv.style.background = color.bg;
+        messageDiv.style.color = color.text;
+        messageDiv.style.border = `1px solid ${color.border}`;
+        messageDiv.style.opacity = '1';
+        
+        setTimeout(() => {
+            messageDiv.style.opacity = '0';
+            setTimeout(() => {
+                messageDiv.textContent = '';
+            }, 300);
+        }, 3000);
+    }
+    
+    // Event listeners
+    window.onclick = function(event) {
+        const modal = document.getElementById('editModal');
+        if (event.target === modal) {
+            closeModal();
+        }
+        
+        const uploadModal = document.getElementById('uploadModal');
+        if (event.target === uploadModal) {
+            closeUploadModal();
+        }
+        
+        const viewerModal = document.getElementById('imageViewerModal');
+        if (event.target === viewerModal) {
+            closeImageViewer();
+        }
+    };
+    
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            if (isViewerOpen) {
+                closeImageViewer();
+            } else if (document.getElementById('uploadModal').style.display === 'block') {
+                closeUploadModal();
+            } else {
+                closeModal();
+            }
+        }
+        
+        // Image viewer navigation
+        if (isViewerOpen) {
+            switch(event.key) {
+                case 'ArrowLeft':
+                    prevImage();
+                    event.preventDefault();
+                    break;
+                case 'ArrowRight':
+                    nextImage();
+                    event.preventDefault();
+                    break;
+                case ' ':
+                    event.preventDefault();
+                    break;
+            }
+        }
+    });
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('pageSize').value = pageSize;
+        loadData();
+    });
+    
+function enableFloatingScrollbar(targetSelector) {
+    const target = document.querySelector(targetSelector);
+    if (!target) return;
+
+    // Avoid duplicate scrollbar
+    if (document.getElementById('__floating_scrollbar__')) return;
+
+    const floating = document.createElement('div');
+    floating.id = '__floating_scrollbar__';
+    floating.style.position = 'fixed';
+    floating.style.bottom = '0';
+    floating.style.left = '0';
+    floating.style.right = '0';
+    floating.style.height = '16px';
+    floating.style.overflowX = 'auto';
+    floating.style.overflowY = 'hidden';
+    floating.style.zIndex = '9999';
+
+    const inner = document.createElement('div');
+    inner.style.height = '1px';
+
+    floating.appendChild(inner);
+    document.body.appendChild(floating);
+
+    function sync() {
+        // Always match real scroll width
+        const width = target.scrollWidth;
+        inner.style.width = width + 'px';
+
+        // Keep scroll positions aligned
+        if (floating.scrollLeft !== target.scrollLeft) {
+            floating.scrollLeft = target.scrollLeft;
+        }
+    }
+
+    // Bidirectional sync
+    floating.addEventListener('scroll', () => {
+        target.scrollLeft = floating.scrollLeft;
+    });
+
+    target.addEventListener('scroll', () => {
+        floating.scrollLeft = target.scrollLeft;
+    });
+
+    // 🔑 AUTO-FIX EVERYTHING
+    new ResizeObserver(sync).observe(target);
+    new MutationObserver(sync).observe(target, {
+        childList: true,
+        subtree: true,
+        attributes: true
+    });
+
+    window.addEventListener('resize', sync);
+
+    // Run continuously until layout stabilizes
+    requestAnimationFrame(function loop() {
+        sync();
+        requestAnimationFrame(loop);
+    });
+}
+enableFloatingScrollbar('#dataContainer');
+</script>
+</body>
+</html>

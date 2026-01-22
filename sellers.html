@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sellers - Zulu Club</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #ff9800;
+            padding-bottom: 10px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .back-btn {
+            background: #6c757d;
+            color: white;
+        }
+        .refresh-btn {
+            background: #2196F3;
+            color: white;
+        }
+        .filter-btn {
+            background: #4CAF50;
+            color: white;
+        }
+        .filter-btn.inactive {
+            background: #f44336;
+        }
+        .sort-btn {
+            background: #9C27B0;
+            color: white;
+        }
+        .sort-btn.active {
+            background: #7B1FA2;
+            box-shadow: 0 0 0 2px rgba(156, 39, 176, 0.3);
+        }
+        #message {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-weight: bold;
+            text-align: center;
+        }
+        #loading {
+            padding: 20px;
+            text-align: center;
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            margin: 20px 0;
+            color: #856404;
+        }
+        #error {
+            padding: 20px;
+            text-align: center;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            margin: 20px 0;
+            color: #721c24;
+        }
+        #dataContainer {
+            overflow-x: auto;
+            margin-top: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #ff9800;
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+        }
+        th.sortable {
+            cursor: pointer;
+        }
+        th.sortable:hover {
+            background: #f57c00;
+        }
+        td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #ddd;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        tr:hover {
+            background: #f9f9f9;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        .priority-high {
+            background: #e8f5e9 !important;
+            border-left: 4px solid #2E7D32;
+        }
+        .priority-medium {
+            background: #e3f2fd !important;
+            border-left: 4px solid #2196F3;
+        }
+        .priority-low {
+            background: #fff3e0 !important;
+            border-left: 4px solid #FF9800;
+        }
+        .priority-outlier {
+            background: #f5f5f5 !important;
+            border-left: 4px solid #9E9E9E;
+        }
+        .status-active {
+            background: #e8f5e9 !important;
+        }
+        .status-inactive {
+            background: #ffebee !important;
+        }
+        .cache-info {
+            background: #fff3e0;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 14px;
+            color: #ef6c00;
+        }
+        .filter-controls {
+            background: #e8f5e9;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .sort-controls {
+            background: #f3e5f5;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 30px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .toggle-slider {
+            background-color: #4CAF50;
+        }
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+        .stats-info {
+            font-size: 14px;
+            color: #333;
+        }
+        .stats-info span {
+            margin-right: 15px;
+        }
+        .stats-info .active {
+            color: #4CAF50;
+        }
+        .stats-info .inactive {
+            color: #f44336;
+        }
+        .priority-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .status-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .status-btn {
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-btn.active {
+            background: #4CAF50;
+            color: white;
+        }
+        .status-btn.inactive {
+            background: #f44336;
+            color: white;
+        }
+        .status-btn.all {
+            background: #388E3C;
+            color: white;
+        }
+        .search-box {
+            flex-grow: 1;
+            max-width: 300px;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .pagination-controls {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .page-size-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .page-size-selector select {
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .pagination-buttons {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .pagination-buttons button {
+            padding: 5px 10px;
+            background: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .pagination-buttons button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        .page-info {
+            font-weight: bold;
+        }
+        mark {
+            background-color: yellow;
+            padding: 0 2px;
+        }
+        @media (max-width: 768px) {
+            body {
+                margin: 15px;
+            }
+            .controls {
+                flex-direction: column;
+            }
+            button {
+                width: 100%;
+            }
+            .search-box {
+                max-width: 100%;
+            }
+            .pagination-controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+            table {
+                font-size: 12px;
+            }
+            th, td {
+                padding: 8px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Sellers Data</h1>
+    
+    <div class="controls">
+        <button class="back-btn" onclick="location.href='/home'">← Back to Dashboard</button>
+        <button class="filter-btn" id="toggleStatusFilterBtn" onclick="toggleStatusFilter()">Live Outlets Only</button>
+        <button class="sort-btn" id="toggleSortBtn" onclick="toggleSort()">Sort by Priority</button>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 Search sellers..." onkeyup="handleSearch()">
+        </div>
+    </div>
+    
+    <div class="filter-controls">
+        <div class="status-controls">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="statusFilter" checked onchange="toggleStatusFilter()">
+                    <span class="toggle-slider"></span>
+                </label>
+                <span style="font-weight: bold;">Status Filter:</span>
+            </div>
+            <button class="status-btn active" onclick="setStatusFilter('active')">Live Only</button>
+            <button class="status-btn inactive" onclick="setStatusFilter('inactive')">Inactive Only</button>
+            <button class="status-btn all" onclick="setStatusFilter('all')">Show All</button>
+        </div>
+        <div class="stats-info">
+            <span class="active">Live: <span id="activeCount">0</span></span>
+            <span class="inactive">Inactive: <span id="inactiveCount">0</span></span>
+            <span>Total: <span id="totalCount">0</span></span>
+            <span>Showing: <span id="showingCount">0</span></span>
+        </div>
+    </div>
+    
+    <div class="sort-controls">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-weight: bold;">Sort Order:</span>
+            <select id="priorityOrder" onchange="applySorting()" style="padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+                <option value="asc">Highest First (1→10)</option>
+                <option value="desc">Lowest First (10→1)</option>
+                <option value="outliers">Outliers First</option>
+            </select>
+        </div>
+        <div class="priority-controls">
+            <span style="font-weight: bold;">Priority Filter:</span>
+            <label>
+                <input type="checkbox" id="showOutliers" checked onchange="toggleOutliers()"> Show Outliers
+            </label>
+            <select id="priorityFilter" onchange="applyPriorityFilter()" style="padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+                <option value="all">All Priorities (1-10)</option>
+                <option value="1">Priority 1 (Highest)</option>
+                <option value="2">Priority 2</option>
+                <option value="3">Priority 3</option>
+                <option value="4">Priority 4</option>
+                <option value="5">Priority 5</option>
+                <option value="6">Priority 6</option>
+                <option value="7">Priority 7</option>
+                <option value="8">Priority 8</option>
+                <option value="9">Priority 9</option>
+                <option value="10">Priority 10 (Lowest)</option>
+            </select>
+        </div>
+        <div class="stats-info">
+            <span>P1-3: <span id="priorityHighCount">0</span></span>
+            <span>P4-6: <span id="priorityMediumCount">0</span></span>
+            <span>P7-9: <span id="priorityLowCount">0</span></span>
+            <span>P10: <span id="priorityLowestCount">0</span></span>
+            <span>Outliers: <span id="outlierCount">0</span></span>
+        </div>
+    </div>
+    
+    <div class="pagination-controls">
+        <div class="page-size-selector">
+            <span style="font-weight: bold;">Show:</span>
+            <select id="pageSize" onchange="changePageSize()">
+                <option value="10">10 per page</option>
+                <option value="50" selected>50 per page</option>
+                <option value="100">100 per page</option>
+                <option value="500">500 per page</option>
+                <option value="0">Show All</option>
+            </select>
+        </div>
+        
+        <div class="page-info">
+            Page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+            (<span id="showingInfo">0</span> sellers)
+        </div>
+        
+        <div class="pagination-buttons">
+            <button id="firstPageBtn" onclick="goToPage(1)">First</button>
+            <button id="prevPageBtn" onclick="prevPage()">Previous</button>
+            <span id="pageNumbers"></span>
+            <button id="nextPageBtn" onclick="nextPage()">Next</button>
+            <button id="lastPageBtn" onclick="goToLastPage()">Last</button>
+        </div>
+    </div>
+    
+    <div id="message"></div>
+    <div id="loading">Loading sellers data...</div>
+    <div id="error" style="display: none;"></div>
+    
+    <div id="dataContainer"></div>
+
+    <script>
+        // Global variables
+        let allData = [];          // All data from API
+        let filteredData = [];     // Data after filters
+        let currentData = [];      // Data for current page
+        let statusFilter = 'active'; // 'active', 'inactive', 'all'
+        let sortByPriority = true;
+        let priorityOrder = 'asc'; // Changed to asc for highest first (1→10)
+        let showOutliers = true;
+        let priorityFilter = 'all';
+        let searchTerm = '';
+        let searchTimeout = null;
+        
+        // Pagination variables
+        let currentPage = 1;
+        let pageSize = 50; // Default 50 per page
+        let totalPages = 1;
+        let totalFilteredItems = 0;
+
+        async function loadData() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('dataContainer').innerHTML = '';
+            
+            try {
+                const response = await fetch('/api/sellers');
+                const data = await response.json();
+                
+                console.log('API Response:', data);
+                
+                if (data && data.success) {
+                    if (Array.isArray(data.data)) {
+                        allData = data.data;
+                        
+                        // Process priority values (1-10 normal, others outliers)
+                        if (allData.length > 0) {
+                            allData = allData.map((seller, index) => {
+                                // Process outlet_live status (string 'on'/'off' or 1/0)
+                                let status = seller.outlet_live;
+                                if (typeof status === 'string') {
+                                    if (status.toLowerCase() === 'on' || status === '1' || status === 'true') {
+                                        status = 1;
+                                    } else if (status.toLowerCase() === 'off' || status === '0' || status === 'false') {
+                                        status = 0;
+                                    }
+                                }
+                                
+                                // Get priority value from priority_id and classify (1-10 normal, others outliers)
+                                let priority = Number(seller.priority_id) || 1;
+                                let isOutlier = priority < 1 || priority > 10;
+                                
+                                // Normalize priority for display (1-10)
+                                if (priority < 1) priority = 1;
+                                if (priority > 10) priority = 10;
+                                
+                                return {
+                                    ...seller,
+                                    priority: priority,
+                                    isOutlier: isOutlier,
+                                    original_priority: seller.priority_id, // Keep original for display
+                                    status: Number(status) || 0,
+                                    id: seller.id || index + 1
+                                };
+                            });
+                        }
+                        
+                        applyFilter();
+                        showMessage(`Loaded ${allData.length} sellers`, 'success');
+                        updateStats();
+                        updatePriorityStats();
+                        updateStatusButtons();
+                        
+                        // Show cache info
+                        const cacheDiv = document.createElement('div');
+                        cacheDiv.className = 'cache-info';
+                        cacheDiv.innerHTML = `
+                            <strong>Cache Info:</strong> Data is cached for 2 hours. 
+                            To force fresh data, clear cache from Dashboard.
+                            Database connection closes after 5 minutes of inactivity.
+                        `;
+                        document.getElementById('dataContainer').prepend(cacheDiv);
+                    } else {
+                        console.error('Invalid data format:', data.data);
+                        showError('Invalid data format received from server');
+                    }
+                } else {
+                    console.error('API returned error:', data);
+                    showError(`API Error: ${data ? data.error || 'Unknown error' : 'No response'}`);
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = 'Error: ' + error.message;
+                showMessage(`Network error: ${error.message}`, 'error');
+                document.getElementById('dataContainer').innerHTML = 
+                    '<div style="padding: 40px; text-align: center; color: #666;">Network error. Please check your connection.</div>';
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+        
+        function applyFilter() {
+            filteredData = [...allData];
+            
+            // Apply status filter
+            if (statusFilter === 'active') {
+                filteredData = filteredData.filter(seller => {
+                    return Number(seller.status) === 1;
+                });
+            } else if (statusFilter === 'inactive') {
+                filteredData = filteredData.filter(seller => {
+                    return Number(seller.status) === 0;
+                });
+            }
+            
+            // Apply outlier filter
+            if (!showOutliers) {
+                filteredData = filteredData.filter(seller => !seller.isOutlier);
+            }
+            
+            // Apply priority filter
+            if (priorityFilter !== 'all') {
+                const selectedPriority = parseInt(priorityFilter);
+                filteredData = filteredData.filter(seller => {
+                    if (seller.isOutlier) return false;
+                    return Number(seller.priority) === selectedPriority;
+                });
+            }
+            
+            // Apply search filter
+            if (searchTerm.trim() !== '') {
+                const searchLower = searchTerm.toLowerCase();
+                filteredData = filteredData.filter(seller => {
+                    return Object.values(seller).some(value => {
+                        if (typeof value === 'string') {
+                            return value.toLowerCase().includes(searchLower);
+                        } else if (typeof value === 'number') {
+                            return value.toString().includes(searchTerm);
+                        }
+                        return false;
+                    });
+                });
+            }
+            
+            totalFilteredItems = filteredData.length;
+            
+            // Apply sorting
+            applySorting();
+            
+            updateFilterButton();
+            updateSortButton();
+            updateSearchResults();
+            updatePagination();
+            displayCurrentPage();
+        }
+        
+        function applySorting() {
+            if (filteredData.length === 0) {
+                return;
+            }
+            
+            priorityOrder = document.getElementById('priorityOrder').value;
+            
+            let sortedData = [...filteredData];
+            
+            if (sortByPriority) {
+                if (priorityOrder === 'outliers') {
+                    // Outliers first, then by priority (1 highest, 10 lowest)
+                    sortedData.sort((a, b) => {
+                        // Outliers first
+                        if (a.isOutlier && !b.isOutlier) return -1;
+                        if (!a.isOutlier && b.isOutlier) return 1;
+                        
+                        // Both outliers or both normal
+                        const priorityA = Number(a.priority) || 0;
+                        const priorityB = Number(b.priority) || 0;
+                        return priorityA - priorityB; // Ascending (1→10) for normal
+                    });
+                } else if (priorityOrder === 'asc') {
+                    // Ascending: 1→10 (highest first), outliers at end
+                    sortedData.sort((a, b) => {
+                        // Normal priorities first
+                        if (!a.isOutlier && b.isOutlier) return -1;
+                        if (a.isOutlier && !b.isOutlier) return 1;
+                        
+                        // Both same type
+                        const priorityA = Number(a.priority) || 0;
+                        const priorityB = Number(b.priority) || 0;
+                        return priorityA - priorityB; // Ascending (1→10)
+                    });
+                } else {
+                    // Descending: 10→1 (lowest first), outliers at end
+                    sortedData.sort((a, b) => {
+                        // Normal priorities first
+                        if (!a.isOutlier && b.isOutlier) return -1;
+                        if (a.isOutlier && !b.isOutlier) return 1;
+                        
+                        // Both same type
+                        const priorityA = Number(a.priority) || 0;
+                        const priorityB = Number(b.priority) || 0;
+                        return priorityB - priorityA; // Descending (10→1)
+                    });
+                }
+            } else {
+                // No priority sorting, just keep filtered order
+            }
+            
+            filteredData = sortedData;
+        }
+        
+        function handleSearch() {
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+            
+            searchTimeout = setTimeout(() => {
+                searchTerm = document.getElementById('searchInput').value;
+                applyFilter();
+            }, 1500); // 1.5 second delay
+        }
+        
+        function setStatusFilter(type) {
+            statusFilter = type;
+            document.getElementById('statusFilter').checked = (type === 'active');
+            applyFilter();
+            updateStats();
+            updateStatusButtons();
+            updateFilterMessage();
+        }
+        
+        function toggleStatusFilter() {
+            statusFilter = document.getElementById('statusFilter').checked ? 'active' : 'all';
+            applyFilter();
+            updateStats();
+            updateStatusButtons();
+            updateFilterMessage();
+        }
+        
+        function toggleSort() {
+            sortByPriority = !sortByPriority;
+            applyFilter();
+            updateSortMessage();
+        }
+        
+        function toggleOutliers() {
+            showOutliers = document.getElementById('showOutliers').checked;
+            applyFilter();
+            updateFilterMessage();
+        }
+        
+        function applyPriorityFilter() {
+            priorityFilter = document.getElementById('priorityFilter').value;
+            applyFilter();
+            updateFilterMessage();
+        }
+        
+        // Pagination functions
+        function updatePagination() {
+            pageSize = parseInt(document.getElementById('pageSize').value) || 50;
+            
+            if (pageSize === 0) {
+                totalPages = 1;
+                currentPage = 1;
+            } else {
+                totalPages = Math.ceil(totalFilteredItems / pageSize);
+                if (currentPage > totalPages) {
+                    currentPage = totalPages || 1;
+                }
+            }
+            
+            updatePaginationControls();
+            updatePageInfo();
+        }
+        
+        function changePageSize() {
+            pageSize = parseInt(document.getElementById('pageSize').value) || 50;
+            currentPage = 1; // Reset to first page
+            applyFilter();
+        }
+        
+        function updatePaginationControls() {
+            document.getElementById('currentPage').textContent = currentPage;
+            document.getElementById('totalPages').textContent = totalPages;
+            
+            // Update button states
+            document.getElementById('firstPageBtn').disabled = currentPage === 1;
+            document.getElementById('prevPageBtn').disabled = currentPage === 1;
+            document.getElementById('nextPageBtn').disabled = currentPage === totalPages || totalPages === 0;
+            document.getElementById('lastPageBtn').disabled = currentPage === totalPages || totalPages === 0;
+            
+            // Update page numbers display
+            updatePageNumbers();
+        }
+        
+        function updatePageNumbers() {
+            const pageNumbersDiv = document.getElementById('pageNumbers');
+            let pageNumbersHTML = '';
+            
+            // Show at most 5 page numbers
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            
+            // Adjust start if we're near the end
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                if (i === currentPage) {
+                    pageNumbersHTML += `<button style="background: #f57c00; padding: 5px 10px; border-radius: 4px; color: white; border: none; margin: 0 2px;">${i}</button>`;
+                } else {
+                    pageNumbersHTML += `<button onclick="goToPage(${i})" style="padding: 5px 10px; border-radius: 4px; background: #ff9800; color: white; border: none; margin: 0 2px;">${i}</button>`;
+                }
+            }
+            
+            pageNumbersDiv.innerHTML = pageNumbersHTML;
+        }
+        
+        function goToPage(page) {
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                displayCurrentPage();
+                updatePaginationControls();
+            }
+        }
+        
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                displayCurrentPage();
+                updatePaginationControls();
+            }
+        }
+        
+        function nextPage() {
+            if (currentPage < totalPages) {
+                currentPage++;
+                displayCurrentPage();
+                updatePaginationControls();
+            }
+        }
+        
+        function goToLastPage() {
+            currentPage = totalPages;
+            displayCurrentPage();
+            updatePaginationControls();
+        }
+        
+        function displayCurrentPage() {
+            if (filteredData.length === 0) {
+                document.getElementById('dataContainer').innerHTML = 
+                    '<div style="padding: 40px; text-align: center; color: #666;">No sellers found matching your criteria</div>';
+                return;
+            }
+            
+            let startIndex, endIndex;
+            
+            if (pageSize === 0) {
+                // Show all
+                startIndex = 0;
+                endIndex = filteredData.length;
+                currentData = filteredData;
+            } else {
+                startIndex = (currentPage - 1) * pageSize;
+                endIndex = Math.min(startIndex + pageSize, filteredData.length);
+                currentData = filteredData.slice(startIndex, endIndex);
+            }
+            
+            displayData(currentData);
+            updatePageInfo();
+        }
+        
+        function updatePageInfo() {
+            let showingText;
+            if (pageSize === 0) {
+                showingText = `${totalFilteredItems}`;
+            } else {
+                const startIndex = (currentPage - 1) * pageSize + 1;
+                const endIndex = Math.min(currentPage * pageSize, totalFilteredItems);
+                showingText = `${startIndex}-${endIndex} of ${totalFilteredItems}`;
+            }
+            
+            document.getElementById('showingInfo').textContent = showingText;
+            document.getElementById('showingCount').textContent = totalFilteredItems;
+        }
+        
+        function updateFilterButton() {
+            const button = document.getElementById('toggleStatusFilterBtn');
+            if (statusFilter === 'active') {
+                button.textContent = 'Live Outlets Only';
+                button.className = 'filter-btn';
+            } else {
+                button.textContent = 'Show All Sellers';
+                button.className = 'filter-btn inactive';
+            }
+        }
+        
+        function updateStatusButtons() {
+            const activeBtn = document.querySelector('.status-btn.active');
+            const inactiveBtn = document.querySelector('.status-btn.inactive');
+            const allBtn = document.querySelector('.status-btn.all');
+            
+            if (!activeBtn) return;
+            
+            activeBtn.classList.remove('active');
+            inactiveBtn.classList.remove('active');
+            allBtn.classList.remove('active');
+            
+            if (statusFilter === 'active') {
+                activeBtn.classList.add('active');
+            } else if (statusFilter === 'inactive') {
+                inactiveBtn.classList.add('active');
+            } else {
+                allBtn.classList.add('active');
+            }
+        }
+        
+        function updateSortButton() {
+            const button = document.getElementById('toggleSortBtn');
+            if (sortByPriority) {
+                button.textContent = 'Sorting by Priority';
+                button.className = 'sort-btn active';
+                document.getElementById('priorityOrder').disabled = false;
+            } else {
+                button.textContent = 'Sort by Priority';
+                button.className = 'sort-btn';
+                document.getElementById('priorityOrder').disabled = true;
+            }
+        }
+        
+        function updateStats() {
+            if (!allData || !Array.isArray(allData)) {
+                document.getElementById('activeCount').textContent = '0';
+                document.getElementById('inactiveCount').textContent = '0';
+                document.getElementById('totalCount').textContent = '0';
+                return;
+            }
+            
+            const activeCount = allData.filter(seller => {
+                return Number(seller.status) === 1;
+            }).length;
+            
+            const inactiveCount = allData.filter(seller => {
+                return Number(seller.status) === 0;
+            }).length;
+            
+            document.getElementById('activeCount').textContent = activeCount;
+            document.getElementById('inactiveCount').textContent = inactiveCount;
+            document.getElementById('totalCount').textContent = allData.length;
+        }
+        
+        function updatePriorityStats() {
+            if (!allData || !Array.isArray(allData)) {
+                document.getElementById('priorityHighCount').textContent = '0';
+                document.getElementById('priorityMediumCount').textContent = '0';
+                document.getElementById('priorityLowCount').textContent = '0';
+                document.getElementById('priorityLowestCount').textContent = '0';
+                document.getElementById('outlierCount').textContent = '0';
+                return;
+            }
+            
+            const highCount = allData.filter(seller => {
+                const priority = Number(seller.priority) || 0;
+                return !seller.isOutlier && priority >= 1 && priority <= 3;
+            }).length;
+            
+            const mediumCount = allData.filter(seller => {
+                const priority = Number(seller.priority) || 0;
+                return !seller.isOutlier && priority >= 4 && priority <= 6;
+            }).length;
+            
+            const lowCount = allData.filter(seller => {
+                const priority = Number(seller.priority) || 0;
+                return !seller.isOutlier && priority >= 7 && priority <= 9;
+            }).length;
+            
+            const lowestCount = allData.filter(seller => {
+                const priority = Number(seller.priority) || 0;
+                return !seller.isOutlier && priority === 10;
+            }).length;
+            
+            const outlierCount = allData.filter(seller => seller.isOutlier).length;
+            
+            document.getElementById('priorityHighCount').textContent = highCount;
+            document.getElementById('priorityMediumCount').textContent = mediumCount;
+            document.getElementById('priorityLowCount').textContent = lowCount;
+            document.getElementById('priorityLowestCount').textContent = lowestCount;
+            document.getElementById('outlierCount').textContent = outlierCount;
+        }
+        
+        function updateSearchResults() {
+            if (searchTerm.trim() !== '' && totalFilteredItems > 0) {
+                showMessage(`Found ${totalFilteredItems} sellers matching "${searchTerm}"`, 'info');
+            }
+        }
+        
+        function updateFilterMessage() {
+            let message = `Showing ${totalFilteredItems} sellers`;
+            
+            if (statusFilter === 'active') {
+                message += ` (live only)`;
+            } else if (statusFilter === 'inactive') {
+                message += ` (inactive only)`;
+            }
+            
+            if (!showOutliers) {
+                message += `, outliers hidden`;
+            }
+            
+            if (priorityFilter !== 'all') {
+                message += `, priority ${priorityFilter}`;
+            }
+            
+            showMessage(message, 'info');
+        }
+        
+        function updateSortMessage() {
+            if (sortByPriority) {
+                const order = priorityOrder === 'asc' ? 'highest priority first (1→10)' : 
+                             priorityOrder === 'desc' ? 'lowest priority first (10→1)' : 
+                             'outliers first';
+                showMessage(`Sorting by priority (${order})`, 'info');
+            } else {
+                showMessage(`No priority sorting applied`, 'info');
+            }
+        }
+        
+        function displayData(data) {
+            const container = document.getElementById('dataContainer');
+            
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                container.innerHTML = '<div style="padding: 40px; text-align: center; color: #666;">No sellers found matching your criteria</div>';
+                return;
+            }
+            
+            const firstRow = data[0];
+            if (!firstRow || typeof firstRow !== 'object') {
+                container.innerHTML = '<div style="padding: 40px; text-align: center; color: #666;">Invalid data format</div>';
+                return;
+            }
+            
+            // Get headers, excluding internal fields
+            const headers = Object.keys(firstRow).filter(header => 
+                header !== 'isOutlier' && header !== 'original_priority'
+            );
+            
+            let html = '<table>';
+            
+            // Create header row
+            html += '<tr>';
+            headers.forEach(header => {
+                const displayHeader = header.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                const isSortable = header === 'priority' || header === 'id' || header === 'outlet_live' || 
+                                  header === 'status' || header === 'name' || header === 'title';
+                const sortClass = isSortable ? 'sortable' : '';
+                html += `<th class="${sortClass}" onclick="sortByColumn('${header}')" title="${isSortable ? 'Click to sort' : ''}">${displayHeader}</th>`;
+            });
+            html += '</tr>';
+            
+            // Create data rows
+            data.forEach((row, index) => {
+                const status = row.status;
+                const isActive = Number(status) === 1;
+                const priority = Number(row.priority) || 0;
+                const isOutlier = row.isOutlier;
+                const originalPriority = row.original_priority;
+                
+                // Determine priority class
+                let priorityClass = 'priority-outlier';
+                if (!isOutlier) {
+                    if (priority >= 1 && priority <= 3) {
+                        priorityClass = 'priority-high';
+                    } else if (priority >= 4 && priority <= 6) {
+                        priorityClass = 'priority-medium';
+                    } else if (priority >= 7 && priority <= 9) {
+                        priorityClass = 'priority-low';
+                    } else if (priority === 10) {
+                        priorityClass = 'priority-outlier'; // Lowest priority
+                    }
+                }
+                
+                // Add status class
+                if (isActive) {
+                    priorityClass += ' status-active';
+                } else {
+                    priorityClass += ' status-inactive';
+                }
+                
+                html += `<tr class="${priorityClass}">`;
+                headers.forEach(header => {
+                    let value = row[header];
+                    if (value === null || value === undefined) value = '';
+                    if (typeof value === 'object') {
+                        try {
+                            value = JSON.stringify(value);
+                        } catch (e) {
+                            value = String(value);
+                        }
+                    }
+                    
+                    // Add special styling for specific columns
+                    let cellStyle = '';
+                    let displayValue = String(value);
+                    
+                    if (header === 'outlet_live' || header === 'status') {
+                        if (isActive) {
+                            cellStyle = 'color: #4CAF50; font-weight: bold;';
+                            displayValue = 'Live';
+                        } else {
+                            cellStyle = 'color: #f44336; font-weight: bold;';
+                            displayValue = 'Inactive';
+                        }
+                    } else if (header === 'priority') {
+                        // Show original priority if it's an outlier
+                        if (isOutlier) {
+                            cellStyle = 'color: #9E9E9E; font-weight: bold;';
+                            displayValue = `${originalPriority || value}`;
+                        } else if (priority >= 1 && priority <= 3) {
+                            cellStyle = 'color: #2E7D32; font-weight: bold;';
+                            displayValue = `${value}`;
+                        } else if (priority >= 4 && priority <= 6) {
+                            cellStyle = 'color: #2196F3; font-weight: bold;';
+                        } else if (priority >= 7 && priority <= 9) {
+                            cellStyle = 'color: #FF9800; font-weight: bold;';
+                        } else if (priority === 10) {
+                            cellStyle = 'color: #757575; font-weight: bold;';
+                            displayValue = `${value}`;
+                        }
+                    }
+                    
+                    // Highlight search term in results
+                    if (searchTerm.trim() !== '' && typeof value === 'string') {
+                        const searchLower = searchTerm.toLowerCase();
+                        const valueLower = value.toLowerCase();
+                        if (valueLower.includes(searchLower)) {
+                            const regex = new RegExp(`(${searchTerm})`, 'gi');
+                            displayValue = String(value).replace(regex, '<mark>$1</mark>');
+                            cellStyle += 'background: #fff9c4;';
+                        }
+                    }
+                    
+                    const truncatedValue = displayValue.substring(0, 50);
+                    const isTruncated = displayValue.length > 50;
+                    const titleText = displayValue.length > 50 ? displayValue : '';
+                    
+                    html += `<td title="${titleText}" style="${cellStyle}">${truncatedValue}${isTruncated ? '...' : ''}</td>`;
+                });
+                html += '</tr>';
+            });
+            
+            html += '</table>';
+            
+            // Keep cache info at top
+            const existingCache = container.querySelector('.cache-info');
+            if (existingCache) {
+                container.innerHTML = '';
+                container.appendChild(existingCache);
+                container.insertAdjacentHTML('beforeend', html);
+            } else {
+                container.innerHTML = html;
+            }
+        }
+        
+        function sortByColumn(column) {
+            if (column === 'priority') {
+                // Toggle priority order
+                const orders = ['asc', 'desc', 'outliers'];
+                const currentIndex = orders.indexOf(priorityOrder);
+                priorityOrder = orders[(currentIndex + 1) % orders.length];
+                document.getElementById('priorityOrder').value = priorityOrder;
+                sortByPriority = true;
+                applyFilter();
+            } else if (column === 'id') {
+                // Sort by id
+                const sortedData = [...filteredData].sort((a, b) => (b.id || 0) - (a.id || 0));
+                filteredData = sortedData;
+                displayCurrentPage();
+                showMessage('Sorted by ID (descending)', 'info');
+            } else if (column === 'outlet_live' || column === 'status') {
+                // Sort by status (active first, then inactive)
+                const sortedData = [...filteredData].sort((a, b) => {
+                    const aStatus = Number(a.status) || 0;
+                    const bStatus = Number(b.status) || 0;
+                    return bStatus - aStatus; // active first
+                });
+                filteredData = sortedData;
+                displayCurrentPage();
+                showMessage('Sorted by Status (active first)', 'info');
+            } else {
+                // Sort by other columns alphabetically
+                const sortedData = [...filteredData].sort((a, b) => {
+                    const aVal = String(a[column] || '').toLowerCase();
+                    const bVal = String(b[column] || '').toLowerCase();
+                    return aVal.localeCompare(bVal);
+                });
+                filteredData = sortedData;
+                displayCurrentPage();
+                showMessage(`Sorted by ${column}`, 'info');
+            }
+            
+            updatePaginationControls();
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.style.display = 'block';
+            errorDiv.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; gap: 15px;">
+                    <span style="font-size: 24px;"></span>
+                    <div>${message}</div>
+                </div>
+            `;
+        }
+        
+        function showMessage(text, type = 'success') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            
+            const colors = {
+                success: { bg: '#d4edda', text: '#155724', border: '#c3e6cb' },
+                error: { bg: '#f8d7da', text: '#721c24', border: '#f5c6cb' },
+                info: { bg: '#d1ecf1', text: '#0c5460', border: '#bee5eb' }
+            };
+            
+            const color = colors[type] || colors.success;
+            messageDiv.style.background = color.bg;
+            messageDiv.style.color = color.text;
+            messageDiv.style.border = `1px solid ${color.border}`;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+                messageDiv.textContent = '';
+                messageDiv.style.background = '';
+                messageDiv.style.border = 'none';
+            }, 5000);
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default states
+            document.getElementById('statusFilter').checked = (statusFilter === 'active');
+            document.getElementById('priorityOrder').value = priorityOrder;
+            document.getElementById('showOutliers').checked = showOutliers;
+            document.getElementById('priorityFilter').value = priorityFilter;
+            document.getElementById('pageSize').value = pageSize;
+            
+            updateFilterButton();
+            updateSortButton();
+            updateStatusButtons();
+            loadData();
+        });
+        
+function enableFloatingScrollbar(targetSelector) {
+    const target = document.querySelector(targetSelector);
+    if (!target) return;
+
+    // Avoid duplicate scrollbar
+    if (document.getElementById('__floating_scrollbar__')) return;
+
+    const floating = document.createElement('div');
+    floating.id = '__floating_scrollbar__';
+    floating.style.position = 'fixed';
+    floating.style.bottom = '0';
+    floating.style.left = '0';
+    floating.style.right = '0';
+    floating.style.height = '16px';
+    floating.style.overflowX = 'auto';
+    floating.style.overflowY = 'hidden';
+    floating.style.zIndex = '9999';
+
+    const inner = document.createElement('div');
+    inner.style.height = '1px';
+
+    floating.appendChild(inner);
+    document.body.appendChild(floating);
+
+    function sync() {
+        // Always match real scroll width
+        const width = target.scrollWidth;
+        inner.style.width = width + 'px';
+
+        // Keep scroll positions aligned
+        if (floating.scrollLeft !== target.scrollLeft) {
+            floating.scrollLeft = target.scrollLeft;
+        }
+    }
+
+    // Bidirectional sync
+    floating.addEventListener('scroll', () => {
+        target.scrollLeft = floating.scrollLeft;
+    });
+
+    target.addEventListener('scroll', () => {
+        floating.scrollLeft = target.scrollLeft;
+    });
+
+    // 🔑 AUTO-FIX EVERYTHING
+    new ResizeObserver(sync).observe(target);
+    new MutationObserver(sync).observe(target, {
+        childList: true,
+        subtree: true,
+        attributes: true
+    });
+
+    window.addEventListener('resize', sync);
+
+    // Run continuously until layout stabilizes
+    requestAnimationFrame(function loop() {
+        sync();
+        requestAnimationFrame(loop);
+    });
+}
+enableFloatingScrollbar('#dataContainer');
+    </script>
+</body>
+</html>

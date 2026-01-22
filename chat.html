@@ -1,0 +1,3207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Zulu Club AI Assistant</title>
+    <style>
+        /* Reset & Base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #171f22;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Load Poppins font */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        /* Main Container */
+        .app-container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: linear-gradient(135deg, #171f22 0%, #1c262a 100%);
+        }
+
+        /* Header */
+        .header {
+            background: #1a2733;
+            border-bottom: 1px solid #2d3746;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            height: 70px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-btn {
+            background: transparent;
+            border: none;
+            color: #a0b3c5;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .header-btn.verify {
+            background: #0084ff;
+            color: white;
+        }
+
+        .header-btn.verify:hover {
+            background: #0073e6;
+        }
+
+        .header-btn.logout {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .header-btn.logout:hover {
+            background: #ff5252;
+        }
+
+        .profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 1px solid #2d3746;
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 6px;
+        }
+
+        .profile-name {
+            font-size: 14px;
+            color: #a0b3c5;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Chat Container */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            max-height: calc(100vh - 70px);
+        }
+
+        /* Status Banner */
+        .status-banner {
+            background: #1a2733;
+            padding: 12px 20px;
+            text-align: center;
+            color: #a0b3c5;
+            font-size: 14px;
+            flex-shrink: 0;
+            border-bottom: 1px solid #2d3746;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .status-banner.verified {
+            background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+            color: white;
+        }
+
+        /* Chat Messages */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: rgba(23, 31, 34, 0.95);
+        }
+
+        /* Hide scrollbar but keep functionality */
+        .chat-messages {
+            scrollbar-width: thin;
+            scrollbar-color: #2d3746 transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #2d3746;
+            border-radius: 3px;
+        }
+
+        /* Message Bubbles */
+        .message {
+            display: flex;
+            max-width: 90%;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+            margin-right: auto;
+        }
+
+        .message-content {
+            padding: 14px 18px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.5;
+            position: relative;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .message.user .message-content {
+            background: #0084ff;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant .message-content {
+            background: #1c262a;
+            color: #e0e0e0;
+            border-bottom-left-radius: 4px;
+            border: 1px solid #2d3746;
+        }
+
+        .message-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 4px;
+            display: block;
+            text-align: right;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 14px 18px;
+            background: #1c262a;
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #a0b3c5;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-4px); }
+        }
+
+        /* Welcome Message */
+        .welcome-message {
+            background: #1c262a;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+            border-left: 4px solid #0084ff;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .welcome-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .welcome-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .welcome-text h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .welcome-text p {
+            color: #a0b3c5;
+            font-size: 14px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            font-size: 13px;
+            color: #a0b3c5;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .feature-icon {
+            width: 24px;
+            height: 24px;
+            background: #0084ff;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+        }
+
+        /* Chat Input */
+        .chat-input {
+            padding: 16px 20px;
+            background: #1a2733;
+            border-top: 1px solid #2d3746;
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            flex-shrink: 0;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            display: flex;
+            background: #2d3746;
+            border-radius: 24px;
+            padding: 8px 16px;
+            align-items: center;
+        }
+
+        .message-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 15px;
+            resize: none;
+            max-height: 120px;
+            padding: 8px 0;
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.4;
+        }
+
+        .message-input:focus {
+            outline: none;
+        }
+
+        .message-input::placeholder {
+            color: #a0b3c5;
+        }
+
+        .send-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #0084ff;
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover {
+            background: #0073e6;
+        }
+
+        .send-btn:disabled {
+            background: #2d3746;
+            cursor: not-allowed;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Verification Modal */
+        .verification-modal {
+            background: #1a2733;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 400px;
+            border: 1px solid #2d3746;
+            animation: modalSlideUp 0.3s ease;
+        }
+
+        @keyframes modalSlideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid #2d3746;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: #a0b3c5;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-content {
+            padding: 24px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            color: #a0b3c5;
+            margin-bottom: 8px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .phone-input {
+            width: 100%;
+            padding: 16px;
+            background: #2d3746;
+            border: 2px solid #2d3746;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            transition: border 0.3s;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .phone-input:focus {
+            outline: none;
+            border-color: #0084ff;
+        }
+
+        .phone-input.valid {
+            border-color: #00b894;
+        }
+
+        .phone-input.invalid {
+            border-color: #ff6b6b;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #a0b3c5;
+            margin-top: 6px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* OTP Input */
+        .otp-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 24px 0;
+        }
+
+        .otp-input {
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            font-size: 20px;
+            background: #2d3746;
+            border: 2px solid #2d3746;
+            border-radius: 8px;
+            color: white;
+            transition: border 0.3s;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .otp-input:focus {
+            border-color: #0084ff;
+            outline: none;
+        }
+
+        /* Buttons */
+        .action-btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .action-btn.primary {
+            background: #0084ff;
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            background: #0073e6;
+            transform: translateY(-2px);
+        }
+
+        .action-btn:disabled {
+            background: #2d3746;
+            color: #a0b3c5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .resend-btn {
+            background: transparent;
+            border: 1px solid #0084ff;
+            color: #0084ff;
+            padding: 10px;
+            width: 100%;
+            border-radius: 8px;
+            margin-top: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .resend-btn:hover:not(:disabled) {
+            background: rgba(0, 132, 255, 0.1);
+        }
+
+        .resend-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .timer {
+            text-align: center;
+            color: #a0b3c5;
+            font-size: 13px;
+            margin-top: 12px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Error/Success Messages */
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin: 12px 0;
+            font-size: 14px;
+            text-align: center;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .alert.error {
+            background: rgba(255, 107, 107, 0.1);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 107, 107, 0.2);
+        }
+
+        .alert.success {
+            background: rgba(0, 184, 148, 0.1);
+            color: #00b894;
+            border: 1px solid rgba(0, 184, 148, 0.2);
+        }
+
+        /* Instructions Panel */
+        .instructions-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 450px;
+            height: 100vh;
+            background: #1a2733;
+            border-left: 1px solid #2d3746;
+            transform: translateX(100%);
+            transition: transform 0.5s ease;
+            z-index: 1001;
+            overflow-y: auto;
+        }
+
+        .instructions-panel.active {
+            transform: translateX(0);
+        }
+
+        .panel-header {
+            padding: 20px;
+            border-bottom: 1px solid #2d3746;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .panel-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .panel-content {
+            padding: 20px;
+        }
+
+        .instructions-list {
+            list-style: none;
+        }
+
+        .instructions-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #a0b3c5;
+            font-size: 14px;
+            line-height: 1.5;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .instructions-list li:last-child {
+            border-bottom: none;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Verified Badge */
+        .verified-badge {
+            display: inline-block;
+            background: #00b894;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            margin-left: 6px;
+            vertical-align: middle;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Link Styling */
+        a {
+            color: #0084ff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Enhanced Gallery and Image Styles */
+        .message-content {
+            position: relative;
+        }
+
+        /* Gallery container */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+            margin: 12px 0;
+        }
+
+        /* Gallery item wrapper */
+        .gallery-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #1c262a;
+            transition: all 0.3s ease;
+            border: 1px solid #2d3746;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0, 132, 255, 0.2);
+            border-color: #0084ff;
+        }
+
+        /* Image container with aspect ratio handling */
+        .image-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            background: #171f22;
+            cursor: pointer;
+        }
+
+        /* Default for landscape (16:9) */
+        .image-container.landscape {
+            aspect-ratio: 16/9;
+        }
+
+        /* For portrait (9:16) */
+        .image-container.portrait {
+            aspect-ratio: 9/16;
+        }
+
+        /* Square images */
+        .image-container.square {
+            aspect-ratio: 1/1;
+        }
+
+        /* Loading state */
+        .image-container.loading {
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Gallery image - responsive and properly scaled */
+        .gallery-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.4s ease;
+            background: linear-gradient(135deg, #1a2733 0%, #171f22 100%);
+        }
+
+        .image-container:hover .gallery-image {
+            transform: scale(1.05);
+        }
+
+        /* Image info overlay */
+        .image-info {
+            padding: 12px;
+            background: rgba(28, 38, 42, 0.95);
+            border-top: 1px solid #2d3746;
+        }
+
+        .image-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .image-description {
+            font-size: 11px;
+            color: #a0b3c5;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Loading placeholder for images */
+        .image-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #1a2733 25%, #2d3746 50%, #1a2733 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* For single image display (non-gallery) */
+        .message-content .single-image {
+            max-width: 300px;
+            max-height: 400px;
+            border-radius: 12px;
+            margin: 8px 0;
+            cursor: pointer;
+            border: 2px solid #2d3746;
+            background: #171f22;
+            transition: all 0.3s ease;
+            object-fit: contain;
+        }
+
+        .message-content .single-image:hover {
+            border-color: #0084ff;
+            box-shadow: 0 8px 25px rgba(0, 132, 255, 0.3);
+        }
+
+        /* Image modal enhancements */
+        .image-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .image-modal.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .image-modal img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            object-fit: contain;
+            background: #171f22;
+            animation: scaleIn 0.4s ease;
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* Modal controls */
+        .close-image-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            font-size: 24px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            z-index: 2001;
+            transition: all 0.3s ease;
+        }
+
+        .close-image-modal:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+
+        /* Image navigation in modal */
+        .image-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            font-size: 20px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            z-index: 2001;
+            transition: all 0.3s ease;
+        }
+
+        .image-nav:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .image-nav.prev {
+            left: 20px;
+        }
+
+        .image-nav.next {
+            right: 20px;
+        }
+
+        /* Image info in modal */
+        .modal-image-info {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: white;
+            padding: 15px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            border-radius: 0 0 16px 16px;
+        }
+
+        .modal-image-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .modal-image-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Structured Response Styles */
+        .structured-response {
+            max-width: 95% !important;
+            width: 100%;
+        }
+
+        .structured-text {
+            margin-bottom: 20px;
+            line-height: 1.5;
+            color: #e0e0e0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 20px 0 12px 0;
+            color: #fff;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* UPDATED: Slider Styles - Matching React Component */
+        .products-slider,
+        .galleries-slider {
+            position: relative;
+            width: 100%;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .slider-track {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding: 10px 12px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory;
+        }
+
+        .slider-track::-webkit-scrollbar {
+            display: none;
+        }
+
+        .slider-track.hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .slider-item {
+            flex: 0 0 auto;
+            width: 46%;
+            max-width: 220px;
+            min-width: 160px;
+            background: #1c262a;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #2d3746;
+            transition: all 0.3s ease;
+            position: relative;
+            scroll-snap-align: start;
+        }
+
+        .slider-item:hover {
+            transform: translateY(-4px);
+            border-color: #0084ff;
+            box-shadow: 0 8px 25px rgba(0, 132, 255, 0.2);
+        }
+
+        /* Product Action Buttons */
+        .product-actions {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            z-index: 20;
+            display: flex;
+            gap: 4px;
+        }
+
+        .three-dots-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .three-dots-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .heart-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            cursor: pointer;
+        }
+
+        .heart-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: rgba(239, 68, 68, 0.5);
+            transform: scale(1.1);
+        }
+
+        .heart-btn.active {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        .heart-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: none;
+            stroke: white;
+        }
+
+        .heart-btn.active svg {
+            fill: #f87171;
+            stroke: #f87171;
+        }
+
+        .slider-image-container {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 125%; /* 4/5 aspect ratio */
+            overflow: hidden;
+            background: #171f22;
+        }
+
+        .slider-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .slider-item:hover .slider-image {
+            transform: scale(1.05);
+        }
+
+        .slider-info {
+            padding: 12px;
+            background: rgba(28, 38, 42, 0.95);
+        }
+
+        .slider-title {
+            font-size: 13px;
+            font-weight: 400;
+            color: #e0e0e0;
+            margin-bottom: 8px;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .slider-price {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .current-price {
+            font-size: 14px;
+            font-weight: 500;
+            color: #ffffff;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .original-price {
+            font-size: 12px;
+            color: #a0b3c5;
+            text-decoration: line-through;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Seller List Styles */
+        .sellers-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .seller-item {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid #2d3746;
+            transition: all 0.3s ease;
+        }
+
+        .seller-item:hover {
+            border-color: #0084ff;
+            background: rgba(0, 132, 255, 0.05);
+        }
+
+        .seller-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 6px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Progress Bar for Slider */
+        .slider-progress {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 10px 0 5px 0;
+            opacity: 0.6;
+        }
+
+        .slider-progress-track {
+            position: relative;
+            width: 48px;
+            height: 3px;
+            background: #2d3746;
+            border-radius: 1.5px;
+            overflow: hidden;
+        }
+
+        .slider-progress-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 25%;
+            background: #ffffff;
+            border-radius: 1.5px;
+            transition: left 0.1s ease-out;
+        }
+
+        /* Load More Button */
+        .load-more-container {
+            position: relative;
+            z-index: 100;
+            margin: 10px 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        .load-more-btn {
+            position: relative;
+            z-index: 101;
+            cursor: pointer;
+            pointer-events: auto;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            min-width: 200px;
+            justify-content: center;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .load-more-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .load-more-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Load More Spinner */
+        .load-more-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-2 { margin-top: 16px; }
+        .mb-2 { margin-bottom: 16px; }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px 16px;
+                height: 60px;
+            }
+
+            .header-btn span {
+                display: none;
+            }
+
+            .header-btn {
+                padding: 8px;
+            }
+
+            .profile-name {
+                display: none;
+            }
+
+            .welcome-message {
+                padding: 20px;
+                margin: 0 16px 16px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chat-messages {
+                padding: 16px;
+            }
+
+            .message {
+                max-width: 95%;
+            }
+
+            .instructions-panel {
+                width: 100%;
+            }
+
+            .otp-input {
+                width: 44px;
+                height: 44px;
+                font-size: 18px;
+            }
+
+            /* Responsive slider for mobile */
+            .slider-item {
+                width: 46%;
+                min-width: 140px;
+            }
+
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+                gap: 10px;
+            }
+
+            .slider-title {
+                font-size: 12px;
+            }
+
+            .current-price {
+                font-size: 13px;
+            }
+
+            .original-price {
+                font-size: 11px;
+            }
+        }
+
+        /* For very small screens */
+        @media (max-width: 480px) {
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+                gap: 8px;
+            }
+
+            .slider-item {
+                width: 46%;
+                min-width: 120px;
+            }
+
+            .three-dots-btn,
+            .heart-btn {
+                width: 28px;
+                height: 28px;
+            }
+
+            .three-dots-btn svg,
+            .heart-btn svg {
+                width: 14px;
+                height: 14px;
+            }
+        }
+
+        /* Auto-resize textarea */
+        .message-input {
+            min-height: 24px;
+            max-height: 120px;
+        }
+
+        /* Link styles in slider */
+        .slider-link,
+        .seller-link {
+            display: inline-block;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 12px;
+            margin-top: 6px;
+            padding: 4px 8px;
+            background: rgba(0, 132, 255, 0.1);
+            border-radius: 6px;
+            transition: all 0.3s;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .slider-link:hover,
+        .seller-link:hover {
+            background: rgba(0, 132, 255, 0.2);
+            text-decoration: none;
+        }
+    </style>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Poppins Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <button class="header-btn logout hidden" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </button>
+                <div class="profile" id="profileBtn">
+                    <div class="profile-avatar" id="profileAvatar">
+                        <img src="https://app.zulu.club/neweb/ZULU_WHITE.PNG" alt="Zulu Club Logo">
+                    </div>
+                    <div class="profile-name" id="profileName">Guest User</div>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="header-btn verify" id="verifyBtn">
+                    <i class="fas fa-mobile-alt"></i>
+                    <span>Verify</span>
+                </button>
+                <button class="header-btn" id="infoBtn">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Info</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Image Modal -->
+        <div class="image-modal" id="imageModal">
+            <button class="close-image-modal" id="closeImageModal">
+                <i class="fas fa-times"></i>
+            </button>
+            <img id="modalImage" src="" alt="Gallery Image">
+        </div>
+
+        <!-- Status Banner -->
+        <div class="status-banner" id="statusBanner">
+            <span id="statusMessage"></span>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="chat-container">
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="chatMessages">
+                <!-- Welcome message will be inserted here -->
+            </div>
+
+            <!-- Chat Input -->
+            <div class="chat-input">
+                <div class="input-wrapper">
+                    <textarea class="message-input" id="messageInput" 
+                              placeholder="Type your message..."
+                              rows="1"></textarea>
+                </div>
+                <button class="send-btn" id="sendBtn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Verification Modal -->
+        <div class="modal-overlay" id="verificationModal">
+            <div class="verification-modal">
+                <div class="modal-header">
+                    <h3><i class="fas fa-mobile-alt"></i> Verify Phone</h3>
+                    <button class="close-btn" id="closeVerifyModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-content">
+                    <!-- Phone Input Step -->
+                    <div id="phoneStep">
+                        <div class="form-group">
+                            <label class="form-label">Phone Number (10 digits)</label>
+                            <input type="text" class="phone-input" id="phoneInput" 
+                                   placeholder="" maxlength="11">
+                            <div id="phoneAlert" class="alert hidden"></div>
+                        </div>
+                        <button class="action-btn primary" id="sendOtpBtn">
+                            <i class="fas fa-paper-plane"></i>
+                            Send Verification Code
+                        </button>
+                    </div>
+
+                    <!-- OTP Input Step -->
+                    <div id="otpStep" class="hidden">
+                        <div class="text-center mb-2">
+                            <p>Enter the 4-digit code sent to <strong id="otpPhoneNumber"></strong></p>
+                        </div>
+                        <div class="otp-container">
+                            <input type="text" class="otp-input" id="otp1" maxlength="1" inputmode="numeric">
+                            <input type="text" class="otp-input" id="otp2" maxlength="1" inputmode="numeric">
+                            <input type="text" class="otp-input" id="otp3" maxlength="1" inputmode="numeric">
+                            <input type="text" class="otp-input" id="otp4" maxlength="1" inputmode="numeric">
+                        </div>
+                        <div id="otpAlert" class="alert hidden"></div>
+                        <button class="action-btn primary" id="verifyOtpBtn">
+                            <i class="fas fa-check"></i>
+                            Verify Code
+                        </button>
+                        <div class="timer" id="timer">
+                            Resend code in <span id="countdown">60</span> seconds
+                        </div>
+                        <button class="resend-btn" id="resendOtpBtn" disabled>
+                            Resend Code
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions Panel -->
+        <div class="instructions-panel" id="instructionsPanel">
+            <div class="panel-header">
+                <h3><i class="fas fa-info-circle"></i> How It Works</h3>
+                <button class="close-btn" id="closeInstructionsBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="panel-content">
+                <ul class="instructions-list">
+                    <li><strong>Unlimited Basic Access</strong> - All users can ask about company info and browse products without limits</li>
+                    <li><strong>Free Features</strong> - Company information and product browsing are available to everyone</li>
+                    <li><strong>Premium Features</strong> - Seller inquiries, investor info, agent requests require verification</li>
+                    <li><strong>Phone Verification</strong> - Simple OTP-based verification for full access</li>
+                    <li><strong>Admin/User Support</strong> - Add A/U suffix for different access levels (A=Admin, U=User)</li>
+                    <li><strong>All Messages Saved</strong> - Verified users get conversation history saved</li>
+                    <li><strong>Full Access</strong> - After verification, access all features: seller, investors, agent, voice_ai</li>
+                </ul>
+                <div class="alert success mt-2">
+                    <i class="fas fa-lightbulb"></i>
+                    <strong>Tip:</strong> You can verify anytime to unlock all features
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentSessionId = '';
+        let isAuthenticated = false;
+        let isAdmin = false;
+        let otpTimer = null;
+        let countdown = 60;
+        let welcomeMessageShown = false;
+        let currentGalleryImages = [];
+        let historyLoading = false;
+        let hasMoreHistory = false;
+        let historyPage = 0;
+        const HISTORY_PAGE_SIZE = 10;
+
+        // DOM Elements
+        const statusBanner = document.getElementById('statusBanner');
+        const phoneInput = document.getElementById('phoneInput');
+        const sendOtpBtn = document.getElementById('sendOtpBtn');
+        const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+        const resendOtpBtn = document.getElementById('resendOtpBtn');
+        const otpPhoneNumber = document.getElementById('otpPhoneNumber');
+        const phoneAlert = document.getElementById('phoneAlert');
+        const otpAlert = document.getElementById('otpAlert');
+        const timer = document.getElementById('timer');
+        const countdownSpan = document.getElementById('countdown');
+
+        // Chat elements
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const profileAvatar = document.getElementById('profileAvatar');
+        const profileName = document.getElementById('profileName');
+        const statusMessage = document.getElementById('statusMessage');
+
+        // Header buttons
+        const logoutBtn = document.getElementById('logoutBtn');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const infoBtn = document.getElementById('infoBtn');
+
+        // Modals
+        const verificationModal = document.getElementById('verificationModal');
+        const instructionsPanel = document.getElementById('instructionsPanel');
+
+        // Steps
+        const phoneStep = document.getElementById('phoneStep');
+        const otpStep = document.getElementById('otpStep');
+
+        // Close buttons
+        const closeVerifyModal = document.getElementById('closeVerifyModal');
+        const closeInstructionsBtn = document.getElementById('closeInstructionsBtn');
+
+        // OTP input elements
+        const otp1 = document.getElementById('otp1');
+        const otp2 = document.getElementById('otp2');
+        const otp3 = document.getElementById('otp3');
+        const otp4 = document.getElementById('otp4');
+
+        // Image modal elements
+        const imageModal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        const closeImageModal = document.getElementById('closeImageModal');
+
+        // Format phone number input
+        function formatPhoneInput(value) {
+            // Remove all non-digits and letters A/U
+            let cleaned = value.replace(/[^0-9auAU]/g, '');
+            
+            // Get first 10 digits
+            let digits = cleaned.replace(/[^0-9]/g, '').substring(0, 10);
+            
+            // Get suffix if present (A or U)
+            let suffix = '';
+            if (cleaned.length > 10) {
+                let lastChar = cleaned.charAt(cleaned.length - 1).toUpperCase();
+                if (lastChar === 'A' || lastChar === 'U') {
+                    suffix = lastChar;
+                    digits = digits.substring(0, 10); // Ensure only 10 digits
+                }
+            }
+            
+            return digits + suffix;
+        }
+
+        // Validate phone number
+        function validatePhoneNumber(phone) {
+            // Check if it's exactly 10 digits or 10 digits + A/U
+            const regex = /^[0-9]{10}[AU]?$/i;
+            if (!regex.test(phone)) {
+                return false;
+            }
+            
+            const digits = phone.replace(/[^0-9]/g, '');
+            const suffix = phone.replace(/[^AU]/gi, '').toUpperCase();
+            
+            // If suffix is present, it must be A or U
+            if (suffix && !['A', 'U'].includes(suffix)) {
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Create session
+        async function createSession() {
+            try {
+                console.log('Creating new session...');
+                const response = await fetch('/chat/create-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentSessionId = data.sessionId;
+                    isAuthenticated = false;
+                    
+                    // Store session ID in localStorage
+                    localStorage.setItem('zulu_session_id', currentSessionId);
+                    
+                    console.log('✅ Session created:', currentSessionId);
+                    
+                    // Update UI
+                    updateUI();
+                    messageInput.disabled = false;
+                    messageInput.focus();
+                    
+                    // Load chat history (which will show welcome message if needed)
+                    await loadChatHistory();
+                    return true;
+                } else {
+                    console.error('Failed to create session:', data.error);
+                    alert('Failed to create session. Please try again.');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error creating session:', error);
+                alert('Network error. Please try again.');
+                return false;
+            }
+        }
+
+        // Update UI based on authentication status
+        function updateUI() {
+            if (isAuthenticated) {
+                statusBanner.className = 'status-banner verified';
+                statusMessage.innerHTML = '✅ Verified • Full Access to All Features';
+                profileName.innerHTML = 'Verified User <span class="verified-badge">Verified</span>';
+                verifyBtn.style.display = 'none';
+                logoutBtn.classList.remove('hidden');
+            } else {
+                statusBanner.className = 'status-banner';
+                statusMessage.innerHTML = ''; // Empty string as requested
+                profileName.textContent = 'Guest User';
+                verifyBtn.style.display = 'flex';
+                logoutBtn.classList.add('hidden');
+            }
+            
+            // Always enable chat input (unlimited messages)
+            messageInput.disabled = false;
+            messageInput.placeholder = 'Type your message...';
+            sendBtn.disabled = !messageInput.value.trim();
+        }
+
+        // Show verification modal
+        function showVerificationModal() {
+            verificationModal.classList.add('active');
+            phoneInput.value = '';
+            phoneAlert.classList.add('hidden');
+            phoneStep.classList.remove('hidden');
+            otpStep.classList.add('hidden');
+            
+            // Reset OTP step state
+            clearOtpInputs();
+            otpAlert.classList.add('hidden');
+            
+            // Reset timer and resend button
+            if (otpTimer) {
+                clearInterval(otpTimer);
+            }
+            timer.classList.add('hidden');
+            resendOtpBtn.disabled = false;
+            resendOtpBtn.innerHTML = 'Resend Code';
+            
+            phoneInput.focus();
+        }
+
+        // Send OTP
+        async function sendOtp() {
+            const phone = phoneInput.value.trim();
+            
+            if (!validatePhoneNumber(phone)) {
+                phoneAlert.className = 'alert error';
+                phoneAlert.textContent = 'Please enter a valid phone number (10 digits + optional A/U)';
+                phoneAlert.classList.remove('hidden');
+                return;
+            }
+            
+            sendOtpBtn.innerHTML = '<div class="spinner"></div>';
+            sendOtpBtn.disabled = true;
+            phoneAlert.classList.add('hidden');
+            
+            try {
+                console.log('Sending OTP to:', phone);
+                const response = await fetch('/auth/send-otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        phoneNumber: phone
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Store phone number for OTP verification
+                    otpPhoneNumber.textContent = phone;
+                    
+                    // Show OTP step
+                    phoneStep.classList.add('hidden');
+                    otpStep.classList.remove('hidden');
+                    
+                    // Show debug info if available
+                    if (data.debugOtp) {
+                        phoneAlert.className = 'alert success';
+                        phoneAlert.innerHTML = `<strong>Development Mode:</strong> OTP is: <strong>${data.debugOtp}</strong>`;
+                        phoneAlert.classList.remove('hidden');
+                        console.log(`📱 DEVELOPMENT OTP for ${phone}: ${data.debugOtp}`);
+                    }
+                    
+                    // Start OTP timer
+                    startOtpTimer();
+                    
+                    // Focus first OTP input
+                    otp1.focus();
+                } else {
+                    phoneAlert.className = 'alert error';
+                    phoneAlert.textContent = data.error || 'Failed to send OTP';
+                    phoneAlert.classList.remove('hidden');
+                    sendOtpBtn.disabled = false;
+                    sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Verification Code';
+                }
+            } catch (error) {
+                phoneAlert.className = 'alert error';
+                phoneAlert.textContent = 'Network error. Please try again.';
+                phoneAlert.classList.remove('hidden');
+                sendOtpBtn.disabled = false;
+                sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Verification Code';
+                console.error('Error sending OTP:', error);
+            }
+        }
+
+        // Verify OTP
+        async function verifyOtp() {
+            const otp = otp1.value + otp2.value + otp3.value + otp4.value;
+            const phone = otpPhoneNumber.textContent;
+            
+            if (otp.length !== 4 || !/^\d{4}$/.test(otp)) {
+                otpAlert.className = 'alert error';
+                otpAlert.textContent = 'Please enter a valid 4-digit OTP';
+                otpAlert.classList.remove('hidden');
+                return;
+            }
+            
+            verifyOtpBtn.innerHTML = '<div class="spinner"></div>';
+            verifyOtpBtn.disabled = true;
+            otpAlert.classList.add('hidden');
+            
+            try {
+                console.log('Verifying OTP for:', phone);
+                const response = await fetch('/auth/verify-otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        phoneNumber: phone,
+                        otp: otp
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    otpAlert.className = 'alert success';
+                    otpAlert.textContent = '✓ Phone verified successfully!';
+                    otpAlert.classList.remove('hidden');
+                    
+                    // Update state
+                    isAuthenticated = true;
+                    isAdmin = data.isAdmin || false;
+                    const oldSessionId = currentSessionId;
+                    currentSessionId = phone; // Switch to phone number as session ID
+                    
+                    // Store in localStorage for auto-login
+                    localStorage.setItem('zulu_verified_phone', phone);
+                    localStorage.removeItem('zulu_session_id');
+                    
+                    // Update UI
+                    updateUI();
+                    
+                    // Show success message for 2 seconds then continue chat
+                    setTimeout(async () => {
+                        verificationModal.classList.remove('active');
+                        displayMessage('✅ Your phone has been verified! You now have full access to all features.', 'assistant');
+                        
+                        // Enable chat input
+                        messageInput.disabled = false;
+                        sendBtn.disabled = false;
+                        messageInput.focus();
+                        
+                        // Clear current messages and load full history from Google Sheets
+                        chatMessages.innerHTML = '';
+                        welcomeMessageShown = false;
+                        historyPage = 0;
+                        hasMoreHistory = false;
+                        
+                        // Load Google Sheets history for verified user
+                        await loadSheetsHistory();
+                        
+                        console.log(`✅ User ${phone} verified successfully, full access granted`);
+                    }, 2000);
+                    
+                } else {
+                    otpAlert.className = 'alert error';
+                    otpAlert.textContent = data.error || 'Invalid OTP. Please check and try again.';
+                    otpAlert.classList.remove('hidden');
+                    verifyOtpBtn.disabled = false;
+                    verifyOtpBtn.innerHTML = '<i class="fas fa-check"></i> Verify Code';
+                    
+                    // Clear OTP inputs on error
+                    clearOtpInputs();
+                    otp1.focus();
+                }
+            } catch (error) {
+                otpAlert.className = 'alert error';
+                otpAlert.textContent = 'Network error. Please try again.';
+                otpAlert.classList.remove('hidden');
+                verifyOtpBtn.disabled = false;
+                verifyOtpBtn.innerHTML = '<i class="fas fa-check"></i> Verify Code';
+                console.error('Error verifying OTP:', error);
+            }
+        }
+
+        // Resend OTP
+        async function resendOtp() {
+            resendOtpBtn.innerHTML = '<div class="spinner"></div>';
+            resendOtpBtn.disabled = true;
+            
+            try {
+                const phone = otpPhoneNumber.textContent;
+                const response = await fetch('/auth/send-otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        phoneNumber: phone
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Restart timer
+                    clearInterval(otpTimer);
+                    startOtpTimer();
+                    
+                    // Clear previous OTP inputs
+                    clearOtpInputs();
+                    otp1.focus();
+                    
+                    // Show debug info if available
+                    if (data.debugOtp) {
+                        otpAlert.className = 'alert success';
+                        otpAlert.innerHTML = `<strong>Development Mode:</strong> New OTP is: <strong>${data.debugOtp}</strong>`;
+                        otpAlert.classList.remove('hidden');
+                        console.log(`📱 New OTP for ${phone}: ${data.debugOtp}`);
+                    }
+                    
+                    setTimeout(() => {
+                        otpAlert.classList.add('hidden');
+                    }, 3000);
+                    
+                } else {
+                    // Only enable button on error
+                    resendOtpBtn.disabled = false;
+                    resendOtpBtn.innerHTML = 'Resend Code';
+                    
+                    otpAlert.className = 'alert error';
+                    otpAlert.textContent = data.error || 'Failed to resend OTP';
+                    otpAlert.classList.remove('hidden');
+                }
+            } catch (error) {
+                // Only enable button on error
+                resendOtpBtn.disabled = false;
+                resendOtpBtn.innerHTML = 'Resend Code';
+                
+                otpAlert.className = 'alert error';
+                otpAlert.textContent = 'Network error. Please try again.';
+                otpAlert.classList.remove('hidden');
+                console.error('Error resending OTP:', error);
+            }
+        }
+
+        // Clear OTP inputs
+        function clearOtpInputs() {
+            otp1.value = '';
+            otp2.value = '';
+            otp3.value = '';
+            otp4.value = '';
+        }
+
+        // Handle OTP input navigation
+        function handleOtpInput(e, current, next, prev) {
+            e.preventDefault();
+            
+            if (e.key === 'Backspace' && !current.value && prev) {
+                prev.focus();
+            } else if (e.key === 'Backspace' && current.value) {
+                current.value = '';
+            } else if (e.key.length === 1 && /^\d$/.test(e.key)) {
+                current.value = e.key;
+                if (next) {
+                    setTimeout(() => next.focus(), 10);
+                }
+            } else if (e.key === 'ArrowRight' && next) {
+                next.focus();
+            } else if (e.key === 'ArrowLeft' && prev) {
+                prev.focus();
+            }
+        }
+
+        // Client side fix - cumulative pagination
+        async function loadSheetsHistory() {
+            if (!isAuthenticated || !currentSessionId) {
+                console.log('Not authenticated, skipping history load');
+                return;
+            }
+            
+            if (historyLoading) {
+                console.log('Already loading history, skipping');
+                return;
+            }
+            
+            historyLoading = true;
+            console.log(`Loading history page ${historyPage} for ${currentSessionId}`);
+            
+            try {
+                const response = await fetch('/chat/history-sheets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        phoneNumber: currentSessionId,
+                        page: historyPage,
+                        pageSize: HISTORY_PAGE_SIZE
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    console.error('Failed to load history:', data.error);
+                    hasMoreHistory = false;
+                    updateLoadMoreButton();
+                    return;
+                }
+                
+                console.log(`Got ${data.messages?.length || 0} messages, hasMore: ${data.hasMore}`);
+                
+                // Update state
+                hasMoreHistory = data.hasMore;
+                
+                if (data.messages && data.messages.length > 0) {
+                    // **FIX: Clear messages only on first page**
+                    if (historyPage === 0) {
+                        chatMessages.innerHTML = '';
+                        welcomeMessageShown = false;
+                    } else {
+                        // For subsequent pages, remove existing messages except welcome
+                        // and add all messages (cumulative)
+                        const existingMessages = chatMessages.querySelectorAll('.message:not(.welcome-message)');
+                        existingMessages.forEach(msg => msg.remove());
+                    }
+                    
+                    // Server returns NEWEST messages first (index 0 = newest)
+                    // For chat, we need to REVERSE to show newest at bottom
+                    const messagesToDisplay = data.messages.slice().reverse();
+                    
+                    // Add to chat
+                    messagesToDisplay.forEach(msg => {
+                        if (msg.sender === 'user' || msg.sender === 'bot') {
+                            displayMessage(
+                                msg.text, 
+                                msg.sender === 'user' ? 'user' : 'assistant', 
+                                msg.displayTime || msg.timestamp
+                            );
+                        }
+                    });
+                    
+                    // Scroll to bottom for first page
+                    if (historyPage === 0) {
+                        setTimeout(() => {
+                            chatMessages.scrollTop = chatMessages.scrollHeight;
+                        }, 100);
+                    } else {
+                        // For subsequent pages, scroll to show new older messages
+                        const firstNewMessage = chatMessages.querySelector('.message');
+                        if (firstNewMessage) {
+                            firstNewMessage.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    }
+                    
+                    // Update button
+                    updateLoadMoreButton();
+                    
+                } else {
+                    console.log('No more messages');
+                    if (historyPage === 0 && !welcomeMessageShown) {
+                        loadWelcomeMessage();
+                    }
+                    hasMoreHistory = false;
+                    updateLoadMoreButton();
+                }
+                
+            } catch (error) {
+                console.error('Error loading history:', error);
+                hasMoreHistory = false;
+                updateLoadMoreButton();
+            } finally {
+                historyLoading = false;
+                updateLoadMoreButton();
+            }
+        }
+
+        // Load more history function
+        async function loadMoreHistory() {
+            console.log('Load more clicked - बटन क्लिक हुआ');
+            
+            if (historyLoading) {
+                console.log('Already loading, skipping');
+                return;
+            }
+            
+            // Increment page
+            historyPage++;
+            console.log(`Loading page ${historyPage}`);
+            await loadSheetsHistory();
+        }
+
+        // updateLoadMoreButton फंक्शन को सही करें
+        function updateLoadMoreButton() {
+            console.log('Updating load more button, hasMoreHistory:', hasMoreHistory, 'historyLoading:', historyLoading);
+            
+            // Remove old button
+            const oldBtn = document.getElementById('loadMoreBtn');
+            if (oldBtn) {
+                console.log('Removing old button');
+                oldBtn.remove();
+            }
+            
+            // Add new if needed
+            if (hasMoreHistory) {
+                const btn = document.createElement('button');
+                btn.id = 'loadMoreBtn';
+                btn.className = 'load-more-btn';
+                btn.innerHTML = historyLoading ? 
+                    '<div class="load-more-spinner"></div> Loading...' : 
+                    '<i class="fas fa-history"></i> Load Older Messages';
+                
+                // Button को कभी भी disable न करें, बस loading state दिखाएं
+                btn.disabled = historyLoading;
+                
+                // Event listener को सही तरीके से attach करें
+                btn.addEventListener('click', function(e) {
+                    console.log('Load more button clicked');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    loadMoreHistory();
+                }, true); // Use capture phase
+                
+                // Add to top - chatMessages के पहले child के रूप में
+                if (chatMessages.firstChild) {
+                    chatMessages.insertBefore(btn, chatMessages.firstChild);
+                } else {
+                    chatMessages.appendChild(btn);
+                }
+                
+                console.log('Added load more button');
+            }
+        }
+
+        // Create message element without adding to DOM (for future if needed)
+        function createMessageElement(text, sender, customTime = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            const messageDisplayTime = customTime || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            // Process the text to convert URLs and preserve formatting
+            const formattedText = convertLinksToClickable(text);
+            
+            contentDiv.innerHTML = `
+                ${formattedText}
+                <br>
+                <span class="message-time">${messageDisplayTime}</span>
+            `;
+            
+            messageDiv.appendChild(contentDiv);
+            
+            // Add event listeners for images
+            setTimeout(() => {
+                const images = contentDiv.querySelectorAll('.gallery-image, .single-image');
+                images.forEach(img => {
+                    img.addEventListener('click', (e) => {
+                        const imageId = parseInt(e.target.getAttribute('data-image-id'));
+                        if (!isNaN(imageId) && currentGalleryImages[imageId]) {
+                            showImageInModal(imageId);
+                        }
+                    });
+                });
+            }, 100);
+            
+            return messageDiv;
+        }
+
+        // Load in-memory session history for unauthenticated users
+        async function loadSessionHistory() {
+            try {
+                console.log('📜 Loading in-memory history for session:', currentSessionId);
+                const response = await fetch(`/chat/history/${currentSessionId}`);
+                const data = await response.json();
+                
+                console.log('In-memory history response:', data);
+                
+                if (data.success) {
+                    // Clear current messages
+                    chatMessages.innerHTML = '';
+                    
+                    // Display all messages from history
+                    if (data.history && data.history.length > 0) {
+                        data.history.forEach(msg => {
+                            if (msg.role === 'user' || msg.role === 'assistant') {
+                                // Check if the content is structured JSON or plain text
+                                try {
+                                    const parsed = JSON.parse(msg.content);
+                                    if (parsed.type === 'structured') {
+                                        displayStructuredMessage(parsed, msg.role === 'user' ? 'user' : 'assistant');
+                                    } else {
+                                        displayMessage(parsed.text || msg.content, msg.role === 'user' ? 'user' : 'assistant');
+                                    }
+                                } catch (e) {
+                                    // If it's not JSON, treat it as plain text
+                                    displayMessage(msg.content, msg.role === 'user' ? 'user' : 'assistant');
+                                }
+                            }
+                        });
+                    } else {
+                        // If no history and welcome message hasn't been shown, show it
+                        if (!welcomeMessageShown) {
+                            loadWelcomeMessage();
+                        }
+                    }
+                } else {
+                    console.error('Failed to load chat history:', data.error);
+                    
+                    // If session is invalid, clear localStorage and create a new session
+                    if (data.error === 'Invalid session') {
+                        console.log('Session invalid, clearing localStorage and creating new session...');
+                        localStorage.removeItem('zulu_session_id');
+                        localStorage.removeItem('zulu_verified_phone');
+                        
+                        // Create new session
+                        await createSession();
+                    } else if (!welcomeMessageShown) {
+                        // If no history and welcome message hasn't been shown, show it
+                        loadWelcomeMessage();
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+                // If error and welcome message hasn't been shown, show it
+                if (!welcomeMessageShown) {
+                    loadWelcomeMessage();
+                }
+            }
+        }
+
+        // Main function to load appropriate history based on authentication
+        async function loadChatHistory() {
+            if (isAuthenticated) {
+                // Load from Google Sheets for verified users
+                await loadSheetsHistory();
+            } else {
+                // Load from in-memory for unauthenticated users
+                await loadSessionHistory();
+            }
+        }
+
+        // Load welcome message
+        function loadWelcomeMessage() {
+            // Check if welcome message has already been shown
+            if (welcomeMessageShown) return;
+            
+            const welcomeText = `Welcome to Zulu Club${isAuthenticated ? ' (Verified)' : ''}!
+
+${isAuthenticated ? '✅ You have full access to all features!' : '🎉 You have unlimited access to company info and product browsing!'}
+
+I can help you with:
+• Company details and information
+• Product browsing and shopping recommendations
+${isAuthenticated ? '• Seller information and partnerships\n• Investor queries\n• Connecting with human agents\n• Voice AI features' : '• (Verify to unlock: seller info, investor queries, agent support)'}
+
+${isAuthenticated ? '' : 'Verify your phone to unlock all features including seller, investors, and agent support.'}
+
+Try asking: "Tell me about Zulu Club" or "Show me home decor items"`;
+
+            displayMessage(welcomeText, 'assistant');
+            welcomeMessageShown = true;
+        }
+
+        // Send message function
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            // Display user message
+            displayMessage(message, 'user');
+            
+            // Clear input
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            sendBtn.disabled = true;
+            
+            // Show typing indicator
+            showTyping();
+            
+            try {
+                console.log('Sending message:', message, 'Session ID:', currentSessionId, 'Authenticated:', isAuthenticated);
+                const response = await fetch('/chat/message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sessionId: currentSessionId,
+                        message: message,
+                        phoneNumber: isAuthenticated ? currentSessionId : null
+                    })
+                });
+                    
+                const data = await response.json();
+                console.log('Response from server:', data);
+                
+                // Hide typing indicator
+                hideTyping();
+                
+                if (data.success) {
+                    // Check response type
+                    if (data.responseType === 'structured') {
+                        // Handle structured response (products search)
+                        displayStructuredMessage(data.response, 'assistant');
+                    } else {
+                        // Handle text response
+                        displayMessage(data.response.text, 'assistant');
+                    }
+                } else {
+                    if (data.error === 'Invalid session') {
+                        console.log('Session invalid during message send, creating new session...');
+                        await createSession();
+                        sendMessageWithRetry(message);
+                    } else {
+                        displayMessage('Error: ' + (data.error || 'Unknown error'), 'assistant');
+                    }
+                }
+            } catch (error) {
+                hideTyping();
+                console.error('Error sending message:', error);
+                displayMessage('Network error. Please check your connection.', 'assistant');
+            }
+            
+            sendBtn.disabled = !messageInput.value.trim();
+            messageInput.focus();
+        }
+
+        // Send message with retry
+        async function sendMessageWithRetry(message) {
+            showTyping();
+            
+            try {
+                console.log('Retrying message:', message, 'Session ID:', currentSessionId);
+                const response = await fetch('/chat/message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sessionId: currentSessionId,
+                        message: message
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Retry response from server:', data);
+                
+                hideTyping();
+                
+                if (data.success) {
+                    if (data.responseType === 'structured') {
+                        displayStructuredMessage(data.response, 'assistant');
+                    } else {
+                        displayMessage(data.response.text, 'assistant');
+                    }
+                } else {
+                    displayMessage('Error: ' + (data.error || 'Unknown error'), 'assistant');
+                }
+            } catch (error) {
+                hideTyping();
+                console.error('Error retrying message:', error);
+                displayMessage('Network error. Please check your connection.', 'assistant');
+            }
+        }
+
+        // Convert links and images to clickable elements
+        function convertLinksToClickable(text) {
+            const lines = text.split('\n');
+            let processedLines = [];
+            let i = 0;
+            let inGallery = false;
+            currentGalleryImages = []; // Reset gallery images
+            
+            while (i < lines.length) {
+                const line = lines[i];
+                
+                // Check if this line looks like a gallery item (starts with number and dot followed by title)
+                const galleryMatch = line.match(/^(\d+)\.\s+\*\*(.+?)\*\*/);
+                if (galleryMatch) {
+                    if (!inGallery) {
+                        processedLines.push('<div class="gallery-grid">');
+                        inGallery = true;
+                    }
+                    
+                    const itemNumber = galleryMatch[1];
+                    const title = galleryMatch[2];
+                    let description = '';
+                    let imageUrl = '';
+                    let linkUrl = '';
+                    
+                    // Look for image URL in next lines
+                    for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
+                        if (lines[j].includes('📷') && lines[j].includes('http')) {
+                            imageUrl = lines[j].replace('📷', '').trim();
+                            i = j; // Skip this line
+                            break;
+                        } else if (lines[j].includes('🔗') && lines[j].includes('http')) {
+                            linkUrl = lines[j].replace('🔗', '').trim();
+                        } else if (lines[j].trim() && !lines[j].includes('📷') && !lines[j].includes('🔗')) {
+                            description = lines[j].trim();
+                        }
+                    }
+                    
+                    if (imageUrl) {
+                        // Store image for modal navigation
+                        currentGalleryImages.push({
+                            src: imageUrl,
+                            title: title,
+                            description: description,
+                            link: linkUrl
+                        });
+                        
+                        const imageId = currentGalleryImages.length - 1;
+                        const galleryHtml = `
+                            <div class="gallery-item">
+                                <div class="image-container loading" data-image-id="${imageId}">
+                                    <div class="image-loading"></div>
+                                    <img src="${imageUrl}" 
+                                         alt="${title}" 
+                                         class="gallery-image" 
+                                         data-image-id="${imageId}"
+                                         loading="lazy"
+                                         onload="this.parentElement.classList.remove('loading'); 
+                                                 detectImageOrientation(this)">
+                                </div>
+                                <div class="image-info">
+                                    <div class="image-title">${title}</div>
+                                    ${description ? `<div class="image-description">${description}</div>` : ''}
+                                    ${linkUrl ? `<a href="${linkUrl}" target="_blank" style="color: #0084ff; font-size: 11px; margin-top: 4px; display: block;">View Product</a>` : ''}
+                                </div>
+                            </div>
+                        `;
+                        
+                        processedLines.push(galleryHtml);
+                    }
+                } 
+                // Check for single image in message
+                else if (line.includes('📷') && line.includes('http')) {
+                    const imageUrl = line.replace('📷', '').trim();
+                    currentGalleryImages.push({
+                        src: imageUrl,
+                        title: '',
+                        description: '',
+                        link: ''
+                    });
+                    
+                    const imageId = currentGalleryImages.length - 1;
+                    const singleImageHtml = `
+                        <img src="${imageUrl}" 
+                             class="single-image" 
+                             data-image-id="${imageId}"
+                             alt="Image"
+                             loading="lazy"
+                             onload="detectImageOrientation(this)">
+                    `;
+                    processedLines.push(singleImageHtml);
+                } 
+                // Regular text line
+                else {
+                    if (inGallery) {
+                        processedLines.push('</div>');
+                        inGallery = false;
+                    }
+                    
+                    let processedLine = line;
+                    const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|\b(app\.zulu\.club\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]|[A-Za-z0-9.-]+\.[A-Za-z]{2,}\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]))/ig;
+                    
+                    processedLine = processedLine.replace(urlRegex, function(url) {
+                        let finalUrl = url;
+                        if (!url.match(/^(https?|ftp|file):\/\//i)) {
+                            if (url.startsWith('www.') || url.includes('app.zulu.club') || url.includes('.club/')) {
+                                finalUrl = 'https://' + url;
+                            }
+                        }
+                        return `<a href="${finalUrl}" target="_blank" rel="noopener noreferrer" style="color: #0084ff; text-decoration: underline;">${url}</a>`;
+                    });
+                    
+                    processedLines.push(processedLine);
+                }
+                
+                i++;
+            }
+            
+            // Close gallery if still open
+            if (inGallery) {
+                processedLines.push('</div>');
+            }
+            
+            return processedLines.join('<br>');
+        }
+
+        // Detect image orientation and apply appropriate class
+        function detectImageOrientation(img) {
+            const aspectRatio = img.naturalWidth / img.naturalHeight;
+            let orientationClass = 'square';
+            
+            if (aspectRatio < 0.8) {
+                orientationClass = 'portrait'; // Tall image (9:16)
+            } else if (aspectRatio > 1.2) {
+                orientationClass = 'landscape'; // Wide image (16:9)
+            }
+            
+            // Apply class to container if it exists
+            const container = img.parentElement;
+            if (container && container.classList.contains('image-container')) {
+                container.classList.remove('loading');
+                container.classList.add(orientationClass);
+            }
+            
+            // For single images, we can adjust max dimensions based on orientation
+            if (img.classList.contains('single-image')) {
+                if (orientationClass === 'portrait') {
+                    img.style.maxHeight = '400px';
+                    img.style.maxWidth = '225px'; // 9:16 ratio
+                } else if (orientationClass === 'landscape') {
+                    img.style.maxHeight = '225px';
+                    img.style.maxWidth = '400px'; // 16:9 ratio
+                } else {
+                    img.style.maxHeight = '300px';
+                    img.style.maxWidth = '300px'; // Square
+                }
+            }
+            
+            // Also handle slider images
+            if (img.classList.contains('slider-image')) {
+                const sliderContainer = img.parentElement;
+                if (sliderContainer && sliderContainer.classList.contains('slider-image-container')) {
+                    if (orientationClass === 'portrait') {
+                        sliderContainer.style.height = '200px';
+                    } else if (orientationClass === 'landscape') {
+                        sliderContainer.style.height = '120px';
+                    } else {
+                        sliderContainer.style.height = '150px';
+                    }
+                }
+            }
+        }
+
+        // Display message in chat
+        function displayMessage(text, sender, customTime = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            const now = new Date();
+            const messageDisplayTime = customTime || now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            // Process the text to convert URLs and preserve formatting
+            const formattedText = convertLinksToClickable(text);
+            
+            contentDiv.innerHTML = `
+                ${formattedText}
+                <br>
+                <span class="message-time">${messageDisplayTime}</span>
+            `;
+            
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Add event listeners for images after they're added to DOM
+            setTimeout(() => {
+                const images = contentDiv.querySelectorAll('.gallery-image, .single-image');
+                images.forEach(img => {
+                    img.addEventListener('click', (e) => {
+                        const imageId = parseInt(e.target.getAttribute('data-image-id'));
+                        if (!isNaN(imageId) && currentGalleryImages[imageId]) {
+                            showImageInModal(imageId);
+                        }
+                    });
+                });
+            }, 100);
+            
+            return messageDiv;
+        }
+
+        // Display structured message with sliders - UPDATED TO MATCH REACT COMPONENT
+        function displayStructuredMessage(structuredData, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content structured-response';
+            
+            const now = new Date();
+            const messageDisplayTime = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            // Start building the HTML content
+            let htmlContent = '';
+            
+            // Add the text message
+            if (structuredData.text) {
+                htmlContent += `<div class="structured-text">${structuredData.text.replace(/\n/g, '<br>')}</div>`;
+            }
+            
+            // Add Products section if available
+            if (structuredData.products && structuredData.products.length > 0) {
+                htmlContent += `<div class="section-title">🛍️ Products (${structuredData.products.length})</div>`;
+                htmlContent += `<div class="products-slider">`;
+                htmlContent += `<div class="slider-track hide-scrollbar" id="productsSliderTrack">`;
+                
+                structuredData.products.forEach((product, index) => {
+                    const productImage = product.image || '';
+                    const productLink = product.link || '#';
+                    const productName = product.name || 'Product';
+                    const productPrice = product.price || 0;
+                    const productSpecialPrice = product.specialPrice || productPrice;
+                    const hasDiscount = productSpecialPrice < productPrice;
+                    
+                    htmlContent += `
+                        <div class="slider-item product-item">
+                            <a href="${productLink}" target="_blank" style="text-decoration: none; color: inherit;">
+                                <div class="product-actions">
+                                </div>
+                                <div class="slider-image-container">
+                                    <img src="${productImage}" 
+                                         alt="${productName}" 
+                                         class="slider-image"
+                                         loading="lazy">
+                                </div>
+                                <div class="slider-info">
+                                    <div class="slider-title">${productName}</div>
+                                    <div class="slider-price">
+                                        ${hasDiscount ? 
+                                            `<span class="current-price">₹${productSpecialPrice}</span>
+                                             <span class="original-price">₹${productPrice}</span>` :
+                                            `<span class="current-price">₹${productPrice}</span>`
+                                        }
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    `;
+                });
+                
+                htmlContent += `</div>`;
+                
+                // Add progress bar
+                htmlContent += `
+                    <div class="slider-progress">
+                        <div class="slider-progress-track">
+                            <div class="slider-progress-bar" id="productsProgressBar"></div>
+                        </div>
+                    </div>
+                `;
+                
+                htmlContent += `</div>`;
+            }
+            
+            // Add Galleries section if available
+            if (structuredData.galleries && structuredData.galleries.length > 0) {
+                htmlContent += `<div class="section-title">🎨 Galleries</div>`;
+                htmlContent += `<div class="galleries-slider">`;
+                htmlContent += `<div class="slider-track hide-scrollbar" id="galleriesSliderTrack">`;
+                
+                structuredData.galleries.forEach((gallery, index) => {
+                    const galleryImage = gallery.image || '';
+                    htmlContent += `
+                        <div class="slider-item gallery-item">
+                            <div class="slider-image-container">
+                                <img src="${galleryImage}" 
+                                     alt="${gallery.name}" 
+                                     class="slider-image"
+                                     loading="lazy">
+                            </div>
+                            <div class="slider-info">
+                                <div class="slider-title">${gallery.name}</div>
+                                ${gallery.link ? `<a href="${gallery.link}" target="_blank" class="slider-link">View Gallery</a>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                htmlContent += `</div>`;
+                
+                // Add progress bar
+                htmlContent += `
+                    <div class="slider-progress">
+                        <div class="slider-progress-track">
+                            <div class="slider-progress-bar" id="galleriesProgressBar"></div>
+                        </div>
+                    </div>
+                `;
+                
+                htmlContent += `</div>`;
+            }
+            
+            // Add Sellers section if available
+            if (structuredData.sellers && structuredData.sellers.length > 0) {
+                htmlContent += `<div class="section-title">👥 Sellers</div>`;
+                htmlContent += `<div class="sellers-list">`;
+                
+                structuredData.sellers.forEach((seller, index) => {
+                    htmlContent += `
+                        <div class="seller-item">
+                            <div class="seller-name">${seller.name}</div>
+                            ${seller.link ? `<a href="${seller.link}" target="_blank" class="seller-link">View Seller Profile</a>` : ''}
+                        </div>
+                    `;
+                });
+                
+                htmlContent += `</div>`;
+            }
+            
+            // Add timestamp
+            htmlContent += `<br><span class="message-time">${messageDisplayTime}</span>`;
+            
+            contentDiv.innerHTML = htmlContent;
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Initialize slider progress functionality
+            setTimeout(() => {
+                if (structuredData.products && structuredData.products.length > 0) {
+                    initSliderProgress('productsSliderTrack', 'productsProgressBar');
+                }
+                if (structuredData.galleries && structuredData.galleries.length > 0) {
+                    initSliderProgress('galleriesSliderTrack', 'galleriesProgressBar');
+                }
+            }, 100);
+            
+            return messageDiv;
+        }
+
+        // Initialize slider progress functionality
+        function initSliderProgress(trackId, barId) {
+            const sliderTrack = document.getElementById(trackId);
+            const progressBar = document.getElementById(barId);
+            
+            if (!sliderTrack || !progressBar) return;
+            
+            const handleScroll = () => {
+                const { scrollLeft, scrollWidth, clientWidth } = sliderTrack;
+                const maxScroll = scrollWidth - clientWidth;
+                const progress = maxScroll > 0 ? (scrollLeft / maxScroll) * 100 : 0;
+                const barWidthPercent = 25;
+                const maxTranslate = 100 - barWidthPercent;
+                progressBar.style.left = `${(progress / 100) * maxTranslate}%`;
+            };
+            
+            sliderTrack.addEventListener('scroll', handleScroll);
+            handleScroll(); // Initial call
+        }
+
+        // Toggle wishlist function
+        function toggleWishlist(productId) {
+            // This would typically make an API call to add/remove from wishlist
+            const heartBtn = event.target.closest('.heart-btn');
+            if (heartBtn) {
+                heartBtn.classList.toggle('active');
+                
+                // Show toast notification
+                const isAdded = heartBtn.classList.contains('active');
+                showToast(isAdded ? 'Added to wishlist' : 'Removed from wishlist');
+            }
+        }
+
+        // Show toast notification
+        function showToast(message) {
+            // Simple toast implementation
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                z-index: 10000;
+                font-family: 'Poppins', sans-serif;
+                font-size: 14px;
+                animation: fadeInOut 3s ease;
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Show image in modal
+        function showImageInModal(imageId) {
+            if (!currentGalleryImages[imageId]) return;
+            
+            const image = currentGalleryImages[imageId];
+            modalImage.src = image.src;
+            
+            // Update modal info
+            const existingInfo = document.querySelector('.modal-image-info');
+            if (existingInfo) existingInfo.remove();
+
+            if (image.title || image.description) {
+                const modalInfo = document.createElement('div');
+                modalInfo.className = 'modal-image-info';
+                modalInfo.innerHTML = `
+                    ${image.title ? `<div class="modal-image-title">${image.title}</div>` : ''}
+                    ${image.description ? `<div class="modal-image-desc">${image.description}</div>` : ''}
+                    ${image.link ? `<a href="${image.link}" target="_blank" style="color: #0084ff; margin-top: 8px; display: inline-block;">View Product</a>` : ''}
+                `;
+                imageModal.appendChild(modalInfo);
+            }
+            
+            imageModal.classList.add('active');
+        }
+
+        // Show typing indicator
+        function showTyping() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message assistant';
+            typingDiv.id = 'typingIndicator';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content typing-indicator';
+            contentDiv.innerHTML = `
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            `;
+            
+            typingDiv.appendChild(contentDiv);
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Hide typing indicator
+        function hideTyping() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+
+        // Auto-resize textarea
+        function autoResizeTextarea(textarea) {
+            textarea.style.height = 'auto';
+            const newHeight = Math.min(textarea.scrollHeight, 100);
+            textarea.style.height = newHeight + 'px';
+        }
+
+        // Start OTP timer
+        function startOtpTimer() {
+            countdown = 60;
+            countdownSpan.textContent = countdown;
+            timer.classList.remove('hidden');
+            
+            // Ensure button is disabled when timer starts
+            resendOtpBtn.disabled = true;
+            resendOtpBtn.innerHTML = 'Resend Code'; // Reset text from spinner
+            
+            if (otpTimer) {
+                clearInterval(otpTimer);
+            }
+            
+            otpTimer = setInterval(() => {
+                countdown--;
+                countdownSpan.textContent = countdown;
+                
+                if (countdown <= 0) {
+                    clearInterval(otpTimer);
+                    timer.classList.add('hidden');
+                    resendOtpBtn.disabled = false;
+                }
+            }, 1000);
+        }
+
+        // Check authentication
+        async function checkAuthentication() {
+            console.log('Checking authentication...');
+            
+            // Check if there's a stored phone number in localStorage
+            const storedPhone = localStorage.getItem('zulu_verified_phone');
+            if (storedPhone) {
+                try {
+                    const response = await fetch('/auth/check-status', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            phoneNumber: storedPhone
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.verified) {
+                        // Auto-login verified user
+                        currentSessionId = storedPhone;
+                        isAuthenticated = true;
+                        isAdmin = data.isAdmin || false;
+                        
+                        console.log('✅ Auto-login as verified user:', storedPhone);
+                        
+                        // Update UI
+                        updateUI();
+                        messageInput.disabled = false;
+                        messageInput.focus();
+                        
+                        // Load chat history from Google Sheets
+                        await loadChatHistory();
+                        return;
+                    } else {
+                        console.log('User not verified, removing from localStorage');
+                        localStorage.removeItem('zulu_verified_phone');
+                    }
+                } catch (error) {
+                    console.error('Error checking verification:', error);
+                }
+            }
+            
+            // Check if there's a session in localStorage
+            const sessionId = localStorage.getItem('zulu_session_id');
+            
+            if (sessionId) {
+                try {
+                    const response = await fetch(`/chat/history/${sessionId}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        currentSessionId = sessionId;
+                        isAuthenticated = data.isAuthenticated || false;
+                        
+                        console.log('✅ Reusing existing session:', sessionId);
+                        
+                        // Update UI
+                        updateUI();
+                        messageInput.disabled = false;
+                        messageInput.focus();
+                        
+                        // Load existing chat history
+                        await loadChatHistory();
+                        return;
+                    } else {
+                        console.log('Session invalid, removing from localStorage and creating new one:', data.error);
+                        localStorage.removeItem('zulu_session_id');
+                    }
+                } catch (error) {
+                    console.error('Error checking session:', error);
+                    localStorage.removeItem('zulu_session_id');
+                }
+            }
+            
+            // If no existing session, create a new one
+            console.log('No existing session found, creating new session');
+            await createSession();
+        }
+
+        // Logout function
+        async function logout() {
+            try {
+                if (isAuthenticated) {
+                    await fetch('/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            phoneNumber: currentSessionId
+                        })
+                    });
+                }
+                
+                // Clear localStorage
+                localStorage.removeItem('zulu_session_id');
+                localStorage.removeItem('zulu_verified_phone');
+                
+                // Reset state
+                currentSessionId = '';
+                isAuthenticated = false;
+                isAdmin = false;
+                welcomeMessageShown = false;
+                currentGalleryImages = [];
+                historyPage = 0;
+                hasMoreHistory = false;
+                
+                // Clear chat messages
+                chatMessages.innerHTML = '';
+                
+                // Hide modals
+                verificationModal.classList.remove('active');
+                instructionsPanel.classList.remove('active');
+                
+                // Reset verification modal
+                phoneStep.classList.remove('hidden');
+                otpStep.classList.add('hidden');
+                phoneInput.value = '';
+                clearOtpInputs();
+                phoneAlert.classList.add('hidden');
+                otpAlert.classList.add('hidden');
+                
+                if (otpTimer) {
+                    clearInterval(otpTimer);
+                    timer.classList.add('hidden');
+                }
+                
+                // Create new session
+                await checkAuthentication();
+                
+            } catch (error) {
+                console.error('Error logging out:', error);
+            }
+        }
+
+        // Event Listeners
+        phoneInput.addEventListener('input', function(e) {
+            let formatted = formatPhoneInput(this.value);
+            this.value = formatted;
+            
+            if (validatePhoneNumber(formatted)) {
+                this.classList.remove('invalid');
+                this.classList.add('valid');
+                phoneAlert.classList.add('hidden');
+                sendOtpBtn.disabled = false;
+            } else {
+                this.classList.remove('valid');
+                this.classList.add('invalid');
+                phoneAlert.classList.remove('hidden');
+                
+                if (formatted.length === 11) {
+                    const suffix = formatted.slice(-1).toUpperCase();
+                    if (!['A', 'U'].includes(suffix)) {
+                        phoneAlert.textContent = 'Invalid suffix. Only A (Admin) or U (User) allowed.';
+                    } else if (formatted.slice(0, 10).length !== 10 || !/^\d{10}$/.test(formatted.slice(0, 10))) {
+                        phoneAlert.textContent = 'First 10 characters must be digits.';
+                    }
+                } else if (formatted.length > 0 && formatted.length < 10) {
+                    phoneAlert.textContent = 'Phone number must be 10 digits.';
+                } else if (formatted.length > 11) {
+                    phoneAlert.textContent = 'Maximum 11 characters (10 digits + A/U).';
+                } else {
+                    phoneAlert.textContent = 'Please enter a valid 10-digit number with optional A/U suffix';
+                }
+                
+                sendOtpBtn.disabled = true;
+            }
+        });
+
+        sendOtpBtn.addEventListener('click', sendOtp);
+        verifyOtpBtn.addEventListener('click', verifyOtp);
+        resendOtpBtn.addEventListener('click', resendOtp);
+        sendBtn.addEventListener('click', sendMessage);
+
+        // OTP input navigation
+        otp1.addEventListener('keydown', (e) => handleOtpInput(e, otp1, otp2, null));
+        otp2.addEventListener('keydown', (e) => handleOtpInput(e, otp2, otp3, otp1));
+        otp3.addEventListener('keydown', (e) => handleOtpInput(e, otp3, otp4, otp2));
+        otp4.addEventListener('keydown', (e) => handleOtpInput(e, otp4, null, otp3));
+
+        // Enter key in OTP inputs
+        [otp1, otp2, otp3, otp4].forEach(input => {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    verifyOtp();
+                }
+            });
+        });
+
+        // Enter key in phone input
+        phoneInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                sendOtp();
+            }
+        });
+
+        // Enter key in message input (with shift for new line)
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Auto-resize message input
+        messageInput.addEventListener('input', function() {
+            autoResizeTextarea(this);
+            sendBtn.disabled = !this.value.trim();
+        });
+
+        // Info button
+        infoBtn.addEventListener('click', () => {
+            instructionsPanel.classList.add('active');
+        });
+
+        // Close buttons
+        closeVerifyModal.addEventListener('click', () => {
+            verificationModal.classList.remove('active');
+            phoneStep.classList.remove('hidden');
+            otpStep.classList.add('hidden');
+            phoneInput.value = '';
+            clearOtpInputs();
+            phoneAlert.classList.add('hidden');
+            otpAlert.classList.add('hidden');
+            
+            if (otpTimer) {
+                clearInterval(otpTimer);
+                timer.classList.add('hidden');
+            }
+        });
+
+        closeInstructionsBtn.addEventListener('click', () => {
+            instructionsPanel.classList.remove('active');
+        });
+
+        // Verify button
+        verifyBtn.addEventListener('click', () => {
+            showVerificationModal();
+        });
+
+        // Logout button
+        logoutBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to logout?')) {
+                logout();
+            }
+        });
+
+        // Image modal events
+        closeImageModal.addEventListener('click', function() {
+            imageModal.classList.remove('active');
+        });
+
+        // Close image modal on outside click
+        imageModal.addEventListener('click', function(e) {
+            if (e.target === imageModal) {
+                imageModal.classList.remove('active');
+            }
+        });
+
+        // Close modals on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                verificationModal.classList.remove('active');
+                instructionsPanel.classList.remove('active');
+                imageModal.classList.remove('active');
+            }
+        });
+
+        // Initialize
+        window.addEventListener('load', () => {
+            console.log('Page loaded, initializing...');
+            checkAuthentication();
+        });
+    </script>
+</body>
+</html>

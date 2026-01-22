@@ -1,0 +1,414 @@
+id,type1,type2,name,cat_id,catname,seller_id,cat1,cat1name,image1
+10,Kit,Women After Hours Glam,Try at Home,1870,Women,[],"[1945,1957,1996,2039]","Dresses, Handbags, Jewellery & Accessories, Sandals",/uploads/media/2025/1758358510264-0yntwt.png
+11,Kit,Women Campus Chic,Try at Home,1870,Women,[],"[1945,1957,1958,1959,1962,1996,2039]","Dresses, Handbags, Jewellery & Accessories, Sandals, Shorts & Skirts, T Shirts, Tops",/uploads/media/2025/1758358548047-ue9ys3.png
+12,Kit,Women Work Mode,Try at Home,1870,Women,[],"[1958,1961,1963,1970]","Co-ords, Kurtas & Suits, Tops, Trousers",/uploads/media/2025/1758358715664-95i56q.png
+13,Kit,Women Festive Spark,Try at Home,1870,Women,[],"[1970,1972,1996]","Handbags, Kurtas & Suits, Sarees",/uploads/media/2025/1758358761439-ypivdw.png
+14,Kit,Women Weekend Vibes,Try at Home,1870,Women,[],"[1957,1962,1963]","Co-ords, Dresses, Shorts & Skirts",/uploads/media/2025/1758358841790-3rz8dw.png
+15,Kit,Women Snug & Stylish,Try at Home,1870,Women,[],"[1922,1959,1970,1989,1992]","Boxers, Bra, Kurtas & Suits, Sleepwear & Loungewear, T Shirts",/uploads/media/2025/1758358874122-0ygwki.png
+16,Kit,Men Urban Street,Try at Home,1869,Men,[],"[1907,1916,1933]","Bottomwear, Footwear, T Shirts",/uploads/media/2025/1758359054605-dd1dss.png
+17,Kit,Men Power Mode On,blanket,1869,Men,[],"[1908,1909,1916]","Bottomwear, Casual Shirts, Formal Shirts",/uploads/media/2025/1758359179623-1c8q6h.png
+18,Kit,Men Laid Back Fits,Try at Home,1869,Men,[],"[1891,1907,1908,1958]","Casual Shirts, Innerwear, T Shirts, Tops",/uploads/media/2025/1758359224879-6i5trw.png
+19,Kit,Men Beast Mode,Try at Home,1869,Men,[],[1939],Active T Shirts,/uploads/media/2025/1758359268929-mpf6yc.png
+20,Kit,Men Chill Zone,Try at Home,1869,Men,[],"[1907,1908,1919,1935]","Casual Shirts, Flip Flops, Shorts, T Shirts",/uploads/media/2025/1758359308581-vd6c0e.png
+21,Kit,Kids Party Sparkle,Try at Home,1873,Kids,[],"[2003,2011,2039]","Clothing Sets, Dresses, Sandals",/uploads/media/2025/1758359387303-r4mt77.png
+22,Kit,Kids Little Traditions,Try at Home,1873,Kids,[],[2004],Ethnicwear,/uploads/media/2025/1758359450424-cco8a4.png
+23,Kit,Kids Everyday Play Sets,Try at Home,1873,Kids,[],"[1998,2003,2011,2019,2036]","Clothing Sets, Dresses, Flipflops, Skirts & Shorts, T Shirts",/uploads/media/2025/1758359520786-y7zyxc.png
+24,Kit,Kids Back-to-School cool,Try at Home,1873,Kids,[],[2043],Bags & Backpacks,/uploads/media/2025/1758359554418-e2l5ue.png
+25,Kit,Kids Playtime Picks,Try at Home,1873,Kids,[],[2043],Bags & Backpacks,/uploads/media/2025/1758359580813-419jnb.png
+26,Product,Women Suta,Featured Brands 1,1870,Women,,"[""1972""]",Sarees,/uploads/media/2025/1757579676072-3kqfr9.png
+27,Product,Women Drunch,Featured Brands 1,1870,Women,,"[""2039""]",Sandals,/uploads/media/2025/1756920773319-gb16vh.png
+28,Product,Women Plode,Featured Brands 1,1870,Women,,"[""1996""]",Handbags,/uploads/media/2025/1756920751544-netfnl.png
+29,Product,Men Sassafras,Featured Brands,1869,Men,[],"[1908,1910,1916,1917,1919]","Bottomwear, Casual Shirts, Casual Trousers, Co-ord Sets, Shorts",/uploads/media/2025/1756916702853-hly0po.png
+30,Product,Men 7-10,Featured Brands 1,1869,Men,,"[""1933""]",Footwear,/uploads/media/2025/1756916678559-om9jz6.png
+31,Product,Men Aticx,Featured Brands 1,1869,Men,,"[""1939""]",Active T Shirts,/uploads/media/2025/1756916654621-lwzzln.png
+32,Product,Kids Includ ,Featured Brands 1,1873,Kids,,"[""1998"", ""1999"", ""2000"", ""2003"", ""2011"", ""2019""]","Clothing Sets, Dresses, Shirts, Shorts, Skirts & Shorts, T Shirts",/uploads/media/2025/1756919112681-a0j78z.png
+33,Product,Kids Bownbee,Featured Brands 1,1873,Kids,[3543],[2004],Ethnicwear,/uploads/media/2025/1__1__1760116995589_xgvacx.png
+34,Product,Kids Little Marvel,Featured Brands 1,1873,Kids,[],[2043],Bags & Backpacks,/uploads/media/2025/1__7__1760117546330_i60le9.png
+35,Product,Women Accessories,Last Minute,1870,Women,[],"[1945,1955,1996,2039]","Accessories, Handbags, Jewellery & Accessories, Sandals",/uploads/media/2025/1758373116157-x0c26l.png
+36,Product,Women Innerwear,Last Minute,1870,Women,[],"[1921,1922,1989,1993]","Boxers, Bra, Briefs & Trunks, Swimwear",/uploads/media/2025/1758373148211-9jlyc4.png
+37,Product,Women Loungewear,Last Minute,1870,Women,[],"[1957,1992]","Dresses, Sleepwear & Loungewear",/uploads/media/2025/1758373175947-t70vzr.png
+38,Product,Men Accessories,Last Minute,1869,Men,[],[1955],Accessories,/uploads/media/2025/1758373212344-ucsifp.png
+39,Product,Men Innerwear,Last Minute,1869,Men,[],"[1921,1922,1936]","Boxers, Briefs & Trunks, Socks",/uploads/media/2025/1758373240230-6oanov.png
+40,Product,Men Flip Flops,Last Minute,1869,Men,[],[1933],Footwear,/uploads/media/2025/1758373879959-d2fcxr.png
+41,Product,Kids Stationary,Last Minute,1873,Kids,[],[2043],Bags & Backpacks,/uploads/media/2025/1758373347775-bl19sr.png
+42,Product,Kids Slippers & Sandals,Last Minute,1873,Kids,[7185],"[1933,2036,2039]","Flipflops, Footwear, Sandals",/uploads/media/2025/1758373917810-vtcctj.png
+43,Product,"Kids Bags, Lunch Boxes & Bottles",Last Minute,1873,Kids,[],[2043],Bags & Backpacks,/uploads/media/2025/1758373500045-jpd617.png
+44,Product,Women Quince,Featured Brands 2,1870,Women,,"[""1908"", ""1957"", ""1963"", ""1996""]","Casual Shirts, Co-ords, Dresses, Handbags",/uploads/media/2025/1756743575353-t5sbs7.png
+45,Product,Women Sassafras,Featured Brands,1870,Women,[],"[1908,1957,1961,1962,1963]","Casual Shirts, Co-ords, Dresses, Shorts & Skirts, Trousers",/uploads/media/2025/1756749010022-llna9a.png
+46,Product,Women Burger bae,Featured Brands 2,1870,Women,,"[""1907"", ""1916"", ""1955"", ""1957"", ""1958"", ""1961"", ""1963""]","Accessories, Bottomwear, Co-ords, Dresses, T Shirts, Tops, Trousers",/uploads/media/2025/1757576462266-3l4o1x.png
+47,Product,Men Wellbi,Featured Brands 2,1869,Men,,"[""1907""]",T Shirts,/uploads/media/2025/1756748679846-6ftxad.png
+48,Product,Men Subtract,Featured Brands 1,1869,Men,,"[""1908"", ""1916""]","Bottomwear, Casual Shirts",/uploads/media/2025/1757575930012-n7p5as.png
+49,Product,Men Wakatic,Featured Brands 1,1869,Men,,"[""1908"", ""1922""]","Boxers, Casual Shirts",/uploads/media/2025/1757313489577-5mpl8g.png
+102,Product,live deals,Everything Under 599,1869,Men,,"[""1921"", ""1922"", ""1933"", ""1936"", ""1939"", ""1955""]","Accessories, Active T Shirts, Boxers, Briefs & Trunks, Footwear, Socks",/uploads/media/2025/1757506936234-nxb59z.png
+103,Product,live deals,Everything Under 1499,1869,Men,,"[""1907"", ""1908"", ""1910"", ""1916"", ""1917"", ""1919"", ""1921"", ""1922"", ""1926"", ""1933"", ""1936"", ""1939"", ""1955""]","Accessories, Active T Shirts, Bottomwear, Boxers, Briefs & Trunks, Casual Shirts, Casual Trousers, Co-ord Sets, Footwear, Kurta & Kurta Sets, Shorts, Socks, T Shirts",/uploads/media/2025/1757506912678-v8i0ou.png
+104,Product,live deals,Flat 20% Off,1869,Men,,"[""1907"", ""1908"", ""1910"", ""1916"", ""1917"", ""1919"", ""1921"", ""1922"", ""1955""]","Accessories, Bottomwear, Boxers, Briefs & Trunks, Casual Shirts, Casual Trousers, Co-ord Sets, Shorts, T Shirts",/uploads/media/2025/1757506759385-74tj60.png
+105,Product,live deals,Flat 50% Off,1869,Men,,"[""1908"", ""1910"", ""1916"", ""1917"", ""1919"", ""1955""]","Accessories, Bottomwear, Casual Shirts, Casual Trousers, Co-ord Sets, Shorts",/uploads/media/2025/1757506504660-vmuzip.png
+106,Product,live deals,Flat 50% Off,1870,Women,,"[""1908"", ""1945"", ""1957"", ""1958"", ""1961"", ""1962"", ""1963"", ""1970"", ""1972""]","Casual Shirts, Co-ords, Dresses, Jewellery & Accessories, Kurtas & Suits, Sarees, Shorts & Skirts, Tops, Trousers",/uploads/media/2025/1757506476824-0vxvfe.png
+107,Product,live deals,Flat 20 % Off,1870,Women,,"[""1908"", ""1945"", ""1957"", ""1958"", ""1961"", ""1962"", ""1963"", ""1970"", ""1972"", ""1996"", ""2039""]","Casual Shirts, Co-ords, Dresses, Handbags, Jewellery & Accessories, Kurtas & Suits, Sandals, Sarees, Shorts & Skirts, Tops, Trousers",/uploads/media/2025/1757506337902-yg60wq.png
+109,Product,live deals,Everything Under 1499,1870,Women,,"[""1908"", ""1945"", ""1957"", ""1958"", ""1961"", ""1962"", ""1963"", ""1970"", ""1972"", ""1992"", ""1996"", ""2039""]","Casual Shirts, Co-ords, Dresses, Handbags, Jewellery & Accessories, Kurtas & Suits, Sandals, Sarees, Shorts & Skirts, Sleepwear & Loungewear, Tops, Trousers",/uploads/media/2025/1757506250130-9jr2oj.png
+110,Product,live deals,Everything Under 599,1870,Women,,"[""1908"", ""1945"", ""1957"", ""1958"", ""1961"", ""1963"", ""1970"", ""1972"", ""1992"", ""1996"", ""2039""]","Casual Shirts, Co-ords, Dresses, Handbags, Jewellery & Accessories, Kurtas & Suits, Sandals, Sarees, Sleepwear & Loungewear, Tops, Trousers",/uploads/media/2025/1757506153093-6aii4p.png
+111,Product,live deals,Everything Under 599,1873,Kids,,"[""1945"", ""1998"", ""2000"", ""2003"", ""2011"", ""2019"", ""2036"", ""2039"", ""2043""]","Bags & Backpacks, Clothing Sets, Dresses, Flipflops, Jewellery & Accessories, Sandals, Shorts, Skirts & Shorts, T Shirts",/uploads/media/2025/1757506114880-e5ww96.png
+112,Product,live deals,Everything Under 1499,1873,Kids,,"[""1998"", ""1999"", ""2000"", ""2003"", ""2004"", ""2011"", ""2019"", ""2036"", ""2039"", ""2043""]","Bags & Backpacks, Clothing Sets, Dresses, Ethnicwear, Flipflops, Sandals, Shirts, Shorts, Skirts & Shorts, T Shirts",/uploads/media/2025/1757506027522-gqjrm6.png
+113,Product,live deals,Flat 20% Off,1873,Kids,,"[""1998"", ""2000"", ""2003"", ""2004"", ""2011"", ""2036"", ""2043""]","Bags & Backpacks, Clothing Sets, Dresses, Ethnicwear, Flipflops, Shorts, T Shirts",/uploads/media/2025/1757505427621-6zgihw.png
+114,Product,live deals,Flat 50% Off,1873,Kids,,"[""1998"", ""2000"", ""2003"", ""2004"", ""2011"", ""2019"", ""2036"", ""2043""]","Bags & Backpacks, Clothing Sets, Dresses, Ethnicwear, Flipflops, Shorts, Skirts & Shorts, T Shirts",/uploads/media/2025/1757505377694-en4m5p.png
+116,Video,sfgsdf,adhfdhfhd,,,,"[""1933"", ""1998"", ""2011"", ""2019"", ""2012"", ""2003""]","Clothing Sets, Dresses, Footwear, Skirts & Shorts, T Shirts, Tops",
+117,Video,Men,NEW VIDS,1869,Men,,"[""2102"", ""2135"", ""1933"", ""1908"", ""1909"", ""1918"", ""1907"", ""1916"", ""1945"", ""1955"", ""1910"", ""1963"", ""1957"", ""1962"", ""2131"", ""2069"", ""2070"", ""2071"", ""2072"", ""2073"", ""2049"", ""213""]","Accessories, Bottomwear, Casual Shirts, Co-ord Sets, Co-ords, Crockery, Decor, Dresses, Fashion, Footwear, Formal Shirts, Formal Trousers, Furniture, Gadgets, Handloom, Home, Jewellery & Accessories, Laptops, Lights, Shorts & Skirts, T Shirts",/uploads/media/2025/Men.gif
+119,Video,Women,Shop Live,1870,Women,,"[""1907"", ""1957"", ""1958"", ""1960"", ""1980"", ""2131"", ""2069"", ""2070"", ""2071"", ""2072"", ""2073"", ""2049"", ""1908"", ""1916"", ""1930"", ""1932"", ""1970"", ""1972"", ""1971"", ""1963""]","Bottomwear, Casual Shirts, Casual Shoes, Co-ords, Crockery, Decor, Dresses, Fashion, Flats, Formal Shoes, Furniture, Handloom, Home, Jeans, Kurtas & Suits, Kurtis, Tunics & Tops, Lights, Sarees, T Shirts, Tops",/uploads/media/2025/Women.gif
+120,Video,Kids,NEW VIDS,1873,Kids,,"[""2028"", ""2011"", ""2004"", ""1998"", ""2019"", ""2012"", ""2003"", ""2025"", ""2043"", ""2127"", ""2128"", ""2069"", ""2070"", ""2071"", ""2072"", ""2073"", ""2049"", ""2131"", ""2044""]","Back to school, Bags & Backpacks, Clothing Sets, Clothing Sets, Crockery, Decor, Dresses, Ethnicwear, Fashion, Furniture, Handloom, Home, Kids Corner, Lights, Skirts & Shorts, Stationary, T Shirts, Tops, Watches",/uploads/media/2025/Kids.gif
+126,Product,Suta,Brands You Love,1870,Women,[],[1972],Sarees,/uploads/media/2025/1__6__1760112707753_14iih9.png
+127,Product,Includ,Brands You Love,1873,Kids,,"[""1998"", ""1999"", ""2000"", ""2003"", ""2011"", ""2019""]","Clothing Sets, Dresses, Shirts, Shorts, Skirts & Shorts, T Shirts",/uploads/media/2025/1757315472599-iio9a3.png
+128,Product,Sassafras Men,Brands You Love,1869,Men,[],"[1908,1910,1916,1917,1919]","Bottomwear, Casual Shirts, Casual Trousers, Co-ord Sets, Shorts",/uploads/media/2025/1__2__1760112674260_l3eskl.png
+129,Product,07-Oct,Brands You Love,1869,Men,,"[""1933""]",Footwear,/uploads/media/2025/1757315577890-77f8u4.png
+131,Product,Plode,Brands You Love,1870,Women,,"[""1996""]",Handbags,/uploads/media/2025/1757316511591-dbtcxw.png
+132,Product,Bownbee,Brands You Love,1873,Kids,[],[2004],Ethnicwear,/uploads/media/2025/1__1__1760117021453_asoxwk.png
+133,Product,Aticx,Brands You Love,1869,Men,,"[""1939""]",Active T Shirts,/uploads/media/2025/1757321025238-sfujxn.png
+134,Product,Drunch,Brands You Love,1870,Women,[],[2039],Sandals,/uploads/media/2025/1__5__1760112598284_tqgef4.png
+135,Product,Wellbi,Brands You Love,1869,Men,,"[""1907""]",T Shirts,/uploads/media/2025/1757323188860-p70ztu.png
+136,Product,Bummer,Brands You Love,1869,Men,,"[""1921"", ""1922"", ""1936"", ""1989"", ""1993""]","Boxers, Bra, Briefs & Trunks, Socks, Swimwear",/uploads/media/2025/1757321781244-ckt6dj.png
+137,Product,Sassafras Women,Brands You Love,1870,Women,[],"[1908,1957,1961,1962,1963]","Casual Shirts, Co-ords, Dresses, Shorts & Skirts, Trousers",/uploads/media/2025/1__3__1760112664226_tcyl6c.png
+138,Product,Wakatic,Brands You Love,1869,Men,,"[""1908"", ""1922""]","Boxers, Casual Shirts",/uploads/media/2025/1757322056657-ss16vb.png
+139,Product,The Little Marvels,Brands You Love,1873,Kids,[],[2043],Bags & Backpacks,/uploads/media/2025/1__7__1760117403918_a7a85e.png
+140,Product,Hrimaan,Brands You Love,1870,Women,[],"[1945,1955]","Accessories, Jewellery & Accessories",/uploads/media/2025/1__4__1760112637147_8cuqcs.png
+141,Product,Better Basics,Brands You Love,1869,Men,,"[""1907"", ""1908""]","Casual Shirts, T Shirts",/uploads/media/2025/1757323367804-2nhywb.png
+142,Product,Burgerbae,Brands You Love,1870,Women,,"[""1907"", ""1916"", ""1955"", ""1957"", ""1958"", ""1961"", ""1963""]","Accessories, Bottomwear, Co-ords, Dresses, T Shirts, Tops, Trousers",/uploads/media/2025/1757323454887-tnxhpp.png
+143,Product,A Clutch Story,Brands You Love,1870,Women,,"[""1996""]",Handbags,/uploads/media/2025/1757323614877-5emzim.png
+144,Product,Bluejam,Brands You Love,1869,Men,,"[""1916"", ""1955""]","Accessories, Bottomwear",/uploads/media/2025/1757323718910-1f6zsu.png
+145,Video,Nest & Nook,Shop Live,1874,Home,[],"[2104,2049,2069,2070,2071,2072,2073,2088,2089,2090,2091,1945,1996,2131,2084,2083,2079,2]","Aromas & Candles, Crockery, Cups & Mugs, Decor, Dinnerware & Serveware, Fashion, Festive Decor, Flowers, Furniture, Handbags, Handloom, Home, Jewellery & Accessories, Lights, Ottoman, Pooja Essentials, Table Runners",/uploads/media/2025/1758374696559-euvqqf.png
+146,Video,Connected Living,Shop Live,2132,Electronics,[],"[2102,2135,2132]","Electronics, Gadgets, Laptops",/uploads/media/2025/1758374656152-m04qzg.png
+147,Video,Season of Sparkle,Shop Live,1870,Women,[],"[1996,1945,2120,2121,2122,2123,2124,2125,2126,1971,2131,2119,1977,1970,1973,1972]","Ethnicwear, Fashion, Gold, Gold Bar, Gold Coin, Handbags, Jewellery & Accessories, Kurtas & Suits, Kurtis, Tunics & Tops, Lehenga Cholis, Metals, Platinum, Sarees, Silver, Silver Bar, Silver Coin",/uploads/media/2025/1758374611416-m0q4rl.png
+148,Video,Discover Gurugram,Discover Gurugram,,,,"[""2102"", ""2135"", ""1907"", ""1957"", ""1958"", ""1960"", ""1980"", ""1933"", ""1908"", ""1909"", ""1918"", ""2028"", ""2011"", ""2004"", ""1998"", ""2019"", ""2012"", ""2003"", ""1916"", ""1945"", ""1955""]","Accessories, Bottomwear, Casual Shirts, Clothing Sets, Clothing Sets, Dresses, Dresses, Ethnicwear, Flats, Footwear, Formal Shirts, Formal Trousers, Gadgets, Jeans, Jewellery & Accessories, Laptops, Skirts & Shorts, T Shirts, T Shirts, Tops, Tops",
+149,Video,Six Yards Magic,Shop Live,1870,Women,[],"[1977,1970,1973,2131,1963,1972,1870]","Co-ords, Ethnicwear, Fashion, Kurtas & Suits, Lehenga Cholis, Sarees, Women",/uploads/media/2025/category_offline_banner_1758606453319_bvkx0m.png
+150,Video,Cub Corner,Shop Live,1873,Kids,[],"[2028,2011,2004,1998,2019,2012,2003,2025,2043,2127,2128,2131,2037,2036,2044,1873,1999]","Back to school, Bags & Backpacks, Clothing Sets, Clothing Sets, Dresses, Ethnicwear, Fashion, Flipflops, Kids, Kids Corner, Shirts, Skirts & Shorts, Sports Shoes, Stationary, T Shirts, Tops, Watches",/uploads/media/2025/1758374552310-1y6ege.png
+151,Video,Petal Stories,Shop Live,1874,Home,[],"[2104,2049,2078]","Flowers, Home, Plants & Planters",/uploads/media/2025/1758374495612-y54rkw.png
+152,Video,Crave Corner,Shop Live,2130,Food,[],[2130],Food,/uploads/media/2025/1758374474821-mm6vdm.png
+153,Video,Vogue Edit,Shop Live,1870,Women,[],"[1907,1957,1958,1960,1910,1908,1963,1962,2131,1926,1870,195]","Casual Shirts, Co-ord Sets, Co-ords, Dresses, Fashion, Jeans, Kurta & Kurta Sets, Shorts & Skirts, T Shirts, Tops, Women",/uploads/media/2025/1758374444310-t71qcw.png
+154,Video,Moonlit Treasures,Shop Live,1870,Women,[],"[1945,2120,2121,2122,2123,2124,2125,2126,2131,2119,1971,1970]","Fashion, Gold, Gold Bar, Gold Coin, Jewellery & Accessories, Kurtas & Suits, Kurtis, Tunics & Tops, Metals, Platinum, Silver, Silver Bar, Silver Coin",/uploads/media/2025/1758374410657-6b4pvj.png
+155,Video,Curated Gifting,Shop Live,1874,Home,[],"[2104,2049,2088,2089,2090,2091,1883,2131,1945,1996,2084,2083,2079,1951,1898,1892,2069,1902,2082,2078]","Accessories, Accessories, Accessory Gift Set, Aromas & Candles, Cups & Mugs, Decor, Dinnerware & Serveware, Fashion, Festive Decor, Flowers, Fragrances, Handbags, Home, Homedecor, Jewellery & Accessories, Ottoman, Plants & Planters, Pooja Essentials, Table Runners, Wall Decor",/uploads/media/2025/1758374389068-xev1el.png
+156,Video,Persona Edit,Shop Live,1869,Men,[],"[1933,1916,1945,1955,2103,2131,1908,1996,1963,1957,1883,1951,1898,1871,1892,1997,1947,1930,2132]","Accessories, Accessories, Accessories, Accessory Gift Set, Bags & Wallets, Bottomwear, Casual Shirts, Casual Shoes, Co-ords, Dresses, Electronics, Eyewear, Fashion, Footwear, Fragrances, Handbags, Jewellery & Accessories, Perfumes, Topwear",/uploads/media/2025/1758374364212-m47k69.png
+157,Video,Beauty & Wellness,Shop Live,2105,Wellness,[],"[2131,1947,1883]","Fashion, Fragrances, Perfumes",/uploads/media/2025/1758374312201-sqoofp.png
+158,Video,Jaipur Edits,Shop Live,1870,Women,[],"[1971,1957,1963,2131,1970,1972,2049,2069,2073,1945,1888,1985]","Clothing, Co-ords, Decor, Dresses, Fashion, Footwear, Handloom, Home, Jewellery & Accessories, Kurtas & Suits, Kurtis, Tunics & Tops, Sarees",/uploads/media/2025/1758374280658-z1iqn1.png
+159,Video,Urban Edge,Shop Live,1869,Men,[],"[1933,1908,1909,1918,1907,1916,1945,1955,1930,1932,2131,1913,1871,1892,1996,1997,1947,2103]","Accessories, Accessories, Bags & Wallets, Blazers, Bottomwear, Casual Shirts, Casual Shoes, Eyewear, Fashion, Footwear, Formal Shirts, Formal Shoes, Formal Trousers, Handbags, Jewellery & Accessories, Perfumes, T Shirts, Topwear",/uploads/media/2025/1758374246187-8g5wig.png
+160,Video,Grace Edit,Shop Live,1870,Women,[],"[1980,1996,1945,2120,2121,2122,2123,2124,2125,2126,2103,2131,2119,1908,1963,1957,1883]","Casual Shirts, Co-ords, Dresses, Eyewear, Fashion, Flats, Fragrances, Gold, Gold Bar, Gold Coin, Handbags, Jewellery & Accessories, Metals, Platinum, Silver, Silver Bar, Silver Coin",/uploads/media/2025/1758374202273-ytt53r.png
+161,Video,Walk This Way,Shop Live,1870,Women,[],"[1980,1933,1888,2131,2037,2036]","Fashion, Flats, Flipflops, Footwear, Footwear, Sports Shoes",/uploads/media/2025/1758374158114-9bimny.png
+162,Video,Core Basic,Shop Live,1869,Men,[],"[1908,1909,1918,1907,1916,1945,1955,1971,1970,1963,2131,1926,1957,1962,1958,1961]","Accessories, Bottomwear, Casual Shirts, Co-ords, Dresses, Fashion, Formal Shirts, Formal Trousers, Jewellery & Accessories, Kurta & Kurta Sets, Kurtas & Suits, Kurtis, Tunics & Tops, Shorts & Skirts, T Shirts, Tops, Trousers",/uploads/media/2025/1758374132294-by1vuy.png
+163,Video,Mini Styles,Shop Live,1873,Kids,[],"[2028,2011,2004,1998,2019,2012,2003,2131,1873,1999]","Clothing Sets, Clothing Sets, Dresses, Ethnicwear, Fashion, Kids, Shirts, Skirts & Shorts, T Shirts, Tops",/uploads/media/2025/1758374086845-6t7b7q.png
+164,Video,Under Essentials,Shop Live,1869,Men,[],"[2131,1922,1993,1989,1936]","Boxers, Bra, Fashion, Socks, Swimwear",/uploads/media/2025/1758374051056-c957o1.png
+165,Kit,"Try outfits, accessories and more from the comfort of your house",Website Try At Home,,,[],"[1891,1907,1908,1909,1916,1919,1922,1933,1935,1939,1945,1957,1958,1959,1961,1962,1963,1970,1972,1989,1992,1996,1998,2003,2004,2011,2019,2036,2039,2043]","Active T Shirts, Bags & Backpacks, Bottomwear, Boxers, Bra, Casual Shirts, Clothing Sets, Co-ords, Dresses, Dresses, Ethnicwear, Flip Flops, Flipflops, Footwear, Formal Shirts, Handbags, Innerwear, Jewellery & Accessories, Kurtas & Suits, Sandals, Sarees, Shorts, Shorts & Skirts, Skirts & Shorts, Sleepwear & Loungewear, T Shirts, T Shirts, T Shirts, Tops, Trousers",
+166,Video,Bhakti Kalash,Shop Live,1874,Home,[],"[2104,2049,1945,1996,2131,2084,2083,2079,2069,1902,2082,2078]","Aromas & Candles, Decor, Fashion, Festive Decor, Flowers, Handbags, Home, Homedecor, Jewellery & Accessories, Plants & Planters, Pooja Essentials, Wall Decor",/uploads/media/2025/1758374006560-m8dnk9.png
+167,Kit,"Your runway, your living room—explore looks at home",Try at Home for Women,1870,Women,,"[""1920"", ""1922"", ""1945"", ""1951"", ""1957"", ""1958"", ""1959"", ""1961"", ""1962"", ""1963"", ""1970"", ""1972"", ""1989"", ""1992"", ""1993"", ""1996"", ""2039""]","Accessory Gift Set, Boxers, Bra, Co-ords, Dresses, Handbags, Jewellery & Accessories, Kurtas & Suits, Sandals, Sarees, Shorts & Skirts, Sleepwear & Loungewear, Swimwear, T Shirts, Tops, Track pants & Joggers, Trousers",
+168,Kit,Test-drive your style at home before stepping out in it,Try at Home for Men,1869,Men,,"[""1891"", ""1907"", ""1908"", ""1909"", ""1916"", ""1919"", ""1926"", ""1933"", ""1935"", ""1939"", ""1951"", ""1955"", ""1958""]","Accessories, Accessory Gift Set, Active T Shirts, Bottomwear, Casual Shirts, Flip Flops, Footwear, Formal Shirts, Innerwear, Kurta & Kurta Sets, Shorts, T Shirts, Tops",
+169,Kit,"Easy, breezy looks for school, play, and everything in between",Try at Home for Kids,1873,Kids,[7185],"[""1998"", ""2003"", ""2004"", ""2011"", ""2019"", ""2036"", ""2039"", ""2043""]","Bags & Backpacks, Clothing Sets, Dresses, Ethnicwear, Flipflops, Sandals, Skirts & Shorts, T Shirts",
+170,Product,"Curated chaos, cozy corners, and a touch of bohemian magic!",Banjara Market Live,1874,Home,[],"[2069,2072,2074,2075,2078,2080,2081,2082,2084,2086,2087]","Clocks, Decor, Fountains, Lights, Mirrors, Plants & Planters, Pooja Essentials, Showpieces & Vases, Table Lamps, Wall Decor, Wall Lamps",/uploads/media/2025/38_1761139296045_8wn7lt.png
+171,Outlet,Banjara Outlet,Banjara Outlet,1874,Home,[],[2081],Mirrors,/uploads/media/2025/1757753042646-aqrg77.png
+172,Outlet,Kindlife Outlet,Kindlife Outlet,2105,Wellness,,2106,Skincare,/uploads/media/2025/1757752985737-jy2ymt.png
+174,Outlet,The Little Marvel,The Little Marvel,1873,Kids,,2025,Back to school,/uploads/media/2025/1757753415322-8c1a6n.png
+176,Outlet,Quince Outlet,Quince Outlet,1873,Kids,,1957,Dresses,/uploads/media/2025/1757753257063-yikndt.png
+182,Video,Decor,Decor,1874,Home,,"1,90,21,90,41,90,52,07,00,00,00,000","Furniture, Handloom, Homedecor, Kitchen & Dining, Lighting, Plants & Planters",/uploads/media/2025/Home.gif
+183,Video,Kindlife,Kindlife,2105,Wellness,,"2,10,62,10,72,10,82,10,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,000","Body Care, Cleansers, Cosmetics & Makeup, Face Makeup, Hair Care, Lip Makeup, Makeup Tools & Accessories, Moisturizers, Personal Care & Hygiene, Serums, Skincare, Sunscreens , Toners",/uploads/media/2025/Beauty.gif
+186,Video,Discover,Discover,2132,Electronics,[],"[2133,2135,2129,2122,2123,2124,2125,2126]","Gadgets, Gift Items, Gold Bar, Gold Coin, Mobile, Platinum, Silver Bar, Silver Coin",/uploads/media/2025/1758389228832-pf2woc.png
+188,Video,Outlets,Join the Club,,,"[5203,3543,3538,3536,3535,3672,3545,3862,3534,3531,3536,1752,5118,3669,5207,5200,3972,3544,5201,5144]",[],,
+189,Video,Products/ Brands,Join the Club,,,[],[],,
+190,Product,All products,Kindlife First Big Banner,2105,Wellness,[],[],,/uploads/media/2025/kindlife_1760097493165_z07gj8.png
+191,Product,Cleansers,Kindlife Cleansers,2105,Wellness,[],[],,/uploads/media/2025/1758033379921-p6m8ja.png
+192,Product,Toners,Kindlife Toners,2105,Wellness,[],[],,/uploads/media/2025/1758033353670-3j1tqo.png
+193,Product,Serums,Kindlife Serums,2105,Wellness,[],[],,/uploads/media/2025/1758033326412-4xt115.png
+194,Product,Moisturizer,Kindlife Moisturizer,2105,Wellness,[],[],,/uploads/media/2025/1758033298368-3kar3h.png
+195,Product,Sunscreen,Kindlife Sunscreen,2105,Wellness,[],[],,/uploads/media/2025/1758033263361-liz3q4.png
+196,Product,Most Loved,Kindlife Most Loved,2105,Wellness,[],[],,/uploads/media/2025/1758028141225-q0fu6p.png
+197,Product,New Drops,Kindlife New Drops,2105,Wellness,[],[],,/uploads/media/2025/1758028395069-t8swnt.png
+198,Product,Barrier Boosters,Kindlife Barrier Boosters,2105,Wellness,[],[],,/uploads/media/2025/1758028560606-11zild.png
+199,Product,Recommended,Kindlife Recommended,2105,Wellness,,,,
+200,Product,Cosrx,Kindlife Cosrx,2105,Wellness,[],[],,/uploads/media/2025/cosrx_1758531263343_ddjpgf.png
+201,Product,Beauty of Joseon,Kindlife Beauty of Joseon,2105,Wellness,[],[],,/uploads/media/2025/beauty_of_josen_1758531244922_w9qv6n.png
+202,Product,Skin1004,Kindlife Skin1004,2105,Wellness,[],[],,/uploads/media/2025/neaf_neaf_1758531216814_0ly7o7.png
+203,Product,VT Cosmetics,Kindlife VT Cosmetics,2105,Wellness,[],[],,/uploads/media/2025/iunik_1758531197967_0zhd9u.png
+204,Product,Skinfood,Kindlife Skinfood,2105,Wellness,[],[],,/uploads/media/2025/skinfood_1758531116760_fa7e9x.png
+205,Product,Neaf Neaf,Kindlife Neaf Neaf,2105,Wellness,[],[],,/uploads/media/2025/5_1758530735600_cadvqe.png
+206,Product,Frudia,Kindlife Frudia,2105,Wellness,[],[],,/uploads/media/2025/6_1758530708745_dzlocs.png
+207,Product,Coxir,Kindlife Coxir,2105,Wellness,[],[],,/uploads/media/2025/Untitled__460_x_400_px__1758530536474_csozej.png
+208,Product,Iunik,Kindlife Iunik,2105,Wellness,[],[],,/uploads/media/2025/4_1758529910232_0q846o.png
+209,Product,Rovectin,Kindlife Rovectin,2105,Wellness,[],[],,/uploads/media/2025/Untitled__460_x_400_px___1__1758530521650_ixlqt1.png
+210,Product,Mary & May,Kindlife Mary & May,2105,Wellness,[],[],,/uploads/media/2025/7_1758529774924_kntpwb.png
+211,Product,Shop All,Kindlife Shop All ,2105,Wellness,,,,/uploads/media/2025/1758033604508-159m1q.png
+212,Product,,BANJARA ALL PRODUCTS,1874,Home,[5118],"[2100,2049,2064,2070,2071,2072,2073,2074,2080,2081,2082,2084,2086,2087]","Bath rugs, Clocks, Crockery, Fountains, Furniture, Handloom, Home, Laundry Bags, Lights, Mirrors, Pooja Essentials, Showpieces & Vases, Table Lamps, Wall Decor",/uploads/media/2025/36_1761139079198_u8zq8o.png
+213,Product,,BANJARA- HOME DECOR,1874,Home,[7185],"[2069,2071,2074,2080,2081,2082,2086,2087]","Clocks, Crockery, Decor, Fountains, Mirrors, Showpieces & Vases, Table Lamps, Wall Decor",/uploads/media/2025/1758350427191-i909o4.png
+214,Product,,BANJARA-FURNITURE & FURNISHINGS,1874,Home,[5118],"[2049,2064,2070,2073,2100]","Bath rugs, Furniture, Handloom, Home, Laundry Bags",/uploads/media/2025/1758105376449-fj9jda.png
+215,Product,,BANJARA- LIGHTING,1874,Home,[5118],[2072],Lights,/uploads/media/2025/1758105195976-kcdrt5.png
+216,Product,,BANJARA- POOJA ESSENTIALS,1874,Home,[5118],[2084],Pooja Essentials,/uploads/media/2025/1758105241573-v3hwxk.png
+217,Product,,BANJARA- DINING & KITCHEN,1874,Home,[5118],[2071],Crockery,/uploads/media/2025/1758105293765-rt6cr5.png
+218,Product,,BANJARA- PLANTS & PLANTERS,1874,Home,[5118],[2078],Plants & Planters,/uploads/media/2025/1758105322495-sl6h5a.png
+219,Product,,BANJARA- RANDOM PRODUCTS,1874,Home,[5118],"[2069,2071,2074,2080,2081,2082,2086,2087]","Clocks, Crockery, Decor, Fountains, Mirrors, Showpieces & Vases, Table Lamps, Wall Decor",/uploads/media/2025/37_1761139257395_a39ld1.png
+222,Product,,BANJARA- 50% OFF,1874,Home,[5118],[],,/uploads/media/2025/1758104923226-ukp2sr.png
+223,Product,,BANJARA- under 499,1874,Home,[],[],,/uploads/media/2025/1758104961876-7lkzbn.png
+224,Product,,BANJARA-  20% off,1874,Home,[5118],[],,/uploads/media/2025/1758105010083-0t7ka3.png
+225,Product,,BANJARA- Under 999/-,1874,Home,[5118],[],,/uploads/media/2025/1758105048479-w0k6w6.png
+228,Product,Peripherals,Electronics Peripherals,2135,Gadgets,[],[],,/uploads/media/2025/1758125611858-szyiuy.png
+229,Video,Video Gallery,Electronics & Appliances Video Gallery,2135,Gadgets,[],[],,/uploads/media/2025/1758125636916-w79x9q.png
+230,Video,Silver jewellery Videos,Silver jewellery Videos,2119,Metals,[],[],,/uploads/media/2025/1758125715336-ymtljo.png
+231,Product,Collectibles,Collectibles,2119,Metals,[],[],,/uploads/media/2025/1758125681603-86udle.png
+232,Product,Discover all products,Discover All products,2119,Metals,[],[],,/uploads/media/2025/1758389350328-063a4j.png
+233,Product,Category Gadgets,Discover Category Gadgets,2135,Gadgets,[],[],,/uploads/media/2025/1758389304722-lmq7u4.png
+234,Product,Category Collectibles,Discover Category Collectibles,2119,Metals,[],[],,/uploads/media/2025/1758389278494-x0wck4.png
+235,Product,BRING MY FLOWERS- All Products,BRING MY FLOWERS,1870,Women,[4810],"[2104,2079,2087,2098]","Aromas & Candles, Flowers, Organisers, Showpieces & Vases",/uploads/media/2025/1758125218422-fsdz8n.png
+236,Video,Discover Food,Discover Category Food,2130,Food,[],[],,/uploads/media/2025/1758125479486-3tkivv.png
+237,Video,MK Video,Merrigo Kidz Video Gallery,1873,Kids,[],[],,/uploads/media/2025/merrigo__3__1758544080370_r3yd8a.jpg
+238,Product,MK Big Banner,Merrigo Kidz Big Banner,1873,Kids,[],[],,/uploads/media/2025/1758130266029-tjx3si.png
+239,Product,MK All Products,Merrigo Kidz All Products,1873,Kids,[],[],,/uploads/media/2025/1758130231405-vx63mv.png
+240,Product,MK Category Topwear,Merrigo Kidz Category Topwear,1873,Kids,[],[],,/uploads/media/2025/1758130417854-6pitcr.png
+241,Product,MK Category Bottomwear,Merrigo Kidz Category Bottomwear,1873,Kids,[],[],,/uploads/media/2025/1758130364938-792olh.png
+242,Product,MK Category Dresses,Merrigo Kidz Category Dresses,1873,Kids,[],[],,/uploads/media/2025/1758130390206-jzihpl.png
+243,Product,BMF-Flowers,Bring My Flowers- Flowers,1870,Women,[4810],[2104],Flowers,/uploads/media/2025/1758128709374-xejlk9.png
+244,Product,MK Category Ethnicwear,Merrigo Kidz Category Ethnicwear,1873,Kids,[],[],,/uploads/media/2025/1758130450458-sblhut.png
+245,Product,MK Category Footwear,Merrigo Kidz Category Footwear,1873,Kids,[],[],,/uploads/media/2025/1758130480264-r3zso2.png
+246,Product,Bring My Flowers- Showpieces,Bring My Flowers- Showpieces,1870,Women,[],[],,/uploads/media/2025/1758129437566-378hez.png
+247,Product,Bring My Flowers- Aromas & Candles,Bring My Flowers- Aromas & Candles,1870,Women,[],[],,/uploads/media/2025/1758129484040-uh0lyv.png
+249,Product,Bring My Flowers- Organizers,Bring My Flowers- Organizers,1870,Women,[],[],,/uploads/media/2025/1758129553279-jtfqwj.png
+250,Product,Bring My Flowers- Random Photos,Bring My Flowers- Random Photos,1870,Women,[],[],,/uploads/media/2025/Bring_my_flowers__2__1758543475146_bqe5vx.jpg
+251,Video,Bring My Flowers- Videos,Bring My Flowers- Videos,1870,Women,[],[],,/uploads/media/2025/Bring_my_flowers__3__1758543529654_9tnlod.jpg
+252,Product,Bring My Flowers- offer 1,Bring My Flowers- Offer 1,,,[],[],,/uploads/media/2025/1758282573312-a2ijwn.png
+253,Product,Bring My Flowers- offer 2,Bring My Flowers- Offer 2,1870,Women,[4810],[],,/uploads/media/2025/1758282548185-qxwxrf.png
+254,Product,Bring My Flowers- offer 3,Bring My Flowers- offer 3,1870,Women,[4810],[],,/uploads/media/2025/1758282613431-4uiy2w.png
+255,Product,Bring My Flowers- offer 4,Bring My Flowers- offer 4,1870,Women,[4810],[],,/uploads/media/2025/1758282658283-bto0g5.png
+256,Product,MK- Offer 1 Below 499,Merrigo Kidz- Offer 1,1873,Kids,[5442],"[2004,2015,2029,2030,2031]","Bottomwear, Dresses, Ethnicwear, Lehenga Choli, T shirts & tops",/uploads/media/2025/1758132862586-h9nsg0.png
+257,Product,MK- Offer 2 Below 999,Merrigo Kidz- Offer 2,,,[5442],"[2004,2015,2037,2039]","Ethnicwear, Lehenga Choli, Sandals, Sports Shoes",/uploads/media/2025/1758132882618-egumk5.png
+258,Product,MK- Offer 3 Below 1499,Merrigo Kidz- Offer 3,1873,Kids,[5442],"[2004,2029,2037,2039,2029]","Ethnicwear, Sandals, Sports Shoes, T shirts & tops",/uploads/media/2025/1758132913549-athzt0.png
+259,Product,MK- Offer 4 Below 1999,Merrigo Kidz- Offer 4,1873,Kids,[5442],"[2004,2015,2029,2030,2031]","Bottomwear, Dresses, Ethnicwear, Lehenga Choli, T shirts & tops",/uploads/media/2025/1758133013401-npb97o.png
+260,Product,The Little Marvel- All Product,The Little Marvel- All Product,1873,Kids,[3546],[2025],Back to school,/uploads/media/2025/little_marvel_1758543930596_b7ju99.jpg
+261,Product,The Little Marvel- Stationary & School Supplies,PLAYTIME & FUN,1873,Kids,[3546],[],,/uploads/media/2025/1758130896434-tgjo5q.png
+262,Product,The Little Marvel- Bags Accessories,SCHOOL & STATIONARIES,1873,Kids,[3546],[2025],Back to school,/uploads/media/2025/1758130940057-iifm4i.png
+263,Product,The Little Marvel- Lunch Bottles,COOL & LIFETSYLE,1873,Kids,[3546],[2025],Back to school,/uploads/media/2025/1758130976776-7flr8s.png
+264,Product,The Little Marvel- Dolls,The Little Marvel- Dolls,,,[],[],,/uploads/media/2025/1758131072638-szvjra.png
+265,Product,MK Category Nightsuits,Merrigo Kids Category Nightsuits,1873,Kids,[],[],,/uploads/media/2025/1758132318072-fdxso3.png
+266,Product,The Little Marvel- Toy Car & Trains,The Little Marvel- Toy Car & Trains,,,[],[],,/uploads/media/2025/1758131809539-j4h8o0.png
+267,Product,The Little Marvel- Playset Games,The Little Marvel- Playset Games,,,[],[],,/uploads/media/2025/1758131857140-t3njho.png
+268,Product,The Little Marvel- Random Products,The Little Marvel- Random Products,,,[3546],[2025],Back to school,/uploads/media/2025/little_marvel_3_1758543897687_dbyhka.jpg
+269,Product,The Little Marvel- Videos,The Little Marvel- Videos,1873,Kids,[3546],[],,/uploads/media/2025/little_marvel_2_1758543877697_gglen8.jpg
+270,Product,The Little Marvel- Offer 1,The Little Marvel- Offer 1,1973,Ethnicwear,[3546],[2025],Back to school,/uploads/media/2025/1758274876799-w9wpqq.png
+271,Product,The Little Marvel- Offer 2,The Little Marvel- Offer 2,1873,Kids,[3546],[2025],Back to school,/uploads/media/2025/1758274936057-j56se9.png
+272,Product,The Little Marvel- Offer 3,The Little Marvel- Offer 3,1873,Kids,[3546],[2025],Back to school,/uploads/media/2025/1758275109990-92jaf3.png
+273,Product,The Little Marvel- Offer 4,The Little Marvel- Offer 4,1873,Kids,[3546],[2025],Back to school,/uploads/media/2025/1758275161582-ybdcym.png
+274,Product,Seevan- All Products,Seevan- All Products,,,[274],"[1908,1957,1963,1970,1971,1972,1977]","Casual Shirts, Co-ords, Dresses, Kurtas & Suits, Kurtis, Tunics & Tops, Lehenga Cholis, Sarees",/uploads/media/2025/outlets__2__1758534878796_5r62db.png
+275,Product,EVERYDAY ETHNIC,EVERYDAY ETHNIC,1870,Women,[274],"[1957,1970,1971]","Dresses, Kurtas & Suits, Kurtis, Tunics & Tops",/uploads/media/2025/1758273408987-n3qlm5.png
+276,Product,FESTIVE & GLAM,FESTIVE & GLAM,1870,Women,[274],"[1972,1977]","Lehenga Cholis, Sarees",/uploads/media/2025/1758273571549-dv5qkd.png
+277,Product,MODERN FUSION,MODERN FUSION,1870,Women,[274],"[1908,1963,1957]","Casual Shirts, Co-ords, Dresses",/uploads/media/2025/1758273748323-9buw6m.png
+278,Product,Seevan- Co-ords,Seevan- Co-ords,,,[274],[],,
+279,Product,Seevan- Casual Wear,Seevan- Casual Wear,,,[274],[],,
+280,Product,Seevan- Ethnic Wear,Seevan- Ethnic Wear,,,[274],[],,
+281,Product,Seevan- Random Products,Seevan- Random Products,1870,Women,[274],"[1908,1957,1963,1970,1971,1972,1977]","Casual Shirts, Co-ords, Dresses, Kurtas & Suits, Kurtis, Tunics & Tops, Lehenga Cholis, Sarees",/uploads/media/2025/outlets__4__1758535397598_gjueul.png
+282,Video,Seevan- Videos,Seevan- Videos,1870,Women,[274],"[1908,1957,1963,1970,1971,1972,1977]","Casual Shirts, Co-ords, Dresses, Kurtas & Suits, Kurtis, Tunics & Tops, Lehenga Cholis, Sarees",/uploads/media/2025/outlets__3__1758535413378_lp4qrh.png
+283,Product,Seevan- Offer 1,Seevan- Offer 1,1870,Women,[274],"[1908,1957,1963,1971]","Casual Shirts, Co-ords, Dresses, Kurtis, Tunics & Tops",/uploads/media/2025/1758285528889-p7tqa8.png
+284,Product,Seevan- Offer 2,Seevan- Offer 2,1870,Women,[274],"[1908,1957,1963,1970]","Casual Shirts, Co-ords, Dresses, Kurtas & Suits",/uploads/media/2025/1758285622096-5gh6ta.png
+285,Product,Seevan- Offer 3,Seevan- Offer 3,1870,Women,[274],[],,/uploads/media/2025/1758285678331-t9yzh3.png
+286,Product,Seevan- Offer 4,Seevan- Offer 4,1870,Women,[274],"[1908,1957,1963,1970,1971]","Casual Shirts, Co-ords, Dresses, Kurtas & Suits, Kurtis, Tunics & Tops",/uploads/media/2025/1758285784162-toa52k.png
+287,Product,Rreflection- All Products,Rreflection- All Products,1870,Women,[3673],"[1957,1958,1963,1970,1971,1975]","Co-ords, Dresses, Kurtas & Suits, Kurtis, Tunics & Tops, Skirts & Palazzos, Tops",/uploads/media/2025/rreflections_2_1758544460454_lypobg.jpg
+288,Product,Rreflection- Dresses,EVERYDAY ETHNIC,1870,Women,[3673],"[1970,1971]","Kurtas & Suits, Kurtis, Tunics & Tops",/uploads/media/2025/1758355253456-y5n87f.png
+289,Product,"Rreflection- Kurtis, Tunics & Tops",CHIC WESTERN,1870,Women,[3673],"[1957,1958]","Dresses, Tops",/uploads/media/2025/1758275545129-ghd1u5.png
+290,Product,Rreflection- Kurtas & Suits,TRENDY FUSION,1870,Women,[3673],[1963],Co-ords,/uploads/media/2025/1758275682377-vg3i05.png
+291,Product,Rreflection- Tops,Rreflection- Tops,,,[],[],,
+292,Product,Rreflection- Co-ords,Rreflection- Co-ords,,,[],[],,
+293,Product,Rreflection- Random Products,Rreflection- Random Products,1870,Women,[3673],"[1970,1971,1957,1958,1963]","Co-ords, Dresses, Kurtas & Suits, Kurtis, Tunics & Tops, Tops",/uploads/media/2025/rreflections_1758544420906_z2oevs.jpg
+294,Video,Rreflection- Videos,Rreflection- Videos,1870,Women,[3673],"[1970,1971,1957,1958,1963]","Co-ords, Dresses, Kurtas & Suits, Kurtis, Tunics & Tops, Tops",/uploads/media/2025/rreflections_4_1758544391045_ldukrr.jpg
+295,Product,Rreflection- Offer 1,Rreflection- Offer 1,1870,Women,[3673],"[1970,1971,1957,1958,1963]","Co-ords, Dresses, Kurtas & Suits, Kurtis, Tunics & Tops, Tops",/uploads/media/2025/1758276209066-r3h37x.png
+296,Product,Rreflection- Offer 2,Rreflection- Offer 2,1870,Women,[3673],"[1970,1971,1957,1958,1963]","Co-ords, Dresses, Kurtas & Suits, Kurtis, Tunics & Tops, Tops",/uploads/media/2025/1758276281605-w7bu0q.png
+297,Product,Rreflection- Offer 3,Rreflection- Offer 3,1870,Women,[3673],"[1970,1971,1957,1958,1963]","Co-ords, Dresses, Kurtas & Suits, Kurtis, Tunics & Tops, Tops",/uploads/media/2025/1758276335114-1rp452.png
+298,Product,Rreflection- Offer 4,Rreflection- Offer 4,1870,Women,[3673],"[1970,1971,1957,1958,1963]","Co-ords, Dresses, Kurtas & Suits, Kurtis, Tunics & Tops, Tops",/uploads/media/2025/1758276375856-a1x0ym.png
+299,Product,SIMKRAFTZ- ALL PRODUCTS,SIMKRAFTZ- ALL PRODUCTS,1870,Women,[3548],"[1972,2084,2045]","Jewellery & Hair Accessories, Pooja Essentials, Sarees",/uploads/media/2025/simkraftz_1758544553234_21hq00.jpg
+300,Product,SIMLRAFTZ- INDIAN WEAR,SIMLRAFTZ- INDIAN WEAR,1870,Women,[3548],[1972],Sarees,/uploads/media/2025/1758179492644-3bqzs4.png
+301,Product,SIMKRAFTZ- HOMEDECOR,SIMKRAFTZ- HOMEDECOR,1870,Women,[3548],[2084],Pooja Essentials,/uploads/media/2025/1758179523004-lqvx4e.png
+302,Product,SIMKRAFTZ- BAGS & BACKPACKS,SIMKRAFTZ- BAGS & BACKPACKS,1870,Women,[3548],[2045],Jewellery & Hair Accessories,/uploads/media/2025/1758179545046-bzbsga.png
+303,Product,SIMKRAFTZ- RANDOM PRODUCT,SIMKRAFTZ- RANDOM PRODUCT,1870,Women,[3548],"[1972,2084,2045]","Jewellery & Hair Accessories, Pooja Essentials, Sarees",/uploads/media/2025/simkraftz__3__1758544565941_x9mqve.jpg
+304,Product,SIMKRAFTZ- OFFER 1 ,SIMKRAFTZ- OFFER 1 ,1870,Women,[3548],"[1972,2084,2045]","Jewellery & Hair Accessories, Pooja Essentials, Sarees",/uploads/media/2025/1758181513288-1f3dsd.png
+305,Product,SIMKARFTZ OFFER 2,SIMKARFTZ OFFER 2,1870,Women,[3548],"[1972,2084,2045]","Jewellery & Hair Accessories, Pooja Essentials, Sarees",/uploads/media/2025/1758181715217-rzlbek.png
+306,Product,SIMKRAFTZ OFFER 3,SIMKRAFTZ OFFER 3,1870,Women,[3548],"[1972,2084,2045]","Jewellery & Hair Accessories, Pooja Essentials, Sarees",/uploads/media/2025/1758181942360-4eqyv1.png
+307,Product,SIMKRAFTZ- OFFER 4,SIMKRAFTZ- OFFER 4,1870,Women,[3548],"[1972,2084,2045]","Jewellery & Hair Accessories, Pooja Essentials, Sarees",/uploads/media/2025/1758182158010-9f435r.png
+308,Video,BANJARA- VIDEO 1,BANJARA- VIDEO 1,,,[5118],"[2069,2070,2071,2072,2073,2049]","Crockery, Decor, Furniture, Handloom, Home, Lights",/uploads/media/2025/38_1761139674301_7zzoir.png
+309,Video,BANJARA- VIDEO 2,BANJARA- VIDEO 2,,,[5118],[],,/uploads/media/2025/40_1761139652627_cges18.png
+310,Video,BANJARA- VIDEO 3,BANJARA- VIDEO 3,,,[5118],[],,/uploads/media/2025/39_1761139593935_hfb381.png
+311,Product,BANJARA- ALL PRODUCTS,BANJARA- ALL PRODUCTS,1874,Home,[5118],"[2049,2064,2069,2070,2071,2072,2073,2074,2078,2081,2082,2084,2086,2087,2100]","Bath rugs, Crockery, Decor, Fountains, Furniture, Handloom, Home, Laundry Bags, Lights, Mirrors, Plants & Planters, Pooja Essentials, Showpieces & Vases, Table Lamps, Wall Decor",/uploads/media/2025/40_1761139197945_7fex4l.png
+312,Product,ART & ASTHETICS ,ART & ASTHETICS ,1874,Home,[5118],"[2069,2072,2074,2080,2081,2082,2087]","Clocks, Decor, Lights, Mirrors, Showpieces & Vases, Table Lamps, Wall Decor",/uploads/media/2025/1758260930298-tlo6g4.png
+313,Product,LIIVNG & LIFESTYLE,LIIVNG & LIFESTYLE,1874,Home,[5118],"[2049,2064,2070,2073,2078]","Bath rugs, Furniture, Handloom, Home, Plants & Planters",/uploads/media/2025/1758261088000-i1bjf9.png
+314,Product,HERITAGE & DECOR,HERITAGE & DECOR,1874,Home,[7185],"[2069,2071,2074,2082,2084,2086,2087]","Crockery, Decor, Fountains, Pooja Essentials, Showpieces & Vases, Table Lamps, Wall Decor",/uploads/media/2025/1758261495201-akbst4.png
+315,Product,BRING MY FLOWERS- ALL PRODUCTS ,BRING MY FLOWERS,1870,Women,[4810],"[2079,2087,2098,2104]","Aromas & Candles, Flowers, Organisers, Showpieces & Vases",/uploads/media/2025/Bring_my_flowers_1758543405880_j09als.jpg
+316,Product,BLOOMS & BOTANICALS ,BLOOMS & BOTANICALS ,1870,Women,[4810],"[2104,2087]","Flowers, Showpieces & Vases",/uploads/media/2025/1758266822481-fraebq.png
+317,Product,GLOW &  AURA ,GLOW &  AURA ,1870,Women,[4810],[2079],Aromas & Candles,/uploads/media/2025/1758267033618-1uvfts.png
+318,Product,ORDER & ELEGANCE,ORDER & ELEGANCE,1870,Women,[4810],[2098],Organisers,/uploads/media/2025/1758267343873-27fgzs.png
+319,Product,MERRIGO KIDZ ALL PRODUCTS,MERRIGO KIDZ,1873,Kids,[5442],"[2004,2015,2029,2030,2031,2037,2039]","Bottomwear, Dresses, Ethnicwear, Lehenga Choli, Sandals, Sports Shoes, T shirts & tops",/uploads/media/2025/merrigo_1758543994750_xpmqd5.jpg
+320,Product,EVERYDAY CHIC,EVERYDAY CHIC,1873,Kids,[5442],"[2029,2030,2031]","Bottomwear, Dresses, T shirts & tops",/uploads/media/2025/1758268422393-dc686v.png
+321,Product,ETHNIC ELEGANCE,ETHNIC ELEGANCE,1873,Kids,[5442],"[2004,2015]","Ethnicwear, Lehenga Choli",/uploads/media/2025/1758268621155-jez0jq.png
+322,Product,STEP IN STYLE,STEP IN STYLE,1873,Kids,[5442],"[2037,2039]","Sandals, Sports Shoes",/uploads/media/2025/1758268761395-lic7nw.png
+323,Product,QUINCE- ALL PRODUCTS,QUINCE- ALL PRODUCTS,1870,Women,[273],"[1910,1951,1952,1957,1996,1997,2045,2054]","Accessory Gift Set, Bags & Wallets, Blankets, Quilts & Dohars, Caps & Hats, Co-ord Sets, Dresses, Handbags, Jewellery & Hair Accessories",/uploads/media/2025/quince__2__1758544221159_3ca478.jpg
+324,Product,CHIC WESTERN ,CHIC WESTERN ,1870,Women,[273],"[1910,1957]","Co-ord Sets, Dresses",/uploads/media/2025/1758277159201-ezgi5q.png
+325,Product,BAGS AND BEYOND,BAGS AND BEYOND,1870,Women,[273],"[1996,1997]","Bags & Wallets, Handbags",/uploads/media/2025/1758277295244-r0e37r.png
+326,Product,ACCESSORIES AND MORE,ACCESSORIES AND MORE,1870,Women,[274],"[1951,1952,2045,2054]","Accessory Gift Set, Blankets, Quilts & Dohars, Caps & Hats, Jewellery & Hair Accessories",/uploads/media/2025/1758277430102-w2ltpu.png
+327,Product,ACCESSORIES AND MORE,ACCESSORIES AND MORE,1870,Women,[274],"[1951,1952,2045,2054]","Accessory Gift Set, Blankets, Quilts & Dohars, Caps & Hats, Jewellery & Hair Accessories",/uploads/media/2025/1758277430102-w2ltpu.png
+328,Product,QUINCE- RANDOM PRODUCTS,QUINCE- RANDOM PRODUCTS,1870,Women,[273],"[1910,1951,1952,1957,1996,1997,2045,2045]","Accessory Gift Set, Bags & Wallets, Caps & Hats, Co-ord Sets, Dresses, Handbags, Jewellery & Hair Accessories",/uploads/media/2025/quince_1758544177550_ax874j.jpg
+329,Video,QUINCE- VIDEOS,QUINCE- VIDEOS,1870,Women,[273],"[1910,1951,1952,1957,1996,1997,2045,2054]","Accessory Gift Set, Bags & Wallets, Blankets, Quilts & Dohars, Caps & Hats, Co-ord Sets, Dresses, Handbags, Jewellery & Hair Accessories",/uploads/media/2025/quince__3__1758544156729_5xnlnr.jpg
+330,Product,QUINCE- OFFER 1,QUINCE- OFFER 1,1870,Women,[273],"[1910,1952,1957,2045]","Caps & Hats, Co-ord Sets, Dresses, Jewellery & Hair Accessories",/uploads/media/2025/1758277856912-xzkhjw.png
+331,Product,QUINCE- OFFER 2,QUINCE- OFFER 2,1870,Women,[273],"[1910,2952,1997,1996]","Bags & Wallets, Co-ord Sets, Handbags",/uploads/media/2025/1758286235179-3kco6x.png
+332,Product,QUINCE- OFFER 3,QUINCE- OFFER 3,1870,Women,[273],"[1910,1997,1957,1952]","Bags & Wallets, Caps & Hats, Co-ord Sets, Dresses",/uploads/media/2025/1758286310849-aheui6.png
+333,Product,QUINCE- OFFER 4,QUINCE- OFFER 4,1870,Women,[273],"[1910,1951,1952,1996,1997]","Accessory Gift Set, Bags & Wallets, Caps & Hats, Co-ord Sets, Handbags",/uploads/media/2025/1758286357298-pec5oz.png
+334,Product,ROOHANI- ALL  PRODUCTS,ROOHANI- ALL  PRODUCTS,1870,Women,[5173],"[1963,1970,1971,1972,1996]","Co-ords, Handbags, Kurtas & Suits, Kurtis, Tunics & Tops, Sarees",/uploads/media/2025/roohani_1758544319332_zybwio.jpg
+335,Product,ETHNIC ELEGANCE,ETHNIC ELEGANCE,1870,Women,[5173],"[1970,1972]","Kurtas & Suits, Sarees",/uploads/media/2025/1758278469497-agi4hn.png
+336,Product,MODERN FUSION,MODERN FUSION,1870,Women,[5173],"[1963,1996]","Co-ords, Handbags",/uploads/media/2025/1758278621193-txjo1f.png
+337,Product,TIMELESS CLASSICS,TIMELESS CLASSICS,1870,Women,[5173],[1971],"Kurtis, Tunics & Tops",/uploads/media/2025/1758278745884-ugsf8e.png
+338,Product,ROOHANI- RANDOM PRODUCTS,ROOHANI- RANDOM PRODUCTS,1870,Women,[5173],"[1963,1972,1996]","Co-ords, Handbags, Sarees",/uploads/media/2025/roohani_2_1758544303600_36u1va.jpg
+339,Video,ROOHANI- VIDEOS,ROOHANI- VIDEOS,1870,Women,[5173],"[1963,1970,1971,1996]","Co-ords, Handbags, Kurtas & Suits, Kurtis, Tunics & Tops",/uploads/media/2025/roohani_3_1758544280457_e4wjk3.jpg
+340,Product,ROOHANI OFFER 1,ROOHANI-  OFFER 1,1870,Women,[5173],"[1963,1970,1971,1972,1996]","Co-ords, Handbags, Kurtas & Suits, Kurtis, Tunics & Tops, Sarees",/uploads/media/2025/1758286904456-fm67t4.png
+341,Product,ROOHANI- OFFER 2,ROOHANI- OFFER 2,1870,Women,[5173],"[1963,1970,1971,1972,1996]","Co-ords, Handbags, Kurtas & Suits, Kurtis, Tunics & Tops, Sarees",/uploads/media/2025/1758287078250-icva1d.png
+342,Product,ROOHANI - OFFER 3,ROOHANI- OFFER 3,1870,Women,[5173],"[1963,1970,1971,1972,1996]","Co-ords, Handbags, Kurtas & Suits, Kurtis, Tunics & Tops, Sarees",/uploads/media/2025/1758287121975-bugf7d.png
+343,Product,,ROOHANI-  OFFER 4,1870,Women,[5173],"[1963,1970,1971,1972,1996]","Co-ords, Handbags, Kurtas & Suits, Kurtis, Tunics & Tops, Sarees",/uploads/media/2025/1758287155572-2yx1bq.png
+344,Product,HRIMAAN-  ALL PRODUCTS,HRIMAAN-  ALL PRODUCTS,1870,Women,[3862],[1945],Jewellery & Accessories,/uploads/media/2025/hrimaan_1758543805287_hd2pqm.jpg
+345,Product,EVERYDAY SPARKLE,EVERYDAY SPARKLE,1870,Women,[3862],[1945],Jewellery & Accessories,/uploads/media/2025/1758279925585-3xvqa1.png
+346,Product,WRIST WONDERS,WRIST WONDERS,1870,Women,[3862],[1945],Jewellery & Accessories,/uploads/media/2025/1758280034931-h1fgns.png
+347,Product,KEEP IT TOGTHER,KEEP IT TOGTHER,1870,Women,[3862],[1945],Jewellery & Accessories,/uploads/media/2025/1758280137984-aauo4a.png
+348,Product,HRIMAAN- RANDOM PRODUCTS,HRIMAAN- RANDOM PRODUCTS,1870,Women,[3862],[1945],Jewellery & Accessories,/uploads/media/2025/hrimaan__3__1758543786979_cjzrsb.jpg
+349,Video,HRIMAAN- VIDEOS,HRIMAAN- VIDEOS,1870,Women,[3862],[1945],Jewellery & Accessories,/uploads/media/2025/hrimaan__2__1758543689789_6bx6sj.jpg
+350,Product,HRIMAAN- OFFER 1,HRIMAAN- OFFER 1,1870,Women,[3862],[1945],Jewellery & Accessories,/uploads/media/2025/1758287318038-jctg08.png
+351,Product,HRIMAAN- OFFER 2,HRIMAAN- OFFER 2,1870,Women,[3862],[1945],Jewellery & Accessories,/uploads/media/2025/1758287386020-qsuvaa.png
+352,Product,HRIMAAN- OFFER 3,HRIMAAN- OFFER 3,1870,Women,[3862],[1945],Jewellery & Accessories,/uploads/media/2025/1758287437287-m61kgq.png
+353,Product,HRIMAAN- OFFER 4,HRIMAAN- OFFER 4,1870,Women,[3862],[1945],Jewellery & Accessories,/uploads/media/2025/1758287467420-5r6r9e.png
+354,Video,SIMKRAFTZ- VIDEOS,SIMKRAFTZ- VIDEOS,1870,Women,[3548],[],,/uploads/media/2025/simkraftz__2__1758544498578_iadx3p.jpg
+357,Video,Women watch gallery,Women Watch Gallery,1870,Women,[],[],,
+358,Video,Men watch gallery,Men Watch Gallery,1869,Men,[],[],,
+359,Video,,Kids Watch Gallery,1873,Kids,[],[],,
+360,Video,Home Decor Watch Gallery,Home Decor Watch Gallery,1874,Home,[],[],,/uploads/media/2025/38_1761139506137_xcom90.png
+361,Video,Beauty Watch Gallery,Beauty Watch Gallery,2105,Wellness,[],[],,
+362,Video,Discover watch gallery,Discover watch gallery,2136,Discover,[],[],,
+364,Kit,Women After Hours Glam12,Try at Home,1870,Women,[],"[1945,1957,1996,2039]","Dresses, Handbags, Jewellery & Accessories, Sandals",/uploads/media/2025/1758358510264-0yntwt.png
+365,Product,Fountains,Fountains,1874,Home,[7185],[2086],Fountains,/uploads/media/2025/1_1760790930726_ggom0f.png
+367,Product,Decor items,Decor items,1874,Home,[5118],[1902],Homedecor,/uploads/media/2025/2_1761042866942_cuauz6.png
+368,Product,Showpiece,showpiece,1874,Home,[5118],[2087],Showpieces & Vases,/uploads/media/2025/3_1760799625869_5nkr4x.png
+369,Product,Trays ,Trays ,1874,Home,[5118],[1902],Homedecor,/uploads/media/2025/4_1760799590843_dq8cg0.png
+370,Product,Furniture,Furniture,1874,Home,[5118],[2070],Furniture,/uploads/media/2025/5_1761042789308_4wlr0e.png
+371,Product,Wall Paintings,Wall Paintings,1874,Home,[5118],[2082],Wall Decor,/uploads/media/2025/6_1761042803168_4nrj1q.png
+372,Product,Clocks,Clocks,1874,Home,[5118],[2080],Clocks,/uploads/media/2025/SAVE_20251127_131402_1764229446293_b1q0ig.jpg
+373,Product,Ottoman,Ottoman,1874,Home,[5118],[2086],Fountains,/uploads/media/2025/8_1761042823928_g6484f.png
+374,Product,Vases and Planters,Vases and Planters,1874,Home,[5118],[2087],Showpieces & Vases,/uploads/media/2025/9_1761042838117_sz97yn.png
+375,Product,Lamps,Lamps,1874,Home,[5118],[2074],Table Lamps,/uploads/media/2025/10_1761042848787_6v7hia.png
+376,Product,Chandelier,Chandelier,1874,Home,[5118],[1902],Homedecor,/uploads/media/2025/11_1761042589840_9ccfqf.png
+377,Product,Mirrors,Mirrors,1874,Home,[5118],[2081],Mirrors,/uploads/media/2025/New_Banners_1761042722900_03b8ip.png
+378,Product,Textiles- Mats,Textiles- Mats,1874,Home,[5118],[2095],Table Covers & Furnishings,/uploads/media/2025/14_1761042776154_7dyrxg.png
+379,Product,,Outdoor furniture,1874,Home,[],"[1902,2070]","Furniture, Homedecor",
+380,Product,,Outdoor furniture,1874,Home,[],"[1902,2070]","Furniture, Homedecor",
+381,Product,,CI Gallery 1763551935251,,,,,,
+386,Product,,Tray sets,,,,,,gallery/trays.png
+387,Product,,Table lamps,,,[7185],,,gallery/table_lamp.png
+388,Product,,Floor lamps,,,,,,/uploads/media/2025/SAVE_20251129_142357_1764406494204_qa6csz.jpg
+389,Product,,kids toys,,,[7185],,,/uploads/media/2025/SAVE_20251129_134351_1764404109343_5ammms.jpg
+390,Product,,Metal Showpiece,,,,,,gallery/metal_showpeices.png
+391,Product,,Fountains,,,,,,gallery/fountain.png
+392,Product,,Book Stand,,,,,,/uploads/media/2025/SAVE_20251129_141931_1764406199241_hl3kf6.jpg
+399,Product,,Carpets,,,,,,/uploads/media/2025/SAVE_20251129_143032_1764406848820_uit5vm.jpg
+400,Product,,Wall Paintings,,,[7185],,,/uploads/media/2025/SAVE_20251127_140921_1764232770453_gzrz9w.jpg
+401,Product,,Ottomans,,,,,,/uploads/media/2025/SAVE_20251127_141752_1764233282192_7q0asg.jpg
+403,Product,,Wall Clocks,,,[7185],,,/uploads/media/2025/SAVE_20251127_131402_1764234026527_aumtvv.jpg
+404,Product,,Buddha Artifacts,,,,,,/uploads/media/2025/SAVE_20251127_144451_1764234924817_z1jas6.jpg
+405,Product,,Kitchen Essentials,,,,,,/uploads/media/2025/SAVE_20251128_140431_1764318878816_43wiec.jpg
+406,Product,,Poker Game Sets,,,,,,/uploads/media/2025/SAVE_20251129_134359_1764404074288_rtvu5r.jpg
+407,Product,,Poker Game Sets,,,,,,https://cdn.example.com/hero.jpg
+408,Product,,Bar Essentials,,,,,,/uploads/media/2025/SAVE_20251128_141512_1764319522044_ajnqjv.jpg
+409,Product,,Sweatshirt,,,,,,/uploads/media/2025/3_2_1764592014051_yv60t2.png
+410,Product,,Hoodies,,,,,,/uploads/media/2025/2_2_1764592263192_v5h9q5.png
+411,Product,,TestGallery_1766393147241,,,[999],,,
+412,Product,,FilesGallery_1766408024826,,,,,,
+413,Product,,FilesGallery_1766408239727,,,,,,
+414,Product,,FilesGallery_1766408411644,,,,,,
+415,Product,,FilesGallery_1766408530998,,,,,,
+416,Product,,FilesGallery_1766408864460,,,,,,
+417,Product,,FilesGallery_1766409031929,,,,,,
+418,Product,,PriorityGallery_1766411504499,,,,,,
+419,Product,,PriorityGallery_1766411677011,,,,,,
+420,Product,,PriorityGallery_1766411738507,,,,,,
+421,Product,,PriorityGallery_1766412263036,,,,,,
+422,Product,,PriorityGallery_1766412314767,,,,,,
+423,Product,,Home Hero 2,,,,,,https://cdn.example.com/hero.jpg
+424,Product,,Version1_1766464321185,,,,,,
+425,Product,,Version2_1766464321699,,,,,,
+426,Product,,Explicit_1766464321920,,,,,,
+427,Product,,Version1_1766465326630,,,,,,
+428,Product,,Version2_1766465327122,,,,,,
+429,Product,,Explicit_1766465327264,,,,,,
+430,Product,,Version1_1766465573689,,,,,,
+431,Product,,Version2_1766465574161,,,,,,
+432,Product,,Explicit_1766465574304,,,,,,
+433,Product,,LayoutGallery_1766471538591,,,,,,
+434,Product,,LayoutGallery_1766471584246,,,,,,
+435,Product,,LayoutGallery_1766471642446,,,,,,
+437,Product,Men Wellbi,Featured Brands 2,1869,Men,,"[""1907""]",T Shirts,/uploads/media/2025/1756748679846-6ftxad.png
+438,Product,Men Subtract,Featured Brands 1,1869,Men,,"[""1908"", ""1916""]","Bottomwear, Casual Shirts",/uploads/media/2025/1757575930012-n7p5as.png
+439,Product,Women Sassafras,Featured Brands,1870,Women,[],"[1908,1957,1961,1962,1963]","Casual Shirts, Co-ords, Dresses, Shorts & Skirts, Trousers",/uploads/media/2025/1756749010022-llna9a.png
+440,Product,Hrimaan,Brands You Love,1870,Women,[],"[1945,1955]","Accessories, Jewellery & Accessories",/uploads/media/2025/1__4__1760112637147_8cuqcs.png
+441,Product,Men Wellbi,Featured Brands 2,1869,Men,,"[""1907""]",T Shirts,/uploads/media/2025/1756748679846-6ftxad.png
+442,Product,Men Subtract,Featured Brands 1,1869,Men,,"[""1908"", ""1916""]","Bottomwear, Casual Shirts",/uploads/media/2025/1757575930012-n7p5as.png
+443,Product,Women Sassafras,Featured Brands,1870,Women,[],"[1908,1957,1961,1962,1963]","Casual Shirts, Co-ords, Dresses, Shorts & Skirts, Trousers",/uploads/media/2025/1756749010022-llna9a.png
+444,Product,Hrimaan,Brands You Love,1870,Women,[],"[1945,1955]","Accessories, Jewellery & Accessories",/uploads/media/2025/1__4__1760112637147_8cuqcs.png
+445,Product,Men Wellbi,Featured Brands 2,1869,Men,,"[""1907""]",T Shirts,/uploads/media/2025/1756748679846-6ftxad.png
+446,Product,Men Subtract,Featured Brands 1,1869,Men,,"[""1908"", ""1916""]","Bottomwear, Casual Shirts",/uploads/media/2025/1757575930012-n7p5as.png
+447,Product,Women Sassafras,Featured Brands,1870,Women,[],"[1908,1957,1961,1962,1963]","Casual Shirts, Co-ords, Dresses, Shorts & Skirts, Trousers",/uploads/media/2025/1756749010022-llna9a.png
+448,Product,Hrimaan,Brands You Love,1870,Women,[],"[1945,1955]","Accessories, Jewellery & Accessories",/uploads/media/2025/1__4__1760112637147_8cuqcs.png
+449,Product,Men Wellbi,Featured Brands 2,1869,Men,,"[""1907""]",T Shirts,/uploads/media/2025/1756748679846-6ftxad.png
+450,Product,Men Subtract,Featured Brands 1,1869,Men,,"[""1908"", ""1916""]","Bottomwear, Casual Shirts",/uploads/media/2025/1757575930012-n7p5as.png
+451,Product,live deals,Everything Under 599,1869,Men,,"[""1921"", ""1922"", ""1933"", ""1936"", ""1939"", ""1955""]","Accessories, Active T Shirts, Boxers, Briefs & Trunks, Footwear, Socks",/uploads/media/2025/1757506936234-nxb59z.png
+452,Product,live deals,Everything Under 1499,1869,Men,,"[""1907"", ""1908"", ""1910"", ""1916"", ""1917"", ""1919"", ""1921"", ""1922"", ""1926"", ""1933"", ""1936"", ""1939"", ""1955""]","Accessories, Active T Shirts, Bottomwear, Boxers, Briefs & Trunks, Casual Shirts, Casual Trousers, Co-ord Sets, Footwear, Kurta & Kurta Sets, Shorts, Socks, T Shirts",/uploads/media/2025/1757506912678-v8i0ou.png
+453,Product,Women Sassafras,Featured Brands,1870,Women,[],"[1908,1957,1961,1962,1963]","Casual Shirts, Co-ords, Dresses, Shorts & Skirts, Trousers",/uploads/media/2025/1756749010022-llna9a.png
+454,Product,Hrimaan,Brands You Love,1870,Women,[],"[1945,1955]","Accessories, Jewellery & Accessories",/uploads/media/2025/1__4__1760112637147_8cuqcs.png
+455,Product,live deals,Flat 50% Off,1870,Women,,"[""1908"", ""1945"", ""1957"", ""1958"", ""1961"", ""1962"", ""1963"", ""1970"", ""1972""]","Casual Shirts, Co-ords, Dresses, Jewellery & Accessories, Kurtas & Suits, Sarees, Shorts & Skirts, Tops, Trousers",/uploads/media/2025/1757506476824-0vxvfe.png
+456,Product,live deals,Flat 20 % Off,1870,Women,,"[""1908"", ""1945"", ""1957"", ""1958"", ""1961"", ""1962"", ""1963"", ""1970"", ""1972"", ""1996"", ""2039""]","Casual Shirts, Co-ords, Dresses, Handbags, Jewellery & Accessories, Kurtas & Suits, Sandals, Sarees, Shorts & Skirts, Tops, Trousers",/uploads/media/2025/1757506337902-yg60wq.png
+457,Product,Kids Bownbee,Featured Brands 1,1873,Kids,[3543],[2004],Ethnicwear,/uploads/media/2025/1__1__1760116995589_xgvacx.png
+458,Product,Kids Little Marvel,Featured Brands 1,1873,Kids,[],[2043],Bags & Backpacks,/uploads/media/2025/1__7__1760117546330_i60le9.png
+459,Product,live deals,Everything Under 599,1873,Kids,,"[""1945"", ""1998"", ""2000"", ""2003"", ""2011"", ""2019"", ""2036"", ""2039"", ""2043""]","Bags & Backpacks, Clothing Sets, Dresses, Flipflops, Jewellery & Accessories, Sandals, Shorts, Skirts & Shorts, T Shirts",/uploads/media/2025/1757506114880-e5ww96.png
+460,Product,live deals,Everything Under 1499,1873,Kids,,"[""1998"", ""1999"", ""2000"", ""2003"", ""2004"", ""2011"", ""2019"", ""2036"", ""2039"", ""2043""]","Bags & Backpacks, Clothing Sets, Dresses, Ethnicwear, Flipflops, Sandals, Shirts, Shorts, Skirts & Shorts, T Shirts",/uploads/media/2025/1757506027522-gqjrm6.png
+461,Product,,Multi-Biz Test Gallery,,,,,,
+462,Product,,Temp Update Test,,,,,,
+463,Product,,Temp Update Test,,,,,,
+464,Product,,Temp Update Test,,,,,,
+465,Product,,Multi-Biz Test Gallery Updated,,,,,,
+466,Product,,SubSubCatGallery_1766740120697,,,,888,,
+467,Product,,Test V2 - Only Products,,,,,,
+468,Product,,Test V2 - Products + 1 Video,,,,,,/uploads/media/2025/image_28AE57CB_9B7E_4C03_9A7B_75C0A7AC24AF_1766741295_1766741296712_l7ly5v.heic
+469,Product,,Test V2 - Products + Multi Videos,,,[3672],,,/uploads/media/2025/image_DD2655F8_2863_47D3_B52E_F73B19841609_1766751637_1766751638485_hnf9wy.jpeg
+470,Video,,Test V2 - Just Videos,,,[274],,,/uploads/media/2025/2_1766741710548_bkj66a.png
+471,Product,,Seven Horses,,,,,,
+472,Product,,Seven Horses,,,,,,/uploads/media/2025/PXL_20251227_094417517_MP_1766829015186_qih2ud.jpg
+473,Video,,The Jhula,,,,,,/uploads/media/2025/PXL_20251227_112448834_1766835050291_1cmy2w.jpg
+474,Video,,The Mudha,,,,,,/uploads/media/2025/IMG_20251227_154818_1766835968220_670v80.jpg
+475,Product,,Dilli ki Sardi,,,[7185],,,/uploads/media/2026/Galleries/Dilli_ki_Sardi_1767263301684_suwcrb.png
+476,Product,,Tha jharnas,,,[7185],,,/uploads/media/2025/Tha_jharna__2__1769010404341_jx952z.png
+477,Product,,The Art,,,"[5532,7185]",,,/uploads/media/2025/The_Art__3__1769012901719_4h1qn4.png
+478,Product,,The Faith,,,"[5532,7185]",,,/uploads/media/2025/The_Faith__3__1769012944846_q6amtu.png
+479,Product,,The Gadgets,,,[7185],,,/uploads/media/2026/Galleries/The_Gadgets_1767263333609_wrae1w.png
+480,Product,,The Games,,,[7185],,,/uploads/media/2025/The_Games__3__1769012995170_9ismow.png
+481,Product,,The Ghadi,,,[7185],,,/uploads/media/2026/Galleries/The_Ghadi_1767263344568_qmh2r5.png
+482,Product,,The Jhula,,,[7185],,,/uploads/media/2026/Galleries/The_Jhula_1767263355198_6x2vgp.png
+483,Product,,The Kaleen,,,[5532],,,/uploads/media/2026/Galleries/The_Kaleen_1767263360677_aqc2gt.png
+484,Product,,The Kambal,,,[7185],,,/uploads/media/2026/Galleries/The_Kambal_1767263366091_lblnyx.png
+485,Product,,The Kitchen,,,[5532],,,/uploads/media/2026/Galleries/The_Kitchen_1767263371348_gy9blz.png
+486,Product,,The Lanterns,,,[7185],,,/uploads/media/2026/Galleries/The_Lanterns_1767263382162_wgjzl4.png
+487,Product,,The basket,,,[5532],,,/uploads/media/2026/Galleries/The_basket_1767263317896_2txvoc.png
+488,Product,,The cushion,,,[5532],,,/uploads/media/2026/Galleries/The_cushion_1767263323134_qthcvy.png
+489,Product,,The hasrat,,,[5532],,,/uploads/media/2025/The_hasrat__3__1769013061697_jyrqn9.png
+490,Product,,The kursi,,,[5532],,,/uploads/media/2025/The_kursi__2__1769004440291_50y079.png
+491,Product,,The mudha,,,"[273,274]",,,/uploads/media/2026/Galleries/The_mudha_1767263387792_u7luv4.png
+492,Product,,The painting,,,[7185],,,/uploads/media/2025/The_vase__3__1769004317127_usdck7.png
+493,Product,,The Table,,,[7185],,,/uploads/media/2025/The_table__2__1769004492950_sc0jko.png
+494,Product,,The vase,,,[5532],,,/uploads/media/2025/The_vase__2__1769004380259_14p7mu.png
+495,Product,,Wellness,,,[5532],,,/uploads/media/2026/Galleries/Wellness_1767263409792_rjtryo.png
+496,Product,,Test Gallery 1767086569782,,,,,,
+497,Product,,Test Direct 1767174323084,,,,,,
+498,Video,,Elegant Sarees,,,[7185],,,/uploads/media/2026/Galleries/New/Elegant%20Sarees%201.png
+500,Video,,Happy Kids & Toys,,,[7185],,,/uploads/media/2026/Galleries/New/Happy%20Kids%20%26%20Toys%201.png
+501,Video,,Beautiful Home Decor,,,,,,/uploads/media/2026/Galleries/New/Beautiful%20Home%20Decor%201.png
+502,Video,,Stylish Women Accessories,,,,,,/uploads/media/2026/Galleries/New/Stylish%20Women%20Accessories%201.png
+503,Video,,Smart Electronic Gadgets,,,,,,/uploads/media/2026/Galleries/New/Smart%20Electronic%20Gadgets%201.png
+504,Video,,Kurti for the Rozana,,,"[273,274,3547,3548,3673,5116,5281,5286,5294,5314,5320]",,,/uploads/media/2026/Galleries/The%20kurti.png
+505,Video,,Riwaaz for the Roots,,,"[274,3669,3673,5151,5170,5286,5293,5294,5408,5808]",,,/uploads/media/2026/Galleries/the%20ethnic.png
+506,Video,,Pallu for the Power,,,"[274,5151,5173,5293,5294,5320,5808]",,,/uploads/media/2026/Galleries/the%20saree.png
+507,Video,,Silai for the Grace,,,"[274,5286,5293,5383,5808]",,,/uploads/media/2026/Galleries/the%20suit.png
+508,Video,,Walk for the Woman,,,"[3547,3667,5116,5125,5146,5303,5314,5383]",,,/uploads/media/2026/Galleries/the%20office.png
+509,Video,,Nazariya for the Mood,,,"[4810,5123,5129,5168,5186,5441,5465]",,,/uploads/media/2026/Galleries/the%20home.png
+510,Video,,Switch for the Now,,,"[4811,4813,4950,4952,5405]",,,/uploads/media/2026/Galleries/the%20appliance.png
+511,Video,,Gali for the Giggles,,,"[4832,5126,5799]",,,/uploads/media/2026/Galleries/kids%20corner.png
+512,Video,,Add-on for the Attitude,,,"[4834,5119,5152,5287,5320,5380,5382,5407,5409,5552]",,,/uploads/media/2026/Galleries/accessories.png
+513,Video,,Bichona for the Sleep,,,"[5169,5277,5284,5285,5445]",,,/uploads/media/2026/Galleries/handloom.png
+514,Video,,Aangan for the Evening,,,"[5321,5322]",,,/uploads/media/2026/Galleries/patio.png
+515,Video,,Tayyar for the Taali,,,"[5403,5442]",,,/uploads/media/2026/Galleries/kids%20fashion.png

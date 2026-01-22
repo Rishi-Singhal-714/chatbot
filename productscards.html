@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products - Card View | Zulu Club</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-left h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-left h1 i {
+            color: #667eea;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-back {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-back:hover {
+            background: #388E3C;
+            transform: translateY(-2px);
+        }
+
+        .btn-refresh {
+            background: #2196F3;
+            color: white;
+        }
+
+        .btn-refresh:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+        }
+
+        .search-box {
+            position: relative;
+            min-width: 300px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px 12px 45px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+
+        .stats-bar {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .stat-content h3 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            line-height: 1;
+        }
+
+        .stat-content p {
+            font-size: 13px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        @media (min-width: 1400px) {
+            .products-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .products-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .products-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .products-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            position: relative;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(45deg, #f5f7fa, #c3cfe2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .product-card:hover .card-image img {
+            transform: scale(1.05);
+        }
+
+        .no-image {
+            color: #888;
+            font-size: 14px;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .card-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            backdrop-filter: blur(5px);
+            z-index: 2;
+        }
+
+        .card-content {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-id {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 5px 10px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .priority-badge {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .priority-1 { background: #e8f5e9; color: #2E7D32; }
+        .priority-2 { background: #e8f5e9; color: #2E7D32; }
+        .priority-3 { background: #e8f5e9; color: #2E7D32; }
+        .priority-4 { background: #e3f2fd; color: #1976D2; }
+        .priority-5 { background: #e3f2fd; color: #1976D2; }
+        .priority-6 { background: #e3f2fd; color: #1976D2; }
+        .priority-7 { background: #fff3e0; color: #F57C00; }
+        .priority-8 { background: #fff3e0; color: #F57C00; }
+        .priority-9 { background: #fff3e0; color: #F57C00; }
+        .priority-10 { background: #f5f5f5; color: #616161; }
+        .priority-outlier { background: #fce4ec; color: #C2185B; }
+
+        .status-badge {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .status-active { background: #4CAF50; }
+        .status-inactive { background: #f44336; }
+
+        .loading-container {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        .empty-state i {
+            font-size: 60px;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 40px;
+        }
+
+        .page-btn {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .page-btn.active {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .page-info {
+            margin: 0 15px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .message.success { background: #4CAF50; }
+        .message.error { background: #f44336; }
+        .message.info { background: #2196F3; }
+
+        .filters-bar {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-group label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .filter-select {
+            padding: 8px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            min-width: 150px;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .filter-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .filter-checkbox input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .product-grid {
+            display: contents;
+        }
+
+        .card-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn.view {
+            background: #e3f2fd;
+            color: #1976D2;
+        }
+
+        .action-btn.view:hover {
+            background: #bbdefb;
+        }
+
+        .action-btn.edit {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .action-btn.edit:hover {
+            background: #e1bee7;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <h1><i class="fas fa-th-large"></i> Products Gallery</h1>
+                <p class="subtitle">Card view - 6 products per row</p>
+            </div>
+            <div class="controls">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search products by name or ID...">
+                </div>
+                <a href="/home" class="btn btn-back">
+                    <i class="fas fa-arrow-left"></i> Dashboard
+                </a>
+                <button class="btn btn-refresh" onclick="loadProducts()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-icon" style="background: #4CAF50;">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="totalProducts">0</h3>
+                    <p>Total Products</p>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon" style="background: #2196F3;">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="activeProducts">0</h3>
+                    <p>Active Products</p>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon" style="background: #FF9800;">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="highPriority">0</h3>
+                    <p>High Priority (1-3)</p>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon" style="background: #9C27B0;">
+                    <i class="fas fa-image"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="withImages">0</h3>
+                    <p>With Images</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-bar">
+            <div class="filter-group">
+                <label>Status:</label>
+                <select class="filter-select" id="statusFilter" onchange="applyFilters()">
+                    <option value="all">All Status</option>
+                    <option value="active">Active Only</option>
+                    <option value="inactive">Inactive Only</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Priority:</label>
+                <select class="filter-select" id="priorityFilter" onchange="applyFilters()">
+                    <option value="all">All Priorities</option>
+                    <option value="1">Priority 1</option>
+                    <option value="2">Priority 2</option>
+                    <option value="3">Priority 3</option>
+                    <option value="4">Priority 4</option>
+                    <option value="5">Priority 5</option>
+                    <option value="6">Priority 6</option>
+                    <option value="7">Priority 7</option>
+                    <option value="8">Priority 8</option>
+                    <option value="9">Priority 9</option>
+                    <option value="10">Priority 10</option>
+                    <option value="outlier">Outliers</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-checkbox">
+                    <input type="checkbox" id="showImagesOnly" onchange="applyFilters()">
+                    Show only products with images
+                </label>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div id="loadingContainer" class="loading-container">
+            <div class="loading-spinner"></div>
+            <h3>Loading products...</h3>
+            <p>Fetching data from database</p>
+        </div>
+
+        <div id="productsContainer" class="products-grid" style="display: none;"></div>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <i class="fas fa-box-open"></i>
+            <h3>No products found</h3>
+            <p>Try adjusting your filters or search term</p>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination" style="display: none;">
+            <button class="page-btn" onclick="changePage(1)" id="firstPage">
+                <i class="fas fa-angle-double-left"></i>
+            </button>
+            <button class="page-btn" onclick="prevPage()" id="prevPage">
+                <i class="fas fa-angle-left"></i>
+            </button>
+            <span class="page-info" id="pageInfo">Page 1 of 1</span>
+            <button class="page-btn" onclick="nextPage()" id="nextPage">
+                <i class="fas fa-angle-right"></i>
+            </button>
+            <button class="page-btn" onclick="changePage(totalPages)" id="lastPage">
+                <i class="fas fa-angle-double-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Message Container -->
+    <div id="messageContainer"></div>
+
+    <script>
+        // Global variables
+        let allProducts = [];
+        let filteredProducts = [];
+        let currentPage = 1;
+        const productsPerPage = 6;
+        let totalPages = 1;
+        let searchTimeout = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProducts();
+            
+            // Setup search input
+            document.getElementById('searchInput').addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    applyFilters();
+                }, 300);
+            });
+        });
+
+        // Load products from API
+        async function loadProducts() {
+            showLoading(true);
+            
+            try {
+                const response = await fetch('/api/products');
+                const data = await response.json();
+                
+                if (data && data.success && Array.isArray(data.data)) {
+                    allProducts = data.data.map(product => ({
+                        ...product,
+                        // Ensure proper formatting
+                        id: product.id || 'N/A',
+                        name: product.name || product.title || 'Unnamed Product',
+                        image: product.image || product.IMAGE || null,
+                        priority: parseInt(product.priority) || 1,
+                        status: parseInt(product.status) || 0,
+                        // Check if it has an image
+                        hasImage: !!(product.image || product.IMAGE || product.other_images)
+                    }));
+                    
+                    showMessage('Products loaded successfully!', 'success');
+                    applyFilters();
+                    updateStats();
+                } else {
+                    throw new Error(data?.error || 'Invalid data format');
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+                showMessage(`Error: ${error.message}`, 'error');
+                document.getElementById('productsContainer').innerHTML = '';
+                document.getElementById('productsContainer').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('pagination').style.display = 'none';
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const priorityFilter = document.getElementById('priorityFilter').value;
+            const showImagesOnly = document.getElementById('showImagesOnly').checked;
+            
+            filteredProducts = allProducts.filter(product => {
+                // Search filter
+                if (searchTerm) {
+                    const searchable = [
+                        product.name,
+                        product.id.toString(),
+                        product.sku || '',
+                        product.description || ''
+                    ].join(' ').toLowerCase();
+                    
+                    if (!searchable.includes(searchTerm)) {
+                        return false;
+                    }
+                }
+                
+                // Status filter
+                if (statusFilter === 'active' && product.status !== 1) return false;
+                if (statusFilter === 'inactive' && product.status !== 0) return false;
+                
+                // Image filter
+                if (showImagesOnly && !product.hasImage) return false;
+                
+                // Priority filter
+                if (priorityFilter !== 'all') {
+                    if (priorityFilter === 'outlier') {
+                        const priority = parseInt(product.priority) || 1;
+                        if (priority >= 1 && priority <= 10) return false;
+                    } else {
+                        const selectedPriority = parseInt(priorityFilter);
+                        if (selectedPriority !== product.priority) return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            currentPage = 1;
+            displayProducts();
+            updatePagination();
+        }
+
+        // Display products in grid
+        function displayProducts() {
+            const container = document.getElementById('productsContainer');
+            const emptyState = document.getElementById('emptyState');
+            const pagination = document.getElementById('pagination');
+            
+            if (filteredProducts.length === 0) {
+                container.innerHTML = '';
+                container.style.display = 'none';
+                emptyState.style.display = 'block';
+                pagination.style.display = 'none';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            container.style.display = 'grid';
+            pagination.style.display = 'flex';
+            
+            // Calculate pagination
+            const startIndex = (currentPage - 1) * productsPerPage;
+            const endIndex = startIndex + productsPerPage;
+            const pageProducts = filteredProducts.slice(startIndex, endIndex);
+            
+            // Generate cards HTML
+            let html = '';
+            pageProducts.forEach(product => {
+                const priority = parseInt(product.priority) || 1;
+                const isOutlier = priority < 1 || priority > 10;
+                const priorityClass = isOutlier ? 'priority-outlier' : `priority-${priority}`;
+                const statusClass = product.status === 1 ? 'status-active' : 'status-inactive';
+                const statusText = product.status === 1 ? 'Active' : 'Inactive';
+                
+                // Get image URL
+                let imageUrl = product.image || product.IMAGE || '';
+                if (product.other_images) {
+                    try {
+                        const otherImages = JSON.parse(product.other_images);
+                        if (Array.isArray(otherImages) && otherImages.length > 0) {
+                            imageUrl = otherImages[0];
+                        }
+                    } catch (e) {
+                        // Not valid JSON, use as is
+                        if (product.other_images.includes('http')) {
+                            imageUrl = product.other_images.split(',')[0];
+                        }
+                    }
+                }
+                
+                // Truncate name if too long
+                const productName = product.name.length > 50 
+                    ? product.name.substring(0, 50) + '...' 
+                    : product.name;
+                
+                html += `
+                <div class="product-card">
+                    <div class="card-image">
+                        ${imageUrl ? 
+                            `<img src="${imageUrl}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'">` :
+                            `<div class="no-image">
+                                <i class="fas fa-image fa-3x"></i>
+                                <p>No image available</p>
+                            </div>`
+                        }
+                        <div class="card-badge">
+                            ${isOutlier ? 'Outlier' : `P${priority}`}
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <h3 class="card-title">${productName}</h3>
+                        <div class="card-id">ID: ${product.id}</div>
+                        
+                        ${product.sku ? `<p style="font-size: 12px; color: #888; margin-bottom: 10px;">SKU: ${product.sku}</p>` : ''}
+                        
+                        ${product.category_id ? `<p style="font-size: 12px; color: #666; margin-bottom: 10px;">Category: ${product.category_id}</p>` : ''}
+                        
+                        <div class="card-meta">
+                            <div>
+                                <span class="priority-badge ${priorityClass}">
+                                    <i class="fas fa-star"></i> Priority ${isOutlier ? 'Outlier' : priority}
+                                </span>
+                            </div>
+                            <div class="status-badge ${statusClass}" title="${statusText}"></div>
+                        </div>
+                        
+                        <div class="card-footer">
+                            <button class="action-btn view" onclick="viewProduct(${product.id})">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="action-btn edit" onclick="editProduct(${product.id})">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            updatePageInfo();
+        }
+
+        // Update statistics
+        function updateStats() {
+            const totalProducts = allProducts.length;
+            const activeProducts = allProducts.filter(p => p.status === 1).length;
+            const highPriority = allProducts.filter(p => {
+                const priority = parseInt(p.priority) || 1;
+                return !(priority < 1 || priority > 10) && priority <= 3;
+            }).length;
+            const withImages = allProducts.filter(p => p.hasImage).length;
+            
+            document.getElementById('totalProducts').textContent = totalProducts.toLocaleString();
+            document.getElementById('activeProducts').textContent = activeProducts.toLocaleString();
+            document.getElementById('highPriority').textContent = highPriority.toLocaleString();
+            document.getElementById('withImages').textContent = withImages.toLocaleString();
+        }
+
+        // Pagination functions
+        function updatePagination() {
+            totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+            
+            document.getElementById('firstPage').disabled = currentPage === 1;
+            document.getElementById('prevPage').disabled = currentPage === 1;
+            document.getElementById('nextPage').disabled = currentPage === totalPages;
+            document.getElementById('lastPage').disabled = currentPage === totalPages;
+            
+            updatePageInfo();
+        }
+
+        function updatePageInfo() {
+            const start = (currentPage - 1) * productsPerPage + 1;
+            const end = Math.min(currentPage * productsPerPage, filteredProducts.length);
+            const total = filteredProducts.length;
+            
+            document.getElementById('pageInfo').textContent = 
+                `Page ${currentPage} of ${totalPages} (${start}-${end} of ${total})`;
+        }
+
+        function changePage(page) {
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                displayProducts();
+                updatePagination();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                changePage(currentPage - 1);
+            }
+        }
+
+        function nextPage() {
+            if (currentPage < totalPages) {
+                changePage(currentPage + 1);
+            }
+        }
+
+        // View product details
+        function viewProduct(id) {
+            showMessage(`Viewing product ${id}`, 'info');
+            // You can implement a modal or redirect to detailed view
+            window.open(`/api/products/${id}`, '_blank');
+        }
+
+        // Edit product
+        function editProduct(id) {
+            showMessage(`Editing product ${id}`, 'info');
+            // Redirect to edit page
+            window.location.href = `/edit-product?id=${id}`;
+        }
+
+        // Show/hide loading
+        function showLoading(show) {
+            document.getElementById('loadingContainer').style.display = show ? 'block' : 'none';
+            if (!show) {
+                document.getElementById('productsContainer').style.display = 'grid';
+            }
+        }
+
+        // Show message
+        function showMessage(text, type) {
+            const container = document.getElementById('messageContainer');
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            message.textContent = text;
+            container.appendChild(message);
+            
+            setTimeout(() => {
+                message.remove();
+            }, 3000);
+        }
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft' && currentPage > 1) {
+                prevPage();
+            } else if (e.key === 'ArrowRight' && currentPage < totalPages) {
+                nextPage();
+            } else if (e.key === 'Escape') {
+                document.getElementById('searchInput').value = '';
+                applyFilters();
+            }
+        });
+    </script>
+</body>
+</html>
