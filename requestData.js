@@ -43,7 +43,7 @@ const columnMapping = {
     'id', 'user_id', 'slug', 'store_name', 'store_description', 'business', 
     'category_ids', 'categories_1', 'market_place', 'outlet_live', 'buy_now', 
     'accepting_orders', 'call_outlet', 'whatsapp_toggle', 'outlet_type', 
-    'public_phone', 'whatsapp', 'instagram', 'public_address', 'priority_id'
+    'public_phone', 'whatsapp', 'instagram', 'public_address', 'slider_images','priority_id'
   ],
   'users': [
     'id', 'username', 'mobile', 'email', 'preffered_outlets', 

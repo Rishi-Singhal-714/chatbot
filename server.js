@@ -3504,6 +3504,11 @@ app.get('/appconfigs', (req, res) => {
 app.get('/sellers', (req, res) => {
   res.sendFile(__dirname + '/sellers.html');
 });
+app.get('/sellercards', (req, res) => {
+  res.sendFile(__dirname + '/sellercards.html');
+});app.get('/productscards', (req, res) => {
+  res.sendFile(__dirname + '/productscards.html');
+});
 app.get('/videos', (req, res) => {
   res.sendFile(__dirname + '/videos.html');
 });

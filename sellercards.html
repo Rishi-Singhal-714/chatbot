@@ -1,0 +1,3222 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sellers - Card View</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 30px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            font-size: 28px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        h1:before {
+            content: "🏪";
+            font-size: 32px;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin: 25px 0;
+            flex-wrap: wrap;
+            align-items: center;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .back-btn {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: white;
+        }
+        .refresh-btn {
+            background: linear-gradient(135deg, #2196F3 0%, #0b7dda 100%);
+            color: white;
+        }
+        .search-box {
+            flex-grow: 1;
+            max-width: 400px;
+            position: relative;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 12px 45px 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+        .search-box:after {
+            content: "🔍";
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7f8c8d;
+        }
+        
+        /* Filters with Counts */
+        .filters-container {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 25px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid #e8e8e8;
+        }
+        .filters-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .filter-group {
+            position: relative;
+        }
+        .filter-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .filter-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237f8c8d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 15px;
+        }
+        .filter-group select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+        .filter-count {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 4px 10px;
+            background: #4CAF50;
+            color: white;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 30px;
+            text-align: center;
+        }
+        
+        #message {
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: 600;
+            text-align: center;
+            display: none;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        #loading {
+            padding: 30px;
+            text-align: center;
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 2px solid #ffeaa7;
+            border-radius: 10px;
+            margin: 25px 0;
+            color: #856404;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        #loading:before {
+            content: "⏳";
+            font-size: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #error {
+            padding: 25px;
+            text-align: center;
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border: 2px solid #f5c6cb;
+            border-radius: 10px;
+            margin: 25px 0;
+            color: #721c24;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+        
+        /* Sellers Grid */
+        .sellers-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            margin-top: 25px;
+        }
+        
+        @media (max-width: 1400px) {
+            .sellers-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (max-width: 1000px) {
+            .sellers-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .sellers-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Seller Card */
+        .seller-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            border: 1px solid #f0f0f0;
+        }
+        
+        .seller-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        
+        /* Image Slider Styles */
+        .image-slider {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        }
+        
+        .slider-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            transition: transform 1s ease;
+        }
+        
+        .slider-image {
+            width: 100%;
+            height: 100%;
+            flex-shrink: 0;
+            object-fit: cover;
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        }
+        
+        .image-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48px;
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        }
+        
+        .slider-nav {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            z-index: 2;
+        }
+        
+        .slider-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .slider-dot.active {
+            background: white;
+            transform: scale(1.2);
+        }
+        
+        .slider-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s;
+            z-index: 2;
+            opacity: 0;
+        }
+        
+        .seller-card:hover .slider-arrow {
+            opacity: 1;
+        }
+        
+        .slider-arrow:hover {
+            background: rgba(0,0,0,0.8);
+        }
+        
+        .slider-arrow.prev {
+            left: 15px;
+        }
+        
+        .slider-arrow.next {
+            right: 15px;
+        }
+        
+        .card-actions {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        
+        .seller-card:hover .card-actions {
+            opacity: 1;
+        }
+        
+        .action-btn {
+            background: rgba(255,255,255,0.95);
+            color: #2c3e50;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .action-btn:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .action-btn.edit-details {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .action-btn.edit-images {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .card-content {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+            line-height: 1.3;
+        }
+        
+        .card-subtitle {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .card-id {
+            font-size: 12px;
+            color: #7f8c8d;
+            background: #f8f9fa;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 12px;
+            display: inline-block;
+            border: 1px solid #e8e8e8;
+        }
+        
+        /* Info Tags */
+        .card-info {
+            margin-top: 15px;
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .info-tag {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #1565c0;
+            padding: 6px 12px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            transition: all 0.3s;
+            border: 1px solid rgba(21, 101, 192, 0.1);
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .info-tag:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .info-tag.category {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            color: #2e7d32;
+        }
+        
+        .info-tag.priority {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            color: #ef6c00;
+        }
+        
+        .info-tag.business {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            color: #7b1fa2;
+        }
+        
+        .info-tag.status.active {
+            background: linear-gradient(135deg, #4CAF50 0%, #388e3c 100%);
+            color: white;
+        }
+        
+        .info-tag.status.inactive {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+        }
+        
+        .info-tag.outlet {
+            background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+            color: #00695c;
+        }
+        
+        .contact-info {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .contact-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        /* Edit Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 0;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: modalSlideIn 0.4s ease;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px 30px;
+            border-bottom: 2px solid #f0f0f0;
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            color: white;
+            border-radius: 16px 16px 0 0;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            color: white;
+            font-size: 22px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .modal-header h2:before {
+            content: "✏️";
+            font-size: 24px;
+        }
+        
+        .close-modal {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            font-size: 32px;
+            cursor: pointer;
+            color: white;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+        
+        .close-modal:hover {
+            background: rgba(255,255,255,0.3);
+            transform: rotate(90deg);
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        .form-section {
+            margin-bottom: 25px;
+        }
+        
+        .form-section h3 {
+            margin: 0 0 15px 0;
+            color: #2c3e50;
+            font-size: 18px;
+            font-weight: 600;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #4CAF50;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.3s;
+            background: white;
+            font-family: inherit;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+        
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237f8c8d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 15px;
+            padding-right: 45px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            padding: 25px 30px;
+            border-top: 2px solid #f0f0f0;
+            background: #f8f9fa;
+            border-radius: 0 0 16px 16px;
+        }
+        
+        .save-btn {
+            background: linear-gradient(135deg, #27ae60 0%, #219653 100%);
+            color: white;
+            padding: 12px 24px;
+            font-size: 14px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .save-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #219653 0%, #1e874b 100%);
+        }
+        
+        .cancel-btn {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            color: white;
+            padding: 12px 24px;
+            font-size: 14px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Images Management Modal */
+        .images-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .image-item {
+            position: relative;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f8f9fa;
+        }
+        
+        .image-item img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .image-actions {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            display: flex;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .image-item:hover .image-actions {
+            opacity: 1;
+        }
+        
+        .image-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .image-btn.delete {
+            background: #f44336;
+            color: white;
+        }
+        
+        .image-btn.delete:hover {
+            background: #d32f2f;
+        }
+        
+        .image-btn.view {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .image-btn.view:hover {
+            background: #0b7dda;
+        }
+        
+        .image-btn.replace {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .image-btn.replace:hover {
+            background: #f57c00;
+        }
+        
+        .image-info {
+            padding: 8px;
+            font-size: 11px;
+            color: #666;
+            background: white;
+            border-top: 1px solid #eee;
+        }
+        
+        .upload-container {
+            border: 2px dashed #2196F3;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px;
+            background: #f8f9fa;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+        
+        .upload-container.dragover {
+            border-color: #4CAF50;
+            background: #e8f5e9;
+        }
+        
+        .upload-btn {
+            background: #2196F3;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .upload-btn:hover {
+            background: #0b7dda;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 30px;
+            color: #7f8c8d;
+            font-size: 18px;
+            grid-column: 1 / -1;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 2px dashed #e0e0e0;
+        }
+        
+        .empty-state:before {
+            content: "🏪";
+            font-size: 48px;
+            display: block;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        /* Active filters info */
+        .active-filters {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #bbdefb;
+        }
+        
+        .active-filters h4 {
+            margin: 0 0 10px 0;
+            color: #1565c0;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .active-filters h4:before {
+            content: "⚡";
+        }
+        
+        .filter-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .filter-tag {
+            background: #1565c0;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .filter-tag button {
+            background: none;
+            border: none;
+            color: white;
+            padding: 0;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        
+        /* Custom Dropdown Styles - FIXED */
+        .custom-select-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        
+        .select-header {
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+            user-select: none;
+        }
+        
+        .select-header:hover {
+            border-color: #4CAF50;
+        }
+        
+        .select-header .dropdown-arrow {
+            color: #7f8c8d;
+            font-size: 12px;
+            transition: transform 0.3s;
+        }
+        
+        .custom-select-wrapper.open .select-header .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+        
+        .custom-select-wrapper.open .select-header {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+        
+        .select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            margin-top: 5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            display: none;
+            max-height: 350px;
+            overflow: hidden;
+        }
+        
+        .custom-select-wrapper.open .select-dropdown {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .dropdown-search {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            background: #f8f9fa;
+        }
+        
+        .dropdown-search-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        
+        .dropdown-search-input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+        }
+        
+        .dropdown-options {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        
+        .dropdown-option {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+            user-select: none;
+        }
+        
+        .dropdown-option:hover {
+            background: #f8f9fa;
+        }
+        
+        .dropdown-option.selected {
+            background: #e8f5e9;
+            color: #2e7d32;
+            font-weight: 600;
+        }
+        
+        .dropdown-option.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f8f9fa;
+        }
+        
+        .dropdown-option.disabled:hover {
+            background: #f8f9fa;
+        }
+        
+        /* Multi-select specific styles */
+        .multi-select .dropdown-option {
+            display: flex;
+            align-items: center;
+            padding: 8px 15px;
+            margin: 0;
+        }
+        
+        .multi-select .dropdown-option input[type="checkbox"] {
+            margin-right: 10px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        
+        .multi-select .dropdown-option label {
+            cursor: pointer;
+            flex: 1;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+        }
+        
+        .dropdown-actions {
+            padding: 10px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            background: #f8f9fa;
+        }
+        
+        .select-all-btn, .clear-all-btn {
+            flex: 1;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .select-all-btn {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .select-all-btn:hover {
+            background: #0b7dda;
+        }
+        
+        .clear-all-btn {
+            background: #f44336;
+            color: white;
+        }
+        
+        .clear-all-btn:hover {
+            background: #d32f2f;
+        }
+        
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #4CAF50;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+        
+        /* Grid Layout for Form */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Statistics */
+        .stats-container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #4CAF50;
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Editable JSON textarea for slider images */
+        .json-textarea {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            resize: vertical;
+            min-height: 150px;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        
+        .json-textarea:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+            outline: none;
+        }
+        
+        .json-valid {
+            border-color: #4CAF50 !important;
+        }
+        
+        .json-invalid {
+            border-color: #f44336 !important;
+        }
+        
+        .json-status {
+            font-size: 12px;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .json-status.valid {
+            color: #4CAF50;
+        }
+        
+        .json-status.invalid {
+            color: #f44336;
+        }
+        
+        /* Read-only images in edit modal */
+        .readonly-images-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .readonly-image-item {
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #f8f9fa;
+        }
+        
+        .readonly-image-item img {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .readonly-image-info {
+            padding: 5px;
+            font-size: 10px;
+            color: #666;
+            background: white;
+            text-align: center;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sellers - Card View</h1>
+    
+    <div class="controls">
+        <button class="back-btn" onclick="location.href='/home'">← Back to Dashboard</button>
+        <button class="refresh-btn" onclick="loadSellers()">🔄 Refresh</button>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search sellers by name, ID, or user ID...">
+        </div>
+    </div>
+    
+    <!-- Statistics - REMOVED Active Sellers -->
+    <div class="stats-container">
+        <h3 style="margin: 0 0 20px 0; color: #2c3e50;">Statistics</h3>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalSellers">0</div>
+                <div class="stat-label">Total Sellers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="liveSellers">0</div>
+                <div class="stat-label">Live Outlets</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="filteredSellers">0</div>
+                <div class="stat-label">Currently Showing</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filters with Counts - ADDED Business Filter -->
+    <div class="filters-container">
+        <div class="filters-row">
+            <!-- Outlet Live Filter - FIXED for 'on'/'off' -->
+            <div class="filter-group">
+                <label>Outlet Live <span class="filter-count" id="outletLiveCount">0</span></label>
+                <select id="outletLiveFilter">
+                    <option value="all">All Outlets</option>
+                    <option value="on">Live</option>
+                    <option value="off">Not Live</option>
+                </select>
+            </div>
+            
+            <!-- Category Filter with Custom Dropdown -->
+            <div class="filter-group">
+                <label>Categories <span class="filter-count" id="categoryCount">0</span></label>
+                <div class="custom-select-wrapper" id="categoryFilterWrapper">
+                    <div class="select-header" id="categorySelectHeader">
+                        <span>All Categories</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="select-dropdown" id="categoryDropdown">
+                        <div class="dropdown-search">
+                            <input type="text" id="searchCategoryFilter" 
+                                   class="dropdown-search-input" 
+                                   placeholder="Search category by name or ID...">
+                        </div>
+                        <div class="dropdown-options" id="categoryOptions">
+                            <div class="dropdown-option selected" data-value="all">All Categories</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Business Filter - ADDED Multi-select -->
+            <div class="filter-group">
+                <label>Business Type <span class="filter-count" id="businessCount">0</span></label>
+                <div class="custom-select-wrapper" id="businessFilterWrapper">
+                    <div class="select-header" id="businessSelectHeader">
+                        <span>All Business Types</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="select-dropdown" id="businessDropdown">
+                        <div class="dropdown-search">
+                            <input type="text" id="searchBusinessFilter" 
+                                   class="dropdown-search-input" 
+                                   placeholder="Search business type...">
+                        </div>
+                        <div class="dropdown-options" id="businessOptions">
+                            <div class="dropdown-option selected" data-value="all">All Business Types</div>
+                            <div class="dropdown-option" data-value="6">Kids</div>
+                            <div class="dropdown-option" data-value="10">Home</div>
+                            <div class="dropdown-option" data-value="12">Men</div>
+                            <div class="dropdown-option" data-value="13">Women</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Active Filters Display -->
+        <div class="active-filters" id="activeFilters" style="display: none;">
+            <h4>Active Filters</h4>
+            <div class="filter-tags" id="filterTags"></div>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+            <div id="statsInfo" style="color: #666; font-size: 14px;">
+                Total: <span id="totalCount">0</span> | Showing: <span id="showingCount">0</span>
+                | Live: <span id="liveCount">0</span>
+            </div>
+            <button onclick="resetFilters()" style="background: #f44336; color: white; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600;">
+                ❌ Clear All Filters
+            </button>
+        </div>
+    </div>
+    
+    <div id="message"></div>
+    <div id="loading">Loading sellers...</div>
+    <div id="error"></div>
+    
+    <div id="sellersContainer" class="sellers-grid"></div>
+
+    <!-- Edit Seller Details Modal -->
+    <div id="editSellerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Seller Details</h2>
+                <button class="close-modal" onclick="closeEditSellerModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="editSellerForm">
+                    <div class="form-grid">
+                        <!-- Basic Information -->
+                        <div class="form-group">
+                            <label>Store Name *</label>
+                            <input type="text" id="editStoreName" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Priority ID</label>
+                            <select id="editPriorityId" class="form-control">
+                                <option value="">-- Select --</option>
+                                <option value="1">1 (Highest)</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10 (Lowest)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Outlet Live</label>
+                            <select id="editOutletLive" class="form-control">
+                                <option value="">-- Select --</option>
+                                <option value="on">Live</option>
+                                <option value="off">Not Live</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3>Categories (Multi-select)</h3>
+                        <div class="form-group">
+                            <div class="custom-select-wrapper multi-select" id="editCategoriesWrapper">
+                                <div class="select-header" id="editCategoriesSelectHeader">
+                                    <span>Select categories</span>
+                                    <span class="dropdown-arrow">▼</span>
+                                </div>
+                                <div class="select-dropdown" id="editCategoriesDropdown">
+                                    <div class="dropdown-search">
+                                        <input type="text" id="searchCategoriesEdit" 
+                                               class="dropdown-search-input" 
+                                               placeholder="Search category by name or ID...">
+                                    </div>
+                                    <div class="dropdown-options" id="editCategoriesOptions">
+                                        <!-- Options will be populated dynamically -->
+                                    </div>
+                                    <div class="dropdown-actions">
+                                        <button type="button" class="select-all-btn" onclick="selectAllCategories()">Select All</button>
+                                        <button type="button" class="clear-all-btn" onclick="clearAllCategories()">Clear All</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <small style="color: #666; margin-top: 5px;">Select multiple categories</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3>Business Type (Multi-select)</h3>
+                        <div class="form-group">
+                            <div class="custom-select-wrapper multi-select" id="editBusinessWrapper">
+                                <div class="select-header" id="editBusinessSelectHeader">
+                                    <span>Select business types</span>
+                                    <span class="dropdown-arrow">▼</span>
+                                </div>
+                                <div class="select-dropdown" id="editBusinessDropdown">
+                                    <div class="dropdown-search">
+                                        <input type="text" id="searchBusinessEdit" 
+                                               class="dropdown-search-input" 
+                                               placeholder="Search business type...">
+                                    </div>
+                                    <div class="dropdown-options" id="editBusinessOptions">
+                                        <div class="dropdown-option">
+                                            <input type="checkbox" value="6" id="business_6">
+                                            <label for="business_6">Kids</label>
+                                        </div>
+                                        <div class="dropdown-option">
+                                            <input type="checkbox" value="10" id="business_10">
+                                            <label for="business_10">Home</label>
+                                        </div>
+                                        <div class="dropdown-option">
+                                            <input type="checkbox" value="12" id="business_12">
+                                            <label for="business_12">Men</label>
+                                        </div>
+                                        <div class="dropdown-option">
+                                            <input type="checkbox" value="13" id="business_13">
+                                            <label for="business_13">Women</label>
+                                        </div>
+                                    </div>
+                                    <div class="dropdown-actions">
+                                        <button type="button" class="select-all-btn" onclick="selectAllBusiness()">Select All</button>
+                                        <button type="button" class="clear-all-btn" onclick="clearAllBusiness()">Clear All</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <small style="color: #666; margin-top: 5px;">Select multiple business types (comma-separated in database)</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3>Contact Information</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Public Phone</label>
+                                <input type="tel" id="editPublicPhone" class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>WhatsApp</label>
+                                <input type="tel" id="editWhatsapp" class="form-control">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Public Address</label>
+                            <textarea id="editPublicAddress" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3>Features</h3>
+                        <div class="form-grid">
+                            <div class="form-group" style="display: flex; align-items: center; gap: 15px;">
+                                <label style="margin: 0;">WhatsApp Toggle</label>
+                                <select id="editWhatsappToggle" class="form-control" style="width: auto; min-width: 100px;">
+                                    <option value="">-- Select --</option>
+                                    <option value="on">On</option>
+                                    <option value="off">Off</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group" style="display: flex; align-items: center; gap: 15px;">
+                                <label style="margin: 0;">Call Outlet</label>
+                                <select id="editCallOutlet" class="form-control" style="width: auto; min-width: 100px;">
+                                    <option value="">-- Select --</option>
+                                    <option value="on">On</option>
+                                    <option value="off">Off</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3>Store Description</h3>
+                        <div class="form-group">
+                            <textarea id="editStoreDescription" class="form-control" rows="4" placeholder="Enter store description..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3>Slider Images JSON (Editable)</h3>
+                        <div class="form-group">
+                            <label>Slider Images JSON:</label>
+                            <textarea id="editSliderImagesJson" class="form-control json-textarea" rows="8" placeholder='[{"sort_no": 1, "file_name": "https://..."}, ...]'></textarea>
+                            <div id="jsonStatus" class="json-status"></div>
+                            <small style="color: #666; margin-top: 5px;">
+                                Edit the JSON directly. Format: <code>[{"sort_no": 1, "file_name": "https://..."}, ...]</code>
+                            </small>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="cancel-btn" onclick="closeEditSellerModal()">
+                    ✕ Cancel
+                </button>
+                <button type="button" class="save-btn" onclick="saveSellerDetails()">
+                    💾 Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Slider Images Modal -->
+    <div id="imagesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Manage Slider Images</h2>
+                <button class="close-modal" onclick="closeImagesModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="form-section">
+                    <h3>Current Images</h3>
+                    <p style="color: #666; margin-bottom: 15px; font-size: 14px;">
+                        Images will be saved in format: 
+                        <code>[{"sort_no": 1, "file_name": "https://..."}, ...]</code>
+                    </p>
+                    <div id="currentImagesContainer" class="images-container">
+                        <!-- Images will be populated here -->
+                    </div>
+                    
+                    <div style="text-align: center; margin: 20px 0;">
+                        <button onclick="addNewImage()" style="background: #4CAF50; color: white; padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600;">
+                            ➕ Add New Image
+                        </button>
+                    </div>
+                    
+                    <div id="imageUploadSection" style="display: none;">
+                        <div class="upload-container" id="uploadContainer">
+                            <input type="file" id="imageFileInput" class="file-input" accept="image/*" multiple>
+                            <button type="button" class="upload-btn" onclick="document.getElementById('imageFileInput').click()">
+                                📁 Choose Images
+                            </button>
+                            <p style="margin: 15px 0; color: #666;">or drag and drop images here</p>
+                            <div style="font-size: 13px; color: #7f8c8d; margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.5); border-radius: 6px;">
+                                <strong>Supported formats:</strong> JPG, PNG, GIF, WEBP<br>
+                                <strong>Maximum file size:</strong> 5MB per image<br>
+                                <strong>Recommended:</strong> 800×600px or larger
+                            </div>
+                        </div>
+                        
+                        <div id="uploadedImagesPreview" style="display: none; margin-top: 20px;">
+                            <h4 style="margin: 0 0 15px 0; color: #2c3e50;">Uploaded Images</h4>
+                            <div id="uploadedImagesGrid" class="images-container"></div>
+                            <div style="text-align: center; margin-top: 20px;">
+                                <button onclick="addUploadedImages()" style="background: #2196F3; color: white; padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600;">
+                                    ✅ Add to Gallery
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="cancel-btn" onclick="closeImagesModal()">
+                    ✕ Cancel
+                </button>
+                <button type="button" class="save-btn" onclick="saveAllImages()">
+                    💾 Save All Images
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allSellers = [];
+        let filteredSellers = [];
+        let categoriesList = [];
+        let currentEditSellerId = null;
+        let currentImagesSellerId = null;
+        
+        // Image management variables
+        let sellerImages = []; // Array of image objects: { sort_no, file_name }
+        let uploadedImages = []; // Array of newly uploaded images (temp)
+        
+        // Filter state
+        let activeFilters = {
+            outletLive: 'all',
+            category: 'all',
+            business: 'all'
+        };
+        
+        // Edit form state
+        let selectedCategories = [];
+        let selectedBusiness = [];
+        
+        // Business type mapping
+        const businessLabels = {
+            '6': 'Kids',
+            '10': 'Home',
+            '12': 'Men',
+            '13': 'Women'
+        };
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSellers();
+            
+            // Setup search
+            document.getElementById('searchInput').addEventListener('input', function() {
+                applyFilters();
+            });
+            
+            // Setup filter change events
+            document.getElementById('outletLiveFilter').addEventListener('change', function() {
+                activeFilters.outletLive = this.value;
+                updateFilterOptions();
+                applyFilters();
+            });
+            
+            // Setup drag and drop for images
+            setupImageDragDrop();
+            
+            // Initialize dropdowns in edit modal
+            setTimeout(() => {
+                setupCategoryMultiSelectDropdown();
+                setupBusinessMultiSelectDropdown();
+            }, 1000);
+            
+            // Setup JSON validation for slider images
+            document.getElementById('editSliderImagesJson').addEventListener('input', validateSliderImagesJson);
+            
+            // Setup business filter dropdown
+            setupFilterDropdown('business');
+        });
+        
+        // Load sellers with enhanced data
+        async function loadSellers() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('sellersContainer').innerHTML = '';
+            
+            try {
+                // Load sellers data
+                const sellersResponse = await fetch('/api/sellers');
+                const sellersData = await sellersResponse.json();
+                
+                // Load categories for names
+                const categoriesResponse = await fetch('/api/categories');
+                const categoriesData = await categoriesResponse.json();
+                
+                if (sellersData && sellersData.success && Array.isArray(sellersData.data)) {
+                    allSellers = sellersData.data;
+                    categoriesList = categoriesData.data || [];
+                    
+                    // Process sellers data
+                    allSellers = allSellers.map(seller => {
+                        // Process slider images - ensure proper format
+                        const processedImages = processSliderImages(seller.slider_images);
+                        
+                        // Process category IDs to names
+                        const categoryIds = seller.category_ids ? seller.category_ids.split(',').map(id => id.trim()).filter(id => id) : [];
+                        const categoryNames = categoryIds.map(id => {
+                            const category = categoriesList.find(c => c.id == id);
+                            return category ? category.name : `Category ${id}`;
+                        });
+                        
+                        // Process business IDs - can be comma-separated
+                        const businessIds = seller.business ? seller.business.split(',').map(id => id.trim()).filter(id => id) : [];
+                        const businessNames = businessIds.map(id => businessLabels[id] || `Business ${id}`);
+                        
+                        // Handle outlet_live as 'on'/'off' instead of 1/0
+                        const outletLiveValue = seller.outlet_live;
+                        let outletLiveDisplay = 'Unknown';
+                        if (outletLiveValue === 'on' || outletLiveValue === 1 || outletLiveValue === '1') {
+                            outletLiveDisplay = 'Live';
+                        } else if (outletLiveValue === 'off' || outletLiveValue === 0 || outletLiveValue === '0') {
+                            outletLiveDisplay = 'Not Live';
+                        }
+                        
+                        return {
+                            ...seller,
+                            processed_images: processedImages,
+                            category_names: categoryNames,
+                            category_ids_array: categoryIds,
+                            business_ids_array: businessIds,
+                            business_names: businessNames,
+                            status_display: seller.status == 1 ? 'Active' : 'Inactive',
+                            outlet_live_display: outletLiveDisplay,
+                            outlet_live_value: outletLiveValue === 1 || outletLiveValue === '1' ? 'on' : 
+                                             outletLiveValue === 0 || outletLiveValue === '0' ? 'off' : outletLiveValue,
+                            whatsapp_toggle_display: seller.whatsapp_toggle === 'on' ? 'On' : 'Off',
+                            call_outlet_display: seller.call_outlet === 'on' ? 'On' : 'Off'
+                        };
+                    });
+                    
+                    // Calculate statistics
+                    calculateStatistics();
+                    
+                    // Populate filters
+                    populateFilters();
+                    
+                    // Initialize category dropdown in edit modal
+                    populateCategoryMultiSelect();
+                    
+                    showMessage(`✅ Loaded ${allSellers.length} sellers`, 'success');
+                    applyFilters();
+                } else {
+                    throw new Error('Invalid sellers data format');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = 'Error loading sellers: ' + error.message;
+                showMessage('❌ Failed to load sellers', 'error');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+        
+        // Calculate statistics - REMOVED Active Sellers
+        function calculateStatistics() {
+            const totalSellers = allSellers.length;
+            const liveSellers = allSellers.filter(s => s.outlet_live_value === 'on').length;
+            
+            document.getElementById('totalSellers').textContent = totalSellers;
+            document.getElementById('liveSellers').textContent = liveSellers;
+        }
+        
+        // Process slider images - ensure proper format
+        function processSliderImages(sliderImages) {
+            if (!sliderImages) return [];
+            
+            try {
+                // If it's already an array
+                if (Array.isArray(sliderImages)) {
+                    return sliderImages.map((item, index) => {
+                        if (typeof item === 'string') {
+                            return { 
+                                sort_no: index + 1, 
+                                file_name: getFullUrl(item) 
+                            };
+                        } else if (item && typeof item === 'object') {
+                            return { 
+                                sort_no: item.sort_no || index + 1, 
+                                file_name: getFullUrl(item.file_name || item.url || item) 
+                            };
+                        }
+                        return { sort_no: index + 1, file_name: '' };
+                    }).filter(img => img.file_name);
+                }
+                
+                // Try to parse as JSON
+                if (typeof sliderImages === 'string') {
+                    // Check if it's a JSON array
+                    if (sliderImages.startsWith('[') && sliderImages.endsWith(']')) {
+                        const parsed = JSON.parse(sliderImages);
+                        if (Array.isArray(parsed)) {
+                            return parsed.map((item, index) => {
+                                if (typeof item === 'string') {
+                                    return { 
+                                        sort_no: index + 1, 
+                                        file_name: getFullUrl(item) 
+                                    };
+                                } else if (item && typeof item === 'object') {
+                                    return { 
+                                        sort_no: item.sort_no || index + 1, 
+                                        file_name: getFullUrl(item.file_name || item.url || item) 
+                                    };
+                                }
+                                return { sort_no: index + 1, file_name: '' };
+                            }).filter(img => img.file_name);
+                        }
+                    }
+                    
+                    // Check if it's a single URL string
+                    if (sliderImages.startsWith('http') || sliderImages.startsWith('/')) {
+                        return [{ sort_no: 1, file_name: getFullUrl(sliderImages) }];
+                    }
+                }
+            } catch (error) {
+                console.error('Error processing slider images:', error);
+            }
+            
+            return [];
+        }
+        
+        // Get full URL from relative path
+        function getFullUrl(url) {
+            if (!url) return '';
+            if (url.startsWith('http')) return url;
+            if (url.startsWith('/')) return `https://zulushop.in${url}`;
+            return `https://zulushop.in/${url}`;
+        }
+        
+        // Populate filters
+        function populateFilters() {
+            // Category filter
+            const categoryOptions = document.getElementById('categoryOptions');
+            categoryOptions.innerHTML = '<div class="dropdown-option selected" data-value="all">All Categories</div>';
+            
+            // Get unique category IDs from all sellers
+            const allCategoryIds = new Set();
+            allSellers.forEach(seller => {
+                if (seller.category_ids_array) {
+                    seller.category_ids_array.forEach(id => allCategoryIds.add(id));
+                }
+            });
+            
+            // Add category options with counts
+            Array.from(allCategoryIds).sort().forEach(catId => {
+                const category = categoriesList.find(c => c.id == catId);
+                const name = category ? `${category.name} (${catId})` : `Category ${catId}`;
+                const count = allSellers.filter(seller => 
+                    seller.category_ids_array && seller.category_ids_array.includes(catId)
+                ).length;
+                
+                if (count > 0) {
+                    const option = document.createElement('div');
+                    option.className = 'dropdown-option';
+                    option.setAttribute('data-value', catId);
+                    option.textContent = `${name} - ${count}`;
+                    categoryOptions.appendChild(option);
+                }
+            });
+            
+            // Setup custom dropdown for categories
+            setupFilterDropdown('category');
+            
+            // Business filter is already set up in HTML
+        }
+        
+        // Setup filter dropdown
+        function setupFilterDropdown(type) {
+            const wrapper = document.getElementById(`${type}FilterWrapper`);
+            const header = document.getElementById(`${type}SelectHeader`);
+            const dropdown = document.getElementById(`${type}Dropdown`);
+            const searchInput = document.getElementById(`search${type.charAt(0).toUpperCase() + type.slice(1)}Filter`);
+            const optionsContainer = document.getElementById(`${type}Options`);
+            
+            if (!wrapper || !header || !dropdown || !optionsContainer) return;
+            
+            // Toggle dropdown
+            header.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                const isOpen = wrapper.classList.contains('open');
+                closeAllDropdowns();
+                if (!isOpen) {
+                    wrapper.classList.add('open');
+                }
+            });
+            
+            // Search functionality
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    e.stopPropagation();
+                    const searchTerm = this.value.toLowerCase();
+                    const options = optionsContainer.querySelectorAll('.dropdown-option');
+                    
+                    options.forEach(option => {
+                        const text = option.textContent.toLowerCase();
+                        option.style.display = text.includes(searchTerm) ? '' : 'none';
+                    });
+                });
+                
+                searchInput.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+            
+            // Handle option selection
+            optionsContainer.addEventListener('click', function(e) {
+                const option = e.target.closest('.dropdown-option');
+                if (option) {
+                    const value = option.getAttribute('data-value');
+                    const text = option.textContent;
+                    
+                    // Update header
+                    header.querySelector('span:first-child').textContent = text;
+                    
+                    // Update selected state
+                    optionsContainer.querySelectorAll('.dropdown-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    option.classList.add('selected');
+                    
+                    // Update active filters
+                    activeFilters[type] = value;
+                    
+                    // Close dropdown
+                    wrapper.classList.remove('open');
+                    
+                    // Apply filters
+                    applyFilters();
+                }
+            });
+        }
+        
+        // Setup category multi-select dropdown
+        function setupCategoryMultiSelectDropdown() {
+            const wrapper = document.getElementById('editCategoriesWrapper');
+            const header = document.getElementById('editCategoriesSelectHeader');
+            const dropdown = document.getElementById('editCategoriesDropdown');
+            const searchInput = document.getElementById('searchCategoriesEdit');
+            const optionsContainer = document.getElementById('editCategoriesOptions');
+            
+            if (!wrapper || !header || !dropdown || !optionsContainer) return;
+            
+            // Toggle dropdown
+            header.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                const isOpen = wrapper.classList.contains('open');
+                closeAllDropdowns();
+                if (!isOpen) {
+                    wrapper.classList.add('open');
+                }
+            });
+            
+            // Search functionality
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    e.stopPropagation();
+                    const searchTerm = this.value.toLowerCase();
+                    const options = optionsContainer.querySelectorAll('.dropdown-option');
+                    
+                    options.forEach(option => {
+                        const text = option.textContent.toLowerCase();
+                        option.style.display = searchTerm === '' || text.includes(searchTerm) ? '' : 'none';
+                    });
+                });
+                
+                searchInput.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+            
+            // Handle checkbox selection
+            optionsContainer.addEventListener('change', function(e) {
+                if (e.target.type === 'checkbox') {
+                    updateMultiSelectHeader('categories');
+                }
+            });
+            
+            // Handle option click on label
+            optionsContainer.addEventListener('click', function(e) {
+                if (e.target.tagName === 'LABEL') {
+                    const checkbox = e.target.previousElementSibling;
+                    if (checkbox && checkbox.type === 'checkbox') {
+                        checkbox.checked = !checkbox.checked;
+                        updateMultiSelectHeader('categories');
+                    }
+                }
+            });
+        }
+        
+        // Setup business multi-select dropdown
+        function setupBusinessMultiSelectDropdown() {
+            const wrapper = document.getElementById('editBusinessWrapper');
+            const header = document.getElementById('editBusinessSelectHeader');
+            const dropdown = document.getElementById('editBusinessDropdown');
+            const searchInput = document.getElementById('searchBusinessEdit');
+            const optionsContainer = document.getElementById('editBusinessOptions');
+            
+            if (!wrapper || !header || !dropdown || !optionsContainer) return;
+            
+            // Toggle dropdown
+            header.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                const isOpen = wrapper.classList.contains('open');
+                closeAllDropdowns();
+                if (!isOpen) {
+                    wrapper.classList.add('open');
+                }
+            });
+            
+            // Search functionality
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    e.stopPropagation();
+                    const searchTerm = this.value.toLowerCase();
+                    const options = optionsContainer.querySelectorAll('.dropdown-option');
+                    
+                    options.forEach(option => {
+                        const label = option.querySelector('label');
+                        const text = label ? label.textContent.toLowerCase() : '';
+                        option.style.display = searchTerm === '' || text.includes(searchTerm) ? '' : 'none';
+                    });
+                });
+                
+                searchInput.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+            
+            // Handle checkbox selection
+            optionsContainer.addEventListener('change', function(e) {
+                if (e.target.type === 'checkbox') {
+                    updateMultiSelectHeader('business');
+                }
+            });
+            
+            // Handle option click on label
+            optionsContainer.addEventListener('click', function(e) {
+                if (e.target.tagName === 'LABEL') {
+                    const checkbox = e.target.previousElementSibling;
+                    if (checkbox && checkbox.type === 'checkbox') {
+                        checkbox.checked = !checkbox.checked;
+                        updateMultiSelectHeader('business');
+                    }
+                }
+            });
+        }
+        
+        // Close all dropdowns
+        function closeAllDropdowns() {
+            // Filter dropdowns
+            ['category', 'business'].forEach(type => {
+                const wrapper = document.getElementById(`${type}FilterWrapper`);
+                if (wrapper) {
+                    wrapper.classList.remove('open');
+                }
+            });
+            
+            // Edit form dropdowns
+            ['editCategoriesWrapper', 'editBusinessWrapper'].forEach(id => {
+                const wrapper = document.getElementById(id);
+                if (wrapper) {
+                    wrapper.classList.remove('open');
+                }
+            });
+        }
+        
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+            // Filter dropdowns
+            ['category', 'business'].forEach(type => {
+                const wrapper = document.getElementById(`${type}FilterWrapper`);
+                if (wrapper && !wrapper.contains(e.target)) {
+                    wrapper.classList.remove('open');
+                }
+            });
+            
+            // Edit form dropdowns
+            ['editCategoriesWrapper', 'editBusinessWrapper'].forEach(id => {
+                const wrapper = document.getElementById(id);
+                if (wrapper && !wrapper.contains(e.target)) {
+                    wrapper.classList.remove('open');
+                }
+            });
+        });
+        
+        // Close dropdowns with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeAllDropdowns();
+            }
+        });
+        
+        // Populate category multi-select dropdown
+        function populateCategoryMultiSelect() {
+            const optionsContainer = document.getElementById('editCategoriesOptions');
+            if (!optionsContainer) return;
+            
+            optionsContainer.innerHTML = '';
+            
+            // Add options
+            categoriesList.sort((a, b) => a.name.localeCompare(b.name)).forEach(category => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'dropdown-option';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = category.id;
+                checkbox.id = `cat_${category.id}`;
+                checkbox.checked = selectedCategories.includes(String(category.id));
+                
+                const label = document.createElement('label');
+                label.htmlFor = `cat_${category.id}`;
+                label.textContent = `${category.name} (${category.id})`;
+                
+                optionDiv.appendChild(checkbox);
+                optionDiv.appendChild(label);
+                optionsContainer.appendChild(optionDiv);
+            });
+            
+            // Update header
+            updateMultiSelectHeader('categories');
+        }
+        
+        // Update multi-select header
+        function updateMultiSelectHeader(type) {
+            const header = document.getElementById(`edit${type.charAt(0).toUpperCase() + type.slice(1)}SelectHeader`);
+            const optionsContainer = document.getElementById(`edit${type.charAt(0).toUpperCase() + type.slice(1)}Options`);
+            if (!header || !optionsContainer) return;
+            
+            const selectedCheckboxes = optionsContainer.querySelectorAll('input[type="checkbox"]:checked');
+            const selectedValues = Array.from(selectedCheckboxes).map(cb => cb.value);
+            
+            if (type === 'categories') {
+                selectedCategories = selectedValues;
+            } else if (type === 'business') {
+                selectedBusiness = selectedValues;
+            }
+            
+            if (selectedValues.length === 0) {
+                header.querySelector('span:first-child').textContent = `Select ${type}`;
+            } else if (selectedValues.length === 1) {
+                const selectedOption = optionsContainer.querySelector('.dropdown-option input[type="checkbox"]:checked');
+                if (selectedOption) {
+                    const label = selectedOption.nextElementSibling.textContent;
+                    header.querySelector('span:first-child').textContent = label;
+                }
+            } else {
+                header.querySelector('span:first-child').textContent = `${selectedValues.length} selected`;
+            }
+        }
+        
+        // Select all categories
+        function selectAllCategories() {
+            const optionsContainer = document.getElementById('editCategoriesOptions');
+            if (!optionsContainer) return;
+            
+            const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            
+            updateMultiSelectHeader('categories');
+        }
+        
+        // Clear all categories
+        function clearAllCategories() {
+            const optionsContainer = document.getElementById('editCategoriesOptions');
+            if (!optionsContainer) return;
+            
+            const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            updateMultiSelectHeader('categories');
+        }
+        
+        // Select all business types
+        function selectAllBusiness() {
+            const optionsContainer = document.getElementById('editBusinessOptions');
+            if (!optionsContainer) return;
+            
+            const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            
+            updateMultiSelectHeader('business');
+        }
+        
+        // Clear all business types
+        function clearAllBusiness() {
+            const optionsContainer = document.getElementById('editBusinessOptions');
+            if (!optionsContainer) return;
+            
+            const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            updateMultiSelectHeader('business');
+        }
+        
+        // Update filter options
+        function updateFilterOptions() {
+            // Update count badges
+            updateFilterCountBadges();
+        }
+        
+        // Update filter count badges
+        function updateFilterCountBadges() {
+            const showing = filteredSellers.length;
+            
+            // Calculate counts for each filter
+            const outletLiveCounts = { 'on': 0, 'off': 0 };
+            const categoryCounts = {};
+            const businessCounts = { '6': 0, '10': 0, '12': 0, '13': 0 };
+            
+            filteredSellers.forEach(seller => {
+                // Outlet Live - FIXED for 'on'/'off'
+                if (seller.outlet_live_value === 'on') outletLiveCounts['on']++;
+                else if (seller.outlet_live_value === 'off') outletLiveCounts['off']++;
+                
+                // Categories
+                if (seller.category_ids_array) {
+                    seller.category_ids_array.forEach(catId => {
+                        categoryCounts[catId] = (categoryCounts[catId] || 0) + 1;
+                    });
+                }
+                
+                // Business - handle multiple IDs per seller
+                if (seller.business_ids_array) {
+                    seller.business_ids_array.forEach(businessId => {
+                        if (businessCounts[businessId] !== undefined) {
+                            businessCounts[businessId]++;
+                        }
+                    });
+                }
+            });
+            
+            // Update badges
+            document.getElementById('outletLiveCount').textContent = showing;
+            document.getElementById('categoryCount').textContent = showing;
+            document.getElementById('businessCount').textContent = showing;
+            
+            // Update stats info
+            const liveSellers = filteredSellers.filter(s => s.outlet_live_value === 'on').length;
+            
+            document.getElementById('totalCount').textContent = allSellers.length;
+            document.getElementById('showingCount').textContent = showing;
+            document.getElementById('liveCount').textContent = liveSellers;
+            
+            // Update statistics
+            document.getElementById('filteredSellers').textContent = showing;
+            
+            // Update active filters display
+            updateActiveFiltersDisplay();
+        }
+        
+        // Update active filters display
+        function updateActiveFiltersDisplay() {
+            const activeFiltersDiv = document.getElementById('activeFilters');
+            const filterTagsDiv = document.getElementById('filterTags');
+            
+            const activeFiltersList = [];
+            
+            // Collect active filters
+            if (activeFilters.outletLive !== 'all') {
+                activeFiltersList.push({
+                    type: 'outletLive',
+                    value: activeFilters.outletLive,
+                    label: `Outlet: ${activeFilters.outletLive === 'on' ? 'Live' : 'Not Live'}`
+                });
+            }
+            
+            if (activeFilters.category !== 'all') {
+                const category = categoriesList.find(c => c.id == activeFilters.category);
+                activeFiltersList.push({
+                    type: 'category',
+                    value: activeFilters.category,
+                    label: `Category: ${category ? `${category.name} (${activeFilters.category})` : `ID: ${activeFilters.category}`}`
+                });
+            }
+            
+            if (activeFilters.business !== 'all') {
+                const businessLabel = businessLabels[activeFilters.business] || `Business ${activeFilters.business}`;
+                activeFiltersList.push({
+                    type: 'business',
+                    value: activeFilters.business,
+                    label: `Business: ${businessLabel}`
+                });
+            }
+            
+            // Update display
+            if (activeFiltersList.length > 0) {
+                activeFiltersDiv.style.display = 'block';
+                filterTagsDiv.innerHTML = '';
+                
+                activeFiltersList.forEach(filter => {
+                    const tag = document.createElement('div');
+                    tag.className = 'filter-tag';
+                    tag.innerHTML = `
+                        ${filter.label}
+                        <button onclick="removeFilter('${filter.type}')">×</button>
+                    `;
+                    filterTagsDiv.appendChild(tag);
+                });
+            } else {
+                activeFiltersDiv.style.display = 'none';
+            }
+        }
+        
+        // Remove specific filter
+        function removeFilter(filterType) {
+            if (filterType === 'outletLive') {
+                document.getElementById('outletLiveFilter').value = 'all';
+                activeFilters.outletLive = 'all';
+            } else if (filterType === 'category') {
+                const header = document.getElementById('categorySelectHeader');
+                const options = document.getElementById('categoryOptions');
+                const allOption = options.querySelector('.dropdown-option[data-value="all"]');
+                
+                header.querySelector('span:first-child').textContent = allOption.textContent;
+                options.querySelectorAll('.dropdown-option').forEach(opt => opt.classList.remove('selected'));
+                allOption.classList.add('selected');
+                activeFilters.category = 'all';
+            } else if (filterType === 'business') {
+                const header = document.getElementById('businessSelectHeader');
+                const options = document.getElementById('businessOptions');
+                const allOption = options.querySelector('.dropdown-option[data-value="all"]');
+                
+                header.querySelector('span:first-child').textContent = allOption.textContent;
+                options.querySelectorAll('.dropdown-option').forEach(opt => opt.classList.remove('selected'));
+                allOption.classList.add('selected');
+                activeFilters.business = 'all';
+            }
+            
+            applyFilters();
+        }
+        
+        // Reset all filters
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('outletLiveFilter').value = 'all';
+            
+            // Reset category dropdown
+            const categoryHeader = document.getElementById('categorySelectHeader');
+            const categoryOptions = document.getElementById('categoryOptions');
+            const categoryAllOption = categoryOptions.querySelector('.dropdown-option[data-value="all"]');
+            
+            categoryHeader.querySelector('span:first-child').textContent = categoryAllOption.textContent;
+            categoryOptions.querySelectorAll('.dropdown-option').forEach(opt => opt.classList.remove('selected'));
+            categoryAllOption.classList.add('selected');
+            
+            // Reset business dropdown
+            const businessHeader = document.getElementById('businessSelectHeader');
+            const businessOptions = document.getElementById('businessOptions');
+            const businessAllOption = businessOptions.querySelector('.dropdown-option[data-value="all"]');
+            
+            businessHeader.querySelector('span:first-child').textContent = businessAllOption.textContent;
+            businessOptions.querySelectorAll('.dropdown-option').forEach(opt => opt.classList.remove('selected'));
+            businessAllOption.classList.add('selected');
+            
+            // Reset search boxes
+            const searchCategoryFilter = document.getElementById('searchCategoryFilter');
+            const searchBusinessFilter = document.getElementById('searchBusinessFilter');
+            
+            if (searchCategoryFilter) searchCategoryFilter.value = '';
+            if (searchBusinessFilter) searchBusinessFilter.value = '';
+            
+            // Reset active filters
+            activeFilters = {
+                outletLive: 'all',
+                category: 'all',
+                business: 'all'
+            };
+            
+            applyFilters();
+        }
+        
+        // Apply filters - ADDED Business Filter
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            filteredSellers = allSellers.filter(seller => {
+                // Search filter
+                if (searchTerm) {
+                    const searchable = [
+                        seller.store_name || '',
+                        seller.id.toString(),
+                        seller.user_id.toString(),
+                        seller.slug || '',
+                        seller.store_description || '',
+                        seller.category_names.join(' ') || '',
+                        seller.business_names.join(' ') || ''
+                    ].join(' ').toLowerCase();
+                    
+                    if (!searchable.includes(searchTerm)) {
+                        return false;
+                    }
+                }
+                
+                // Outlet Live filter - FIXED for 'on'/'off'
+                if (activeFilters.outletLive !== 'all') {
+                    if (seller.outlet_live_value !== activeFilters.outletLive) {
+                        return false;
+                    }
+                }
+                
+                // Category filter
+                if (activeFilters.category !== 'all') {
+                    if (!seller.category_ids_array || !seller.category_ids_array.includes(activeFilters.category)) {
+                        return false;
+                    }
+                }
+                
+                // Business filter - handle multiple IDs per seller
+                if (activeFilters.business !== 'all') {
+                    if (!seller.business_ids_array || !seller.business_ids_array.includes(activeFilters.business)) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            displaySellers();
+            updateFilterCountBadges();
+        }
+        
+        // Display sellers
+        function displaySellers() {
+            const container = document.getElementById('sellersContainer');
+            
+            if (filteredSellers.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div>🏪</div>
+                        <div style="font-size: 20px; font-weight: 600; margin: 10px 0; color: #2c3e50;">No Sellers Found</div>
+                        <div style="color: #7f8c8d;">Try different search or filters</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            filteredSellers.forEach(seller => {
+                const hasImages = seller.processed_images && seller.processed_images.length > 0;
+                const imageSliderId = `slider-${seller.id}`;
+                
+                // Generate category tags
+                let categoryTags = '';
+                if (seller.category_names && seller.category_names.length > 0) {
+                    seller.category_names.forEach((name, index) => {
+                        const catId = seller.category_ids_array[index];
+                        categoryTags += `<span class="info-tag category" onclick="setFilter('categoryFilter', '${catId}')">📂 ${name}</span>`;
+                    });
+                }
+                
+                // Generate business tags
+                let businessTags = '';
+                if (seller.business_names && seller.business_names.length > 0) {
+                    seller.business_names.forEach((name, index) => {
+                        const businessId = seller.business_ids_array[index];
+                        businessTags += `<span class="info-tag business" onclick="setFilter('businessFilter', '${businessId}')">🏢 ${name}</span>`;
+                    });
+                }
+                
+                html += `
+                <div class="seller-card">
+                    <div class="image-slider" id="${imageSliderId}">
+                        ${hasImages ? `
+                            <div class="slider-container">
+                                ${seller.processed_images.map((img, index) => `
+                                    <img src="${img.file_name}" alt="Slider Image ${index + 1}" class="slider-image"
+                                         onerror="this.src='https://via.placeholder.com/300x250/4CAF50/FFFFFF?text=No+Image'">
+                                `).join('')}
+                            </div>
+                            <button class="slider-arrow prev" onclick="prevSlide('${imageSliderId}')">❮</button>
+                            <button class="slider-arrow next" onclick="nextSlide('${imageSliderId}')">❯</button>
+                            <div class="slider-nav">
+                                ${seller.processed_images.map((_, index) => `
+                                    <div class="slider-dot ${index === 0 ? 'active' : ''}" onclick="goToSlide('${imageSliderId}', ${index})"></div>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div class="image-placeholder">
+                                🏪
+                            </div>
+                        `}
+                        <div class="card-actions">
+                            <button class="action-btn edit-details" onclick="openEditSellerModal(${seller.id}); event.stopPropagation();">
+                                ✏️ Edit
+                            </button>
+                            <button class="action-btn edit-images" onclick="openImagesModal(${seller.id}); event.stopPropagation();">
+                                🖼️ Images
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-title">${seller.store_name || 'No Store Name'}</div>
+                        <div class="card-subtitle">
+                            <span>ID: ${seller.id}</span>
+                            <span>•</span>
+                            <span>User ID: ${seller.user_id}</span>
+                        </div>
+                        
+                        <div class="card-info">
+                            ${categoryTags}
+                            ${businessTags}
+                            <span class="info-tag outlet ${seller.outlet_live_value === 'on' ? 'active' : 'inactive'}" onclick="setFilter('outletLiveFilter', '${seller.outlet_live_value}')">
+                                ${seller.outlet_live_display}
+                            </span>
+                            ${seller.priority_id ? `<span class="info-tag priority">🎯 P${seller.priority_id}</span>` : ''}
+                        </div>
+                        
+                        <div class="contact-info">
+                            ${seller.public_phone ? `
+                                <div class="contact-item">
+                                    📞 ${seller.public_phone}
+                                </div>
+                            ` : ''}
+                            ${seller.whatsapp ? `
+                                <div class="contact-item">
+                                    💬 ${seller.whatsapp}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            
+            // Initialize sliders
+            filteredSellers.forEach(seller => {
+                if (seller.processed_images && seller.processed_images.length > 0) {
+                    initSlider(`slider-${seller.id}`);
+                }
+            });
+        }
+        
+        // Initialize image slider
+        function initSlider(sliderId) {
+            const slider = document.getElementById(sliderId);
+            if (!slider) return;
+            
+            const container = slider.querySelector('.slider-container');
+            const dots = slider.querySelectorAll('.slider-dot');
+            const images = slider.querySelectorAll('.slider-image');
+            
+            let currentSlide = 0;
+            let slideInterval;
+            
+            function startAutoSlide() {
+                slideInterval = setInterval(() => {
+                    nextSlide(sliderId);
+                }, 5000); // 5 seconds
+            }
+            
+            function stopAutoSlide() {
+                if (slideInterval) {
+                    clearInterval(slideInterval);
+                }
+            }
+            
+            // Start auto-rotate
+            startAutoSlide();
+            
+            // Stop auto-rotate on hover
+            slider.addEventListener('mouseenter', stopAutoSlide);
+            slider.addEventListener('mouseleave', startAutoSlide);
+            
+            // Store slider state
+            slider._sliderState = { 
+                currentSlide, 
+                container, 
+                dots, 
+                images,
+                startAutoSlide,
+                stopAutoSlide
+            };
+        }
+        
+        // Next slide
+        function nextSlide(sliderId) {
+            const slider = document.getElementById(sliderId);
+            if (!slider || !slider._sliderState) return;
+            
+            const { currentSlide, container, dots, images } = slider._sliderState;
+            const nextSlide = (currentSlide + 1) % images.length;
+            
+            container.style.transform = `translateX(-${nextSlide * 100}%)`;
+            
+            dots.forEach(dot => dot.classList.remove('active'));
+            dots[nextSlide].classList.add('active');
+            
+            slider._sliderState.currentSlide = nextSlide;
+        }
+        
+        // Previous slide
+        function prevSlide(sliderId) {
+            const slider = document.getElementById(sliderId);
+            if (!slider || !slider._sliderState) return;
+            
+            const { currentSlide, container, dots, images } = slider._sliderState;
+            const prevSlide = (currentSlide - 1 + images.length) % images.length;
+            
+            container.style.transform = `translateX(-${prevSlide * 100}%)`;
+            
+            dots.forEach(dot => dot.classList.remove('active'));
+            dots[prevSlide].classList.add('active');
+            
+            slider._sliderState.currentSlide = prevSlide;
+        }
+        
+        // Go to specific slide
+        function goToSlide(sliderId, slideIndex) {
+            const slider = document.getElementById(sliderId);
+            if (!slider || !slider._sliderState) return;
+            
+            const { container, dots, images } = slider._sliderState;
+            
+            if (slideIndex >= 0 && slideIndex < images.length) {
+                container.style.transform = `translateX(-${slideIndex * 100}%)`;
+                
+                dots.forEach(dot => dot.classList.remove('active'));
+                dots[slideIndex].classList.add('active');
+                
+                slider._sliderState.currentSlide = slideIndex;
+            }
+        }
+        
+        // Set filter from click on tag
+        function setFilter(filterType, value) {
+            if (filterType === 'outletLiveFilter') {
+                document.getElementById('outletLiveFilter').value = value;
+                activeFilters.outletLive = value;
+            } else if (filterType === 'categoryFilter') {
+                const header = document.getElementById('categorySelectHeader');
+                const options = document.getElementById('categoryOptions');
+                const selectedOption = options.querySelector(`.dropdown-option[data-value="${value}"]`);
+                
+                if (selectedOption) {
+                    header.querySelector('span:first-child').textContent = selectedOption.textContent;
+                    options.querySelectorAll('.dropdown-option').forEach(opt => opt.classList.remove('selected'));
+                    selectedOption.classList.add('selected');
+                    activeFilters.category = value;
+                }
+            } else if (filterType === 'businessFilter') {
+                const header = document.getElementById('businessSelectHeader');
+                const options = document.getElementById('businessOptions');
+                const selectedOption = options.querySelector(`.dropdown-option[data-value="${value}"]`);
+                
+                if (selectedOption) {
+                    header.querySelector('span:first-child').textContent = selectedOption.textContent;
+                    options.querySelectorAll('.dropdown-option').forEach(opt => opt.classList.remove('selected'));
+                    selectedOption.classList.add('selected');
+                    activeFilters.business = value;
+                }
+            }
+            
+            applyFilters();
+        }
+        
+        // Open edit seller modal
+        function openEditSellerModal(sellerId) {
+            const seller = allSellers.find(s => s.id == sellerId);
+            if (!seller) {
+                showMessage('❌ Seller not found', 'error');
+                return;
+            }
+            
+            currentEditSellerId = sellerId;
+            
+            // Update selected categories
+            selectedCategories = seller.category_ids_array || [];
+            
+            // Update selected business types
+            selectedBusiness = seller.business_ids_array || [];
+            
+            // Update category dropdown
+            const categoryOptionsContainer = document.getElementById('editCategoriesOptions');
+            const categoryCheckboxes = categoryOptionsContainer.querySelectorAll('input[type="checkbox"]');
+            categoryCheckboxes.forEach(checkbox => {
+                checkbox.checked = selectedCategories.includes(checkbox.value);
+            });
+            updateMultiSelectHeader('categories');
+            
+            // Update business dropdown
+            const businessOptionsContainer = document.getElementById('editBusinessOptions');
+            const businessCheckboxes = businessOptionsContainer.querySelectorAll('input[type="checkbox"]');
+            businessCheckboxes.forEach(checkbox => {
+                checkbox.checked = selectedBusiness.includes(checkbox.value);
+            });
+            updateMultiSelectHeader('business');
+            
+            // Populate form fields
+            document.getElementById('editStoreName').value = seller.store_name || '';
+            document.getElementById('editPriorityId').value = seller.priority_id || '';
+            document.getElementById('editOutletLive').value = seller.outlet_live_value || '';
+            document.getElementById('editPublicPhone').value = seller.public_phone || '';
+            document.getElementById('editWhatsapp').value = seller.whatsapp || '';
+            document.getElementById('editPublicAddress').value = seller.public_address || '';
+            document.getElementById('editStoreDescription').value = seller.store_description || '';
+            document.getElementById('editWhatsappToggle').value = seller.whatsapp_toggle || '';
+            document.getElementById('editCallOutlet').value = seller.call_outlet || '';
+            
+            // Populate slider images JSON (editable)
+            const jsonTextarea = document.getElementById('editSliderImagesJson');
+            if (seller.processed_images && seller.processed_images.length > 0) {
+                // Format images properly
+                const formattedImages = seller.processed_images.map(img => ({
+                    sort_no: img.sort_no,
+                    file_name: img.file_name
+                }));
+                jsonTextarea.value = JSON.stringify(formattedImages, null, 2);
+            } else {
+                jsonTextarea.value = '';
+            }
+            validateSliderImagesJson();
+            
+            // Show modal
+            document.getElementById('editSellerModal').style.display = 'block';
+        }
+        
+        // Validate slider images JSON
+        function validateSliderImagesJson() {
+            const jsonTextarea = document.getElementById('editSliderImagesJson');
+            const jsonStatus = document.getElementById('jsonStatus');
+            const jsonValue = jsonTextarea.value.trim();
+            
+            if (!jsonValue) {
+                jsonTextarea.classList.remove('json-valid', 'json-invalid');
+                jsonStatus.textContent = '';
+                jsonStatus.className = 'json-status';
+                return true;
+            }
+            
+            try {
+                const parsed = JSON.parse(jsonValue);
+                if (!Array.isArray(parsed)) {
+                    throw new Error('Must be a JSON array');
+                }
+                
+                // Validate each item in the array
+                for (let i = 0; i < parsed.length; i++) {
+                    const item = parsed[i];
+                    if (typeof item !== 'object' || item === null) {
+                        throw new Error(`Item ${i + 1}: Must be an object`);
+                    }
+                    if (typeof item.sort_no !== 'number' || !Number.isInteger(item.sort_no) || item.sort_no < 1) {
+                        throw new Error(`Item ${i + 1}: sort_no must be a positive integer`);
+                    }
+                    if (typeof item.file_name !== 'string' || !item.file_name.trim()) {
+                        throw new Error(`Item ${i + 1}: file_name must be a non-empty string`);
+                    }
+                }
+                
+                jsonTextarea.classList.remove('json-invalid');
+                jsonTextarea.classList.add('json-valid');
+                jsonStatus.textContent = '✅ Valid JSON format';
+                jsonStatus.className = 'json-status valid';
+                return true;
+            } catch (error) {
+                jsonTextarea.classList.remove('json-valid');
+                jsonTextarea.classList.add('json-invalid');
+                jsonStatus.textContent = `❌ ${error.message}`;
+                jsonStatus.className = 'json-status invalid';
+                return false;
+            }
+        }
+        
+        // Close edit seller modal
+        function closeEditSellerModal() {
+            document.getElementById('editSellerModal').style.display = 'none';
+            currentEditSellerId = null;
+        }
+        
+        // Save seller details - UPDATED for multiple business types
+        async function saveSellerDetails() {
+            if (!currentEditSellerId) return;
+            
+            // Validate slider images JSON first
+            if (!validateSliderImagesJson()) {
+                showMessage('❌ Please fix the slider images JSON format before saving', 'error');
+                return;
+            }
+            
+            const updateData = {
+                store_name: document.getElementById('editStoreName').value,
+                priority_id: document.getElementById('editPriorityId').value || null,
+                outlet_live: document.getElementById('editOutletLive').value || null,
+                category_ids: selectedCategories.length > 0 ? selectedCategories.join(',') : null,
+                business: selectedBusiness.length > 0 ? selectedBusiness.join(',') : null,
+                public_phone: document.getElementById('editPublicPhone').value || null,
+                whatsapp: document.getElementById('editWhatsapp').value || null,
+                public_address: document.getElementById('editPublicAddress').value || null,
+                store_description: document.getElementById('editStoreDescription').value || null,
+                whatsapp_toggle: document.getElementById('editWhatsappToggle').value || null,
+                call_outlet: document.getElementById('editCallOutlet').value || null
+            };
+            
+            // Add slider images JSON if provided
+            const sliderImagesJson = document.getElementById('editSliderImagesJson').value.trim();
+            if (sliderImagesJson) {
+                updateData.slider_images = sliderImagesJson;
+            }
+            
+            // Remove empty values
+            Object.keys(updateData).forEach(key => {
+                if (updateData[key] === null || updateData[key] === '') {
+                    delete updateData[key];
+                }
+            });
+            
+            if (Object.keys(updateData).length === 0) {
+                showMessage('ℹ️ No changes to save', 'info');
+                return;
+            }
+            
+            try {
+                showMessage('🔄 Saving...', 'info');
+                
+                const response = await fetch(`/api/sellers/${currentEditSellerId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('✅ Seller updated successfully', 'success');
+                    
+                    // Reload sellers to get updated data
+                    loadSellers();
+                    closeEditSellerModal();
+                } else {
+                    showMessage(`❌ ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ ${error.message}`, 'error');
+            }
+        }
+        
+        // Open images modal
+        function openImagesModal(sellerId) {
+            const seller = allSellers.find(s => s.id == sellerId);
+            if (!seller) {
+                showMessage('❌ Seller not found', 'error');
+                return;
+            }
+            
+            currentImagesSellerId = sellerId;
+            sellerImages = [...seller.processed_images];
+            uploadedImages = [];
+            
+            // Display current images
+            displayCurrentImages();
+            
+            // Hide upload section initially
+            document.getElementById('imageUploadSection').style.display = 'none';
+            document.getElementById('uploadedImagesPreview').style.display = 'none';
+            
+            // Show modal
+            document.getElementById('imagesModal').style.display = 'block';
+        }
+        
+        // Display current images
+        function displayCurrentImages() {
+            const container = document.getElementById('currentImagesContainer');
+            
+            if (sellerImages.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1; padding: 30px;">
+                        <div>🖼️</div>
+                        <div style="font-size: 16px; font-weight: 600; margin: 10px 0; color: #2c3e50;">No Images</div>
+                        <div style="color: #7f8c8d; font-size: 14px;">No slider images found for this seller</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            sellerImages.sort((a, b) => a.sort_no - b.sort_no).forEach((image, index) => {
+                html += `
+                <div class="image-item">
+                    <img src="${image.file_name}" alt="Image ${image.sort_no}" 
+                         onerror="this.src='https://via.placeholder.com/150x120/4CAF50/FFFFFF?text=Error'">
+                    <div class="image-actions">
+                        <button class="image-btn view" onclick="viewImage('${image.file_name}')" title="View Image">
+                            👁️
+                        </button>
+                        <button class="image-btn replace" onclick="replaceImage(${index})" title="Replace Image">
+                            🔄
+                        </button>
+                        <button class="image-btn delete" onclick="deleteImage(${index})" title="Delete Image">
+                            🗑️
+                        </button>
+                    </div>
+                    <div class="image-info">
+                        <div>Order: ${image.sort_no}</div>
+                        <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${image.file_name.substring(0, 30)}...</div>
+                    </div>
+                </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // View image in new tab
+        function viewImage(url) {
+            window.open(url, '_blank');
+        }
+        
+        // Replace image
+        function replaceImage(index) {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                // Validate file
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                if (!validTypes.includes(file.type)) {
+                    showMessage('❌ Please select a valid image file', 'error');
+                    return;
+                }
+                
+                if (file.size > 5 * 1024 * 1024) {
+                    showMessage('❌ Image size must be less than 5MB', 'error');
+                    return;
+                }
+                
+                try {
+                    showMessage('🔄 Uploading image...', 'info');
+                    
+                    // Upload the image
+                    const formData = new FormData();
+                    formData.append('image', file);
+                    
+                    const response = await fetch('https://api.zulushop.in/api/v1/user/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.url || result.image_url) {
+                        const imageUrl = result.url || result.image_url;
+                        sellerImages[index].file_name = getFullUrl(imageUrl);
+                        
+                        showMessage('✅ Image replaced successfully', 'success');
+                        displayCurrentImages();
+                    } else {
+                        throw new Error('Upload failed');
+                    }
+                } catch (error) {
+                    showMessage(`❌ Upload failed: ${error.message}`, 'error');
+                }
+            };
+            
+            fileInput.click();
+        }
+        
+        // Delete image
+        function deleteImage(index) {
+            if (confirm('Are you sure you want to delete this image?')) {
+                sellerImages.splice(index, 1);
+                // Reorder sort numbers
+                sellerImages.forEach((img, idx) => {
+                    img.sort_no = idx + 1;
+                });
+                displayCurrentImages();
+            }
+        }
+        
+        // Add new image
+        function addNewImage() {
+            document.getElementById('imageUploadSection').style.display = 'block';
+        }
+        
+        // Setup drag and drop for images
+        function setupImageDragDrop() {
+            const uploadContainer = document.getElementById('uploadContainer');
+            const fileInput = document.getElementById('imageFileInput');
+            
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            // Highlight drop zone
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, unhighlight, false);
+            });
+            
+            // Handle dropped files
+            uploadContainer.addEventListener('drop', handleDrop, false);
+            fileInput.addEventListener('change', handleFileSelect, false);
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            function highlight() {
+                uploadContainer.classList.add('dragover');
+            }
+            
+            function unhighlight() {
+                uploadContainer.classList.remove('dragover');
+            }
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleImageFiles(files);
+            }
+            
+            function handleFileSelect(e) {
+                const files = e.target.files;
+                handleImageFiles(files);
+            }
+        }
+        
+        // Handle image files
+        function handleImageFiles(files) {
+            if (files.length === 0) return;
+            
+            uploadedImages = [];
+            
+            // Process each file
+            Array.from(files).forEach((file, index) => {
+                // Validate file type
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                if (!validTypes.includes(file.type)) {
+                    showMessage(`❌ ${file.name} is not a valid image file`, 'error');
+                    return;
+                }
+                
+                // Validate file size (5MB max)
+                if (file.size > 5 * 1024 * 1024) {
+                    showMessage(`❌ ${file.name} is too large (max 5MB)`, 'error');
+                    return;
+                }
+                
+                // Create preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadedImages.push({
+                        file: file,
+                        previewUrl: e.target.result
+                    });
+                    
+                    // Display uploaded images preview
+                    displayUploadedImagesPreview();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // Display uploaded images preview
+        function displayUploadedImagesPreview() {
+            const container = document.getElementById('uploadedImagesGrid');
+            
+            if (uploadedImages.length === 0) {
+                document.getElementById('uploadedImagesPreview').style.display = 'none';
+                return;
+            }
+            
+            let html = '';
+            uploadedImages.forEach((img, index) => {
+                html += `
+                <div class="image-item">
+                    <img src="${img.previewUrl}" alt="Uploaded ${index + 1}">
+                    <div class="image-info">
+                        <div>${img.file.name}</div>
+                        <div>${(img.file.size / 1024).toFixed(2)} KB</div>
+                    </div>
+                </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            document.getElementById('uploadedImagesPreview').style.display = 'block';
+        }
+        
+        // Add uploaded images to gallery
+        async function addUploadedImages() {
+            if (uploadedImages.length === 0) {
+                showMessage('ℹ️ No images to add', 'info');
+                return;
+            }
+            
+            try {
+                showMessage('🔄 Uploading images...', 'info');
+                
+                // Upload each image
+                for (let i = 0; i < uploadedImages.length; i++) {
+                    const img = uploadedImages[i];
+                    
+                    const formData = new FormData();
+                    formData.append('image', img.file);
+                    
+                    const response = await fetch('https://api.zulushop.in/api/v1/user/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.url || result.image_url) {
+                        const imageUrl = result.url || result.image_url;
+                        const newSortNo = sellerImages.length + 1;
+                        
+                        sellerImages.push({
+                            sort_no: newSortNo,
+                            file_name: getFullUrl(imageUrl)
+                        });
+                    } else {
+                        throw new Error('Upload failed for ' + img.file.name);
+                    }
+                }
+                
+                uploadedImages = [];
+                document.getElementById('uploadedImagesPreview').style.display = 'none';
+                document.getElementById('imageUploadSection').style.display = 'none';
+                displayCurrentImages();
+                
+                showMessage('✅ Images added successfully', 'success');
+                
+            } catch (error) {
+                showMessage(`❌ Upload failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Save all images
+        async function saveAllImages() {
+            try {
+                // Format images properly
+                const formattedImages = sellerImages.map(img => ({
+                    sort_no: img.sort_no,
+                    file_name: img.file_name
+                }));
+                
+                const updateData = {
+                    slider_images: JSON.stringify(formattedImages)
+                };
+                
+                showMessage('🔄 Saving images...', 'info');
+                
+                const response = await fetch(`/api/sellers/${currentImagesSellerId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('✅ Images saved successfully', 'success');
+                    
+                    // Reload sellers to get updated data
+                    loadSellers();
+                    closeImagesModal();
+                } else {
+                    showMessage(`❌ ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ ${error.message}`, 'error');
+            }
+        }
+        
+        // Close images modal
+        function closeImagesModal() {
+            document.getElementById('imagesModal').style.display = 'none';
+            currentImagesSellerId = null;
+            sellerImages = [];
+            uploadedImages = [];
+        }
+        
+        function showMessage(text, type = 'success') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            
+            const colors = {
+                success: { bg: '#d4edda', text: '#155724' },
+                error: { bg: '#f8d7da', text: '#721c24' },
+                info: { bg: '#d1ecf1', text: '#0c5460' }
+            };
+            
+            const color = colors[type] || colors.success;
+            messageDiv.style.background = color.bg;
+            messageDiv.style.color = color.text;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const modals = ['editSellerModal', 'imagesModal'];
+            modals.forEach(modalId => {
+                const modal = document.getElementById(modalId);
+                if (event.target === modal) {
+                    if (modalId === 'editSellerModal') closeEditSellerModal();
+                    if (modalId === 'imagesModal') closeImagesModal();
+                }
+            });
+        };
+        
+        // Close modals with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeEditSellerModal();
+                closeImagesModal();
+                closeAllDropdowns();
+            }
+        });
+    </script>
+</body>
+</html>
