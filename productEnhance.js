@@ -431,7 +431,7 @@ async function processImage(imageInput, productName) {
     // Step 2: Try to enhance image using existing API
     console.log('🤖 Trying to enhance image...');
     try {
-      const enhanceResponse = await fetch('http://localhost:3000/api/ai/enhance-image', {
+      const enhanceResponse = await fetch('https://chatbot-umber-gamma.vercel.app/api/ai/enhance-image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -549,7 +549,7 @@ async function analyzeCategoriesWithChatGPT(productName, imageUrl, description =
     `;
     
     // Call your existing analyze-categories endpoint
-    const response = await fetch('http://localhost:3000/api/ai/analyze-categories', {
+    const response = await fetch('https://chatbot-umber-gamma.vercel.app/api/ai/analyze-categories', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -710,7 +710,7 @@ router.post('/api/ai/enhance-product', async (req, res) => {
     let tags;
     
     try {
-      const tagsResponse = await fetch('http://localhost:3000/api/ai/generate-tags', {
+      const tagsResponse = await fetch('https://chatbot-umber-gamma.vercel.app/api/ai/generate-tags', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -745,7 +745,7 @@ router.post('/api/ai/enhance-product', async (req, res) => {
     let descriptions;
     
     try {
-      const descResponse = await fetch('http://localhost:3000/api/ai/generate-descriptions', {
+      const descResponse = await fetch('https://chatbot-umber-gamma.vercel.app/api/ai/generate-descriptions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

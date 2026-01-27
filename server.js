@@ -15,9 +15,8 @@ const { put } = require('@vercel/blob');
 // Add these requires at the top with other requires
 const productEnhanceRouter = require('./productEnhance');
 const FormData = require('form-data'); // If not already installed: npm install form-data
+const { File } = require("undici");
 
-const CACHE_DIR = path.join(__dirname, 'public', 'ai-cache');
-if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
 
 // Import database functions
 let db;
@@ -916,12 +915,22 @@ async function loadSellersData() {
               mapped.category_names_array = [];
             }
             
-            // Process slider images array
-            if (mapped.slider_images) {
-              mapped.slider_images_array = mapped.slider_images
-                .split(',')
-                .map(s => s.trim())
-                .filter(Boolean);
+            // Process slider images array - PARSE JSON STRING
+            if (mapped.slider_images && mapped.slider_images.trim()) {
+              try {
+                // Parse the JSON array string
+                const imagesArray = JSON.parse(mapped.slider_images);
+                if (Array.isArray(imagesArray)) {
+                  mapped.slider_images_array = imagesArray
+                    .map(item => item.file_name || item.image || item.url || '')
+                    .filter(url => url && url.trim());
+                } else {
+                  mapped.slider_images_array = [];
+                }
+              } catch (e) {
+                console.log('Failed to parse slider_images JSON for seller:', mapped.store_name, 'Error:', e.message);
+                mapped.slider_images_array = [];
+              }
             } else {
               mapped.slider_images_array = [];
             }
@@ -2797,7 +2806,7 @@ function buildConciseResponse(userMessage, galleryMatches = [], sellersObj = {},
     };
   });
   
-  // Prepare sellers data for response
+  // Prepare sellers data for response - UPDATED WITH IMAGES
   const sellers = (sellersObj.all || []).slice(0, 5).map((seller, index) => {
     const sellerId = seller.user_id || seller.seller_id || '';
     let sellerLink = '';
@@ -2806,10 +2815,34 @@ function buildConciseResponse(userMessage, galleryMatches = [], sellersObj = {},
       sellerLink = `https://app.zulu.club/sellerassets/${sellerId}`;
     }
     
+    // Get seller images from slider_images_array
+    let sellerImages = [];
+    if (seller.slider_images_array && seller.slider_images_array.length > 0) {
+      sellerImages = seller.slider_images_array;
+    }
+    
+    // Get first image as main image
+    const mainImage = sellerImages.length > 0 ? sellerImages[0] : null;
+    
+    // Generate image URL - handle both full URLs and relative paths
+    let imageUrl = mainImage;
+    if (mainImage) {
+      if (mainImage.startsWith('/')) {
+        imageUrl = `https://zulushop.in${mainImage}`;
+      } else if (!mainImage.startsWith('http')) {
+        imageUrl = `https://zulushop.in/${mainImage}`;
+      }
+    } else {
+      // Fallback image
+      imageUrl = 'https://via.placeholder.com/150x200/1a2733/ffffff?text=Store';
+    }
+    
     return {
       id: sellerId || `seller-${index}`,
       name: seller.store_name || `Seller ${index + 1}`,
       link: sellerLink,
+      image: imageUrl,
+      images: sellerImages, // All images
       categories: seller.category_ids_array || [],
       source: seller.source || 'unknown',
       gallery_linked: seller.gallery_linked || false,
@@ -2818,7 +2851,7 @@ function buildConciseResponse(userMessage, galleryMatches = [], sellersObj = {},
     };
   });
   
-  // Create response text
+ // Create response text
   let textResponse = `Based on your search for "${userMessage}":\n\n`;
   
   if (products.length === 0 && galleries.length === 0 && sellers.length === 0) {
@@ -4140,19 +4173,27 @@ app.get('/refresh-csv', async (req, res) => {
     res.status(500).json({ status: 'error', message: error.message });
   }
 });
-// AI Endpoints
-app.use('/ai-cache', express.static(path.join(__dirname, 'public', 'ai-cache')));
+
 
 async function cacheImageFor5Min(imageSource) {
+    if (!imageSource || typeof imageSource !== 'string') {
+        throw new Error("Invalid image source received for caching");
+    }
+
     let buffer;
 
-    // Decode image
+    // Base64 data URL
     if (imageSource.startsWith('data:image')) {
         buffer = Buffer.from(imageSource.split(',')[1], 'base64');
-    } else if (/^[A-Za-z0-9+/=]+$/.test(imageSource.slice(0, 100))) {
+    }
+    // Raw base64
+    else if (/^[A-Za-z0-9+/=]+$/.test(imageSource.slice(0, 100))) {
         buffer = Buffer.from(imageSource, 'base64');
-    } else {
+    }
+    // Normal URL
+    else {
         const response = await fetch(imageSource);
+        if (!response.ok) throw new Error("Failed to fetch image from URL");
         buffer = Buffer.from(await response.arrayBuffer());
     }
 
@@ -4164,91 +4205,67 @@ async function cacheImageFor5Min(imageSource) {
         addRandomSuffix: false
     });
 
-    return url; // Public CDN URL
+    return url;
 }
+
 app.post('/api/ai/enhance-image', async (req, res) => {
     try {
         const { imageUrl, productName } = req.body;
-
         if (!imageUrl) {
-            return res.status(400).json({ success: false, error: 'No image URL provided' });
+            return res.status(400).json({ success: false, error: 'No image URL' });
         }
 
         console.log('🔄 Enhancing image:', imageUrl);
 
-        let base64Image;
         const imgRes = await fetch(imageUrl);
-        const buffer = await imgRes.arrayBuffer();
-        base64Image = Buffer.from(buffer).toString('base64');
+        const buffer = Buffer.from(await imgRes.arrayBuffer());
 
-        const prompt = `
+        const imageFile = new File([buffer], "product.jpg", { type: "image/jpeg" });
+
+        const result = await openai.images.edit({
+            model: "gpt-image-1",
+            image: imageFile,
+            prompt: `
 Ultra-realistic studio product enhancement.
 Product: ${productName || 'Unknown'}
 No crop, no reshape, no text, no humans.
 Premium lighting, white background.
-`;
+`,
+            size: "1024x1536"
+        });
 
-        try {
-            const response = await openai.responses.create({
-                model: "gpt-4.1",
-                input: [{
-                    role: "user",
-                    content: [
-                        { type: "input_text", text: prompt },
-                        { type: "input_image", image_url: `data:image/jpeg;base64,${base64Image}` }
-                    ]
-                }],
-                tools: [{ type: "image_generation", size: "1024x1536", quality: "high" }]
-            });
+        let enhancedImageSource = null;
 
-            let enhancedImageUrl = null;
-            for (const out of response.output || []) {
-                if (out.type === "image_generation_call") enhancedImageUrl = out.result;
-                if (out.type === "message") {
-                    for (const c of out.content || []) {
-                        if (c.type === "image") enhancedImageUrl = c.image_url;
-                    }
-                }
+        if (result.data && result.data[0]) {
+            if (result.data[0].url) {
+                enhancedImageSource = result.data[0].url;
+            } else if (result.data[0].b64_json) {
+                enhancedImageSource = `data:image/png;base64,${result.data[0].b64_json}`;
             }
-
-            if (!enhancedImageUrl) throw new Error("No image returned");
-
-            const cachedUrl = await cacheImageFor5Min(enhancedImageUrl);
-
-            return res.json({
-                success: true,
-                enhancedImageUrl: cachedUrl,
-                ttl: 300
-            });
-
-        } catch (err) {
-            console.error("Primary enhancement failed:", err);
-
-            const dalle = await openai.images.generate({
-                model: "dall-e-3",
-                prompt: `Studio product photo of ${productName}, white background, premium lighting.`,
-                size: "1024x1024",
-                quality: "high"
-            });
-
-            const cachedUrl = await cacheImageFor5Min(dalle.data[0].url);
-
-            return res.json({
-                success: true,
-                enhancedImageUrl: cachedUrl,
-                fallback: true,
-                ttl: 300
-            });
         }
 
+        if (!enhancedImageSource) {
+            throw new Error("OpenAI did not return image data");
+        }
+
+        const cachedUrl = await cacheImageFor5Min(enhancedImageSource);
+
+        return res.json({
+            success: true,
+            enhancedImageUrl: cachedUrl,
+            model: "gpt-image-1",
+            ttl: 300
+        });
+
     } catch (error) {
+        console.error("Enhancement failed:", error);
         return res.status(500).json({
             success: false,
-            enhancedImageUrl: req.body.imageUrl,
             error: error.message
         });
     }
 });
+
 app.post('/api/ai/analyze-categories', async (req, res) => {
     try {
         const { productName, currentCategory, currentCat1, imageUrl, description } = req.body;
@@ -4258,6 +4275,7 @@ app.post('/api/ai/analyze-categories', async (req, res) => {
         // Get categories from database using db (not requestData)
         const categories = await db.getCachedData('categories');
         
+
         if (!categories || categories.length === 0) {
             console.warn('No categories found in database');
             // Try to fetch fresh data
