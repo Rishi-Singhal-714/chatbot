@@ -4231,7 +4231,8 @@ Product: ${productName || 'Unknown'}
 No crop, no reshape, no text, no humans.
 Premium lighting, white background.
 `,
-            size: "1024x1536"
+            size: "1024x1536",
+            quality: "medium"
         });
 
         let enhancedImageSource = null;
@@ -4680,6 +4681,86 @@ app.post('/api/ai/generate-descriptions', async (req, res) => {
         });
     }
 });
+
+// Add this to your server.js or routes file
+app.post('/api/ai/generate-lyrics', async (req, res) => {
+    try {
+        const { productName, description, category, cat1 } = req.body;
+        
+        console.log('🎵 Generating lyrics for:', productName);
+        
+        const lyricsPrompt = `
+Write a 30-second song inspired by the following product description.
+
+Style: Warm, modern, cozy, aesthetic, lightly funny
+Mood: Home comfort, everyday love, handcrafted beauty, Indian warmth
+Genre: Indie pop / soft lo-fi / acoustic chill (Indian indie vibe)
+Tempo: Medium
+
+Requirements:
+
+Convert product features into emotional, poetic lyrics
+
+Reflect Indian sensibilities (homely vibes, small joys, cozy chaos, "ghar wali feeling")
+
+Highlight handcrafted / artisan feel naturally
+
+Keep the tone relatable, warm, slightly playful
+
+Avoid sounding like an advertisement
+
+Suitable for a 30-second Suno clip (8–10 short lines)
+
+Include a catchy hook that evokes comfort and home
+
+Product description:
+"""
+${description || productName}
+${category ? `\nCategory: ${category}` : ''}
+${cat1 ? `\nSub-category: ${cat1}` : ''}
+"""
+
+Generate ONLY the lyrics, no explanations or additional text.
+`;
+        
+        const response = await openai.chat.completions.create({
+            model: "gpt-4.1",
+            messages: [
+                {
+                    role: "user",
+                    content: lyricsPrompt
+                }
+            ],
+            temperature: 0.8,
+            max_tokens: 300
+        });
+        
+        let lyrics = response.choices[0].message.content.trim();
+        
+        // Clean up the lyrics
+        lyrics = lyrics.replace(/^["']|["']$/g, '');
+        
+        console.log('Lyrics generated successfully');
+        
+        res.json({
+            success: true,
+            lyrics: lyrics
+        });
+        
+    } catch (error) {
+        console.error('Lyrics generation error:', error);
+        
+        // Create fallback lyrics
+        const fallbackLyrics = `(Verse 1)\nIn our cozy little corner\nWhere the handmade beauty stays\nEveryday feels like Sunday\nIn the most delightful ways\n\n(Chorus)\nThis is home, this is comfort\nIn the simple things we find\nWarmth and love in every moment\nPeace of heart and peace of mind\n\n(Bridge)\nIndian skies and gentle breezes\nSmiles that never fade away\nIn this space we call our own\nWe find joy in every day`;
+        
+        res.json({ 
+            success: true,
+            lyrics: fallbackLyrics,
+            warning: error.message
+        });
+    }
+});
+
 // app.post('/chat/history-sheets') - Pagination logic को बदलें
 app.post('/chat/history-sheets', async (req, res) => {
     try {

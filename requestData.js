@@ -37,7 +37,7 @@ const columnMapping = {
     'image', 'other_images', 'hsn_code', 'brand', 'sku', 'stock', 
     'availability', 'description', 'business_id', 'whatsapp_toggle', 
     'location', 'priority', 'retail_simple_price', 'retail_simple_special_price', 
-    'short_description','cat1','cat2','tags','extra_description'
+    'short_description','cat1','cat2','tags','extra_description','download_link'
   ],
   'sellers': [
     'id', 'user_id', 'slug', 'store_name', 'store_description', 'business', 
