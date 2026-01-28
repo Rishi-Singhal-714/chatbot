@@ -4698,20 +4698,15 @@ Genre: Indie pop / soft lo-fi / acoustic chill (Indian indie vibe)
 Tempo: Medium
 
 Requirements:
-
 Convert product features into emotional, poetic lyrics
-
 Reflect Indian sensibilities (homely vibes, small joys, cozy chaos, "ghar wali feeling")
-
 Highlight handcrafted / artisan feel naturally
-
 Keep the tone relatable, warm, slightly playful
-
 Avoid sounding like an advertisement
-
 Suitable for a 30-second Suno clip (8–10 short lines)
-
 Include a catchy hook that evokes comfort and home
+Do NOT use any section labels like Verse, Chorus, Hook, Bridge, Outro, etc.
+Present the lyrics as a continuous flow of lines only
 
 Product description:
 """
@@ -4731,7 +4726,7 @@ Generate ONLY the lyrics, no explanations or additional text.
                     content: lyricsPrompt
                 }
             ],
-            temperature: 0.8,
+            temperature: 0.5,
             max_tokens: 300
         });
         
