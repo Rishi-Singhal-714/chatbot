@@ -717,6 +717,262 @@ async function getProductStatsByUpdater() {
   });
 }
 
+// Add this function after other database functions
+
+/**
+ * Get products from a specific gallery
+ * @param {string} galleryId - Gallery ID
+ * @param {string} categoryId - Optional category filter
+ * @returns {Promise<Object>} Gallery products data
+ */
+async function getGalleryProducts(galleryId, categoryId = 'all') {
+  return new Promise((resolve, reject) => {
+    ensureConnection();
+    
+    if (!pool) {
+      console.error('❌ Database connection pool not available');
+      reject(new Error('Database connection not available'));
+      return;
+    }
+    
+    // Extract numeric ID from "id=493" format if needed
+    let cleanGalleryId = galleryId;
+    if (galleryId && galleryId.includes('=')) {
+      const match = galleryId.match(/id=(\d+)/);
+      cleanGalleryId = match ? match[1] : galleryId;
+    }
+    
+    console.log(`📊 Fetching products for gallery ID: ${cleanGalleryId}, category filter: ${categoryId}`);
+    lastQueryTime = Date.now();
+    
+    pool.getConnection(async (err, connection) => {
+      if (err) {
+        console.error('❌ Database connection error:', err);
+        reject(err);
+        return;
+      }
+      
+      try {
+        // Step 1: Get componentIds from gallery
+        const [galleryRows] = await connection.execute(
+          `SELECT componentiIds FROM u130660877_zulu.galleries WHERE id = ?`,
+          [cleanGalleryId]
+        );
+        
+        if (galleryRows.length === 0) {
+          connection.release();
+          resolve({
+            success: false,
+            error: 'Gallery not found',
+            data: []
+          });
+          return;
+        }
+        
+        const gallery = galleryRows[0];
+        let componentIds = [];
+        
+        try {
+          if (gallery.componentiIds) {
+            if (typeof gallery.componentiIds === 'string') {
+              // Try to parse as JSON
+              try {
+                const parsed = JSON.parse(gallery.componentiIds);
+                componentIds = Array.isArray(parsed) ? parsed.map(id => String(id).trim()) : [];
+              } catch (parseError) {
+                // Try comma-separated string
+                componentIds = gallery.componentiIds
+                  .replace(/[\[\]"\s]/g, '')
+                  .split(',')
+                  .map(id => id.trim())
+                  .filter(id => id);
+              }
+            } else if (Array.isArray(gallery.componentiIds)) {
+              componentIds = gallery.componentiIds.map(id => String(id));
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error parsing componentIds:', error);
+          connection.release();
+          resolve({
+            success: false,
+            error: 'Failed to parse gallery data',
+            data: []
+          });
+          return;
+        }
+        
+        if (componentIds.length === 0) {
+          connection.release();
+          resolve({
+            success: true,
+            data: [],
+            message: 'No products found in gallery'
+          });
+          return;
+        }
+        
+        // Step 2: Fetch products with basic info
+        const placeholders = componentIds.map(() => '?').join(',');
+        let query = `
+          SELECT 
+            p.id,
+            p.name,
+            p.image,
+            p.cat1,
+            p.retail_simple_price,
+            p.retail_simple_special_price,
+            p.description,
+            p.tags,
+            p.category_id
+          FROM u130660877_zulu.products p
+          WHERE p.id IN (${placeholders})
+        `;
+        const queryParams = [...componentIds];
+        
+        // If categoryId is provided and not "all", filter by category
+        if (categoryId && categoryId !== 'all') {
+          query += ` AND p.cat1 = ?`;
+          queryParams.push(categoryId);
+        }
+        
+        const [productRows] = await connection.execute(query, queryParams);
+        
+        if (productRows.length === 0) {
+          connection.release();
+          resolve({
+            success: true,
+            data: [],
+            stats: {
+              totalComponents: componentIds.length,
+              productsFound: 0,
+              categoryFilter: categoryId || 'all',
+              galleryId: cleanGalleryId
+            }
+          });
+          return;
+        }
+        
+        // Step 3: Fetch variant data (special_price) for each product
+        const productIds = productRows.map(p => p.id);
+        const variantPlaceholders = productIds.map(() => '?').join(',');
+        
+        const variantQuery = `
+          SELECT 
+            product_id,
+            special_price,
+            price,
+            sku,
+            status
+          FROM u130660877_zulu.product_variants
+          WHERE product_id IN (${variantPlaceholders})
+          AND status = 1
+          ORDER BY product_id, id
+        `;
+        
+        const [variantRows] = await connection.execute(variantQuery, productIds);
+        
+        // Create a map of product_id to variant data
+        const variantMap = {};
+        variantRows.forEach(variant => {
+          if (!variantMap[variant.product_id]) {
+            variantMap[variant.product_id] = [];
+          }
+          variantMap[variant.product_id].push(variant);
+        });
+        
+        // Step 4: Combine product data with variant data
+        const products = productRows.map(product => {
+          const variants = variantMap[product.id] || [];
+          
+          // Calculate the best prices from variants
+          let retail_simple_price = product.retail_simple_price || 0;
+          let retail_simple_special_price = product.retail_simple_special_price || 0;
+          
+          if (variants.length > 0) {
+            // Get the lowest special price (if any)
+            const specialPrices = variants
+              .filter(v => v.special_price && v.special_price > 0)
+              .map(v => parseFloat(v.special_price));
+            
+            // Get the lowest regular price
+            const regularPrices = variants
+              .filter(v => v.price && v.price > 0)
+              .map(v => parseFloat(v.price));
+            
+            // Find the best special price (lowest)
+            if (specialPrices.length > 0) {
+              retail_simple_special_price = Math.min(...specialPrices);
+            }
+            
+            // Find the best regular price (lowest)
+            if (regularPrices.length > 0) {
+              retail_simple_price = Math.min(...regularPrices);
+            }
+            
+            // If no special price, use regular price as both
+            if (retail_simple_special_price === 0 && retail_simple_price > 0) {
+              retail_simple_special_price = retail_simple_price;
+            }
+            
+            // If no regular price but has special price, use special price for both
+            if (retail_simple_price === 0 && retail_simple_special_price > 0) {
+              retail_simple_price = retail_simple_special_price;
+            }
+          }
+          
+          return {
+            id: product.id,
+            name: product.name,
+            image: product.image,
+            categoryId: product.cat1,
+            galleryId: cleanGalleryId,
+            retail_simple_price: retail_simple_price,
+            retail_simple_special_price: retail_simple_special_price,
+            price: retail_simple_price,
+            variant_count: variants.length,
+            description: product.description,
+            tags: product.tags,
+            category_id: product.category_id,
+            has_variants: variants.length > 0,
+            variants: process.env.NODE_ENV === 'development' ? variants.slice(0, 2) : undefined
+          };
+        });
+        
+        connection.release();
+        
+        setTimeout(() => {
+          console.log('🔌 Closing connection after gallery products query');
+          closeConnectionPool();
+        }, 3000);
+        
+        resolve({
+          success: true,
+          data: products,
+          stats: {
+            totalComponents: componentIds.length,
+            productsFound: productRows.length,
+            variantsFound: variantRows.length,
+            categoryFilter: categoryId || 'all',
+            galleryId: cleanGalleryId
+          },
+          debug: process.env.NODE_ENV === 'development' ? {
+            firstFewComponentIds: componentIds.slice(0, 10),
+            componentIdsParsed: componentIds.length > 0,
+            rawComponentiIds: gallery.componentiIds,
+            sampleProducts: products.slice(0, 2)
+          } : undefined
+        });
+        
+      } catch (error) {
+        connection.release();
+        console.error('❌ Gallery products query error:', error);
+        reject(error);
+      }
+    });
+  });
+}
+
 async function executeDelete(table, id) {
   return new Promise((resolve, reject) => {
     ensureConnection();
@@ -750,24 +1006,22 @@ async function executeDelete(table, id) {
         
         const [result] = await connection.query(query, [id]);
         
-        connection.release();
+        connection.release(); // Just release the connection back to pool
         
         console.log(`✅ Delete successful, affected rows: ${result.affectedRows}`);
         
         // Clear cache for this table after delete
         clearCache(table);
         
-        setTimeout(() => {
-          console.log('🔌 Closing connection after delete execution');
-          closeConnectionPool();
-        }, 3000);
+        // REMOVED the setTimeout that closes the connection pool
+        // This allows the pool to stay open for other operations
         
         resolve({
           affectedRows: result.affectedRows,
           message: `Deleted 1 record from ${tableName}`
         });
       } catch (error) {
-        connection.release();
+        connection.release(); // Always release connection on error
         console.error(`❌ Error deleting from ${tableName}:`, error);
         reject(error);
       }
@@ -789,7 +1043,8 @@ module.exports = {
   clearAllCaches,
   getAllCacheStatus,
   getTableColumns,
-  executeDelete, 
+  executeDelete,
+  getGalleryProducts, 
   // Connection management
   createConnectionPool: () => createConnectionPool(),
   closeConnectionPool: () => closeConnectionPool(),
