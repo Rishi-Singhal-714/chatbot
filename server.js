@@ -4157,297 +4157,226 @@ app.put('/api/appconfigs/:id', async (req, res) => {
     });
   }
 });
-/**
-/**
- * DELETE video endpoint
-/**
- * DELETE video endpoint
- */
-app.delete('/api/videos/:id', async (req, res) => {
+// Get single appconfigs record
+app.get('/api/appconfigs/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    if (!id) {
-      return res.status(400).json({
-        success: false,
-        error: 'Video ID is required'
-      });
-    }
-
-    console.log(`🗑️ Deleting video with ID: ${id}`);
-
-    // First, get the video to check if it exists
-    const video = await db.getRecordById('videos', id);
+    const record = await db.getRecordById('appconfigs', id);
     
-    if (!video) {
+    if (!record) {
       return res.status(404).json({
         success: false,
-        error: 'Video not found'
-      });
-    }
-
-    // Use the db.executeDelete function with the table KEY, not the actual table name
-    // The function should handle the table mapping internally
-    const result = await db.executeDelete('videos', id);
-    
-    if (result && result.affectedRows > 0) {
-      // Clear cache to ensure fresh data
-      db.clearCache('videos');
-      
-      console.log(`✅ Video ${id} deleted successfully`);
-      
-      return res.json({
-        success: true,
-        message: 'Video deleted successfully',
-        deletedId: id,
-        affectedRows: result.affectedRows
-      });
-    } else {
-      return res.status(500).json({
-        success: false,
-        error: 'Failed to delete video from database'
+        error: 'App config record not found'
       });
     }
     
+    res.json({
+      success: true,
+      data: record
+    });
   } catch (error) {
-    console.error('Error deleting video:', error);
-    return res.status(500).json({
+    console.error('Get appconfigs record error:', error);
+    res.status(500).json({
       success: false,
       error: error.message
     });
   }
 });
-
-/**
- * DELETE product endpoint
- */
-app.delete('/api/products/:id', async (req, res) => {
+app.get('/api/galleries', async (req, res) => {
   try {
-    const { id } = req.params;
+    const data = await db.getCachedData('galleries');
     
-    if (!id) {
-      return res.status(400).json({
-        success: false,
-        error: 'Product ID is required'
-      });
-    }
-
-    console.log(`🗑️ Deleting product with ID: ${id}`);
-
-    // First, get the product to check if it exists
-    const product = await db.getRecordById('products', id);
-    
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        error: 'Product not found'
-      });
-    }
-
-    // Use the db.executeDelete function
-    const result = await db.executeDelete('products', id);
-    
-    if (result && result.affectedRows > 0) {
-      // Clear cache to ensure fresh data
-      db.clearCache('products');
-      
-      console.log(`✅ Product ${id} deleted successfully`);
-      
-      return res.json({
-        success: true,
-        message: 'Product deleted successfully',
-        deletedId: id,
-        affectedRows: result.affectedRows
-      });
-    } else {
-      return res.status(500).json({
-        success: false,
-        error: 'Failed to delete product from database'
-      });
-    }
-    
+    res.json({
+      success: true,
+      data: data,
+      count: data.length
+    });
   } catch (error) {
-    console.error('Error deleting product:', error);
-    return res.status(500).json({
+    console.error('Error fetching galleries:', error);
+    res.status(500).json({
       success: false,
       error: error.message
     });
   }
 });
-
-/**
- * GET /api/gallery/products - Get products from a specific gallery
- * Query parameters:
- *   - id: Gallery ID (required)
- *   - categoryId: Optional category filter (use 'all' for all categories)
- */
-app.get('/api/gallery/products', async (req, res) => {
-  let connection;
+// Get sellers data
+app.get('/api/sellers', async (req, res) => {
+  try {
+    const data = await db.getCachedData('sellers');
+    
+    res.json({
+      success: true,
+      data: data,
+      count: data.length
+    });
+  } catch (error) {
+    console.error('Error fetching sellers:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+// Get videos data
+app.get('/api/videos', async (req, res) => {
+  try {
+    const data = await db.getCachedData('videos');
+    
+    res.json({
+      success: true,
+      data: data,
+      count: data.length
+    });
+  } catch (error) {
+    console.error('Error fetching videos:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+// Get users data
+app.get('/api/users', async (req, res) => {
+  try {
+    const data = await db.getCachedData('users');
+    
+    res.json({
+      success: true,
+      data: data,
+      count: data.length
+    });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+// Clear specific cache
+app.post('/api/clear-cache/:type', (req, res) => {
+  const { type } = req.params;
   
+  if (type === 'all') {
+    db.clearAllCaches();  // Changed from dbFunctions
+    res.json({ success: true, message: 'All caches cleared' });
+  } else if (['products', 'sellers', 'videos', 'users', 'galleries'].includes(type)) {
+    db.clearCache(type);  // Changed from dbFunctions
+    res.json({ success: true, message: `Cache cleared for ${type}` });
+  } else {
+    res.status(400).json({ success: false, error: 'Invalid cache type' });
+  }
+});
+// Get cache status
+app.get('/api/cache-status', (req, res) => {
+  const status = db.getAllCacheStatus();  // Changed from dbFunctions
+  res.json({
+    success: true,
+    cacheStatus: status
+  });
+});
+// Enhanced videos endpoint with category names
+app.get('/api/videosenhanced', async (req, res) => {
   try {
-    const galleryId = req.query.id;
-    const categoryId = req.query.categoryId || 'all';
-
-    // Extract numeric ID from "id=493" format if needed
-    let cleanGalleryId = galleryId;
-    if (galleryId && galleryId.includes('=')) {
-      const match = galleryId.match(/id=(\d+)/);
-      cleanGalleryId = match ? match[1] : galleryId;
-    }
-
-    if (!cleanGalleryId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Gallery ID parameter is required'
-      });
-    }
-
-    console.log(`📊 Fetching products for gallery ID: ${cleanGalleryId}, category filter: ${categoryId}`);
-
-    // Ensure database connection
-    if (db.ensureConnection) {
-      db.ensureConnection();
-    }
+    // Get all necessary data
+    const videos = await db.getCachedData('videos');
+    const categories = await db.getCachedData('categories');
+    const sellers = await db.getCachedData('sellers');
     
-    // Step 1: Get componentIds from gallery
-    const galleries = await db.getCachedData('galleries');
-    const gallery = galleries.find(g => String(g.id) === String(cleanGalleryId));
-
-    if (!gallery) {
-      return res.json({
-        success: false,
-        error: 'Gallery not found',
-        data: []
-      });
-    }
-
-    let componentIds = [];
-    try {
-      if (gallery.componentiIds) {
-        console.log(`📋 Raw componentiIds from gallery ${cleanGalleryId}:`, gallery.componentiIds);
-
-        if (typeof gallery.componentiIds === 'string') {
-          // Try to parse as JSON
-          try {
-            const parsed = JSON.parse(gallery.componentiIds);
-            componentIds = Array.isArray(parsed) ? parsed.map(id => String(id).trim()) : [];
-          } catch (parseError) {
-            console.log("⚠️ JSON parse failed, trying alternative parsing");
-            // Try comma-separated string
-            componentIds = gallery.componentiIds
-              .replace(/[\[\]"\s]/g, '')
-              .split(',')
-              .map(id => id.trim())
-              .filter(id => id);
-          }
-        } else if (Array.isArray(gallery.componentiIds)) {
-          componentIds = gallery.componentiIds.map(id => String(id));
-        }
-      }
-    } catch (error) {
-      console.error('❌ Error parsing componentIds:', error);
-      return res.json({
-        success: false,
-        error: 'Failed to parse gallery data',
-        data: []
-      });
-    }
-
-    console.log(`📊 Parsed ${componentIds.length} component IDs from gallery`);
-    
-    if (componentIds.length === 0) {
-      return res.json({
-        success: true,
-        data: [],
-        message: 'No products found in gallery'
-      });
-    }
-
-    // Step 2: Fetch all products to filter
-    const allProducts = await db.getCachedData('products');
-    
-    // Filter products by componentIds
-    let filteredProducts = allProducts.filter(product => 
-      componentIds.includes(String(product.id))
-    );
-
-    // Apply category filter if specified and not 'all'
-    if (categoryId && categoryId !== 'all') {
-      console.log(`🎯 Filtering by category ID: ${categoryId}`);
-      filteredProducts = filteredProducts.filter(product => 
-        String(product.cat1) === String(categoryId)
-      );
-    }
-
-    console.log(`✅ Found ${filteredProducts.length} products in gallery`);
-
-    if (filteredProducts.length === 0) {
-      return res.json({
-        success: true,
-        data: [],
-        stats: {
-          totalComponents: componentIds.length,
-          productsFound: 0,
-          categoryFilter: categoryId || 'all',
-          galleryId: cleanGalleryId
-        }
-      });
-    }
-
-    // Since we don't have direct variant data in our current structure,
-    // we'll use the available price fields from products
-    
-    const products = filteredProducts.map(product => {
-      // Use available price fields from product data
-      const retail_simple_price = product.retail_simple_price || product.price || 0;
-      const retail_simple_special_price = product.retail_simple_special_price || retail_simple_price;
-
-      return {
-        id: product.id,
-        name: product.name,
-        image: product.image,
-        categoryId: product.cat1,
-        galleryId: cleanGalleryId,
-        retail_simple_price: parseFloat(retail_simple_price) || 0,
-        retail_simple_special_price: parseFloat(retail_simple_special_price) || 0,
-        price: parseFloat(retail_simple_price) || 0, // Legacy field
-        has_variants: false, // Since we don't have variant data in current structure
-        // Include additional product info if available
-        ...(product.description && { description: product.description }),
-        ...(product.tags && { tags: product.tags }),
-        ...(product.category_id && { category_id: product.category_id })
+    // Create lookup maps
+    const categoryMap = {};
+    categories.forEach(cat => {
+      categoryMap[cat.id] = {
+        name: cat.name,
+        parent_id: cat.parent_id
       };
     });
-
-    return res.json({
-      success: true,
-      data: products,
-      stats: {
-        totalComponents: componentIds.length,
-        productsFound: filteredProducts.length,
-        categoryFilter: categoryId || 'all',
-        galleryId: cleanGalleryId,
-        galleryName: gallery.name || gallery.type2 || 'Unnamed Gallery'
-      },
-      debug: process.env.NODE_ENV === 'development' ? {
-        firstFewComponentIds: componentIds.slice(0, 10),
-        componentIdsParsed: componentIds.length > 0,
-        rawComponentiIds: gallery.componentiIds,
-        sampleProducts: products.slice(0, 2)
-      } : undefined
+    
+    const sellerMap = {};
+    sellers.forEach(seller => {
+      sellerMap[seller.user_id] = seller.store_name;
     });
-
+    
+    // Enhance videos with names and process sub_sub_category
+    const enhancedVideos = videos.map(video => {
+      // Get main category name
+      const categoryInfo = categoryMap[video.category_id];
+      const categoryName = categoryInfo ? categoryInfo.name : '';
+      
+      // Get seller name
+      const sellerName = sellerMap[video.seller_id] || '';
+      
+      // Process sub_sub_category (could be JSON array, comma-separated, or single value)
+      let subCategoryIds = [];
+      let subCategoryNames = [];
+      
+      if (video.sub_sub_category) {
+        try {
+          // Try to parse as JSON array
+          const parsed = JSON.parse(video.sub_sub_category);
+          if (Array.isArray(parsed)) {
+            subCategoryIds = parsed.map(id => String(id).trim());
+          } else if (typeof parsed === 'string') {
+            subCategoryIds = parsed.split(',').map(id => String(id).trim());
+          } else if (typeof parsed === 'number') {
+            subCategoryIds = [String(parsed)];
+          }
+        } catch (e) {
+          // If not JSON, try comma-separated or single value
+          const strVal = String(video.sub_sub_category);
+          if (strVal.includes(',')) {
+            subCategoryIds = strVal.split(',').map(id => String(id).trim());
+          } else {
+            subCategoryIds = [strVal.trim()];
+          }
+        }
+        
+        // Get names for sub categories
+        subCategoryNames = subCategoryIds.map(id => {
+          const cat = categories.find(c => String(c.id) === id);
+          return cat ? cat.name : `Sub Cat ${id}`;
+        });
+      }
+      
+      return {
+        ...video,
+        id: video.id,
+        category_name: categoryName,
+        seller_name: sellerName,
+        sub_category_ids: subCategoryIds,
+        sub_category_names: subCategoryNames,
+        sub_category_display: subCategoryNames.join(', '),
+        status_display: video.status == 1 ? 'Active' : 'Inactive',
+        priority_display: video.priority ? `P${video.priority}` : 'P1',
+        has_thumbnail: !!video.thumbnail,
+        thumbnail_url: video.thumbnail ? getFullMediaUrl(video.thumbnail) : ''
+      };
+    });
+    
+    res.json({
+      success: true,
+      data: enhancedVideos,
+      categories: categories,
+      sellers: sellers,
+      count: enhancedVideos.length
+    });
   } catch (error) {
-    console.error('❌ Gallery products API error:', error);
-    return res.status(500).json({
+    console.error('Error fetching enhanced videos:', error);
+    res.status(500).json({
       success: false,
-      error: 'Internal server error',
-      details: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: error.message
     });
   }
 });
 
+// Helper function for media URLs
+function getFullMediaUrl(url) {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  if (url.startsWith('/')) return `https://zulushop.in${url}`;
+  return `https://zulushop.in/${url}`;
+}
 // Thumbnail upload endpoint (keep existing)
 app.post('/api/videos/:id/upload-thumbnail', async (req, res) => {
   try {

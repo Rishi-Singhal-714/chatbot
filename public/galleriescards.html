@@ -871,7 +871,39 @@
             .modal-body {
                 padding: 20px;
             }
-            
+            /* Tab content animations */
+.tab-content {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Product and Video card hover effects */
+.product-card:hover, .video-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* Image loading animation */
+.product-card img, .video-card img {
+    transition: transform 0.3s ease;
+}
+
+.product-card:hover img {
+    transform: scale(1.05);
+}
+
+/* Responsive adjustments for modal */
+@media (max-width: 768px) {
+    .products-grid, .videos-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .products-grid, .videos-grid {
+        grid-template-columns: 1fr;
+    }
+}
             .form-section {
                 padding: 20px;
             }
@@ -1774,25 +1806,345 @@
             </div>
         </div>
     </div>
-// Replace the entire script section with this updated code:
 
-<script>
-    // Global variables
-    let allGalleries = [];
-    let filteredGalleries = [];
-    let searchTimeout = null;
+    <script>
+        // Gallery Details Variables
+let currentGalleryDetails = null;
+
+// View Gallery Details
+async function viewGalleryDetails(galleryId) {
+    const gallery = allGalleries.find(g => g.id == galleryId);
+    if (!gallery) {
+        showMessage('❌ Gallery not found', 'error');
+        return;
+    }
     
-    // Music generation variables
-    let currentMusicGallery = null;
-    let generatedLyrics = '';
-    let generatedStyle = '';
-    let uploadedMusicUrl = null;
-    let uploadedMusicFile = null;
-    let currentGenerationType = null;
+    // Set modal title
+    document.getElementById('galleryModalTitle').textContent = `Gallery: ${gallery.name}`;
     
-    // Prompts storage
-    const defaultPrompts = {
-        lyrics: `Write a 30-second song inspired by the following gallery name.
+    // Show loading state
+    document.getElementById('galleryDetailsLoading').style.display = 'block';
+    document.getElementById('galleryDetailsError').style.display = 'none';
+    document.getElementById('galleryInfoSection').style.display = 'none';
+    document.getElementById('productsContent').style.display = 'none';
+    document.getElementById('videosContent').style.display = 'none';
+    
+    // Switch to products tab by default
+    switchTab('products');
+    
+    // Show modal
+    document.getElementById('galleryDetailsModal').style.display = 'block';
+    
+    try {
+        // Fetch gallery details
+        const response = await fetch(`https://api.zulushop.in/api/v1/user/get-galleries?id=${galleryId}`);
+        const result = await response.json();
+        
+        if (result.success && result.data && result.data.length > 0) {
+            const galleryData = result.data[0];
+            currentGalleryDetails = galleryData;
+            
+            // Update gallery info
+            updateGalleryInfo(galleryData);
+            
+            // Display products and videos
+            displayProducts(galleryData.products || []);
+            displayVideos(galleryData.shopable_videos || []);
+            
+            // Hide loading
+            document.getElementById('galleryDetailsLoading').style.display = 'none';
+            document.getElementById('galleryInfoSection').style.display = 'block';
+            
+        } else {
+            throw new Error(result.error || 'No data received');
+        }
+    } catch (error) {
+        console.error('Error loading gallery details:', error);
+        document.getElementById('galleryDetailsLoading').style.display = 'none';
+        document.getElementById('galleryDetailsError').style.display = 'block';
+        document.getElementById('galleryDetailsErrorMessage').textContent = error.message;
+    }
+}
+
+// Update gallery info section
+function updateGalleryInfo(galleryData) {
+    // Basic info
+    document.getElementById('galleryDetailName').textContent = galleryData.name || 'Unnamed Gallery';
+    document.getElementById('galleryDetailImage').src = galleryData.image1 || galleryData.image || 'https://via.placeholder.com/80x80?text=No+Image';
+    document.getElementById('galleryDetailImage').onerror = function() {
+        this.src = 'https://via.placeholder.com/80x80?text=Image+Error';
+    };
+    
+    // Status
+    const statusBadge = document.getElementById('galleryDetailStatus');
+    statusBadge.textContent = galleryData.status === 'on' ? '✅ Active' : '❌ Inactive';
+    statusBadge.className = galleryData.status === 'on' ? 'status-badge active' : 'status-badge inactive';
+    
+    // Version and type
+    document.getElementById('galleryDetailVersion').textContent = galleryData.version || '1';
+    document.getElementById('galleryDetailType').textContent = galleryData.type1 || 'Product';
+    
+    // Description (limited to 200 chars)
+    const description = galleryData.description || galleryData.cat1_names || 'No description available';
+    document.getElementById('galleryDetailDescription').textContent = 
+        description.length > 200 ? description.substring(0, 200) + '...' : description;
+}
+
+// Display products in grid
+function displayProducts(products) {
+    const productsGrid = document.querySelector('.products-grid');
+    const noProducts = document.getElementById('noProducts');
+    
+    // Update count
+    document.getElementById('productsCount').textContent = products.length;
+    
+    if (products.length === 0) {
+        productsGrid.style.display = 'none';
+        noProducts.style.display = 'block';
+        return;
+    }
+    
+    productsGrid.style.display = 'grid';
+    noProducts.style.display = 'none';
+    
+    let html = '';
+    products.forEach(product => {
+        // Calculate discount percentage if special price exists
+        let discountBadge = '';
+        if (product.special_price && product.retail_simple_price) {
+            const originalPrice = parseFloat(product.retail_simple_price);
+            const specialPrice = parseFloat(product.special_price);
+            if (originalPrice > specialPrice) {
+                const discount = Math.round(((originalPrice - specialPrice) / originalPrice) * 100);
+                discountBadge = `<span style="position: absolute; top: 10px; right: 10px; background: #e74c3c; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">${discount}% OFF</span>`;
+            }
+        }
+        
+        html += `
+        <div class="product-card" style="
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            position: relative;
+        ">
+            ${discountBadge}
+            <div style="width: 100%; height: 180px; overflow: hidden;">
+                <img src="${product.image || 'https://via.placeholder.com/250x180?text=No+Image'}" 
+                     alt="${product.name}"
+                     style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;"
+                     onerror="this.src='https://via.placeholder.com/250x180?text=Image+Error'">
+            </div>
+            <div style="padding: 15px;">
+                <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #333; line-height: 1.4; height: 40px; overflow: hidden;">
+                    ${product.name}
+                </h4>
+                <div style="margin-bottom: 8px;">
+                    <span style="font-size: 16px; font-weight: 600; color: #795548;">
+                        ₹${product.special_price || product.retail_simple_price || '0'}
+                    </span>
+                    ${product.retail_simple_price && product.special_price && parseFloat(product.retail_simple_price) > parseFloat(product.special_price) ? 
+                        `<span style="font-size: 12px; color: #7f8c8d; text-decoration: line-through; margin-left: 8px;">
+                            ₹${product.retail_simple_price}
+                        </span>` : ''
+                    }
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 10px;">
+                    <span style="font-size: 11px; padding: 4px 8px; background: #f8f9fa; border-radius: 4px; color: #666;">
+                        ID: ${product.id}
+                    </span>
+                    ${product.business_id ? 
+                        `<span style="font-size: 11px; padding: 4px 8px; background: #e3f2fd; border-radius: 4px; color: #1565c0;">
+                            Biz: ${product.business_id}
+                        </span>` : ''
+                    }
+                </div>
+            </div>
+        </div>
+        `;
+    });
+    
+    productsGrid.innerHTML = html;
+    
+    // Add hover effects
+    document.querySelectorAll('.product-card').forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.style.transform = 'translateY(-4px)';
+            card.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+            card.querySelector('img').style.transform = 'scale(1.05)';
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'translateY(0)';
+            card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+            card.querySelector('img').style.transform = 'scale(1)';
+        });
+    });
+}
+
+// Display videos in grid
+function displayVideos(videos) {
+    const videosGrid = document.querySelector('.videos-grid');
+    const noVideos = document.getElementById('noVideos');
+    
+    // Update count
+    document.getElementById('videosCount').textContent = videos.length;
+    
+    if (videos.length === 0) {
+        videosGrid.style.display = 'none';
+        noVideos.style.display = 'block';
+        return;
+    }
+    
+    videosGrid.style.display = 'grid';
+    noVideos.style.display = 'none';
+    
+    let html = '';
+    videos.forEach(video => {
+        html += `
+        <div class="video-card" style="
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        ">
+            <div style="position: relative; width: 100%; height: 180px; overflow: hidden;">
+                <img src="${video.thumbnail || 'https://via.placeholder.com/300x180?text=No+Thumbnail'}" 
+                     alt="${video.name}"
+                     style="width: 100%; height: 100%; object-fit: cover;"
+                     onerror="this.src='https://via.placeholder.com/300x180?text=Image+Error'">
+                <div style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                    ${video.mode === 'tour' ? '🎬 Tour' : '📱 Insta'}
+                </div>
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;"
+                     onclick="playVideo('${video.video}')">
+                    <span style="color: white; font-size: 24px;">▶️</span>
+                </div>
+            </div>
+            <div style="padding: 15px;">
+                <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #333; line-height: 1.4;">
+                    ${video.name}
+                </h4>
+                <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+                    <span style="font-size: 11px; padding: 4px 8px; background: #f8f9fa; border-radius: 4px; color: #666;">
+                        ID: ${video.id}
+                    </span>
+                    ${video.business_id ? 
+                        `<span style="font-size: 11px; padding: 4px 8px; background: #e3f2fd; border-radius: 4px; color: #1565c0;">
+                            Biz: ${video.business_id}
+                        </span>` : ''
+                    }
+                    <span style="font-size: 11px; padding: 4px 8px; background: #f3e5f5; border-radius: 4px; color: #7b1fa2;">
+                        ${video.product_id ? `${video.product_id.split(',').length} products` : 'No products'}
+                    </span>
+                </div>
+            </div>
+        </div>
+        `;
+    });
+    
+    videosGrid.innerHTML = html;
+    
+    // Add hover effects
+    document.querySelectorAll('.video-card').forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.style.transform = 'translateY(-4px)';
+            card.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'translateY(0)';
+            card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+        });
+    });
+}
+
+// Tab switching
+function switchTab(tab) {
+    // Update tab buttons
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.style.borderBottom = '3px solid transparent';
+        button.style.color = '#666';
+        button.style.background = 'none';
+    });
+    
+    const activeTab = document.getElementById(`${tab}Tab`);
+    activeTab.style.borderBottom = '3px solid #795548';
+    activeTab.style.color = '#795548';
+    
+    // Show/hide content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.style.display = 'none';
+    });
+    document.getElementById(`${tab}Content`).style.display = 'block';
+}
+
+// Play video
+function playVideo(videoUrl) {
+    window.open(videoUrl, '_blank');
+}
+
+// Close gallery details modal
+function closeGalleryDetailsModal() {
+    document.getElementById('galleryDetailsModal').style.display = 'none';
+    currentGalleryDetails = null;
+}
+
+// Retry loading gallery details
+function retryLoadGalleryDetails() {
+    if (currentGalleryDetails) {
+        viewGalleryDetails(currentGalleryDetails.id);
+    }
+}
+
+// Add to window click handler
+// Add this to your existing window.onclick function:
+window.onclick = function(event) {
+    const imageModal = document.getElementById('imageUploadModal');
+    const editModal = document.getElementById('editGalleryModal');
+    const musicModal = document.getElementById('musicModal');
+    const galleryDetailsModal = document.getElementById('galleryDetailsModal');
+    
+    if (event.target === imageModal) {
+        closeImageModal();
+    }
+    if (event.target === editModal) {
+        closeEditGalleryModal();
+    }
+    if (event.target === musicModal) {
+        closeMusicModal();
+    }
+    if (event.target === galleryDetailsModal) {
+        closeGalleryDetailsModal();
+    }
+};
+
+// Add to keydown handler
+// Add this to your existing keydown event listener:
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeImageModal();
+        closeEditGalleryModal();
+        closeMusicModal();
+        closeGalleryDetailsModal();
+    }
+});
+        // Global variables
+        let allGalleries = [];
+        let filteredGalleries = [];
+        let searchTimeout = null;
+        
+        // Music generation variables
+        let currentMusicGallery = null;
+        let generatedLyrics = '';
+        let generatedStyle = '';
+        let uploadedMusicUrl = null;
+        let uploadedMusicFile = null;
+        let currentGenerationType = null;
+        
+        // Prompts storage
+        const defaultPrompts = {
+            lyrics: `Write a 30-second song inspired by the following gallery name.
 
 Style: Warm, modern, cozy, aesthetic, lightly funny
 Mood: Home comfort, everyday love, handcrafted beauty, Indian warmth
@@ -1820,8 +2172,8 @@ Description: {description}
 Tags: {tags}
 
 Generate ONLY the lyrics, no explanations or additional text.`,
-        
-        style: `Based on the following gallery information, suggest a detailed music style description for a 30-second song.
+            
+            style: `Based on the following gallery information, suggest a detailed music style description for a 30-second song.
 
 Consider:
 1. Music genre and sub-genre
@@ -1847,1581 +2199,1628 @@ Requirements:
 - Focus on Indian indie/folk/pop influences if appropriate
 
 Generate ONLY the style description, no explanations or additional text.`
-    };
-    
-    let currentPrompts = JSON.parse(JSON.stringify(defaultPrompts));
-    
-    // Image upload variables
-    let currentGalleryId = null;
-    let currentImageField = null;
-    let currentImageUrl = null;
-    let uploadedImageUrl = null;
-    let uploadedFile = null;
-    
-    // Edit gallery variables
-    let currentEditGalleryId = null;
-    
-    // Filter counts
-    let filterCounts = {
-        status: { all: 0, on: 0, off: 0 },
-        priority: {},
-        version: {},
-        type: {}
-    };
-    
-    // Base API URL - updated with your API
-    const API_BASE_URL = 'https://api.zulushop.in/api/v1/user';
-    
-    // Image loader for smooth loading
-    class ImageLoader {
-        constructor() {
-            this.images = new Map();
-        }
+        };
         
-        loadImage(url, element) {
-            if (!url || url.trim() === '') {
-                element.src = 'https://via.placeholder.com/300x200?text=No+Image';
-                element.classList.add('loaded');
-                return;
-            }
-            
-            // Check if image is already loaded
-            if (this.images.has(url)) {
-                const imgData = this.images.get(url);
-                if (imgData.loaded) {
-                    element.src = url;
-                    element.classList.add('loaded');
-                } else {
-                    imgData.elements.push(element);
-                }
-                return;
-            }
-            
-            // Create new image loading
-            const img = new Image();
-            const imgData = {
-                loaded: false,
-                elements: [element]
-            };
-            
-            this.images.set(url, imgData);
-            
-            img.onload = () => {
-                imgData.loaded = true;
-                imgData.elements.forEach(el => {
-                    el.src = url;
-                    setTimeout(() => {
-                        el.classList.add('loaded');
-                    }, 10);
-                });
-            };
-            
-            img.onerror = () => {
-                imgData.loaded = true;
-                imgData.elements.forEach(el => {
-                    el.src = 'https://via.placeholder.com/300x200?text=Image+Error';
-                    el.classList.add('loaded');
-                });
-            };
-            
-            // Start loading
-            img.src = url;
-        }
-    }
-    
-    const imageLoader = new ImageLoader();
-    
-    // Helper function to get full image URL
-    function getFullImageUrl(url) {
-        if (!url || url.trim() === '') {
-            return '';
-        }
+        let currentPrompts = JSON.parse(JSON.stringify(defaultPrompts));
         
-        // If already a full URL
-        if (url.startsWith('http://') || url.startsWith('https://')) {
-            return url;
-        }
+        // Image upload variables
+        let currentGalleryId = null;
+        let currentImageField = null;
+        let currentImageUrl = null;
+        let uploadedImageUrl = null;
+        let uploadedFile = null;
         
-        // If it's a relative path
-        if (url.startsWith('uploads/') || url.startsWith('temp_images/')) {
-            return 'https://zulushop.in/' + url;
-        }
+        // Edit gallery variables
+        let currentEditGalleryId = null;
         
-        // Default: prepend base URL
-        return 'https://zulushop.in/' + url;
-    }
-    
-    // Initialize
-    document.addEventListener('DOMContentLoaded', function() {
-        loadGalleries();
-        
-        // Setup search
-        document.getElementById('searchInput').addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                filterGalleries();
-            }, 300);
-        });
-        
-        // Setup filter change events
-        document.getElementById('statusFilter').addEventListener('change', function() {
-            updateFilterOptions();
-            filterGalleries();
-        });
-        
-        document.getElementById('priorityFilter').addEventListener('change', function() {
-            updateFilterOptions();
-            filterGalleries();
-        });
-        
-        document.getElementById('versionFilter').addEventListener('change', function() {
-            updateFilterOptions();
-            filterGalleries();
-        });
-        
-        document.getElementById('typeFilter').addEventListener('change', function() {
-            updateFilterOptions();
-            filterGalleries();
-        });
-        
-        // Form validation
-        setupFormValidation();
-        
-        // Load saved prompts from localStorage
-        loadSavedPrompts();
-    });
-    
-    // Form validation setup
-    function setupFormValidation() {
-        const form = document.getElementById('editGalleryForm');
-        
-        // Priority validation
-        document.getElementById('editPriority').addEventListener('input', function() {
-            validatePriority(this);
-        });
-        
-        // Version validation
-        document.getElementById('editVersion').addEventListener('input', function() {
-            validateVersion(this);
-        });
-        
-        // Form submission validation
-        form.addEventListener('submit', function(e) {
-            if (!validateGalleryForm()) {
-                e.preventDefault();
-                showMessage('❌ Please fix the errors in the form', 'error');
-            }
-        });
-    }
-    
-    function validatePriority(input) {
-        const value = parseInt(input.value);
-        if (value < 0 || value > 10) {
-            input.classList.add('invalid');
-            input.classList.remove('valid');
-            return false;
-        } else {
-            input.classList.add('valid');
-            input.classList.remove('invalid');
-            return true;
-        }
-    }
-    
-    function validateVersion(input) {
-        const value = parseInt(input.value);
-        if (value < 1 || value > 10) {
-            input.classList.add('invalid');
-            input.classList.remove('valid');
-            return false;
-        } else {
-            input.classList.add('valid');
-            input.classList.remove('invalid');
-            return true;
-        }
-    }
-    
-    function validateGalleryForm() {
-        let isValid = true;
-        
-        // Check required fields
-        const requiredFields = ['editStatus', 'editName', 'editPriority', 'editVersion', 'editType1'];
-        requiredFields.forEach(fieldId => {
-            const field = document.getElementById(fieldId);
-            if (!field.value.trim()) {
-                field.classList.add('invalid');
-                isValid = false;
-            } else {
-                field.classList.remove('invalid');
-            }
-        });
-        
-        return isValid;
-    }
-    
-    // Load saved prompts from localStorage
-    function loadSavedPrompts() {
-        const savedPrompts = localStorage.getItem('galleryPrompts');
-        if (savedPrompts) {
-            try {
-                currentPrompts = JSON.parse(savedPrompts);
-            } catch (e) {
-                console.error('Error loading saved prompts:', e);
-            }
-        }
-    }
-    
-    // Save prompts to localStorage
-    function savePrompts() {
-        localStorage.setItem('galleryPrompts', JSON.stringify(currentPrompts));
-    }
-    
-    // Load galleries from API - Updated for your API
-    async function loadGalleries() {
-        document.getElementById('loading').style.display = 'block';
-        document.getElementById('error').style.display = 'none';
-        document.getElementById('galleriesContainer').innerHTML = '';
-        
-        try {
-            // For testing, we'll use the example gallery ID 481
-            // In production, you would fetch all galleries from your API
-            const galleryId = 481; // Example gallery ID
-            const response = await fetch(`${API_BASE_URL}/get-galleries?id=${galleryId}`);
-            const data = await response.json();
-            
-            if (data && data.success && Array.isArray(data.data)) {
-                // Process gallery data to match our expected format
-                allGalleries = data.data.map(gallery => {
-                    // Get the main image
-                    let mainImage = null;
-                    
-                    // Check for images in different fields
-                    const possibleImageFields = ['image1', 'image_1', 'main_image', 'thumbnail'];
-                    
-                    for (const field of possibleImageFields) {
-                        if (gallery[field]) {
-                            mainImage = gallery[field];
-                            if (mainImage) break;
-                        }
-                    }
-                    
-                    // Check if description has music links
-                    let hasMusic = false;
-                    let musicLinks = [];
-                    if (gallery.description) {
-                        // Check for MP3 files in description
-                        if (gallery.description.includes('.mp3')) {
-                            hasMusic = true;
-                            musicLinks = [gallery.description];
-                        }
-                    }
-                    
-                    return {
-                        ...gallery,
-                        id: gallery.id,
-                        name: gallery.heading || gallery.name || 'Unnamed Gallery',
-                        image: mainImage ? getFullImageUrl(mainImage) : null,
-                        hasImage: !!mainImage,
-                        hasMusic: hasMusic,
-                        musicLinks: musicLinks,
-                        priority: Number(gallery.priority) || 0,
-                        version: Number(gallery.version) || 1,
-                        status: gallery.status || 'on',
-                        type1: gallery.type1 || 'Product',
-                        // Ensure all fields exist
-                        title: gallery.title || '',
-                        subtitle: gallery.subtitle || '',
-                        tags: gallery.tags || '',
-                        description: gallery.description || '',
-                        cat1_names: gallery.cat1_names || ''
-                    };
-                });
-                
-                // Calculate initial filter counts
-                calculateFilterCounts();
-                
-                // Populate filter dropdowns
-                populateFilters();
-                
-                showMessage(`✅ Loaded ${allGalleries.length} galleries successfully`, 'success');
-                filterGalleries();
-            } else {
-                // If no data, create sample data for testing
-                createSampleData();
-            }
-        } catch (error) {
-            console.error('Error loading galleries:', error);
-            createSampleData(); // Create sample data if API fails
-        } finally {
-            document.getElementById('loading').style.display = 'none';
-        }
-    }
-    
-    // Create sample data for testing
-    function createSampleData() {
-        allGalleries = [
-            {
-                id: 481,
-                name: "The Ghadi",
-                heading: "The Ghadi",
-                description: "http://zulushop.in/uploads/media/2026/songs/galleries/481.mp3",
-                image1: "https://zulushop.in/uploads/media/2026/Galleries/The_Ghadi_1767263344568_qmh2r5.png",
-                image2: "https://zulushop.in/uploads/media/2025/The_Ghadi_1768625340406_97ajjp.png",
-                image3: "https://zulushop.in/uploads/media/2025/The_Ghadi_1769010444653_jwcof1.png",
-                image4: "https://zulushop.in/uploads/media/2025/The_Ghadi__3__1769010455706_vkb5fo.png",
-                status: "on",
-                priority: 0,
-                version: 2,
-                type1: "Product",
-                tags: "wall clocks, home decor, modern",
-                cat1_names: "🕰️ The Ghadi\n\nModern wall clocks | Starting ₹699\n\nPhone dekh ke time dekhna band karo.\nWall clocks that look fab, not expensive.\nStarting ₹699.\nTime bhi upgrade, ghar bhi.",
-                display: 1,
-                seller_id: "[7185]",
-                shopable_video_ids: "[440,463]",
-                business_id: "[10,12]",
-                show_title: 1,
-                show_subtitle: 0,
-                showBanner: 1,
-                showVideos: 0,
-                showProducts: 1,
-                created_at: "2025-12-27T17:40:01.000Z",
-                updated_at: "2026-01-29T07:36:00.000Z"
-            }
-        ];
-        
-        // Process sample data
-        allGalleries = allGalleries.map(gallery => ({
-            ...gallery,
-            image: getFullImageUrl(gallery.image1),
-            hasImage: !!gallery.image1,
-            hasMusic: gallery.description && gallery.description.includes('.mp3'),
-            musicLinks: gallery.description && gallery.description.includes('.mp3') ? [gallery.description] : []
-        }));
-        
-        calculateFilterCounts();
-        populateFilters();
-        showMessage(`✅ Loaded sample gallery data`, 'success');
-        filterGalleries();
-    }
-    
-    // Calculate filter counts
-    function calculateFilterCounts() {
-        // Reset counts
-        filterCounts = {
-            status: { all: allGalleries.length, on: 0, off: 0 },
+        // Filter counts
+        let filterCounts = {
+            status: { all: 0, on: 0, off: 0 },
             priority: {},
             version: {},
             type: {}
         };
         
-        // Calculate counts
-        allGalleries.forEach(gallery => {
-            // Status counts
-            if (gallery.status === 'on') {
-                filterCounts.status['on']++;
-            } else {
-                filterCounts.status['off']++;
+        // Image loader for smooth loading
+        class ImageLoader {
+            constructor() {
+                this.images = new Map();
             }
             
-            // Priority counts
-            if (gallery.priority !== undefined) {
-                const priority = String(gallery.priority);
-                if (!filterCounts.priority[priority]) {
-                    filterCounts.priority[priority] = 0;
+            loadImage(url, element) {
+                if (!url || url.trim() === '') {
+                    element.src = 'https://via.placeholder.com/300x200?text=No+Image';
+                    element.classList.add('loaded');
+                    return;
                 }
-                filterCounts.priority[priority]++;
+                
+                // Check if image is already loaded
+                if (this.images.has(url)) {
+                    const imgData = this.images.get(url);
+                    if (imgData.loaded) {
+                        element.src = url;
+                        element.classList.add('loaded');
+                    } else {
+                        imgData.elements.push(element);
+                    }
+                    return;
+                }
+                
+                // Create new image loading
+                const img = new Image();
+                const imgData = {
+                    loaded: false,
+                    elements: [element]
+                };
+                
+                this.images.set(url, imgData);
+                
+                img.onload = () => {
+                    imgData.loaded = true;
+                    imgData.elements.forEach(el => {
+                        el.src = url;
+                        setTimeout(() => {
+                            el.classList.add('loaded');
+                        }, 10);
+                    });
+                };
+                
+                img.onerror = () => {
+                    imgData.loaded = true;
+                    imgData.elements.forEach(el => {
+                        el.src = 'https://via.placeholder.com/300x200?text=Image+Error';
+                        el.classList.add('loaded');
+                    });
+                };
+                
+                // Start loading
+                img.src = url;
+            }
+        }
+        
+        const imageLoader = new ImageLoader();
+        
+        // Helper function to get full image URL
+        function getFullImageUrl(url) {
+            if (!url || url.trim() === '') {
+                return '';
             }
             
-            // Version counts
-            if (gallery.version) {
-                const version = String(gallery.version);
-                if (!filterCounts.version[version]) {
-                    filterCounts.version[version] = 0;
-                }
-                filterCounts.version[version]++;
+            // If already a full URL
+            if (url.startsWith('http://') || url.startsWith('https://')) {
+                return url;
             }
             
-            // Type counts
-            if (gallery.type1) {
-                const type = String(gallery.type1);
-                if (!filterCounts.type[type]) {
-                    filterCounts.type[type] = 0;
-                }
-                filterCounts.type[type]++;
+            // If it's a relative path
+            if (url.startsWith('uploads/') || url.startsWith('temp_images/')) {
+                return 'https://zulushop.in/' + url;
             }
+            
+            // Default: prepend base URL
+            return 'https://zulushop.in/' + url;
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadGalleries();
+            
+            // Setup search
+            document.getElementById('searchInput').addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    filterGalleries();
+                }, 300);
+            });
+            
+            // Setup filter change events
+            document.getElementById('statusFilter').addEventListener('change', function() {
+                updateFilterOptions();
+                filterGalleries();
+            });
+            
+            document.getElementById('priorityFilter').addEventListener('change', function() {
+                updateFilterOptions();
+                filterGalleries();
+            });
+            
+            document.getElementById('versionFilter').addEventListener('change', function() {
+                updateFilterOptions();
+                filterGalleries();
+            });
+            
+            document.getElementById('typeFilter').addEventListener('change', function() {
+                updateFilterOptions();
+                filterGalleries();
+            });
+            
+            // Form validation
+            setupFormValidation();
+            
+            // Load saved prompts from localStorage
+            loadSavedPrompts();
         });
+        
+        // Form validation setup
+        function setupFormValidation() {
+            const form = document.getElementById('editGalleryForm');
+            
+            // Priority validation
+            document.getElementById('editPriority').addEventListener('input', function() {
+                validatePriority(this);
+            });
+            
+            // Version validation
+            document.getElementById('editVersion').addEventListener('input', function() {
+                validateVersion(this);
+            });
+            
+            // Form submission validation
+            form.addEventListener('submit', function(e) {
+                if (!validateGalleryForm()) {
+                    e.preventDefault();
+                    showMessage('❌ Please fix the errors in the form', 'error');
+                }
+            });
+        }
+        
+        function validatePriority(input) {
+            const value = parseInt(input.value);
+            if (value < 0 || value > 10) {
+                input.classList.add('invalid');
+                input.classList.remove('valid');
+                return false;
+            } else {
+                input.classList.add('valid');
+                input.classList.remove('invalid');
+                return true;
+            }
+        }
+        
+        function validateVersion(input) {
+            const value = parseInt(input.value);
+            if (value < 1 || value > 10) {
+                input.classList.add('invalid');
+                input.classList.remove('valid');
+                return false;
+            } else {
+                input.classList.add('valid');
+                input.classList.remove('invalid');
+                return true;
+            }
+        }
+        
+        function validateGalleryForm() {
+            let isValid = true;
+            
+            // Check required fields
+            const requiredFields = ['editStatus', 'editName', 'editPriority', 'editVersion', 'editType1'];
+            requiredFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (!field.value.trim()) {
+                    field.classList.add('invalid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('invalid');
+                }
+            });
+            
+            return isValid;
+        }
+        
+        // Load saved prompts from localStorage
+        function loadSavedPrompts() {
+            const savedPrompts = localStorage.getItem('galleryPrompts');
+            if (savedPrompts) {
+                try {
+                    currentPrompts = JSON.parse(savedPrompts);
+                } catch (e) {
+                    console.error('Error loading saved prompts:', e);
+                }
+            }
+        }
+        
+        // Save prompts to localStorage
+        function savePrompts() {
+            localStorage.setItem('galleryPrompts', JSON.stringify(currentPrompts));
+        }
+        
+        // Load galleries with enhanced data
+        async function loadGalleries() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('galleriesContainer').innerHTML = '';
+            
+            try {
+                const response = await fetch('/api/galleries');
+                const data = await response.json();
+                
+                if (data && data.success && Array.isArray(data.data)) {
+                    allGalleries = data.data.map((gallery, index) => {
+                        // Get the main image
+                        let mainImage = null;
+                        
+                        // Check for images in different fields
+                        const possibleImageFields = ['image1', 'image_1', 'main_image', 'thumbnail'];
+                        
+                        for (const field of possibleImageFields) {
+                            if (gallery[field]) {
+                                mainImage = gallery[field];
+                                if (mainImage) break;
+                            }
+                        }
+                        
+                        // Check if description has music links
+                        let hasMusic = false;
+                        let musicLinks = [];
+                        if (gallery.description) {
+                            const musicMatch = gallery.description.match(/🎵 Music: (https?:\/\/[^\s]+)/g);
+                            if (musicMatch) {
+                                hasMusic = true;
+                                musicLinks = musicMatch;
+                            }
+                        }
+                        
+                        return {
+                            ...gallery,
+                            id: gallery.id || index + 1,
+                            name: gallery.name || gallery.title || 'Unnamed Gallery',
+                            image: mainImage ? getFullImageUrl(mainImage) : null,
+                            hasImage: !!mainImage,
+                            hasMusic: hasMusic,
+                            musicLinks: musicLinks,
+                            priority: Number(gallery.priority) || 0,
+                            version: Number(gallery.version) || 1,
+                            status: gallery.status || 'on',
+                            type1: gallery.type1 || 'Product'
+                        };
+                    });
+                    
+                    // Calculate initial filter counts
+                    calculateFilterCounts();
+                    
+                    // Populate filter dropdowns
+                    populateFilters();
+                    
+                    showMessage(`✅ Loaded ${allGalleries.length} galleries successfully`, 'success');
+                    filterGalleries();
+                } else {
+                    throw new Error(data?.error || 'Invalid data format');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = 'Error loading galleries: ' + error.message;
+                showMessage('❌ Failed to load galleries', 'error');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+        
+        // Calculate filter counts
+        function calculateFilterCounts() {
+            // Reset counts
+            filterCounts = {
+                status: { all: allGalleries.length, on: 0, off: 0 },
+                priority: {},
+                version: {},
+                type: {}
+            };
+            
+            // Calculate counts
+            allGalleries.forEach(gallery => {
+                // Status counts
+                if (gallery.status === 'on') {
+                    filterCounts.status['on']++;
+                } else {
+                    filterCounts.status['off']++;
+                }
+                
+                // Priority counts
+                if (gallery.priority !== undefined) {
+                    const priority = String(gallery.priority);
+                    if (!filterCounts.priority[priority]) {
+                        filterCounts.priority[priority] = 0;
+                    }
+                    filterCounts.priority[priority]++;
+                }
+                
+                // Version counts
+                if (gallery.version) {
+                    const version = String(gallery.version);
+                    if (!filterCounts.version[version]) {
+                        filterCounts.version[version] = 0;
+                    }
+                    filterCounts.version[version]++;
+                }
+                
+                // Type counts
+                if (gallery.type1) {
+                    const type = String(gallery.type1);
+                    if (!filterCounts.type[type]) {
+                        filterCounts.type[type] = 0;
+                    }
+                    filterCounts.type[type]++;
+                }
+            });
+            
+            // Update filter count badges
+            updateFilterCountBadges();
+        }
         
         // Update filter count badges
-        updateFilterCountBadges();
-    }
-    
-    // Update filter count badges
-    function updateFilterCountBadges() {
-        const statusFilter = document.getElementById('statusFilter');
-        const priorityFilter = document.getElementById('priorityFilter');
-        const versionFilter = document.getElementById('versionFilter');
-        const typeFilter = document.getElementById('typeFilter');
-        
-        // Get selected values
-        const selectedStatus = statusFilter.value;
-        const selectedPriority = priorityFilter.value;
-        const selectedVersion = versionFilter.value;
-        const selectedType = typeFilter.value;
-        
-        // Calculate counts for current selection
-        let filtered = [...allGalleries];
-        
-        if (selectedStatus !== 'all') {
-            filtered = filtered.filter(g => g.status === selectedStatus);
+        function updateFilterCountBadges() {
+            const statusFilter = document.getElementById('statusFilter');
+            const priorityFilter = document.getElementById('priorityFilter');
+            const versionFilter = document.getElementById('versionFilter');
+            const typeFilter = document.getElementById('typeFilter');
+            
+            // Get selected values
+            const selectedStatus = statusFilter.value;
+            const selectedPriority = priorityFilter.value;
+            const selectedVersion = versionFilter.value;
+            const selectedType = typeFilter.value;
+            
+            // Calculate counts for current selection
+            let filtered = [...allGalleries];
+            
+            if (selectedStatus !== 'all') {
+                filtered = filtered.filter(g => g.status === selectedStatus);
+            }
+            if (selectedPriority !== 'all') {
+                filtered = filtered.filter(g => String(g.priority) === selectedPriority);
+            }
+            if (selectedVersion !== 'all') {
+                filtered = filtered.filter(g => String(g.version) === selectedVersion);
+            }
+            if (selectedType !== 'all') {
+                filtered = filtered.filter(g => g.type1 === selectedType);
+            }
+            
+            // Update count badges
+            document.getElementById('statusCount').textContent = filtered.length;
+            
+            // Count unique priorities in filtered results
+            const uniquePriorities = new Set(filtered.map(g => g.priority).filter(p => p !== undefined));
+            document.getElementById('priorityCount').textContent = uniquePriorities.size;
+            
+            // Count unique versions in filtered results
+            const uniqueVersions = new Set(filtered.map(g => g.version).filter(v => v));
+            document.getElementById('versionCount').textContent = uniqueVersions.size;
+            
+            // Count unique types in filtered results
+            const uniqueTypes = new Set(filtered.map(g => g.type1).filter(t => t));
+            document.getElementById('typeCount').textContent = uniqueTypes.size;
         }
-        if (selectedPriority !== 'all') {
-            filtered = filtered.filter(g => String(g.priority) === selectedPriority);
+        
+        // Populate filter dropdowns with counts
+        function populateFilters() {
+            const priorityFilter = document.getElementById('priorityFilter');
+            const versionFilter = document.getElementById('versionFilter');
+            const typeFilter = document.getElementById('typeFilter');
+            
+            // Clear existing options (keep "All" option)
+            while (priorityFilter.options.length > 1) priorityFilter.remove(1);
+            while (versionFilter.options.length > 1) versionFilter.remove(1);
+            while (typeFilter.options.length > 1) typeFilter.remove(1);
+            
+            // Get unique values from ALL galleries
+            const priorities = [...new Set(allGalleries.map(g => g.priority).filter(p => p !== undefined))].sort((a, b) => a - b);
+            const versions = [...new Set(allGalleries.map(g => g.version).filter(v => v))].sort((a, b) => a - b);
+            const types = [...new Set(allGalleries.map(g => g.type1).filter(t => t))].sort();
+            
+            // Sort by count (descending)
+            priorities.sort((a, b) => filterCounts.priority[b] - filterCounts.priority[a]);
+            versions.sort((a, b) => filterCounts.version[b] - filterCounts.version[a]);
+            types.sort((a, b) => filterCounts.type[b] - filterCounts.type[a]);
+            
+            // Populate priority filter with counts
+            priorities.forEach(priority => {
+                const count = filterCounts.priority[priority] || 0;
+                const option = new Option(`Priority ${priority} (${count})`, priority);
+                priorityFilter.add(option);
+            });
+            
+            // Populate version filter with counts
+            versions.forEach(version => {
+                const count = filterCounts.version[version] || 0;
+                const option = new Option(`Version ${version} (${count})`, version);
+                versionFilter.add(option);
+            });
+            
+            // Populate type filter with counts
+            types.forEach(type => {
+                const count = filterCounts.type[type] || 0;
+                const option = new Option(`${type} (${count})`, type);
+                typeFilter.add(option);
+            });
         }
-        if (selectedVersion !== 'all') {
-            filtered = filtered.filter(g => String(g.version) === selectedVersion);
-        }
-        if (selectedType !== 'all') {
-            filtered = filtered.filter(g => g.type1 === selectedType);
-        }
         
-        // Update count badges
-        document.getElementById('statusCount').textContent = filtered.length;
-        
-        // Count unique priorities in filtered results
-        const uniquePriorities = new Set(filtered.map(g => g.priority).filter(p => p !== undefined));
-        document.getElementById('priorityCount').textContent = uniquePriorities.size;
-        
-        // Count unique versions in filtered results
-        const uniqueVersions = new Set(filtered.map(g => g.version).filter(v => v));
-        document.getElementById('versionCount').textContent = uniqueVersions.size;
-        
-        // Count unique types in filtered results
-        const uniqueTypes = new Set(filtered.map(g => g.type1).filter(t => t));
-        document.getElementById('typeCount').textContent = uniqueTypes.size;
-    }
-    
-    // Populate filter dropdowns with counts
-    function populateFilters() {
-        const priorityFilter = document.getElementById('priorityFilter');
-        const versionFilter = document.getElementById('versionFilter');
-        const typeFilter = document.getElementById('typeFilter');
-        
-        // Clear existing options (keep "All" option)
-        while (priorityFilter.options.length > 1) priorityFilter.remove(1);
-        while (versionFilter.options.length > 1) versionFilter.remove(1);
-        while (typeFilter.options.length > 1) typeFilter.remove(1);
-        
-        // Get unique values from ALL galleries
-        const priorities = [...new Set(allGalleries.map(g => g.priority).filter(p => p !== undefined))].sort((a, b) => a - b);
-        const versions = [...new Set(allGalleries.map(g => g.version).filter(v => v))].sort((a, b) => a - b);
-        const types = [...new Set(allGalleries.map(g => g.type1).filter(t => t))].sort();
-        
-        // Sort by count (descending)
-        priorities.sort((a, b) => (filterCounts.priority[b] || 0) - (filterCounts.priority[a] || 0));
-        versions.sort((a, b) => (filterCounts.version[b] || 0) - (filterCounts.version[a] || 0));
-        types.sort((a, b) => (filterCounts.type[b] || 0) - (filterCounts.type[a] || 0));
-        
-        // Populate priority filter with counts
-        priorities.forEach(priority => {
-            const count = filterCounts.priority[priority] || 0;
-            const option = new Option(`Priority ${priority} (${count})`, priority);
-            priorityFilter.add(option);
-        });
-        
-        // Populate version filter with counts
-        versions.forEach(version => {
-            const count = filterCounts.version[version] || 0;
-            const option = new Option(`Version ${version} (${count})`, version);
-            versionFilter.add(option);
-        });
-        
-        // Populate type filter with counts
-        types.forEach(type => {
-            const count = filterCounts.type[type] || 0;
-            const option = new Option(`${type} (${count})`, type);
-            typeFilter.add(option);
-        });
-    }
-    
-    // Filter galleries based on search and filters
-    function filterGalleries() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        const statusFilter = document.getElementById('statusFilter').value;
-        const priorityFilter = document.getElementById('priorityFilter').value;
-        const versionFilter = document.getElementById('versionFilter').value;
-        const typeFilter = document.getElementById('typeFilter').value;
-        
-        filteredGalleries = allGalleries.filter(gallery => {
-            // Search filter
-            if (searchTerm) {
-                const searchable = [
-                    gallery.name,
-                    gallery.heading || '',
-                    gallery.description || '',
-                    gallery.cat1_names || '',
-                    gallery.tags || '',
-                    gallery.type1 || ''
-                ].join(' ').toLowerCase();
+        // Filter galleries based on search and filters
+        function filterGalleries() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const priorityFilter = document.getElementById('priorityFilter').value;
+            const versionFilter = document.getElementById('versionFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+            
+            filteredGalleries = allGalleries.filter(gallery => {
+                // Search filter
+                if (searchTerm) {
+                    const searchable = [
+                        gallery.name,
+                        gallery.title || '',
+                        gallery.description || '',
+                        gallery.heading || '',
+                        gallery.subtitle || '',
+                        gallery.tags || ''
+                    ].join(' ').toLowerCase();
+                    
+                    if (!searchable.includes(searchTerm)) {
+                        return false;
+                    }
+                }
                 
-                if (!searchable.includes(searchTerm)) {
-                    return false;
+                // Status filter
+                if (statusFilter !== 'all') {
+                    if (gallery.status !== statusFilter) {
+                        return false;
+                    }
                 }
+                
+                // Priority filter
+                if (priorityFilter !== 'all') {
+                    if (String(gallery.priority) !== priorityFilter) {
+                        return false;
+                    }
+                }
+                
+                // Version filter
+                if (versionFilter !== 'all') {
+                    if (String(gallery.version) !== versionFilter) {
+                        return false;
+                    }
+                }
+                
+                // Type filter
+                if (typeFilter !== 'all') {
+                    if (gallery.type1 !== typeFilter) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            displayGalleries();
+        }
+        
+        // Display galleries in grid
+        function displayGalleries() {
+            const container = document.getElementById('galleriesContainer');
+            
+            if (filteredGalleries.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 24px; margin-bottom: 10px;">🔍</div>
+                        <div style="font-size: 20px; font-weight: 600; margin-bottom: 10px; color: #333;">No Galleries Found</div>
+                        <div style="color: #7f8c8d; margin-bottom: 20px;">Try adjusting your search or filters</div>
+                        <button onclick="resetFilters()" style="background: #795548; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                            Reset All Filters
+                        </button>
+                    </div>
+                `;
+                return;
             }
             
-            // Status filter
-            if (statusFilter !== 'all') {
-                if (gallery.status !== statusFilter) {
-                    return false;
-                }
+            let html = '';
+            filteredGalleries.forEach(gallery => {
+                html += `
+                <div class="gallery-card">
+                    <div class="card-image" onclick="viewImage('${gallery.image || ''}')">
+                        <img data-src="${gallery.image || ''}" alt="${gallery.name}" 
+                             onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'; this.classList.add('loaded')">
+                        <div class="image-actions">
+                            <button class="image-action-btn" onclick="openImageModal(${gallery.id}, 'image1', '${encodeURIComponent(gallery.image || '')}'); event.stopPropagation();">
+                                ✏️ Edit Image
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-title">${gallery.name}</div>
+                        <div class="card-id">ID: ${gallery.id} | ${gallery.type1 || 'Product'}</div>
+                        
+                        <!-- Status and Priority Section -->
+                        <div class="card-status">
+                            <span class="status-badge ${gallery.status === 'on' ? 'active' : 'inactive'}">
+                                ${gallery.status === 'on' ? '✅ On' : '❌ Off'}
+                            </span>
+                            <span class="priority-badge" title="Priority">
+                                P${gallery.priority}
+                            </span>
+                        </div>
+                        
+                        <!-- Info Tags with Edit Option -->
+                        <div class="card-info">
+                            <span class="info-tag version" 
+                                  onclick="setFilter('versionFilter', '${gallery.version}')"
+                                  title="Click to filter by this version">
+                                📱 V${gallery.version}
+                            </span>
+                            
+                            <!-- Music Indicator -->
+                            ${gallery.hasMusic ? `
+                                <span class="info-tag" style="background: linear-gradient(135deg, #4CAF50 0%, #388e3c 100%); color: white;"
+                                      title="Has music link in description">
+                                    🎵 Has Music
+                                </span>
+                            ` : ''}
+                            
+                            ${gallery.tags ? `
+                                <span class="info-tag" style="background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%); color: white;">
+                                    🏷️ ${gallery.tags.split(',').slice(0, 2).join(', ')}
+                                </span>
+                            ` : ''}
+                            
+                            <span class="info-tag edit" 
+                                  onclick="openEditGalleryModal(${gallery.id})"
+                                  title="Edit all gallery details">
+                                ✏️ Edit Details
+                            </span>
+                            
+                            <span class="info-tag music" 
+                                  onclick="showGenerateOptionsForGallery(${gallery.id})"
+                                  title="Generate music and style based on gallery name">
+                                🎵 Generate Music
+                            </span>
+                            <span class="info-tag" 
+      onclick="viewGalleryDetails(${gallery.id})"
+      style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;"
+      title="View gallery details, products and videos">
+    👁️ View Details
+</span>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            
+            // Load images smoothly after DOM is updated
+            setTimeout(() => {
+                document.querySelectorAll('.card-image img').forEach(img => {
+                    const src = img.getAttribute('data-src');
+                    if (src) {
+                        imageLoader.loadImage(src, img);
+                    } else {
+                        img.src = 'https://via.placeholder.com/300x200?text=No+Image';
+                        img.classList.add('loaded');
+                    }
+                });
+            }, 10);
+        }
+        
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('statusFilter').value = 'all';
+            document.getElementById('priorityFilter').value = 'all';
+            document.getElementById('versionFilter').value = 'all';
+            document.getElementById('typeFilter').value = 'all';
+            filterGalleries();
+        }
+        
+        // Set filter from click on tag
+        function setFilter(filterId, value) {
+            const filter = document.getElementById(filterId);
+            filter.value = value;
+            filterGalleries();
+        }
+        
+        // Update filter options
+        function updateFilterOptions() {
+            updateFilterCountBadges();
+        }
+        
+        // Enhanced Edit Gallery Modal
+        function openEditGalleryModal(galleryId) {
+            const gallery = allGalleries.find(g => g.id == galleryId);
+            if (!gallery) {
+                showMessage('❌ Gallery not found', 'error');
+                return;
             }
             
-            // Priority filter
-            if (priorityFilter !== 'all') {
-                if (String(gallery.priority) !== priorityFilter) {
-                    return false;
+            currentEditGalleryId = galleryId;
+            
+            // Set modal info
+            document.getElementById('editGalleryName').textContent = `Edit: ${gallery.name}`;
+            document.getElementById('editGalleryInfo').textContent = `Gallery ID: ${galleryId}`;
+            
+            // Set form values for all fields
+            const fields = [
+                'status', 'name', 'title', 'subtitle', 'description',
+                'type1', 'type2', 'cat_id', 'seller_id', 'cat1',
+                'image1', 'image2', 'image3', 'image4', 'aspect_ratio',
+                'heading', 'display', 'componentiIds', 'tags', 'priority',
+                'version', 'type', 'bottom_bar', 'bottom_slider', 'tracking_bar',
+                'show_title', 'show_subtitle', 'showBanner', 'showVideos', 'showProducts',
+                'cat1_names', 'shopable_video_ids', 'business_id'
+            ];
+            
+            fields.forEach(field => {
+                const element = document.getElementById('edit' + field.charAt(0).toUpperCase() + field.slice(1));
+                if (element) {
+                    element.value = gallery[field] || '';
+                    
+                    // Special handling for boolean fields
+                    if (field === 'display' || field === 'bottom_bar' || field === 'bottom_slider' || 
+                        field === 'showBanner' || field === 'showVideos' || field === 'showProducts') {
+                        element.value = gallery[field] ? '1' : '0';
+                    }
+                    
+                    // Special handling for numeric fields
+                    if (field === 'show_title' || field === 'show_subtitle' || field === 'tracking_bar') {
+                        element.value = gallery[field] || '0';
+                    }
                 }
+            });
+            
+            // Clear validation classes
+            const formControls = document.querySelectorAll('.form-control');
+            formControls.forEach(control => {
+                control.classList.remove('invalid', 'valid');
+            });
+            
+            // Show modal with animation
+            const modal = document.getElementById('editGalleryModal');
+            modal.style.display = 'block';
+            
+            // Focus first field
+            setTimeout(() => {
+                document.getElementById('editName').focus();
+            }, 100);
+        }
+        
+        // Close gallery edit modal
+        function closeEditGalleryModal() {
+            const modal = document.getElementById('editGalleryModal');
+            modal.style.display = 'none';
+            currentEditGalleryId = null;
+            
+            // Reset form validation
+            const formControls = document.querySelectorAll('.form-control');
+            formControls.forEach(control => {
+                control.classList.remove('invalid', 'valid');
+            });
+        }
+        
+        // Handle gallery edit form submission
+        document.getElementById('editGalleryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!validateGalleryForm()) {
+                return;
             }
             
-            // Version filter
-            if (versionFilter !== 'all') {
-                if (String(gallery.version) !== versionFilter) {
-                    return false;
+            // Collect all form data
+            const formData = {};
+            const fields = [
+                'status', 'name', 'title', 'subtitle', 'description',
+                'type1', 'type2', 'cat_id', 'seller_id', 'cat1',
+                'image1', 'image2', 'image3', 'image4', 'aspect_ratio',
+                'heading', 'display', 'componentiIds', 'tags', 'priority',
+                'version', 'type', 'bottom_bar', 'bottom_slider', 'tracking_bar',
+                'show_title', 'show_subtitle', 'showBanner', 'showVideos', 'showProducts',
+                'cat1_names', 'shopable_video_ids', 'business_id'
+            ];
+            
+            fields.forEach(field => {
+                const element = document.getElementById('edit' + field.charAt(0).toUpperCase() + field.slice(1));
+                if (element) {
+                    const value = element.value.trim();
+                    if (value !== '') {
+                        // Convert string booleans to actual booleans
+                        if (field === 'display' || field === 'bottom_bar' || field === 'bottom_slider' || 
+                            field === 'showBanner' || field === 'showVideos' || field === 'showProducts') {
+                            formData[field] = value === '1';
+                        } else if (field === 'show_title' || field === 'show_subtitle' || field === 'tracking_bar' ||
+                                  field === 'priority' || field === 'version' || field === 'cat_id') {
+                            formData[field] = parseInt(value) || 0;
+                        } else {
+                            formData[field] = value;
+                        }
+                    }
                 }
+            });
+            
+            if (Object.keys(formData).length === 0) {
+                showMessage('ℹ️ No changes to save', 'info');
+                return;
             }
             
-            // Type filter
-            if (typeFilter !== 'all') {
-                if (gallery.type1 !== typeFilter) {
-                    return false;
+            try {
+                showMessage('🔄 Saving changes...', 'info');
+                
+                // Add loading state to form
+                const saveBtn = document.querySelector('#editGalleryForm .save-btn');
+                const originalText = saveBtn.innerHTML;
+                saveBtn.innerHTML = '⏳ Saving...';
+                saveBtn.disabled = true;
+                
+                const response = await fetch(`/api/galleries/${currentEditGalleryId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                // Restore button
+                saveBtn.innerHTML = originalText;
+                saveBtn.disabled = false;
+                
+                if (result.success) {
+                    // Add success animation
+                    document.querySelector('.modal-content').classList.add('form-success');
+                    
+                    showMessage('✅ Gallery updated successfully!', 'success');
+                    
+                    // Update the gallery in allGalleries array
+                    const galleryIndex = allGalleries.findIndex(g => g.id == currentEditGalleryId);
+                    if (galleryIndex !== -1) {
+                        // Update all fields
+                        Object.keys(formData).forEach(key => {
+                            allGalleries[galleryIndex][key] = formData[key];
+                        });
+                        
+                        // Update derived fields
+                        if (formData.image1) {
+                            allGalleries[galleryIndex].image = getFullImageUrl(formData.image1);
+                            allGalleries[galleryIndex].hasImage = true;
+                        }
+                        
+                        // Check if description has music links
+                        if (formData.description) {
+                            const musicMatch = formData.description.match(/🎵 Music: (https?:\/\/[^\s]+)/g);
+                            allGalleries[galleryIndex].hasMusic = !!musicMatch;
+                            allGalleries[galleryIndex].musicLinks = musicMatch || [];
+                        }
+                    }
+                    
+                    // Refresh display and filters
+                    calculateFilterCounts();
+                    updateFilterOptions();
+                    filterGalleries();
+                    
+                    setTimeout(() => {
+                        closeEditGalleryModal();
+                        // Remove success animation
+                        setTimeout(() => {
+                            document.querySelector('.modal-content').classList.remove('form-success');
+                        }, 300);
+                    }, 1500);
+                } else {
+                    showMessage(`❌ Error: ${result.error}`, 'error');
                 }
+            } catch (error) {
+                showMessage(`❌ Network error: ${error.message}`, 'error');
+                // Restore button
+                const saveBtn = document.querySelector('#editGalleryForm .save-btn');
+                saveBtn.innerHTML = '💾 Save Changes';
+                saveBtn.disabled = false;
             }
-            
-            return true;
         });
         
-        displayGalleries();
-    }
-    
-    // Display galleries in grid
-    function displayGalleries() {
-        const container = document.getElementById('galleriesContainer');
+        // Image Modal Functions
+        function openImageModal(galleryId, field, imageUrl) {
+            currentGalleryId = galleryId;
+            currentImageField = field;
+            currentImageUrl = decodeURIComponent(imageUrl || '');
+            
+            // Set modal info
+            document.getElementById('imageFieldName').textContent = 'Gallery Image';
+            document.getElementById('imageFieldInfo').textContent = `Gallery ID: ${galleryId}`;
+            
+            // Show/hide current image
+            const currentImageContainer = document.getElementById('currentImageContainer');
+            const currentImagePreview = document.getElementById('currentImagePreview');
+            
+            if (currentImageUrl && currentImageUrl.trim() !== '') {
+                currentImagePreview.src = getFullImageUrl(currentImageUrl);
+                currentImagePreview.alt = 'Current Image';
+                currentImagePreview.onerror = function() {
+                    this.src = 'https://via.placeholder.com/200x150?text=Image+Not+Found';
+                };
+                currentImageContainer.style.display = 'block';
+            } else {
+                currentImageContainer.style.display = 'none';
+            }
+            
+            // Reset upload section
+            resetUploadSection();
+            
+            // Setup drag and drop
+            setupDragAndDrop();
+            
+            // Show modal
+            document.getElementById('imageUploadModal').style.display = 'block';
+        }
         
-        if (filteredGalleries.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div style="font-size: 24px; margin-bottom: 10px;">🔍</div>
-                    <div style="font-size: 20px; font-weight: 600; margin-bottom: 10px; color: #333;">No Galleries Found</div>
-                    <div style="color: #7f8c8d; margin-bottom: 20px;">Try adjusting your search or filters</div>
-                    <button onclick="resetFilters()" style="background: #795548; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
-                        Reset All Filters
+        function closeImageModal() {
+            document.getElementById('imageUploadModal').style.display = 'none';
+            currentGalleryId = null;
+            currentImageField = null;
+            currentImageUrl = null;
+            uploadedImageUrl = null;
+            uploadedFile = null;
+        }
+        
+        function viewCurrentImage() {
+            if (currentImageUrl) {
+                window.open(getFullImageUrl(currentImageUrl), '_blank');
+            }
+        }
+        
+        function deleteCurrentImage() {
+            if (confirm('Are you sure you want to delete this image?')) {
+                saveImageToServer('');
+            }
+        }
+        
+        function setupDragAndDrop() {
+            const uploadContainer = document.getElementById('uploadContainer');
+            const fileInput = document.getElementById('imageFileInput');
+            
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            // Highlight drop zone
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, unhighlight, false);
+            });
+            
+            // Handle dropped files
+            uploadContainer.addEventListener('drop', handleDrop, false);
+            
+            // Handle file input change
+            fileInput.addEventListener('change', handleFileSelect, false);
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            function highlight() {
+                uploadContainer.classList.add('dragover');
+            }
+            
+            function unhighlight() {
+                uploadContainer.classList.remove('dragover');
+            }
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles(files);
+            }
+            
+            function handleFileSelect(e) {
+                const files = e.target.files;
+                handleFiles(files);
+            }
+        }
+        
+        function handleFiles(files) {
+            if (files.length === 0) return;
+            
+            const file = files[0];
+            
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                showMessage('❌ Please select a valid image file (JPG, PNG, GIF, WEBP)', 'error');
+                return;
+            }
+            
+            // Validate file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+                showMessage('❌ Image size must be less than 10MB', 'error');
+                return;
+            }
+            
+            uploadedFile = file;
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('uploadedImagePreview');
+                preview.src = e.target.result;
+                document.getElementById('imagePreviewContainer').style.display = 'block';
+                document.getElementById('saveImageBtn').disabled = false;
+            };
+            reader.readAsDataURL(file);
+            
+            // Upload the file
+            uploadImage(file);
+        }
+        
+        async function uploadImage(file) {
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                const response = await fetch('https://api.zulushop.in/api/v1/user/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const responseText = await response.text();
+                
+                if (response.status >= 200 && response.status < 300) {
+                    let jsonRes;
+                    try {
+                        jsonRes = JSON.parse(responseText);
+                    } catch (e) {
+                        throw new Error('Invalid response from server');
+                    }
+                    
+                    // Extract URL from response
+                    let url;
+                    
+                    if (jsonRes.url && typeof jsonRes.url === 'string') {
+                        url = jsonRes.url;
+                    } else if (jsonRes.image_url && typeof jsonRes.image_url === 'string') {
+                        url = jsonRes.image_url;
+                    } else if (jsonRes.data) {
+                        if (typeof jsonRes.data === 'string') {
+                            url = jsonRes.data;
+                        } else if (typeof jsonRes.data === 'object') {
+                            if (jsonRes.data.url && typeof jsonRes.data.url === 'string') {
+                                url = jsonRes.data.url;
+                            } else if (jsonRes.data.image_url && typeof jsonRes.data.image_url === 'string') {
+                                url = jsonRes.data.image_url;
+                            }
+                        }
+                    }
+                    
+                    if (url) {
+                        uploadedImageUrl = url;
+                        showMessage('✅ Image uploaded successfully!', 'success');
+                        return url;
+                    } else {
+                        throw new Error('No image URL in response');
+                    }
+                } else {
+                    throw new Error(`Upload failed: ${response.status}`);
+                }
+            } catch (error) {
+                showMessage(`❌ Upload failed: ${error.message}`, 'error');
+                document.getElementById('saveImageBtn').disabled = true;
+                throw error;
+            }
+        }
+        
+        function resetUploadSection() {
+            uploadedImageUrl = null;
+            uploadedFile = null;
+            document.getElementById('imagePreviewContainer').style.display = 'none';
+            document.getElementById('saveImageBtn').disabled = true;
+            document.getElementById('imageFileInput').value = '';
+        }
+        
+        function saveImage() {
+            if (uploadedImageUrl) {
+                saveImageToServer(uploadedImageUrl);
+            } else {
+                showMessage('❌ Please upload an image first', 'error');
+            }
+        }
+        
+        async function saveImageToServer(imageUrl) {
+            try {
+                showMessage('🔄 Saving image...', 'info');
+                
+                const updateData = {};
+                updateData[currentImageField] = imageUrl;
+                
+                const response = await fetch(`/api/galleries/${currentGalleryId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('✅ Image saved successfully!', 'success');
+                    
+                    // Update the gallery in allGalleries array
+                    const galleryIndex = allGalleries.findIndex(g => g.id == currentGalleryId);
+                    if (galleryIndex !== -1) {
+                        // Update the specific image field
+                        allGalleries[galleryIndex][currentImageField] = imageUrl;
+                        
+                        // If this is image1, also update main image
+                        if (currentImageField === 'image1') {
+                            allGalleries[galleryIndex].image = imageUrl;
+                            allGalleries[galleryIndex].hasImage = !!imageUrl;
+                        }
+                    }
+                    
+                    // Refresh display
+                    filterGalleries();
+                    
+                    setTimeout(() => {
+                        closeImageModal();
+                    }, 1000);
+                } else {
+                    showMessage(`❌ Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ Network error: ${error.message}`, 'error');
+            }
+        }
+        
+        function viewImage(url) {
+            if (url) {
+                window.open(url, '_blank');
+            }
+        }
+        
+        // Music Generation Functions
+        function showGenerateOptionsForGallery(galleryId) {
+            const gallery = allGalleries.find(g => g.id == galleryId);
+            if (!gallery) {
+                showMessage('❌ Gallery not found', 'error');
+                return;
+            }
+            
+            currentMusicGallery = gallery;
+            
+            // Reset UI
+            const modal = document.getElementById('musicModal');
+            const galleryName = document.getElementById('musicGalleryName');
+            const galleryInfo = document.getElementById('musicGalleryInfo');
+            
+            galleryName.textContent = gallery.name;
+            galleryInfo.textContent = `ID: ${gallery.id} | Generate music and style based on gallery name`;
+            
+            // Reset all sections
+            document.getElementById('choiceSection').style.display = 'block';
+            document.getElementById('promptEditorSection').style.display = 'none';
+            document.getElementById('musicProgress').style.display = 'none';
+            document.getElementById('musicLoading').style.display = 'none';
+            document.getElementById('resultsContent').style.display = 'none';
+            document.getElementById('musicError').style.display = 'none';
+            document.getElementById('lyricsResult').style.display = 'none';
+            document.getElementById('styleResult').style.display = 'none';
+            document.getElementById('musicPreviewContainer').style.display = 'none';
+            document.getElementById('saveMusicBtn').style.display = 'none';
+            
+            // Reset results
+            generatedLyrics = '';
+            generatedStyle = '';
+            uploadedMusicUrl = null;
+            uploadedMusicFile = null;
+            currentGenerationType = null;
+            
+            // Reset upload section
+            resetMusicUploadSection();
+            
+            modal.style.display = 'block';
+            
+            // Add hover effects to buttons
+            const buttons = document.querySelectorAll('#choiceSection button');
+            buttons.forEach(btn => {
+                btn.addEventListener('mouseenter', () => {
+                    btn.style.transform = 'translateY(-4px)';
+                    btn.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
+                });
+                btn.addEventListener('mouseleave', () => {
+                    btn.style.transform = 'translateY(0)';
+                    btn.style.boxShadow = '0 6px 20px rgba(0,0,0,0.15)';
+                });
+            });
+        }
+        
+        function closeMusicModal() {
+            document.getElementById('musicModal').style.display = 'none';
+            currentMusicGallery = null;
+            generatedLyrics = '';
+            generatedStyle = '';
+            uploadedMusicUrl = null;
+            uploadedMusicFile = null;
+            currentGenerationType = null;
+        }
+        
+        function editPromptsBeforeGenerate() {
+            document.getElementById('choiceSection').style.display = 'none';
+            
+            // Create prompt editor interface
+            const promptEditorSection = document.getElementById('promptEditorSection');
+            promptEditorSection.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <h3>Edit Prompts Before Generating</h3>
+                    <p style="color: #7f8c8d; margin-bottom: 20px;">Edit both lyrics and style prompts before generation</p>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button id="lyricsTab" class="prompt-tab active" style="
+                        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+                        color: white;
+                        border: none;
+                        padding: 12px 24px;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        flex: 1;
+                    ">Lyrics Prompt</button>
+                    <button id="styleTab" class="prompt-tab" style="
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        border: none;
+                        padding: 12px 24px;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        flex: 1;
+                    ">Style Prompt</button>
+                </div>
+                
+                <div id="lyricsPromptEditor" style="display: block;">
+                    <h4>🎶 Lyrics Generation Prompt</h4>
+                    <div class="prompt-editor">
+                        <textarea id="lyricsPromptTextarea" placeholder="Edit lyrics prompt..." style="width: 100%; min-height: 200px; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.5; resize: vertical;"></textarea>
+                    </div>
+                </div>
+                
+                <div id="stylePromptEditor" style="display: none;">
+                    <h4>🎨 Style Generation Prompt</h4>
+                    <div class="prompt-editor">
+                        <textarea id="stylePromptTextarea" placeholder="Edit style prompt..." style="width: 100%; min-height: 200px; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.5; resize: vertical;"></textarea>
+                    </div>
+                </div>
+                
+                <div class="prompt-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="prompt-btn cancel" onclick="cancelPromptEditing()">
+                        ✕ Cancel
+                    </button>
+                    <button type="button" class="prompt-btn save" onclick="saveBothPromptsAndGenerate()">
+                        💾 Save Both & Generate
                     </button>
                 </div>
             `;
-            return;
-        }
-        
-        let html = '';
-        filteredGalleries.forEach(gallery => {
-            html += `
-            <div class="gallery-card">
-                <div class="card-image" onclick="viewImage('${gallery.image || ''}')">
-                    <img data-src="${gallery.image || ''}" alt="${gallery.name}" 
-                         onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'; this.classList.add('loaded')">
-                    <div class="image-actions">
-                        <button class="image-action-btn" onclick="openImageModal(${gallery.id}, 'image1', '${encodeURIComponent(gallery.image1 || '')}'); event.stopPropagation();">
-                            ✏️ Edit Image
-                        </button>
-                    </div>
-                </div>
-                <div class="card-content">
-                    <div class="card-title">${gallery.name}</div>
-                    <div class="card-id">ID: ${gallery.id} | ${gallery.type1 || 'Product'}</div>
-                    
-                    <!-- Status and Priority Section -->
-                    <div class="card-status">
-                        <span class="status-badge ${gallery.status === 'on' ? 'active' : 'inactive'}">
-                            ${gallery.status === 'on' ? '✅ On' : '❌ Off'}
-                        </span>
-                        <span class="priority-badge" title="Priority">
-                            P${gallery.priority}
-                        </span>
-                    </div>
-                    
-                    <!-- Info Tags with Edit Option -->
-                    <div class="card-info">
-                        <span class="info-tag version" 
-                              onclick="setFilter('versionFilter', '${gallery.version}')"
-                              title="Click to filter by this version">
-                            📱 V${gallery.version}
-                        </span>
-                        
-                        <!-- Music Indicator -->
-                        ${gallery.hasMusic ? `
-                            <span class="info-tag" style="background: linear-gradient(135deg, #4CAF50 0%, #388e3c 100%); color: white;"
-                                  title="Has music link in description">
-                                🎵 Has Music
-                            </span>
-                        ` : ''}
-                        
-                        ${gallery.tags ? `
-                            <span class="info-tag" style="background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%); color: white;">
-                                🏷️ ${gallery.tags.split(',').slice(0, 2).join(', ')}
-                            </span>
-                        ` : ''}
-                        
-                        <span class="info-tag edit" 
-                              onclick="openEditGalleryModal(${gallery.id})"
-                              title="Edit all gallery details">
-                            ✏️ Edit Details
-                        </span>
-                        
-                        <span class="info-tag music" 
-                              onclick="showGenerateOptionsForGallery(${gallery.id})"
-                              title="Generate music and style based on gallery name">
-                            🎵 Generate Music
-                        </span>
-                    </div>
-                </div>
-            </div>
-            `;
-        });
-        
-        container.innerHTML = html;
-        
-        // Load images smoothly after DOM is updated
-        setTimeout(() => {
-            document.querySelectorAll('.card-image img').forEach(img => {
-                const src = img.getAttribute('data-src');
-                if (src) {
-                    imageLoader.loadImage(src, img);
-                } else {
-                    img.src = 'https://via.placeholder.com/300x200?text=No+Image';
-                    img.classList.add('loaded');
-                }
+            
+            promptEditorSection.style.display = 'block';
+            
+            // Load current prompts with gallery data
+            document.getElementById('lyricsPromptTextarea').value = currentPrompts.lyrics
+                .replace(/{galleryName}/g, currentMusicGallery.name || '')
+                .replace(/{description}/g, currentMusicGallery.description || '')
+                .replace(/{tags}/g, currentMusicGallery.tags || '')
+                .replace(/{type}/g, currentMusicGallery.type1 || 'Product');
+            
+            document.getElementById('stylePromptTextarea').value = currentPrompts.style
+                .replace(/{galleryName}/g, currentMusicGallery.name || '')
+                .replace(/{description}/g, currentMusicGallery.description || '')
+                .replace(/{tags}/g, currentMusicGallery.tags || '')
+                .replace(/{type}/g, currentMusicGallery.type1 || 'Product');
+            
+            // Tab switching
+            document.getElementById('lyricsTab').addEventListener('click', () => {
+                document.getElementById('lyricsTab').classList.add('active');
+                document.getElementById('styleTab').classList.remove('active');
+                document.getElementById('lyricsPromptEditor').style.display = 'block';
+                document.getElementById('stylePromptEditor').style.display = 'none';
             });
-        }, 10);
-    }
-    
-    function resetFilters() {
-        document.getElementById('searchInput').value = '';
-        document.getElementById('statusFilter').value = 'all';
-        document.getElementById('priorityFilter').value = 'all';
-        document.getElementById('versionFilter').value = 'all';
-        document.getElementById('typeFilter').value = 'all';
-        filterGalleries();
-    }
-    
-    // Set filter from click on tag
-    function setFilter(filterId, value) {
-        const filter = document.getElementById(filterId);
-        filter.value = value;
-        filterGalleries();
-    }
-    
-    // Update filter options
-    function updateFilterOptions() {
-        updateFilterCountBadges();
-    }
-    
-    // Enhanced Edit Gallery Modal
-    function openEditGalleryModal(galleryId) {
-        const gallery = allGalleries.find(g => g.id == galleryId);
-        if (!gallery) {
-            showMessage('❌ Gallery not found', 'error');
-            return;
+            
+            document.getElementById('styleTab').addEventListener('click', () => {
+                document.getElementById('styleTab').classList.add('active');
+                document.getElementById('lyricsTab').classList.remove('active');
+                document.getElementById('stylePromptEditor').style.display = 'block';
+                document.getElementById('lyricsPromptEditor').style.display = 'none';
+            });
         }
         
-        currentEditGalleryId = galleryId;
+        function cancelPromptEditing() {
+            document.getElementById('promptEditorSection').style.display = 'none';
+            document.getElementById('choiceSection').style.display = 'block';
+        }
         
-        // Set modal info
-        document.getElementById('editGalleryName').textContent = `Edit: ${gallery.name}`;
-        document.getElementById('editGalleryInfo').textContent = `Gallery ID: ${galleryId}`;
-        
-        // Set form values for all fields
-        const fields = [
-            'status', 'heading', 'name', 'title', 'subtitle', 'description',
-            'type1', 'type2', 'cat_id', 'seller_id', 'cat1',
-            'image1', 'image2', 'image3', 'image4', 'aspect_ratio',
-            'heading', 'display', 'componentiIds', 'tags', 'priority',
-            'version', 'type', 'bottom_bar', 'bottom_slider', 'tracking_bar',
-            'show_title', 'show_subtitle', 'showBanner', 'showVideos', 'showProducts',
-            'cat1_names', 'shopable_video_ids', 'business_id'
-        ];
-        
-        fields.forEach(field => {
-            const element = document.getElementById('edit' + field.charAt(0).toUpperCase() + field.slice(1));
-            if (element) {
-                element.value = gallery[field] || '';
-                
-                // Special handling for boolean fields
-                if (field === 'display' || field === 'bottom_bar' || field === 'bottom_slider' || 
-                    field === 'showBanner' || field === 'showVideos' || field === 'showProducts') {
-                    element.value = gallery[field] ? '1' : '0';
-                }
-                
-                // Special handling for numeric fields
-                if (field === 'show_title' || field === 'show_subtitle' || field === 'tracking_bar') {
-                    element.value = gallery[field] || '0';
-                }
+        function saveBothPromptsAndGenerate() {
+            const lyricsPrompt = document.getElementById('lyricsPromptTextarea').value.trim();
+            const stylePrompt = document.getElementById('stylePromptTextarea').value.trim();
+            
+            if (!lyricsPrompt || !stylePrompt) {
+                showMessage('❌ Both prompts are required', 'error');
+                return;
             }
-        });
-        
-        // Clear validation classes
-        const formControls = document.querySelectorAll('.form-control');
-        formControls.forEach(control => {
-            control.classList.remove('invalid', 'valid');
-        });
-        
-        // Show modal with animation
-        const modal = document.getElementById('editGalleryModal');
-        modal.style.display = 'block';
-        
-        // Focus first field
-        setTimeout(() => {
-            document.getElementById('editName').focus();
-        }, 100);
-    }
-    
-    // Close gallery edit modal
-    function closeEditGalleryModal() {
-        const modal = document.getElementById('editGalleryModal');
-        modal.style.display = 'none';
-        currentEditGalleryId = null;
-        
-        // Reset form validation
-        const formControls = document.querySelectorAll('.form-control');
-        formControls.forEach(control => {
-            control.classList.remove('invalid', 'valid');
-        });
-    }
-    
-    // Handle gallery edit form submission
-    document.getElementById('editGalleryForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        if (!validateGalleryForm()) {
-            return;
+            
+            // Save prompts (remove the current gallery-specific replacements)
+            currentPrompts.lyrics = lyricsPrompt
+                .replace(currentMusicGallery.name || '', '{galleryName}')
+                .replace(currentMusicGallery.description || '', '{description}')
+                .replace(currentMusicGallery.tags || '', '{tags}')
+                .replace(currentMusicGallery.type1 || 'Product', '{type}');
+            
+            currentPrompts.style = stylePrompt
+                .replace(currentMusicGallery.name || '', '{galleryName}')
+                .replace(currentMusicGallery.description || '', '{description}')
+                .replace(currentMusicGallery.tags || '', '{tags}')
+                .replace(currentMusicGallery.type1 || 'Product', '{type}');
+            
+            savePrompts();
+            
+            // Start generation of both
+            generateBothLyricsAndStyle();
         }
         
-        // Collect all form data
-        const formData = {};
-        const fields = [
-            'status', 'name', 'heading', 'title', 'subtitle', 'description',
-            'type1', 'type2', 'cat_id', 'seller_id', 'cat1',
-            'image1', 'image2', 'image3', 'image4', 'aspect_ratio',
-            'heading', 'display', 'componentiIds', 'tags', 'priority',
-            'version', 'type', 'bottom_bar', 'bottom_slider', 'tracking_bar',
-            'show_title', 'show_subtitle', 'showBanner', 'showVideos', 'showProducts',
-            'cat1_names', 'shopable_video_ids', 'business_id'
-        ];
+        function generateImmediately() {
+            document.getElementById('choiceSection').style.display = 'none';
+            generateBothLyricsAndStyle();
+        }
         
-        fields.forEach(field => {
-            const element = document.getElementById('edit' + field.charAt(0).toUpperCase() + field.slice(1));
-            if (element) {
-                const value = element.value.trim();
-                if (value !== '') {
-                    // Convert string booleans to actual booleans
-                    if (field === 'display' || field === 'bottom_bar' || field === 'bottom_slider' || 
-                        field === 'showBanner' || field === 'showVideos' || field === 'showProducts') {
-                        formData[field] = value === '1';
-                    } else if (field === 'show_title' || field === 'show_subtitle' || field === 'tracking_bar' ||
-                              field === 'priority' || field === 'version' || field === 'cat_id') {
-                        formData[field] = parseInt(value) || 0;
+        async function generateBothLyricsAndStyle() {
+            if (!currentMusicGallery) return;
+            
+            // Show loading and progress
+            document.getElementById('musicLoading').style.display = 'block';
+            document.getElementById('musicProgress').style.display = 'block';
+            document.getElementById('promptEditorSection').style.display = 'none';
+            document.getElementById('choiceSection').style.display = 'none';
+            document.getElementById('musicError').style.display = 'none';
+            document.getElementById('resultsContent').style.display = 'none';
+            
+            updateMusicProgress(0);
+            setMusicTask('Starting generation...', 'Preparing to generate lyrics and style');
+            
+            try {
+                // Prepare prompts with gallery data
+                const lyricsPrompt = currentPrompts.lyrics
+                    .replace(/{galleryName}/g, currentMusicGallery.name || '')
+                    .replace(/{description}/g, currentMusicGallery.description || '')
+                    .replace(/{tags}/g, currentMusicGallery.tags || '')
+                    .replace(/{type}/g, currentMusicGallery.type1 || 'Product');
+                
+                const stylePrompt = currentPrompts.style
+                    .replace(/{galleryName}/g, currentMusicGallery.name || '')
+                    .replace(/{description}/g, currentMusicGallery.description || '')
+                    .replace(/{tags}/g, currentMusicGallery.tags || '')
+                    .replace(/{type}/g, currentMusicGallery.type1 || 'Product');
+                
+                // Start both requests in parallel
+                setMusicTask('Generating lyrics...', 'Creating lyrics based on gallery name');
+                updateMusicProgress(25);
+                
+                const lyricsPromise = fetch('/api/ai/generate-gallery-lyrics', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        galleryName: currentMusicGallery.name,
+                        description: currentMusicGallery.description || '',
+                        tags: currentMusicGallery.tags || '',
+                        type: currentMusicGallery.type1 || 'Product',
+                        prompt: lyricsPrompt
+                    })
+                }).then(async response => {
+                    const result = await response.json();
+                    if (result.success && result.lyrics) {
+                        generatedLyrics = result.lyrics;
+                        updateMusicProgress(75);
+                        return result;
                     } else {
-                        formData[field] = value;
+                        throw new Error(result.error || 'Failed to generate lyrics');
                     }
-                }
-            }
-        });
-        
-        if (Object.keys(formData).length === 0) {
-            showMessage('ℹ️ No changes to save', 'info');
-            return;
-        }
-        
-        try {
-            showMessage('🔄 Saving changes...', 'info');
-            
-            // Add loading state to form
-            const saveBtn = document.querySelector('#editGalleryForm .save-btn');
-            const originalText = saveBtn.innerHTML;
-            saveBtn.innerHTML = '⏳ Saving...';
-            saveBtn.disabled = true;
-            
-            // For demo purposes, we'll simulate API call
-            // In production, you would call your API
-            console.log('Updating gallery:', currentEditGalleryId, formData);
-            
-            // Simulate API delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Update local data
-            const galleryIndex = allGalleries.findIndex(g => g.id == currentEditGalleryId);
-            if (galleryIndex !== -1) {
-                Object.keys(formData).forEach(key => {
-                    allGalleries[galleryIndex][key] = formData[key];
                 });
                 
-                // Update derived fields
-                if (formData.image1) {
-                    allGalleries[galleryIndex].image = getFullImageUrl(formData.image1);
-                    allGalleries[galleryIndex].hasImage = true;
-                }
+                setMusicTask('Generating style...', 'Creating music style based on gallery name');
+                updateMusicProgress(50);
                 
-                // Check if description has music links
-                if (formData.description) {
-                    allGalleries[galleryIndex].hasMusic = formData.description.includes('.mp3');
-                    allGalleries[galleryIndex].musicLinks = formData.description.includes('.mp3') ? [formData.description] : [];
-                }
-            }
-            
-            // Restore button
-            saveBtn.innerHTML = originalText;
-            saveBtn.disabled = false;
-            
-            // Add success animation
-            document.querySelector('.modal-content').classList.add('form-success');
-            
-            showMessage('✅ Gallery updated successfully!', 'success');
-            
-            // Refresh display and filters
-            calculateFilterCounts();
-            updateFilterOptions();
-            filterGalleries();
-            
-            setTimeout(() => {
-                closeEditGalleryModal();
-                // Remove success animation
-                setTimeout(() => {
-                    document.querySelector('.modal-content').classList.remove('form-success');
-                }, 300);
-            }, 1500);
-            
-        } catch (error) {
-            showMessage(`❌ Error: ${error.message}`, 'error');
-            // Restore button
-            const saveBtn = document.querySelector('#editGalleryForm .save-btn');
-            saveBtn.innerHTML = '💾 Save Changes';
-            saveBtn.disabled = false;
-        }
-    });
-    
-    // Image Modal Functions
-    function openImageModal(galleryId, field, imageUrl) {
-        currentGalleryId = galleryId;
-        currentImageField = field;
-        currentImageUrl = decodeURIComponent(imageUrl || '');
-        
-        // Set modal info
-        document.getElementById('imageFieldName').textContent = 'Gallery Image';
-        document.getElementById('imageFieldInfo').textContent = `Gallery ID: ${galleryId}`;
-        
-        // Show/hide current image
-        const currentImageContainer = document.getElementById('currentImageContainer');
-        const currentImagePreview = document.getElementById('currentImagePreview');
-        
-        if (currentImageUrl && currentImageUrl.trim() !== '') {
-            currentImagePreview.src = getFullImageUrl(currentImageUrl);
-            currentImagePreview.alt = 'Current Image';
-            currentImagePreview.onerror = function() {
-                this.src = 'https://via.placeholder.com/200x150?text=Image+Not+Found';
-            };
-            currentImageContainer.style.display = 'block';
-        } else {
-            currentImageContainer.style.display = 'none';
-        }
-        
-        // Reset upload section
-        resetUploadSection();
-        
-        // Setup drag and drop
-        setupDragAndDrop();
-        
-        // Show modal
-        document.getElementById('imageUploadModal').style.display = 'block';
-    }
-    
-    function closeImageModal() {
-        document.getElementById('imageUploadModal').style.display = 'none';
-        currentGalleryId = null;
-        currentImageField = null;
-        currentImageUrl = null;
-        uploadedImageUrl = null;
-        uploadedFile = null;
-    }
-    
-    function viewCurrentImage() {
-        if (currentImageUrl) {
-            window.open(getFullImageUrl(currentImageUrl), '_blank');
-        }
-    }
-    
-    function deleteCurrentImage() {
-        if (confirm('Are you sure you want to delete this image?')) {
-            saveImageToServer('');
-        }
-    }
-    
-    function setupDragAndDrop() {
-        const uploadContainer = document.getElementById('uploadContainer');
-        const fileInput = document.getElementById('imageFileInput');
-        
-        // Prevent default drag behaviors
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            uploadContainer.addEventListener(eventName, preventDefaults, false);
-            document.body.addEventListener(eventName, preventDefaults, false);
-        });
-        
-        // Highlight drop zone
-        ['dragenter', 'dragover'].forEach(eventName => {
-            uploadContainer.addEventListener(eventName, highlight, false);
-        });
-        
-        ['dragleave', 'drop'].forEach(eventName => {
-            uploadContainer.addEventListener(eventName, unhighlight, false);
-        });
-        
-        // Handle dropped files
-        uploadContainer.addEventListener('drop', handleDrop, false);
-        
-        // Handle file input change
-        fileInput.addEventListener('change', handleFileSelect, false);
-        
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-        
-        function highlight() {
-            uploadContainer.classList.add('dragover');
-        }
-        
-        function unhighlight() {
-            uploadContainer.classList.remove('dragover');
-        }
-        
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            handleFiles(files);
-        }
-        
-        function handleFileSelect(e) {
-            const files = e.target.files;
-            handleFiles(files);
-        }
-    }
-    
-    function handleFiles(files) {
-        if (files.length === 0) return;
-        
-        const file = files[0];
-        
-        // Validate file type
-        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-        if (!validTypes.includes(file.type)) {
-            showMessage('❌ Please select a valid image file (JPG, PNG, GIF, WEBP)', 'error');
-            return;
-        }
-        
-        // Validate file size (10MB max)
-        if (file.size > 10 * 1024 * 1024) {
-            showMessage('❌ Image size must be less than 10MB', 'error');
-            return;
-        }
-        
-        uploadedFile = file;
-        
-        // Show preview
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const preview = document.getElementById('uploadedImagePreview');
-            preview.src = e.target.result;
-            document.getElementById('imagePreviewContainer').style.display = 'block';
-            document.getElementById('saveImageBtn').disabled = false;
-        };
-        reader.readAsDataURL(file);
-        
-        // Upload the file
-        uploadImage(file);
-    }
-    
-    async function uploadImage(file) {
-        try {
-            const formData = new FormData();
-            formData.append('image', file);
-            
-            // For demo, simulate upload success
-            console.log('Uploading image:', file.name);
-            
-            // Simulate upload delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Generate a mock URL (in production, this would come from your API)
-            uploadedImageUrl = `https://zulushop.in/uploads/media/${Date.now()}_${file.name}`;
-            
-            showMessage('✅ Image uploaded successfully!', 'success');
-            return uploadedImageUrl;
-            
-        } catch (error) {
-            showMessage(`❌ Upload failed: ${error.message}`, 'error');
-            document.getElementById('saveImageBtn').disabled = true;
-            throw error;
-        }
-    }
-    
-    function resetUploadSection() {
-        uploadedImageUrl = null;
-        uploadedFile = null;
-        document.getElementById('imagePreviewContainer').style.display = 'none';
-        document.getElementById('saveImageBtn').disabled = true;
-        document.getElementById('imageFileInput').value = '';
-    }
-    
-    function saveImage() {
-        if (uploadedImageUrl) {
-            saveImageToServer(uploadedImageUrl);
-        } else {
-            showMessage('❌ Please upload an image first', 'error');
-        }
-    }
-    
-    async function saveImageToServer(imageUrl) {
-        try {
-            showMessage('🔄 Saving image...', 'info');
-            
-            // For demo, simulate saving
-            console.log('Saving image:', imageUrl);
-            
-            // Simulate API delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            showMessage('✅ Image saved successfully!', 'success');
-            
-            // Update the gallery in allGalleries array
-            const galleryIndex = allGalleries.findIndex(g => g.id == currentGalleryId);
-            if (galleryIndex !== -1) {
-                // Update the specific image field
-                allGalleries[galleryIndex][currentImageField] = imageUrl;
+                const stylePromise = fetch('/api/ai/generate-gallery-style', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        galleryName: currentMusicGallery.name,
+                        description: currentMusicGallery.description || '',
+                        tags: currentMusicGallery.tags || '',
+                        type: currentMusicGallery.type1 || 'Product',
+                        prompt: stylePrompt
+                    })
+                }).then(async response => {
+                    const result = await response.json();
+                    if (result.success && result.style) {
+                        generatedStyle = result.style;
+                        updateMusicProgress(90);
+                        return result;
+                    } else {
+                        throw new Error(result.error || 'Failed to generate style');
+                    }
+                });
                 
-                // If this is image1, also update main image
-                if (currentImageField === 'image1') {
-                    allGalleries[galleryIndex].image = imageUrl;
-                    allGalleries[galleryIndex].hasImage = !!imageUrl;
-                }
+                // Wait for both to complete
+                await Promise.all([lyricsPromise, stylePromise]);
+                
+                updateMusicProgress(100);
+                
+                // Show results
+                showGenerationResults();
+                
+            } catch (error) {
+                console.error('Generation error:', error);
+                showMusicError(error.message);
             }
-            
-            // Refresh display
-            filterGalleries();
-            
-            setTimeout(() => {
-                closeImageModal();
-            }, 1000);
-            
-        } catch (error) {
-            showMessage(`❌ Error: ${error.message}`, 'error');
-        }
-    }
-    
-    function viewImage(url) {
-        if (url) {
-            window.open(url, '_blank');
-        }
-    }
-    
-    // Music Generation Functions
-    function showGenerateOptionsForGallery(galleryId) {
-        const gallery = allGalleries.find(g => g.id == galleryId);
-        if (!gallery) {
-            showMessage('❌ Gallery not found', 'error');
-            return;
         }
         
-        currentMusicGallery = gallery;
-        
-        // Reset UI
-        const modal = document.getElementById('musicModal');
-        const galleryName = document.getElementById('musicGalleryName');
-        const galleryInfo = document.getElementById('musicGalleryInfo');
-        
-        galleryName.textContent = gallery.name;
-        galleryInfo.textContent = `ID: ${gallery.id} | Generate music and style based on gallery name`;
-        
-        // Reset all sections
-        document.getElementById('choiceSection').style.display = 'block';
-        document.getElementById('promptEditorSection').style.display = 'none';
-        document.getElementById('musicProgress').style.display = 'none';
-        document.getElementById('musicLoading').style.display = 'none';
-        document.getElementById('resultsContent').style.display = 'none';
-        document.getElementById('musicError').style.display = 'none';
-        document.getElementById('lyricsResult').style.display = 'none';
-        document.getElementById('styleResult').style.display = 'none';
-        document.getElementById('musicPreviewContainer').style.display = 'none';
-        document.getElementById('saveMusicBtn').style.display = 'none';
-        
-        // Reset results
-        generatedLyrics = '';
-        generatedStyle = '';
-        uploadedMusicUrl = null;
-        uploadedMusicFile = null;
-        currentGenerationType = null;
-        
-        // Reset upload section
-        resetMusicUploadSection();
-        
-        modal.style.display = 'block';
-    }
-    
-    function closeMusicModal() {
-        document.getElementById('musicModal').style.display = 'none';
-        currentMusicGallery = null;
-        generatedLyrics = '';
-        generatedStyle = '';
-        uploadedMusicUrl = null;
-        uploadedMusicFile = null;
-        currentGenerationType = null;
-    }
-    
-    function editPromptsBeforeGenerate() {
-        document.getElementById('choiceSection').style.display = 'none';
-        
-        // Create prompt editor interface
-        const promptEditorSection = document.getElementById('promptEditorSection');
-        promptEditorSection.innerHTML = `
-            <div style="margin-bottom: 20px;">
-                <h3>Edit Prompts Before Generating</h3>
-                <p style="color: #7f8c8d; margin-bottom: 20px;">Edit both lyrics and style prompts before generation</p>
-            </div>
+        function showGenerationResults() {
+            document.getElementById('musicLoading').style.display = 'none';
+            document.getElementById('resultsContent').style.display = 'block';
             
-            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <button id="lyricsTab" class="prompt-tab active" style="
-                    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-                    color: white;
-                    border: none;
-                    padding: 12px 24px;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    font-weight: 600;
-                    flex: 1;
-                ">Lyrics Prompt</button>
-                <button id="styleTab" class="prompt-tab" style="
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white;
-                    border: none;
-                    padding: 12px 24px;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    font-weight: 600;
-                    flex: 1;
-                ">Style Prompt</button>
-            </div>
+            // Show both results
+            document.getElementById('lyricsResult').style.display = 'block';
+            document.getElementById('styleResult').style.display = 'block';
+            document.getElementById('generatedLyrics').textContent = generatedLyrics;
+            document.getElementById('generatedStyle').textContent = generatedStyle;
             
-            <div id="lyricsPromptEditor" style="display: block;">
-                <h4>🎶 Lyrics Generation Prompt</h4>
-                <div class="prompt-editor">
-                    <textarea id="lyricsPromptTextarea" placeholder="Edit lyrics prompt..." style="width: 100%; min-height: 200px; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.5; resize: vertical;"></textarea>
-                </div>
-            </div>
-            
-            <div id="stylePromptEditor" style="display: none;">
-                <h4>🎨 Style Generation Prompt</h4>
-                <div class="prompt-editor">
-                    <textarea id="stylePromptTextarea" placeholder="Edit style prompt..." style="width: 100%; min-height: 200px; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.5; resize: vertical;"></textarea>
-                </div>
-            </div>
-            
-            <div class="prompt-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-                <button type="button" class="prompt-btn cancel" onclick="cancelPromptEditing()">
-                    ✕ Cancel
-                </button>
-                <button type="button" class="prompt-btn save" onclick="saveBothPromptsAndGenerate()">
-                    💾 Save Both & Generate
-                </button>
-            </div>
-        `;
-        
-        promptEditorSection.style.display = 'block';
-        
-        // Load current prompts with gallery data
-        document.getElementById('lyricsPromptTextarea').value = currentPrompts.lyrics
-            .replace(/{galleryName}/g, currentMusicGallery.name || '')
-            .replace(/{description}/g, currentMusicGallery.description || '')
-            .replace(/{tags}/g, currentMusicGallery.tags || '')
-            .replace(/{type}/g, currentMusicGallery.type1 || 'Product');
-        
-        document.getElementById('stylePromptTextarea').value = currentPrompts.style
-            .replace(/{galleryName}/g, currentMusicGallery.name || '')
-            .replace(/{description}/g, currentMusicGallery.description || '')
-            .replace(/{tags}/g, currentMusicGallery.tags || '')
-            .replace(/{type}/g, currentMusicGallery.type1 || 'Product');
-        
-        // Tab switching
-        document.getElementById('lyricsTab').addEventListener('click', () => {
-            document.getElementById('lyricsTab').classList.add('active');
-            document.getElementById('styleTab').classList.remove('active');
-            document.getElementById('lyricsPromptEditor').style.display = 'block';
-            document.getElementById('stylePromptEditor').style.display = 'none';
-        });
-        
-        document.getElementById('styleTab').addEventListener('click', () => {
-            document.getElementById('styleTab').classList.add('active');
-            document.getElementById('lyricsTab').classList.remove('active');
-            document.getElementById('stylePromptEditor').style.display = 'block';
-            document.getElementById('lyricsPromptEditor').style.display = 'none';
-        });
-    }
-    
-    function cancelPromptEditing() {
-        document.getElementById('promptEditorSection').style.display = 'none';
-        document.getElementById('choiceSection').style.display = 'block';
-    }
-    
-    function saveBothPromptsAndGenerate() {
-        const lyricsPrompt = document.getElementById('lyricsPromptTextarea').value.trim();
-        const stylePrompt = document.getElementById('stylePromptTextarea').value.trim();
-        
-        if (!lyricsPrompt || !stylePrompt) {
-            showMessage('❌ Both prompts are required', 'error');
-            return;
+            // Setup drag and drop for music files
+            setupMusicDragAndDrop();
         }
         
-        // Save prompts (remove the current gallery-specific replacements)
-        currentPrompts.lyrics = lyricsPrompt
-            .replace(currentMusicGallery.name || '', '{galleryName}')
-            .replace(currentMusicGallery.description || '', '{description}')
-            .replace(currentMusicGallery.tags || '', '{tags}')
-            .replace(currentMusicGallery.type1 || 'Product', '{type}');
-        
-        currentPrompts.style = stylePrompt
-            .replace(currentMusicGallery.name || '', '{galleryName}')
-            .replace(currentMusicGallery.description || '', '{description}')
-            .replace(currentMusicGallery.tags || '', '{tags}')
-            .replace(currentMusicGallery.type1 || 'Product', '{type}');
-        
-        savePrompts();
-        
-        // Start generation of both
-        generateBothLyricsAndStyle();
-    }
-    
-    function generateImmediately() {
-        document.getElementById('choiceSection').style.display = 'none';
-        generateBothLyricsAndStyle();
-    }
-    
-    async function generateBothLyricsAndStyle() {
-        if (!currentMusicGallery) return;
-        
-        // Show loading and progress
-        document.getElementById('musicLoading').style.display = 'block';
-        document.getElementById('musicProgress').style.display = 'block';
-        document.getElementById('promptEditorSection').style.display = 'none';
-        document.getElementById('choiceSection').style.display = 'none';
-        document.getElementById('musicError').style.display = 'none';
-        document.getElementById('resultsContent').style.display = 'none';
-        
-        updateMusicProgress(0);
-        setMusicTask('Starting generation...', 'Preparing to generate lyrics and style');
-        
-        try {
-            // Prepare prompts with gallery data
-            const lyricsPrompt = currentPrompts.lyrics
-                .replace(/{galleryName}/g, currentMusicGallery.name || '')
-                .replace(/{description}/g, currentMusicGallery.description || '')
-                .replace(/{tags}/g, currentMusicGallery.tags || '')
-                .replace(/{type}/g, currentMusicGallery.type1 || 'Product');
+        function updateMusicProgress(percentage) {
+            document.getElementById('musicProgressBar').style.width = percentage + '%';
             
-            const stylePrompt = currentPrompts.style
-                .replace(/{galleryName}/g, currentMusicGallery.name || '')
-                .replace(/{description}/g, currentMusicGallery.description || '')
-                .replace(/{tags}/g, currentMusicGallery.tags || '')
-                .replace(/{type}/g, currentMusicGallery.type1 || 'Product');
-            
-            // Simulate AI generation for demo
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            // Generate sample lyrics based on gallery
-            generatedLyrics = `Tick-tock, time's never the same
-In this home where love's the only name
-Ghadi on the wall, stories it tells
-Of chai-sipped mornings and ringing bells
-
-Every second painted with care
-Memories hanging in the air
-Modern design, timeless grace
-A smile on every family's face
-
-The Ghadi watches as we grow
-Making every moment glow
-Home is where this clock will be
-Ticking love for you and me`;
-
-            updateMusicProgress(50);
-            
-            // Generate sample style
-            generatedStyle = `Genre: Indian Indie Folk-Pop
-Mood: Warm, nostalgic, uplifting, cozy
-Tempo: 85-90 BPM (moderate)
-Key: G Major (warm and bright)
-
-Instrumentation:
-- Acoustic guitar (fingerpicking pattern)
-- Light tabla or dholak for rhythm
-- Santoor or harmonium for Indian classical texture
-- Soft synth pad in the background
-- Occasional flute interludes
-
-Vocal Style:
-- Warm, emotive male/female vocals
-- Indian classical touches in ornamentation
-- Clear, storytelling delivery
-- Layered harmonies in chorus
-
-Production Style:
-- Clean, intimate recording
-- Slight reverb on vocals for warmth
-- Prominent acoustic elements
-- Subtle Indian percussion
-
-Cultural Influences:
-- Indian folk music sensibility
-- Bollywood acoustic pop feel
-- Modern indie production
-
-Similar References:
-- Prateek Kuhad's acoustic sound
-- Indian Ocean's folk fusion
-- Modern Bollywood acoustic tracks
-
-For Suno.ai:
-Use "acoustic folk" + "Indian pop" as style tags
-Add "warm vocals" + "storytelling"
-Set length to 30 seconds`;
-
-            updateMusicProgress(100);
-            
-            // Show results
-            showGenerationResults();
-            
-        } catch (error) {
-            console.error('Generation error:', error);
-            showMusicError(error.message);
+            // Update step indicators
+            const steps = ['step1', 'step2'];
+            steps.forEach((stepId, index) => {
+                const step = document.getElementById(stepId);
+                step.className = 'ai-step';
+                if (percentage >= (index + 1) * 50) {
+                    step.classList.add('completed');
+                } else if (percentage >= index * 50) {
+                    step.classList.add('active');
+                }
+            });
         }
-    }
-    
-    function showGenerationResults() {
-        document.getElementById('musicLoading').style.display = 'none';
-        document.getElementById('resultsContent').style.display = 'block';
         
-        // Show both results
-        document.getElementById('lyricsResult').style.display = 'block';
-        document.getElementById('styleResult').style.display = 'block';
-        document.getElementById('generatedLyrics').textContent = generatedLyrics;
-        document.getElementById('generatedStyle').textContent = generatedStyle;
+        function setMusicTask(task, details) {
+            document.getElementById('musicCurrentTask').textContent = task;
+            document.getElementById('musicTaskDetails').textContent = details;
+        }
+        
+        function showMusicError(message) {
+            document.getElementById('musicLoading').style.display = 'none';
+            document.getElementById('musicError').style.display = 'block';
+            document.getElementById('musicErrorMessage').textContent = message;
+        }
+        
+        function retryGeneration() {
+            document.getElementById('musicError').style.display = 'none';
+            generateBothLyricsAndStyle();
+        }
+        
+        // Copy to clipboard
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showMessage('✅ Copied to clipboard!', 'success');
+            }).catch(err => {
+                showMessage('❌ Failed to copy', 'error');
+            });
+        }
         
         // Setup drag and drop for music files
-        setupMusicDragAndDrop();
-    }
-    
-    function updateMusicProgress(percentage) {
-        document.getElementById('musicProgressBar').style.width = percentage + '%';
-        
-        // Update step indicators
-        const steps = ['step1', 'step2'];
-        steps.forEach((stepId, index) => {
-            const step = document.getElementById(stepId);
-            step.className = 'ai-step';
-            if (percentage >= (index + 1) * 50) {
-                step.classList.add('completed');
-            } else if (percentage >= index * 50) {
-                step.classList.add('active');
+        function setupMusicDragAndDrop() {
+            const uploadContainer = document.getElementById('musicUploadContainer');
+            const fileInput = document.getElementById('musicFileInput');
+            
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            // Highlight drop zone
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, unhighlight, false);
+            });
+            
+            // Handle dropped files
+            uploadContainer.addEventListener('drop', handleMusicDrop, false);
+            
+            // Handle file input change
+            fileInput.addEventListener('change', handleMusicFileSelect, false);
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
             }
-        });
-    }
-    
-    function setMusicTask(task, details) {
-        document.getElementById('musicCurrentTask').textContent = task;
-        document.getElementById('musicTaskDetails').textContent = details;
-    }
-    
-    function showMusicError(message) {
-        document.getElementById('musicLoading').style.display = 'none';
-        document.getElementById('musicError').style.display = 'block';
-        document.getElementById('musicErrorMessage').textContent = message;
-    }
-    
-    function retryGeneration() {
-        document.getElementById('musicError').style.display = 'none';
-        generateBothLyricsAndStyle();
-    }
-    
-    // Copy to clipboard
-    function copyToClipboard(elementId) {
-        const element = document.getElementById(elementId);
-        const text = element.textContent;
-        
-        navigator.clipboard.writeText(text).then(() => {
-            showMessage('✅ Copied to clipboard!', 'success');
-        }).catch(err => {
-            showMessage('❌ Failed to copy', 'error');
-        });
-    }
-    
-    // Setup drag and drop for music files
-    function setupMusicDragAndDrop() {
-        const uploadContainer = document.getElementById('musicUploadContainer');
-        const fileInput = document.getElementById('musicFileInput');
-        
-        // Prevent default drag behaviors
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            uploadContainer.addEventListener(eventName, preventDefaults, false);
-            document.body.addEventListener(eventName, preventDefaults, false);
-        });
-        
-        // Highlight drop zone
-        ['dragenter', 'dragover'].forEach(eventName => {
-            uploadContainer.addEventListener(eventName, highlight, false);
-        });
-        
-        ['dragleave', 'drop'].forEach(eventName => {
-            uploadContainer.addEventListener(eventName, unhighlight, false);
-        });
-        
-        // Handle dropped files
-        uploadContainer.addEventListener('drop', handleMusicDrop, false);
-        
-        // Handle file input change
-        fileInput.addEventListener('change', handleMusicFileSelect, false);
-        
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-        
-        function highlight() {
-            uploadContainer.classList.add('dragover');
-        }
-        
-        function unhighlight() {
-            uploadContainer.classList.remove('dragover');
-        }
-        
-        function handleMusicDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            handleMusicFiles(files);
-        }
-        
-        function handleMusicFileSelect(e) {
-            const files = e.target.files;
-            handleMusicFiles(files);
-        }
-    }
-    
-    function handleMusicFiles(files) {
-        if (files.length === 0) return;
-        
-        const file = files[0];
-        
-        // Validate file type
-        const validTypes = ['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/x-m4a'];
-        const validExtensions = ['.mp3', '.wav', '.m4a'];
-        const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-        
-        if (!validTypes.includes(file.type) && !validExtensions.includes(fileExtension)) {
-            showMessage('❌ Please select a valid audio file (MP3, WAV, M4A)', 'error');
-            return;
-        }
-        
-        // Validate file size (10MB max)
-        if (file.size > 10 * 1024 * 1024) {
-            showMessage('❌ Audio file size must be less than 10MB', 'error');
-            return;
-        }
-        
-        uploadedMusicFile = file;
-        
-        // Show preview
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const preview = document.getElementById('uploadedMusicPreview');
-            preview.src = e.target.result;
-            document.getElementById('musicPreviewContainer').style.display = 'block';
-            document.getElementById('saveMusicBtn').style.display = 'block';
             
-            // Show upload status
+            function highlight() {
+                uploadContainer.classList.add('dragover');
+            }
+            
+            function unhighlight() {
+                uploadContainer.classList.remove('dragover');
+            }
+            
+            function handleMusicDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleMusicFiles(files);
+            }
+            
+            function handleMusicFileSelect(e) {
+                const files = e.target.files;
+                handleMusicFiles(files);
+            }
+        }
+        
+        function handleMusicFiles(files) {
+            if (files.length === 0) return;
+            
+            const file = files[0];
+            
+            // Validate file type
+            const validTypes = ['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/x-m4a'];
+            const validExtensions = ['.mp3', '.wav', '.m4a'];
+            const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+            
+            if (!validTypes.includes(file.type) && !validExtensions.includes(fileExtension)) {
+                showMessage('❌ Please select a valid audio file (MP3, WAV, M4A)', 'error');
+                return;
+            }
+            
+            // Validate file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+                showMessage('❌ Audio file size must be less than 10MB', 'error');
+                return;
+            }
+            
+            uploadedMusicFile = file;
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('uploadedMusicPreview');
+                preview.src = e.target.result;
+                document.getElementById('musicPreviewContainer').style.display = 'block';
+                document.getElementById('saveMusicBtn').style.display = 'block';
+                
+                // Show upload status
+                const statusDiv = document.getElementById('uploadStatus');
+                statusDiv.className = 'upload-status success';
+                statusDiv.textContent = '✅ Music file ready to save';
+            };
+            reader.readAsDataURL(file);
+            
+            // Upload the file
+            uploadMusicFile(file);
+        }
+        
+        async function uploadMusicFile(file) {
+            try {
+                const statusDiv = document.getElementById('uploadStatus');
+                statusDiv.className = 'upload-status processing';
+                statusDiv.textContent = '🔄 Uploading music file...';
+                
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                const response = await fetch('https://api.zulushop.in/api/v1/user/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const responseText = await response.text();
+                
+                if (response.status >= 200 && response.status < 300) {
+                    let jsonRes;
+                    try {
+                        jsonRes = JSON.parse(responseText);
+                    } catch (e) {
+                        throw new Error('Invalid response from server');
+                    }
+                    
+                    // Extract URL from response
+                    let url;
+                    
+                    if (jsonRes.url && typeof jsonRes.url === 'string') {
+                        url = jsonRes.url;
+                    } else if (jsonRes.image_url && typeof jsonRes.image_url === 'string') {
+                        url = jsonRes.image_url;
+                    } else if (jsonRes.data) {
+                        if (typeof jsonRes.data === 'string') {
+                            url = jsonRes.data;
+                        } else if (typeof jsonRes.data === 'object') {
+                            if (jsonRes.data.url && typeof jsonRes.data.url === 'string') {
+                                url = jsonRes.data.url;
+                            } else if (jsonRes.data.image_url && typeof jsonRes.data.image_url === 'string') {
+                                url = jsonRes.data.image_url;
+                            }
+                        }
+                    }
+                    
+                    if (url) {
+                        uploadedMusicUrl = url;
+                        
+                        statusDiv.className = 'upload-status success';
+                        statusDiv.textContent = '✅ Music uploaded successfully!';
+                        
+                        showMessage('✅ Music uploaded successfully!', 'success');
+                        return url;
+                    } else {
+                        throw new Error('No URL in response');
+                    }
+                } else {
+                    throw new Error(`Upload failed: ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Music upload failed:', error);
+                
+                const statusDiv = document.getElementById('uploadStatus');
+                statusDiv.className = 'upload-status error';
+                statusDiv.textContent = `❌ Upload failed: ${error.message}`;
+                
+                showMessage(`❌ Music upload failed: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+        
+        function resetMusicUploadSection() {
+            uploadedMusicUrl = null;
+            uploadedMusicFile = null;
+            document.getElementById('musicPreviewContainer').style.display = 'none';
+            document.getElementById('saveMusicBtn').style.display = 'none';
+            document.getElementById('musicFileInput').value = '';
             const statusDiv = document.getElementById('uploadStatus');
-            statusDiv.className = 'upload-status success';
-            statusDiv.textContent = '✅ Music file ready to save';
+            statusDiv.className = 'upload-status';
+            statusDiv.textContent = '';
+        }
+        
+// Save music URL to gallery's description field - REPLACE DESCRIPTION
+async function saveMusicToGallery() {
+    if (!currentMusicGallery || !uploadedMusicUrl) {
+        showMessage('❌ Please upload a music file first', 'error');
+        return;
+    }
+    
+    try {
+        showMessage('🔄 Saving music to gallery...', 'info');
+        
+        // REPLACE the entire description with just the music link
+        const newDescription = uploadedMusicUrl;
+        
+        const updateData = {
+            description: newDescription
         };
-        reader.readAsDataURL(file);
         
-        // Upload the file
-        uploadMusicFile(file);
-    }
-    
-    async function uploadMusicFile(file) {
-        try {
-            const statusDiv = document.getElementById('uploadStatus');
-            statusDiv.className = 'upload-status processing';
-            statusDiv.textContent = '🔄 Uploading music file...';
-            
-            // For demo, simulate upload
-            console.log('Uploading music:', file.name);
-            
-            // Simulate upload delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Generate mock URL
-            uploadedMusicUrl = `https://zulushop.in/uploads/media/music/${Date.now()}_${file.name}`;
-            
-            statusDiv.className = 'upload-status success';
-            statusDiv.textContent = '✅ Music uploaded successfully!';
-            
-            showMessage('✅ Music uploaded successfully!', 'success');
-            return uploadedMusicUrl;
-            
-        } catch (error) {
-            console.error('Music upload failed:', error);
-            
-            const statusDiv = document.getElementById('uploadStatus');
-            statusDiv.className = 'upload-status error';
-            statusDiv.textContent = `❌ Upload failed: ${error.message}`;
-            
-            showMessage(`❌ Music upload failed: ${error.message}`, 'error');
-            throw error;
-        }
-    }
-    
-    function resetMusicUploadSection() {
-        uploadedMusicUrl = null;
-        uploadedMusicFile = null;
-        document.getElementById('musicPreviewContainer').style.display = 'none';
-        document.getElementById('saveMusicBtn').style.display = 'none';
-        document.getElementById('musicFileInput').value = '';
-        const statusDiv = document.getElementById('uploadStatus');
-        statusDiv.className = 'upload-status';
-        statusDiv.textContent = '';
-    }
-    
-    async function saveMusicToGallery() {
-        if (!currentMusicGallery || !uploadedMusicUrl) {
-            showMessage('❌ Please upload a music file first', 'error');
-            return;
-        }
+        const response = await fetch(`/api/galleries/${currentMusicGallery.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updateData)
+        });
         
-        try {
-            showMessage('🔄 Saving music to gallery...', 'info');
-            
-            // REPLACE the entire description with just the music link
-            const newDescription = uploadedMusicUrl;
-            
-            // For demo, simulate saving
-            console.log('Saving music to gallery:', newDescription);
-            
-            // Simulate API delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Update local data
+        const result = await response.json();
+        
+        if (result.success) {
+            // Update the gallery in allGalleries array
             const galleryIndex = allGalleries.findIndex(g => g.id == currentMusicGallery.id);
             if (galleryIndex !== -1) {
                 allGalleries[galleryIndex].description = newDescription;
@@ -3435,59 +3834,182 @@ Set length to 30 seconds`;
             closeMusicModal();
             // Refresh display
             filterGalleries();
-            
-        } catch (error) {
-            console.error('Error saving music:', error);
-            showMessage(`❌ Error: ${error.message}`, 'error');
+        } else {
+            throw new Error(result.error || 'Failed to save music');
         }
+    } catch (error) {
+        console.error('Error saving music:', error);
+        showMessage(`❌ Error: ${error.message}`, 'error');
     }
-    
-    // Show message
-    function showMessage(text, type = 'success') {
-        const messageDiv = document.getElementById('message');
-        messageDiv.textContent = text;
+}
+
+// Show message
+        function showMessage(text, type = 'success') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            
+            const colors = {
+                success: { bg: '#d4edda', text: '#155724' },
+                error: { bg: '#f8d7da', text: '#721c24' },
+                info: { bg: '#d1ecf1', text: '#0c5460' }
+            };
+            
+            const color = colors[type] || colors.success;
+            messageDiv.style.background = color.bg;
+            messageDiv.style.color = color.text;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 3000);
+        }
         
-        const colors = {
-            success: { bg: '#d4edda', text: '#155724' },
-            error: { bg: '#f8d7da', text: '#721c24' },
-            info: { bg: '#d1ecf1', text: '#0c5460' }
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const imageModal = document.getElementById('imageUploadModal');
+            const editModal = document.getElementById('editGalleryModal');
+            const musicModal = document.getElementById('musicModal');
+            
+            if (event.target === imageModal) {
+                closeImageModal();
+            }
+            if (event.target === editModal) {
+                closeEditGalleryModal();
+            }
+            if (event.target === musicModal) {
+                closeMusicModal();
+            }
         };
         
-        const color = colors[type] || colors.success;
-        messageDiv.style.background = color.bg;
-        messageDiv.style.color = color.text;
-        messageDiv.style.display = 'block';
+        // Close modals with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeImageModal();
+                closeEditGalleryModal();
+                closeMusicModal();
+            }
+        });
+    </script>
+    <!-- Gallery Details Modal -->
+<div id="galleryDetailsModal" class="modal">
+    <div class="modal-content" style="max-width: 1200px; width: 95%; max-height: 90vh;">
+        <div class="modal-header">
+            <h2 id="galleryModalTitle">Gallery Details</h2>
+            <button class="close-modal" onclick="closeGalleryDetailsModal()">&times;</button>
+        </div>
         
-        setTimeout(() => {
-            messageDiv.style.display = 'none';
-        }, 3000);
-    }
-    
-    // Close modals when clicking outside
-    window.onclick = function(event) {
-        const imageModal = document.getElementById('imageUploadModal');
-        const editModal = document.getElementById('editGalleryModal');
-        const musicModal = document.getElementById('musicModal');
+        <div class="modal-body" style="padding: 0;">
+            <!-- Loading state -->
+            <div id="galleryDetailsLoading" style="display: none; padding: 60px; text-align: center;">
+                <div style="width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #795548; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+                <h3>Loading gallery details...</h3>
+            </div>
+            
+            <!-- Error state -->
+            <div id="galleryDetailsError" style="display: none; padding: 40px; text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
+                <h3>Failed to load gallery details</h3>
+                <p id="galleryDetailsErrorMessage"></p>
+                <button onclick="retryLoadGalleryDetails()" style="margin-top: 20px; background: linear-gradient(135deg, #795548 0%, #5D4037 100%); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    🔄 Retry
+                </button>
+            </div>
+            
+            <!-- Gallery Info -->
+            <div id="galleryInfoSection" style="display: none; padding: 25px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-bottom: 2px solid #e0e0e0;">
+                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px;">
+                    <img id="galleryDetailImage" src="" alt="Gallery Image" style="width: 80px; height: 80px; object-fit: cover; border-radius: 10px; border: 2px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <div>
+                        <h3 id="galleryDetailName" style="margin: 0 0 8px 0; color: #333;">Gallery Name</h3>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                            <span class="status-badge active" id="galleryDetailStatus"></span>
+                            <span class="info-tag" style="background: #795548; color: white;">
+                                📱 V<span id="galleryDetailVersion"></span>
+                            </span>
+                            <span class="info-tag" id="galleryDetailType"></span>
+                        </div>
+                    </div>
+                </div>
+                <p id="galleryDetailDescription" style="color: #666; margin: 10px 0 0 0; font-size: 14px; line-height: 1.5;"></p>
+            </div>
+            
+            <!-- Tabs -->
+            <div style="display: flex; background: #f8f9fa; border-bottom: 2px solid #e0e0e0;">
+                <button id="productsTab" class="tab-button active" onclick="switchTab('products')" style="
+                    flex: 1;
+                    padding: 18px;
+                    border: none;
+                    background: none;
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #795548;
+                    cursor: pointer;
+                    border-bottom: 3px solid #795548;
+                    transition: all 0.3s;
+                ">
+                    📦 Products (<span id="productsCount">0</span>)
+                </button>
+                <button id="videosTab" class="tab-button" onclick="switchTab('videos')" style="
+                    flex: 1;
+                    padding: 18px;
+                    border: none;
+                    background: none;
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #666;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                ">
+                    🎥 Videos (<span id="videosCount">0</span>)
+                </button>
+            </div>
+            
+            <!-- Content Area -->
+            <div style="padding: 25px;">
+                <!-- Products Grid -->
+                <div id="productsContent" class="tab-content active">
+                    <div class="products-grid" style="
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                        gap: 20px;
+                        margin-top: 20px;
+                    ">
+                        <!-- Products will be loaded here -->
+                    </div>
+                    
+                    <div id="noProducts" style="display: none; text-align: center; padding: 60px 30px; color: #7f8c8d;">
+                        <div style="font-size: 48px; margin-bottom: 20px;">📦</div>
+                        <h3 style="margin: 0 0 10px 0; color: #333;">No Products Found</h3>
+                        <p>This gallery doesn't contain any products.</p>
+                    </div>
+                </div>
+                
+                <!-- Videos Grid -->
+                <div id="videosContent" class="tab-content" style="display: none;">
+                    <div class="videos-grid" style="
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                        gap: 20px;
+                        margin-top: 20px;
+                    ">
+                        <!-- Videos will be loaded here -->
+                    </div>
+                    
+                    <div id="noVideos" style="display: none; text-align: center; padding: 60px 30px; color: #7f8c8d;">
+                        <div style="font-size: 48px; margin-bottom: 20px;">🎥</div>
+                        <h3 style="margin: 0 0 10px 0; color: #333;">No Videos Found</h3>
+                        <p>This gallery doesn't contain any shopable videos.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
         
-        if (event.target === imageModal) {
-            closeImageModal();
-        }
-        if (event.target === editModal) {
-            closeEditGalleryModal();
-        }
-        if (event.target === musicModal) {
-            closeMusicModal();
-        }
-    };
-    
-    // Close modals with Escape key
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
-            closeImageModal();
-            closeEditGalleryModal();
-            closeMusicModal();
-        }
-    });
-</script>
+        <div class="modal-actions">
+            <button type="button" class="cancel-btn" onclick="closeGalleryDetailsModal()">
+                ✕ Close
+            </button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
