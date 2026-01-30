@@ -716,6 +716,26 @@ async function getProductStatsByUpdater() {
     });
   });
 }
+
+async function executeDelete(table, id) {
+  try {
+    const connection = await pool.getConnection();
+    
+    const query = `DELETE FROM ${table} WHERE id = ?`;
+    const [result] = await connection.execute(query, [id]);
+    
+    connection.release();
+    
+    return {
+      affectedRows: result.affectedRows,
+      message: `Deleted 1 record from ${table}`
+    };
+  } catch (error) {
+    console.error(`Error deleting from ${table}:`, error);
+    throw error;
+  }
+}
+
 async function getAppConfigsData() {
   return await getCachedData('appconfigs');
 }

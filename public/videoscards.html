@@ -361,6 +361,17 @@
             color: white;
         }
         
+        .action-btn.delete-video {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+        }
+        
+        .action-btn.delete-video:hover {
+            background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
         .card-content {
             padding: 20px;
             flex-grow: 1;
@@ -368,18 +379,24 @@
             flex-direction: column;
         }
         
-        .card-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 10px;
-            line-height: 1.4;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            min-height: 44px;
-        }
+.card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 10px;
+    line-height: 1.4;
+    
+    /* Multi-line text truncation with fallbacks */
+    display: -webkit-box;
+    display: box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 44px;
+}
         
         .card-id {
             font-size: 12px;
@@ -1341,6 +1358,38 @@
         </div>
     </div>
 
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);">
+                <h2>⚠️ Delete Video</h2>
+                <button class="close-modal" onclick="closeDeleteConfirmModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div style="text-align: center; padding: 20px 0;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">🗑️</div>
+                    <h3 style="color: #2c3e50; margin-bottom: 15px;">Are you sure?</h3>
+                    <p style="color: #666; margin-bottom: 25px; line-height: 1.5;">
+                        You are about to delete video: <strong id="deleteVideoName"></strong>
+                    </p>
+                    <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border: 1px solid #ffeaa7; margin: 20px 0;">
+                        <strong style="color: #856404;">⚠️ Warning:</strong> This action cannot be undone. All video data will be permanently removed.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="cancel-btn" onclick="closeDeleteConfirmModal()">
+                    ✕ Cancel
+                </button>
+                <button type="button" class="save-btn" id="confirmDeleteBtn" style="background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);">
+                    🗑️ Delete Permanently
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let allVideos = [];
         let filteredVideos = [];
@@ -1348,6 +1397,7 @@
         let sellersList = [];
         let currentEditVideoId = null;
         let currentThumbnailVideoId = null;
+        let videoToDelete = null;
         
         // Thumbnail upload variables
         let uploadedThumbnailUrl = null;
@@ -2326,7 +2376,7 @@
                 }
                 
                 html += `
-                <div class="video-card">
+                <div class="video-card" id="video-card-${video.id}">
                     <div class="card-media" onclick="playVideo('${videoUrl}', '${video.name.replace(/'/g, "\\'")}')">
                         ${thumbnailUrl ? `
                             <img src="${thumbnailUrl}" alt="${video.name}" class="card-thumbnail" 
@@ -2347,6 +2397,9 @@
                             </button>
                             <button class="action-btn edit-thumbnail" onclick="openThumbnailModal(${video.id}); event.stopPropagation();">
                                 🖼️ Thumbnail
+                            </button>
+                            <button class="action-btn delete-video" onclick="confirmDeleteVideo(${video.id}, '${video.name.replace(/'/g, "\\'")}'); event.stopPropagation();">
+                                🗑️ Delete
                             </button>
                         </div>
                     </div>
@@ -2414,6 +2467,87 @@
             const videoPlayer = document.getElementById('videoPlayer');
             videoPlayer.src = '';
             document.getElementById('videoPlayerModal').style.display = 'none';
+        }
+        
+        // Delete video functionality
+        function confirmDeleteVideo(videoId, videoName) {
+            videoToDelete = videoId;
+            document.getElementById('deleteVideoName').textContent = videoName;
+            document.getElementById('deleteConfirmModal').style.display = 'block';
+            
+            // Set up delete confirmation handler
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
+            confirmBtn.onclick = () => deleteVideo(videoId);
+        }
+        
+        function closeDeleteConfirmModal() {
+            videoToDelete = null;
+            document.getElementById('deleteConfirmModal').style.display = 'none';
+            document.getElementById('deleteVideoName').textContent = '';
+        }
+        
+        async function deleteVideo(videoId) {
+            if (!videoId) {
+                showMessage('❌ No video selected for deletion', 'error');
+                closeDeleteConfirmModal();
+                return;
+            }
+            
+            try {
+                showMessage('🔄 Deleting video...', 'info');
+                
+                const response = await fetch(`/api/videos/${videoId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('✅ Video deleted successfully', 'success');
+                    
+                    // Remove video card from UI
+                    const videoCard = document.getElementById(`video-card-${videoId}`);
+                    if (videoCard) {
+                        videoCard.style.opacity = '0';
+                        videoCard.style.transform = 'scale(0.8)';
+                        setTimeout(() => {
+                            videoCard.remove();
+                            
+                            // Reload videos if no cards left
+                            const container = document.getElementById('videosContainer');
+                            if (container && container.children.length === 0) {
+                                setTimeout(() => loadVideos(), 1000);
+                            }
+                        }, 300);
+                    }
+                    
+                    // Also remove from local arrays
+                    const videoIndex = allVideos.findIndex(v => v.id == videoId);
+                    if (videoIndex !== -1) {
+                        allVideos.splice(videoIndex, 1);
+                    }
+                    
+                    const filteredIndex = filteredVideos.findIndex(v => v.id == videoId);
+                    if (filteredIndex !== -1) {
+                        filteredVideos.splice(filteredIndex, 1);
+                    }
+                    
+                    // Recalculate filter counts
+                    calculateFilterCounts();
+                    updateFilterCountBadges();
+                    
+                    closeDeleteConfirmModal();
+                    
+                } else {
+                    showMessage(`❌ ${result.error || 'Failed to delete video'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Delete video error:', error);
+                showMessage(`❌ ${error.message}`, 'error');
+            }
         }
         
         // Open edit video modal with custom dropdowns
@@ -2653,7 +2787,7 @@
             }
         }
         
-        // Thumbnail modal functions (same as before)
+        // Thumbnail modal functions
         function openThumbnailModal(videoId) {
             const video = allVideos.find(v => v.id == videoId);
             if (!video) {
@@ -2904,13 +3038,14 @@
         
         // Close modals when clicking outside
         window.onclick = function(event) {
-            const modals = ['videoPlayerModal', 'editVideoModal', 'thumbnailUploadModal'];
+            const modals = ['videoPlayerModal', 'editVideoModal', 'thumbnailUploadModal', 'deleteConfirmModal'];
             modals.forEach(modalId => {
                 const modal = document.getElementById(modalId);
                 if (event.target === modal) {
                     if (modalId === 'videoPlayerModal') closeVideoPlayer();
                     if (modalId === 'editVideoModal') closeEditVideoModal();
                     if (modalId === 'thumbnailUploadModal') closeThumbnailModal();
+                    if (modalId === 'deleteConfirmModal') closeDeleteConfirmModal();
                 }
             });
         };
@@ -2921,6 +3056,7 @@
                 closeVideoPlayer();
                 closeEditVideoModal();
                 closeThumbnailModal();
+                closeDeleteConfirmModal();
                 closeAllDropdowns();
             }
         });

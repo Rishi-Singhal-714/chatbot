@@ -453,6 +453,13 @@
             cursor: pointer;
         }
         
+        /* DELETE BUTTON STYLES */
+        .info-tag.delete {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            cursor: pointer;
+        }
+        
         .empty-state {
             text-align: center;
             padding: 60px 30px;
@@ -1051,276 +1058,387 @@
             background: #fff3cd;
             color: #856404;
         }
+        
         /* Add to existing CSS */
-.prompt-variable {
-    background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-family: 'Courier New', monospace;
-    cursor: pointer;
-    margin: 2px;
-    display: inline-block;
-}
+        .prompt-variable {
+            background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            margin: 2px;
+            display: inline-block;
+        }
 
-.prompt-variable:hover {
-    background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
-    transform: translateY(-1px);
-}
+        .prompt-variable:hover {
+            background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
+            transform: translateY(-1px);
+        }
 
-.prompt-templates {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 8px;
-    margin: 15px 0;
-    border: 1px solid #e0e0e0;
-}
+        .prompt-templates {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #e0e0e0;
+        }
 
-.prompt-templates h5 {
-    margin: 0 0 10px 0;
-    color: #2c3e50;
-    font-size: 14px;
-}
+        .prompt-templates h5 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+            font-size: 14px;
+        }
 
-.preset-prompt-btn {
-    background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 12px;
-    margin: 5px 5px 5px 0;
-    transition: all 0.3s;
-}
+        .preset-prompt-btn {
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            margin: 5px 5px 5px 0;
+            transition: all 0.3s;
+        }
 
-.preset-prompt-btn:hover {
-    background: linear-gradient(135deg, #0984e3 0%, #0767b1 100%);
-    transform: translateY(-2px);
-}
+        .preset-prompt-btn:hover {
+            background: linear-gradient(135deg, #0984e3 0%, #0767b1 100%);
+            transform: translateY(-2px);
+        }
 
-.prompt-info {
-    background: #fff3cd;
-    padding: 10px;
-    border-radius: 6px;
-    border-left: 4px solid #ffc107;
-    font-size: 13px;
-    color: #856404;
-    margin: 10px 0;
-}
-.prompt-tab {
-    transition: all 0.3s ease;
-}
+        .prompt-info {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #ffc107;
+            font-size: 13px;
+            color: #856404;
+            margin: 10px 0;
+        }
+        .prompt-tab {
+            transition: all 0.3s ease;
+        }
 
-.prompt-tab.active {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-}
+        .prompt-tab.active {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
 
-.prompt-tab:not(.active) {
-    opacity: 0.8;
-}
+        .prompt-tab:not(.active) {
+            opacity: 0.8;
+        }
 
-.prompt-tab:hover:not(.active) {
-    opacity: 1;
-    transform: translateY(-2px);
-}
+        .prompt-tab:hover:not(.active) {
+            opacity: 1;
+            transform: translateY(-2px);
+        }
+        
+        /* DELETE CONFIRMATION MODAL STYLES */
+        .confirm-delete-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            animation: fadeIn 0.3s ease;
+            backdrop-filter: blur(5px);
+            display: none;
+        }
+
+        .confirm-delete-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: modalSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-align: center;
+        }
+
+        .confirm-delete-content h3 {
+            margin: 0 0 20px 0;
+            color: #e74c3c;
+            font-size: 22px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .confirm-delete-content p {
+            margin: 0 0 25px 0;
+            color: #7f8c8d;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .delete-warning {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #e74c3c;
+            font-size: 14px;
+        }
+
+        .delete-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        .delete-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .delete-btn:hover {
+            background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
+        }
+
+        .delete-cancel-btn {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .delete-cancel-btn:hover {
+            background: linear-gradient(135deg, #7f8c8d 0%, #6c757d 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(127, 140, 141, 0.3);
+        }
     </style>
 </head>
 <body>
     <h1>Products - Card View</h1>
     
-<!-- Music Generation Modal -->
-<div id="musicModal" class="modal">
-    <div class="modal-content" style="max-width: 800px;">
-        <div class="modal-header" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);">
-            <h2>🎵 Generate Music for Product</h2>
-            <button class="close-modal" onclick="closeMusicModal()">&times;</button>
-        </div>
-        
-        <div class="modal-body">
-            <div class="field-info">
-                <h3 id="musicProductName">Product Name</h3>
-                <p id="musicProductInfo">Generate lyrics and music for this product</p>
+    <!-- Music Generation Modal -->
+    <div id="musicModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);">
+                <h2>🎵 Generate Music for Product</h2>
+                <button class="close-modal" onclick="closeMusicModal()">&times;</button>
             </div>
             
-            <!-- Choice Section -->
-            <div id="choiceSection" style="display: none;">
-                <div style="text-align: center; padding: 20px;">
-                    <h3 style="margin-bottom: 25px; color: #2c3e50;">How would you like to proceed?</h3>
-                    
-                    <div style="display: flex; flex-direction: column; gap: 15px; margin: 30px 0;">
-                        <button onclick="editPromptsBeforeGenerate()" style="
-                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                            color: white;
-                            border: none;
-                            padding: 18px 25px;
-                            border-radius: 12px;
-                            cursor: pointer;
-                            font-size: 16px;
-                            font-weight: 600;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            gap: 12px;
-                            transition: all 0.3s;
-                            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.2);
-                        ">
-                            <span style="font-size: 24px;">✏️</span>
-                            <div style="text-align: left;">
-                                <div style="font-size: 18px;">Edit Prompts First</div>
-                                <div style="font-size: 13px; opacity: 0.9; margin-top: 5px;">Edit lyrics and style prompts, then generate</div>
-                            </div>
-                        </button>
+            <div class="modal-body">
+                <div class="field-info">
+                    <h3 id="musicProductName">Product Name</h3>
+                    <p id="musicProductInfo">Generate lyrics and music for this product</p>
+                </div>
+                
+                <!-- Choice Section -->
+                <div id="choiceSection" style="display: none;">
+                    <div style="text-align: center; padding: 20px;">
+                        <h3 style="margin-bottom: 25px; color: #2c3e50;">How would you like to proceed?</h3>
                         
-                        <button onclick="generateImmediately()" style="
-                            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-                            color: white;
-                            border: none;
-                            padding: 18px 25px;
-                            border-radius: 12px;
-                            cursor: pointer;
-                            font-size: 16px;
-                            font-weight: 600;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            gap: 12px;
-                            transition: all 0.3s;
-                            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.2);
-                        ">
-                            <span style="font-size: 24px;">⚡</span>
-                            <div style="text-align: left;">
-                                <div style="font-size: 18px;">Generate Immediately</div>
-                                <div style="font-size: 13px; opacity: 0.9; margin-top: 5px;">Use default prompts to generate instantly</div>
+                        <div style="display: flex; flex-direction: column; gap: 15px; margin: 30px 0;">
+                            <button onclick="editPromptsBeforeGenerate()" style="
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                color: white;
+                                border: none;
+                                padding: 18px 25px;
+                                border-radius: 12px;
+                                cursor: pointer;
+                                font-size: 16px;
+                                font-weight: 600;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 12px;
+                                transition: all 0.3s;
+                                box-shadow: 0 6px 20px rgba(102, 126, 234, 0.2);
+                            ">
+                                <span style="font-size: 24px;">✏️</span>
+                                <div style="text-align: left;">
+                                    <div style="font-size: 18px;">Edit Prompts First</div>
+                                    <div style="font-size: 13px; opacity: 0.9; margin-top: 5px;">Edit lyrics and style prompts, then generate</div>
+                                </div>
+                            </button>
+                            
+                            <button onclick="generateImmediately()" style="
+                                background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+                                color: white;
+                                border: none;
+                                padding: 18px 25px;
+                                border-radius: 12px;
+                                cursor: pointer;
+                                font-size: 16px;
+                                font-weight: 600;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 12px;
+                                transition: all 0.3s;
+                                box-shadow: 0 6px 20px rgba(255, 107, 107, 0.2);
+                            ">
+                                <span style="font-size: 24px;">⚡</span>
+                                <div style="text-align: left;">
+                                    <div style="font-size: 18px;">Generate Immediately</div>
+                                    <div style="font-size: 13px; opacity: 0.9; margin-top: 5px;">Use default prompts to generate instantly</div>
+                                </div>
+                            </button>
+                        </div>
+                        
+                        <div style="margin-top: 25px; padding: 15px; background: #f8f9fa; border-radius: 10px; border: 2px dashed #ddd;">
+                            <div style="font-size: 14px; color: #7f8c8d;">
+                                <strong>Default prompts will be used for:</strong>
+                                <ul style="text-align: left; margin: 10px 0 10px 20px;">
+                                    <li>Lyrics generation</li>
+                                    <li>Music style description</li>
+                                </ul>
                             </div>
-                        </button>
-                    </div>
-                    
-                    <div style="margin-top: 25px; padding: 15px; background: #f8f9fa; border-radius: 10px; border: 2px dashed #ddd;">
-                        <div style="font-size: 14px; color: #7f8c8d;">
-                            <strong>Default prompts will be used for:</strong>
-                            <ul style="text-align: left; margin: 10px 0 10px 20px;">
-                                <li>Lyrics generation</li>
-                                <li>Music style description</li>
-                            </ul>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Prompt Editor Section -->
-            <div id="promptEditorSection" style="display: none;">
-                <!-- Will be filled dynamically -->
-            </div>
-            
-            <!-- Progress Steps -->
-            <div id="musicProgress" style="margin-bottom: 30px; display: none;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                    <span class="ai-step" id="step1">1. Generate</span>
-                    <span class="ai-step" id="step2">2. Upload</span>
+                
+                <!-- Prompt Editor Section -->
+                <div id="promptEditorSection" style="display: none;">
+                    <!-- Will be filled dynamically -->
                 </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="musicProgressBar"></div>
-                </div>
-            </div>
-            
-            <!-- Loading State -->
-            <div id="musicLoading" style="text-align: center; padding: 30px; display: none;">
-                <div style="width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #ff6b6b; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
-                <h3 id="musicCurrentTask">Generating...</h3>
-                <p id="musicTaskDetails">Please wait while we process your request</p>
-            </div>
-            
-            <!-- Results Display -->
-            <div id="resultsContent" style="display: none;">
-                <!-- Lyrics Display -->
-                <div id="lyricsResult" style="display: none;">
-                    <h4>🎶 Generated Lyrics</h4>
-                    <div class="lyrics-container" id="generatedLyrics">
-                        Lyrics will appear here...
+                
+                <!-- Progress Steps -->
+                <div id="musicProgress" style="margin-bottom: 30px; display: none;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                        <span class="ai-step" id="step1">1. Generate</span>
+                        <span class="ai-step" id="step2">2. Upload</span>
                     </div>
-                    <div style="margin-top: 10px;">
-                        <button onclick="copyToClipboard('generatedLyrics')" class="image-action-btn">
-                            📋 Copy Lyrics
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="musicProgressBar"></div>
+                    </div>
+                </div>
+                
+                <!-- Loading State -->
+                <div id="musicLoading" style="text-align: center; padding: 30px; display: none;">
+                    <div style="width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #ff6b6b; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+                    <h3 id="musicCurrentTask">Generating...</h3>
+                    <p id="musicTaskDetails">Please wait while we process your request</p>
+                </div>
+                
+                <!-- Results Display -->
+                <div id="resultsContent" style="display: none;">
+                    <!-- Lyrics Display -->
+                    <div id="lyricsResult" style="display: none;">
+                        <h4>🎶 Generated Lyrics</h4>
+                        <div class="lyrics-container" id="generatedLyrics">
+                            Lyrics will appear here...
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <button onclick="copyToClipboard('generatedLyrics')" class="image-action-btn">
+                                📋 Copy Lyrics
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Style Display -->
+                    <div id="styleResult" style="display: none;">
+                        <h4>🎨 Generated Style</h4>
+                        <div class="style-container" id="generatedStyle">
+                            Style will appear here...
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <button onclick="copyToClipboard('generatedStyle')" class="image-action-btn">
+                                📋 Copy Style
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="instructions">
+                        <strong>Instructions for Suno.ai:</strong>
+                        <ol>
+                            <li>Go to <a href="https://suno.ai" target="_blank">suno.ai</a></li>
+                            <li>Select "Create" → "Custom Mode"</li>
+                            <li>Paste the lyrics above</li>
+                            <li>Use the style description for guidance</li>
+                            <li>In style settings, select: 30 seconds length</li>
+                            <li>Click "Generate" and wait for the music</li>
+                            <li>Download the generated music file</li>
+                            <li>Upload it below</li>
+                        </ol>
+                    </div>
+                    
+                    <!-- Music File Upload -->
+                    <h4>📁 Upload Generated Music</h4>
+                    <div class="upload-container" id="musicUploadContainer">
+                        <input type="file" id="musicFileInput" class="file-input" accept="audio/*,.mp3,.wav,.m4a">
+                        <button type="button" class="upload-btn" onclick="document.getElementById('musicFileInput').click()">
+                            🎵 Choose Music File to Upload
                         </button>
+                        <p style="margin: 15px 0; color: #666;">or drag and drop audio file here</p>
+                        <div style="font-size: 13px; color: #7f8c8d; margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.5); border-radius: 6px;">
+                            <strong>Supported formats:</strong> MP3, WAV, M4A<br>
+                            <strong>Maximum file size:</strong> 10MB<br>
+                            <strong>Recommended:</strong> 30-second clip from Suno.ai
+                        </div>
+                    </div>
+                    
+                    <!-- Uploaded Music Preview -->
+                    <div id="musicPreviewContainer" style="display: none; text-align: center; margin: 25px 0; padding: 20px; background: #f8f9fa; border-radius: 10px; border: 2px solid #e0e0e0;">
+                        <h4 style="margin: 0 0 15px 0; color: #2c3e50;">Uploaded Music Preview</h4>
+                        <audio id="uploadedMusicPreview" class="audio-preview" controls>
+                            Your browser does not support the audio element.
+                        </audio>
+                        <div id="uploadStatus" class="upload-status" style="margin-top: 15px;"></div>
                     </div>
                 </div>
                 
-                <!-- Style Display -->
-                <div id="styleResult" style="display: none;">
-                    <h4>🎨 Generated Style</h4>
-                    <div class="style-container" id="generatedStyle">
-                        Style will appear here...
-                    </div>
-                    <div style="margin-top: 10px;">
-                        <button onclick="copyToClipboard('generatedStyle')" class="image-action-btn">
-                            📋 Copy Style
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="instructions">
-                    <strong>Instructions for Suno.ai:</strong>
-                    <ol>
-                        <li>Go to <a href="https://suno.ai" target="_blank">suno.ai</a></li>
-                        <li>Select "Create" → "Custom Mode"</li>
-                        <li>Paste the lyrics above</li>
-                        <li>Use the style description for guidance</li>
-                        <li>In style settings, select: 30 seconds length</li>
-                        <li>Click "Generate" and wait for the music</li>
-                        <li>Download the generated music file</li>
-                        <li>Upload it below</li>
-                    </ol>
-                </div>
-                
-                <!-- Music File Upload -->
-                <h4>📁 Upload Generated Music</h4>
-                <div class="upload-container" id="musicUploadContainer">
-                    <input type="file" id="musicFileInput" class="file-input" accept="audio/*,.mp3,.wav,.m4a">
-                    <button type="button" class="upload-btn" onclick="document.getElementById('musicFileInput').click()">
-                        🎵 Choose Music File to Upload
+                <!-- Error State -->
+                <div id="musicError" style="display: none; text-align: center; padding: 30px;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
+                    <h3>Generation Failed</h3>
+                    <p id="musicErrorMessage">Error message will appear here</p>
+                    <button onclick="retryGeneration()" style="margin-top: 20px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        🔄 Retry
                     </button>
-                    <p style="margin: 15px 0; color: #666;">or drag and drop audio file here</p>
-                    <div style="font-size: 13px; color: #7f8c8d; margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.5); border-radius: 6px;">
-                        <strong>Supported formats:</strong> MP3, WAV, M4A<br>
-                        <strong>Maximum file size:</strong> 10MB<br>
-                        <strong>Recommended:</strong> 30-second clip from Suno.ai
-                    </div>
-                </div>
-                
-                <!-- Uploaded Music Preview -->
-                <div id="musicPreviewContainer" style="display: none; text-align: center; margin: 25px 0; padding: 20px; background: #f8f9fa; border-radius: 10px; border: 2px solid #e0e0e0;">
-                    <h4 style="margin: 0 0 15px 0; color: #2c3e50;">Uploaded Music Preview</h4>
-                    <audio id="uploadedMusicPreview" class="audio-preview" controls>
-                        Your browser does not support the audio element.
-                    </audio>
-                    <div id="uploadStatus" class="upload-status" style="margin-top: 15px;"></div>
                 </div>
             </div>
             
-            <!-- Error State -->
-            <div id="musicError" style="display: none; text-align: center; padding: 30px;">
-                <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
-                <h3>Generation Failed</h3>
-                <p id="musicErrorMessage">Error message will appear here</p>
-                <button onclick="retryGeneration()" style="margin-top: 20px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                    🔄 Retry
+            <div class="modal-actions">
+                <button type="button" class="cancel-btn" onclick="closeMusicModal()">
+                    ✕ Close
+                </button>
+                <button type="button" class="save-btn" id="saveMusicBtn" style="display: none; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);" onclick="saveMusicToProduct()">
+                    💾 Save Music File
                 </button>
             </div>
         </div>
-        
-        <div class="modal-actions">
-            <button type="button" class="cancel-btn" onclick="closeMusicModal()">
-                ✕ Close
-            </button>
-            <button type="button" class="save-btn" id="saveMusicBtn" style="display: none; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);" onclick="saveMusicToProduct()">
-                💾 Save Music File
-            </button>
-        </div>
     </div>
-</div>
 
     <!-- AI Results Modal -->
     <div id="aiResultsModal" class="modal">
@@ -1516,15 +1634,15 @@
                     <div class="form-grid">
                         <div class="form-section">
                             <h4>Basic Information</h4>
-    <!-- Product Name Field - ADD THIS -->
-    <div class="form-group">
-        <label class="required">Product Name</label>
-        <input type="text" id="editName" name="name" 
-               class="form-control" required 
-               placeholder="Enter product name">
-        <span class="field-description">The display name of the product</span>
-    </div>
-    
+                            <!-- Product Name Field - ADD THIS -->
+                            <div class="form-group">
+                                <label class="required">Product Name</label>
+                                <input type="text" id="editName" name="name" 
+                                       class="form-control" required 
+                                       placeholder="Enter product name">
+                                <span class="field-description">The display name of the product</span>
+                            </div>
+                            
                             <div class="form-group">
                                 <label class="required">Product Status</label>
                                 <select id="editStatus" name="status" class="form-control" required>
@@ -1627,6 +1745,39 @@
             </div>
         </div>
     </div>
+    
+    <!-- Delete Confirmation Modal -->
+    <div id="confirmDeleteModal" class="confirm-delete-modal">
+        <div class="confirm-delete-content">
+            <h3>🗑️ Delete Product</h3>
+            <p id="deleteProductName">Are you sure you want to delete this product?</p>
+            
+            <div class="delete-warning">
+                ⚠️ <strong>Warning:</strong> This action cannot be undone. The product will be permanently removed from the database.
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: left;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <span style="color: #7f8c8d; font-size: 14px;">Product ID:</span>
+                    <span id="deleteProductId" style="font-weight: 600; font-family: 'Courier New', monospace; background: #e3f2fd; padding: 4px 8px; border-radius: 4px;"></span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="color: #7f8c8d; font-size: 14px;">Status:</span>
+                    <span id="deleteProductStatus" class="status-indicator"></span>
+                </div>
+            </div>
+            
+            <div class="delete-actions">
+                <button type="button" class="delete-cancel-btn" onclick="closeDeleteModal()">
+                    ✕ Cancel
+                </button>
+                <button type="button" class="delete-btn" onclick="confirmDeleteProduct()">
+                    🗑️ Delete Product
+                </button>
+            </div>
+        </div>
+    </div>
+
 <script>
         // ====================== OPTIMIZED CODE ======================
         
@@ -1650,12 +1801,12 @@
         };
         
         // Music variables
-let currentMusicProduct = null;
-let generatedLyrics = '';
-let generatedStyle = '';
-let uploadedMusicUrl = null;
-let uploadedMusicFile = null;
-let currentMode = null;
+        let currentMusicProduct = null;
+        let generatedLyrics = '';
+        let generatedStyle = '';
+        let uploadedMusicUrl = null;
+        let uploadedMusicFile = null;
+        let currentMode = null;
         
         // Image upload variables
         let currentProductId = null;
@@ -1668,6 +1819,9 @@ let currentMode = null;
         let currentEditProductId = null;
         let currentEditField = null;
         
+        // Delete product variables
+        let productToDelete = null;
+        
         // Filter counts
         let filterCounts = {
             status: { all: 0, '1': 0, '0': 0 },
@@ -1679,9 +1833,10 @@ let currentMode = null;
         // Store categories and sellers
         let categoriesList = [];
         let sellersList = [];
+        
         // Prompts storage
-const defaultPrompts = {
-    lyrics: `Write a 30-second song inspired by the following product description.
+        const defaultPrompts = {
+            lyrics: `Write a 30-second song inspired by the following product description.
 
 Style: Warm, modern, cozy, aesthetic, lightly funny
 Mood: Home comfort, everyday love, handcrafted beauty, Indian warmth
@@ -1707,7 +1862,7 @@ Special Price: {specialPrice}
 
 Generate ONLY the lyrics, no explanations or additional text. Do NOT use any section labels like Verse, Chorus, Hook, Bridge, Outro, etc. Present the lyrics as a continuous flow of lines only.`,
 
-    style: `Based on the following product information, suggest a detailed music style description for a 30-second song.
+            style: `Based on the following product information, suggest a detailed music style description for a 30-second song.
 
 Consider:
 1. Music genre and sub-genre
@@ -1735,9 +1890,10 @@ Price: {price}
 Special Price: {specialPrice}
 
 Generate ONLY the style description, no explanations or additional text.`
-};
+        };
 
-let customPrompts = JSON.parse(JSON.stringify(defaultPrompts));
+        let customPrompts = JSON.parse(JSON.stringify(defaultPrompts));
+        
         // Performance optimizations
         const ProductManager = {
             products: [],
@@ -1913,21 +2069,22 @@ let customPrompts = JSON.parse(JSON.stringify(defaultPrompts));
             
             setupFormValidation();
             loadSavedPrompts();
-
         });
-// Add to existing validation functions
-function validateName(input) {
-    const value = input.value.trim();
-    if (!value || value.length < 2) {
-        input.classList.add('invalid');
-        input.classList.remove('valid');
-        return false;
-    } else {
-        input.classList.add('valid');
-        input.classList.remove('invalid');
-        return true;
-    }
-}
+        
+        // Add to existing validation functions
+        function validateName(input) {
+            const value = input.value.trim();
+            if (!value || value.length < 2) {
+                input.classList.add('invalid');
+                input.classList.remove('valid');
+                return false;
+            } else {
+                input.classList.add('valid');
+                input.classList.remove('invalid');
+                return true;
+            }
+        }
+        
         // Form validation
         function setupFormValidation() {
             const form = document.getElementById('editForm');
@@ -2309,65 +2466,6 @@ function validateName(input) {
             displayProducts();
         }
         
-        // SIMPLIFIED VERSION WITHOUT ProductManager if above doesn't work
-        function filterProductsSimple() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const statusFilter = document.getElementById('statusFilter').value;
-            const categoryFilter = document.getElementById('categoryFilter').value;
-            const cat1Filter = document.getElementById('cat1Filter').value;
-            const sellerFilter = document.getElementById('sellerFilter').value;
-            
-            filteredProducts = allProducts.filter(product => {
-                // Search filter
-                if (searchTerm) {
-                    const searchable = [
-                        product.name,
-                        product.id.toString(),
-                        product.sku || '',
-                        product.description || '',
-                        product.category_name || '',
-                        product.seller_name || ''
-                    ].join(' ').toLowerCase();
-                    
-                    if (!searchable.includes(searchTerm)) {
-                        return false;
-                    }
-                }
-                
-                // Status filter
-                if (statusFilter !== 'all') {
-                    if (String(product.status) !== statusFilter) {
-                        return false;
-                    }
-                }
-                
-                // Category filter
-                if (categoryFilter !== 'all') {
-                    if (String(product.category_id) !== categoryFilter) {
-                        return false;
-                    }
-                }
-                
-                // Cat1 filter
-                if (cat1Filter !== 'all') {
-                    if (String(product.cat1) !== cat1Filter) {
-                        return false;
-                    }
-                }
-                
-                // Seller filter
-                if (sellerFilter !== 'all') {
-                    if (String(product.seller_id) !== sellerFilter) {
-                        return false;
-                    }
-                }
-                
-                return true;
-            });
-            
-            displayProducts();
-        }
-        
         // Display products with optimization
         function displayProducts() {
             const container = document.getElementById('productsContainer');
@@ -2476,6 +2574,11 @@ function validateName(input) {
                                   title="Run AI Tasks">
                                 🤖 AI Tasks
                             </span>
+                            <span class="info-tag delete" 
+                                  onclick="confirmDelete(${product.id}, '${product.name.replace(/'/g, "\\'")}', ${isActive})"
+                                  title="Delete this product">
+                                🗑️ Delete
+                            </span>
                         </div>
                     </div>
                 `;
@@ -2491,19 +2594,6 @@ function validateName(input) {
                 const images = container.querySelectorAll('.card-image img');
                 images.forEach(img => imageLoader.observeImage(img));
             }, 10);
-        }
-        
-        // TEST FUNCTION - Add this to debug
-        function debugFilter() {
-            console.log('All products:', allProducts.length);
-            console.log('Filtered products:', filteredProducts.length);
-            console.log('Search input:', document.getElementById('searchInput').value);
-            console.log('Filters:', {
-                status: document.getElementById('statusFilter').value,
-                category: document.getElementById('categoryFilter').value,
-                cat1: document.getElementById('cat1Filter').value,
-                seller: document.getElementById('sellerFilter').value
-            });
         }
         
         function resetFilters() {
@@ -2928,25 +3018,24 @@ function validateName(input) {
             }
         }
         
-
-// Load saved prompts
-function loadSavedPrompts() {
-    const savedPrompts = localStorage.getItem('productPrompts');
-    if (savedPrompts) {
-        try {
-            const parsed = JSON.parse(savedPrompts);
-            if (parsed.lyrics) customPrompts.lyrics = parsed.lyrics;
-            if (parsed.style) customPrompts.style = parsed.style;
-        } catch (e) {
-            console.error('Error loading saved prompts:', e);
+        // Load saved prompts
+        function loadSavedPrompts() {
+            const savedPrompts = localStorage.getItem('productPrompts');
+            if (savedPrompts) {
+                try {
+                    const parsed = JSON.parse(savedPrompts);
+                    if (parsed.lyrics) customPrompts.lyrics = parsed.lyrics;
+                    if (parsed.style) customPrompts.style = parsed.style;
+                } catch (e) {
+                    console.error('Error loading saved prompts:', e);
+                }
+            }
         }
-    }
-}
 
-// Save prompts
-function savePromptsToStorage() {
-    localStorage.setItem('productPrompts', JSON.stringify(customPrompts));
-}
+        // Save prompts
+        function savePromptsToStorage() {
+            localStorage.setItem('productPrompts', JSON.stringify(customPrompts));
+        }
 
         // Music Functions
         function generateMusic(productId) {
@@ -2959,682 +3048,654 @@ function savePromptsToStorage() {
             openMusicModal();
         }
         
-// Load saved prompts
-function loadSavedPrompts() {
-    const savedPrompts = localStorage.getItem('productPrompts');
-    if (savedPrompts) {
-        try {
-            const parsed = JSON.parse(savedPrompts);
-            if (parsed.lyrics) customPrompts.lyrics = parsed.lyrics;
-            if (parsed.style) customPrompts.style = parsed.style;
-        } catch (e) {
-            console.error('Error loading saved prompts:', e);
-        }
-    }
-}
-
-// Save prompts
-function savePromptsToStorage() {
-    localStorage.setItem('productPrompts', JSON.stringify(customPrompts));
-}
-
-// Generate Music Button Click - Show Options
-function generateMusic(productId) {
-    const product = allProducts.find(p => p.id == productId);
-    if (!product) {
-        showMessage('❌ Product not found', 'error');
-        return;
-    }
-    
-    currentMusicProduct = product;
-    openMusicModal();
-}
-
-// Open Music Modal with Options
-function openMusicModal() {
-    const modal = document.getElementById('musicModal');
-    
-    // Reset all sections
-    document.getElementById('choiceSection').style.display = 'block';
-    document.getElementById('promptEditorSection').style.display = 'none';
-    document.getElementById('musicProgress').style.display = 'none';
-    document.getElementById('musicLoading').style.display = 'none';
-    document.getElementById('resultsContent').style.display = 'none';
-    document.getElementById('musicError').style.display = 'none';
-    document.getElementById('lyricsResult').style.display = 'none';
-    document.getElementById('styleResult').style.display = 'none';
-    document.getElementById('musicPreviewContainer').style.display = 'none';
-    document.getElementById('saveMusicBtn').style.display = 'none';
-    
-    // Reset results
-    generatedLyrics = '';
-    generatedStyle = '';
-    uploadedMusicUrl = null;
-    uploadedMusicFile = null;
-    currentMode = null;
-    
-    // Set product info
-    const productName = document.getElementById('musicProductName');
-    const productInfo = document.getElementById('musicProductInfo');
-    
-    if (currentMusicProduct) {
-        productName.textContent = currentMusicProduct.name;
-        productInfo.textContent = `ID: ${currentMusicProduct.id} | Generate lyrics and music for this product`;
-    }
-    
-    // Reset upload section
-    resetMusicUploadSection();
-    
-    modal.style.display = 'block';
-    
-    // Add hover effects to buttons
-    const buttons = document.querySelectorAll('#choiceSection button');
-    buttons.forEach(btn => {
-        btn.addEventListener('mouseenter', () => {
-            btn.style.transform = 'translateY(-4px)';
-            btn.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
-        });
-        btn.addEventListener('mouseleave', () => {
-            btn.style.transform = 'translateY(0)';
-            btn.style.boxShadow = '0 6px 20px rgba(0,0,0,0.15)';
-        });
-    });
-}
-
-function closeMusicModal() {
-    document.getElementById('musicModal').style.display = 'none';
-    currentMusicProduct = null;
-    generatedLyrics = '';
-    generatedStyle = '';
-    uploadedMusicUrl = null;
-    uploadedMusicFile = null;
-    currentMode = null;
-}
-
-// Edit Prompts Before Generation
-function editPromptsBeforeGenerate() {
-    document.getElementById('choiceSection').style.display = 'none';
-    
-    // Create prompt editor interface
-    const promptEditorSection = document.getElementById('promptEditorSection');
-    promptEditorSection.innerHTML = `
-        <div style="margin-bottom: 20px;">
-            <h3>Edit Prompts Before Generating</h3>
-            <p style="color: #7f8c8d; margin-bottom: 20px;">Edit both lyrics and style prompts before generation</p>
-        </div>
-        
-        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-            <button id="lyricsTab" class="prompt-tab active" style="
-                background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-                color: white;
-                border: none;
-                padding: 12px 24px;
-                border-radius: 8px;
-                cursor: pointer;
-                font-weight: 600;
-                flex: 1;
-            ">Lyrics Prompt</button>
-            <button id="styleTab" class="prompt-tab" style="
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                border: none;
-                padding: 12px 24px;
-                border-radius: 8px;
-                cursor: pointer;
-                font-weight: 600;
-                flex: 1;
-            ">Style Prompt</button>
-        </div>
-        
-        <div id="lyricsPromptEditor" style="display: block;">
-            <h4>🎶 Lyrics Generation Prompt</h4>
-            <div class="prompt-editor">
-                <textarea id="lyricsPromptTextarea" placeholder="Edit lyrics prompt..." style="width: 100%; min-height: 200px; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.5; resize: vertical;"></textarea>
-            </div>
-        </div>
-        
-        <div id="stylePromptEditor" style="display: none;">
-            <h4>🎨 Style Generation Prompt</h4>
-            <div class="prompt-editor">
-                <textarea id="stylePromptTextarea" placeholder="Edit style prompt..." style="width: 100%; min-height: 200px; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.5; resize: vertical;"></textarea>
-            </div>
-        </div>
-        
-        <div class="prompt-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-            <button type="button" class="prompt-btn cancel" onclick="cancelPromptEditing()">
-                ✕ Cancel
-            </button>
-            <button type="button" class="prompt-btn save" onclick="saveBothPromptsAndGenerate()">
-                💾 Save Both & Generate
-            </button>
-        </div>
-    `;
-    
-    promptEditorSection.style.display = 'block';
-    
-    // Load current prompts with product data
-    document.getElementById('lyricsPromptTextarea').value = customPrompts.lyrics
-        .replace(/{productName}/g, currentMusicProduct.name || '')
-        .replace(/{description}/g, currentMusicProduct.description || '')
-        .replace(/{category}/g, currentMusicProduct.category_name || '')
-        .replace(/{cat1}/g, currentMusicProduct.cat1_name || '')
-        .replace(/{price}/g, currentMusicProduct.retail_simple_price ? `₹${currentMusicProduct.retail_simple_price}` : '₹0.00')
-        .replace(/{specialPrice}/g, currentMusicProduct.retail_simple_special_price ? `₹${currentMusicProduct.retail_simple_special_price}` : '');
-    
-    document.getElementById('stylePromptTextarea').value = customPrompts.style
-        .replace(/{productName}/g, currentMusicProduct.name || '')
-        .replace(/{description}/g, currentMusicProduct.description || '')
-        .replace(/{category}/g, currentMusicProduct.category_name || '')
-        .replace(/{cat1}/g, currentMusicProduct.cat1_name || '')
-        .replace(/{price}/g, currentMusicProduct.retail_simple_price ? `₹${currentMusicProduct.retail_simple_price}` : '₹0.00')
-        .replace(/{specialPrice}/g, currentMusicProduct.retail_simple_special_price ? `₹${currentMusicProduct.retail_simple_special_price}` : '');
-    
-    // Tab switching
-    document.getElementById('lyricsTab').addEventListener('click', () => {
-        document.getElementById('lyricsTab').classList.add('active');
-        document.getElementById('styleTab').classList.remove('active');
-        document.getElementById('lyricsPromptEditor').style.display = 'block';
-        document.getElementById('stylePromptEditor').style.display = 'none';
-    });
-    
-    document.getElementById('styleTab').addEventListener('click', () => {
-        document.getElementById('styleTab').classList.add('active');
-        document.getElementById('lyricsTab').classList.remove('active');
-        document.getElementById('stylePromptEditor').style.display = 'block';
-        document.getElementById('lyricsPromptEditor').style.display = 'none';
-    });
-}
-
-function cancelPromptEditing() {
-    document.getElementById('promptEditorSection').style.display = 'none';
-    document.getElementById('choiceSection').style.display = 'block';
-}
-
-function saveBothPromptsAndGenerate() {
-    const lyricsPrompt = document.getElementById('lyricsPromptTextarea').value.trim();
-    const stylePrompt = document.getElementById('stylePromptTextarea').value.trim();
-    
-    if (!lyricsPrompt || !stylePrompt) {
-        showMessage('❌ Both prompts are required', 'error');
-        return;
-    }
-    
-    // Save prompts (remove the current product-specific replacements)
-    customPrompts.lyrics = lyricsPrompt
-        .replace(currentMusicProduct.name || '', '{productName}')
-        .replace(currentMusicProduct.description || '', '{description}')
-        .replace(currentMusicProduct.category_name || '', '{category}')
-        .replace(currentMusicProduct.cat1_name || '', '{cat1}')
-        .replace(currentMusicProduct.retail_simple_price ? `₹${currentMusicProduct.retail_simple_price}` : '₹0.00', '{price}')
-        .replace(currentMusicProduct.retail_simple_special_price ? `₹${currentMusicProduct.retail_simple_special_price}` : '', '{specialPrice}');
-    
-    customPrompts.style = stylePrompt
-        .replace(currentMusicProduct.name || '', '{productName}')
-        .replace(currentMusicProduct.description || '', '{description}')
-        .replace(currentMusicProduct.category_name || '', '{category}')
-        .replace(currentMusicProduct.cat1_name || '', '{cat1}')
-        .replace(currentMusicProduct.retail_simple_price ? `₹${currentMusicProduct.retail_simple_price}` : '₹0.00', '{price}')
-        .replace(currentMusicProduct.retail_simple_special_price ? `₹${currentMusicProduct.retail_simple_special_price}` : '', '{specialPrice}');
-    
-    savePromptsToStorage();
-    
-    // Start generation of both
-    generateBothLyricsAndStyle();
-}
-
-// Generate Immediately
-function generateImmediately() {
-    document.getElementById('choiceSection').style.display = 'none';
-    generateBothLyricsAndStyle();
-}
-
-// Generate Both Lyrics and Style in Parallel
-async function generateBothLyricsAndStyle() {
-    if (!currentMusicProduct) return;
-    
-    // Show loading and progress
-    document.getElementById('musicLoading').style.display = 'block';
-    document.getElementById('musicProgress').style.display = 'block';
-    document.getElementById('promptEditorSection').style.display = 'none';
-    document.getElementById('choiceSection').style.display = 'none';
-    document.getElementById('musicError').style.display = 'none';
-    document.getElementById('resultsContent').style.display = 'none';
-    
-    updateMusicProgress(0);
-    setMusicTask('Starting generation...', 'Preparing to generate lyrics and style');
-    
-    try {
-        // Prepare prompts with product data
-        const lyricsPrompt = customPrompts.lyrics
-            .replace(/{productName}/g, currentMusicProduct.name || '')
-            .replace(/{description}/g, currentMusicProduct.description || '')
-            .replace(/{category}/g, currentMusicProduct.category_name || '')
-            .replace(/{cat1}/g, currentMusicProduct.cat1_name || '')
-            .replace(/{price}/g, currentMusicProduct.retail_simple_price ? `₹${currentMusicProduct.retail_simple_price}` : '₹0.00')
-            .replace(/{specialPrice}/g, currentMusicProduct.retail_simple_special_price ? `₹${currentMusicProduct.retail_simple_special_price}` : '');
-        
-        const stylePrompt = customPrompts.style
-            .replace(/{productName}/g, currentMusicProduct.name || '')
-            .replace(/{description}/g, currentMusicProduct.description || '')
-            .replace(/{category}/g, currentMusicProduct.category_name || '')
-            .replace(/{cat1}/g, currentMusicProduct.cat1_name || '')
-            .replace(/{price}/g, currentMusicProduct.retail_simple_price ? `₹${currentMusicProduct.retail_simple_price}` : '₹0.00')
-            .replace(/{specialPrice}/g, currentMusicProduct.retail_simple_special_price ? `₹${currentMusicProduct.retail_simple_special_price}` : '');
-        
-        // Start both requests in parallel
-        setMusicTask('Generating lyrics...', 'Creating lyrics based on product description');
-        updateMusicProgress(25);
-        
-        const lyricsPromise = fetch('/api/ai/generate-lyrics', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                productName: currentMusicProduct.name,
-                description: currentMusicProduct.description || '',
-                category: currentMusicProduct.category_name || '',
-                cat1: currentMusicProduct.cat1_name || '',
-                price: currentMusicProduct.retail_simple_price || 0,
-                specialPrice: currentMusicProduct.retail_simple_special_price || 0,
-                prompt: lyricsPrompt
-            })
-        }).then(async response => {
-            const result = await response.json();
-            if (result.success && result.lyrics) {
-                generatedLyrics = result.lyrics;
-                updateMusicProgress(75);
-                return result;
-            } else {
-                throw new Error(result.error || 'Failed to generate lyrics');
-            }
-        });
-        
-        setMusicTask('Generating style...', 'Creating music style based on product information');
-        updateMusicProgress(50);
-        
-        const stylePromise = fetch('/api/ai/generate-style', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                productName: currentMusicProduct.name,
-                description: currentMusicProduct.description || '',
-                category: currentMusicProduct.category_name || '',
-                cat1: currentMusicProduct.cat1_name || '',
-                price: currentMusicProduct.retail_simple_price || 0,
-                specialPrice: currentMusicProduct.retail_simple_special_price || 0,
-                prompt: stylePrompt
-            })
-        }).then(async response => {
-            const result = await response.json();
-            if (result.success && result.style) {
-                generatedStyle = result.style;
-                updateMusicProgress(90);
-                return result;
-            } else {
-                throw new Error(result.error || 'Failed to generate style');
-            }
-        });
-        
-        // Wait for both to complete
-        await Promise.all([lyricsPromise, stylePromise]);
-        
-        updateMusicProgress(100);
-        
-        // Show results
-        showGenerationResults();
-        
-    } catch (error) {
-        console.error('Generation error:', error);
-        showMusicError(error.message);
-    }
-}
-
-function showGenerationResults() {
-    document.getElementById('musicLoading').style.display = 'none';
-    document.getElementById('resultsContent').style.display = 'block';
-    
-    // Show both results
-    document.getElementById('lyricsResult').style.display = 'block';
-    document.getElementById('styleResult').style.display = 'block';
-    document.getElementById('generatedLyrics').textContent = generatedLyrics;
-    document.getElementById('generatedStyle').textContent = generatedStyle;
-    
-    // Setup drag and drop for music files
-    setupMusicDragAndDrop();
-}
-
-function updateMusicProgress(percentage) {
-    document.getElementById('musicProgressBar').style.width = percentage + '%';
-    
-    // Update step indicators
-    const steps = ['step1', 'step2'];
-    steps.forEach((stepId, index) => {
-        const step = document.getElementById(stepId);
-        step.className = 'ai-step';
-        if (percentage >= (index + 1) * 50) {
-            step.classList.add('completed');
-        } else if (percentage >= index * 50) {
-            step.classList.add('active');
-        }
-    });
-}
-
-function setMusicTask(task, details) {
-    document.getElementById('musicCurrentTask').textContent = task;
-    document.getElementById('musicTaskDetails').textContent = details;
-}
-
-function showMusicError(message) {
-    document.getElementById('musicLoading').style.display = 'none';
-    document.getElementById('musicError').style.display = 'block';
-    document.getElementById('musicErrorMessage').textContent = message;
-}
-
-function retryGeneration() {
-    document.getElementById('musicError').style.display = 'none';
-    generateBothLyricsAndStyle();
-}
-
-// Copy to clipboard
-function copyToClipboard(elementId) {
-    const element = document.getElementById(elementId);
-    const text = element.textContent;
-    
-    navigator.clipboard.writeText(text).then(() => {
-        showMessage('✅ Copied to clipboard!', 'success');
-    }).catch(err => {
-        showMessage('❌ Failed to copy', 'error');
-    });
-}
-
-// Setup drag and drop for music files
-function setupMusicDragAndDrop() {
-    const uploadContainer = document.getElementById('musicUploadContainer');
-    const fileInput = document.getElementById('musicFileInput');
-    
-    // Prevent default drag behaviors
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        uploadContainer.addEventListener(eventName, preventDefaults, false);
-        document.body.addEventListener(eventName, preventDefaults, false);
-    });
-    
-    // Highlight drop zone
-    ['dragenter', 'dragover'].forEach(eventName => {
-        uploadContainer.addEventListener(eventName, highlight, false);
-    });
-    
-    ['dragleave', 'drop'].forEach(eventName => {
-        uploadContainer.addEventListener(eventName, unhighlight, false);
-    });
-    
-    // Handle dropped files
-    uploadContainer.addEventListener('drop', handleMusicDrop, false);
-    
-    // Handle file input change
-    fileInput.addEventListener('change', handleMusicFileSelect, false);
-    
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-    
-    function highlight() {
-        uploadContainer.classList.add('dragover');
-    }
-    
-    function unhighlight() {
-        uploadContainer.classList.remove('dragover');
-    }
-    
-    function handleMusicDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        handleMusicFiles(files);
-    }
-    
-    function handleMusicFileSelect(e) {
-        const files = e.target.files;
-        handleMusicFiles(files);
-    }
-}
-
-function handleMusicFiles(files) {
-    if (files.length === 0) return;
-    
-    const file = files[0];
-    
-    // Validate file type
-    const validTypes = ['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/x-m4a'];
-    const validExtensions = ['.mp3', '.wav', '.m4a'];
-    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-    
-    if (!validTypes.includes(file.type) && !validExtensions.includes(fileExtension)) {
-        showMessage('❌ Please select a valid audio file (MP3, WAV, M4A)', 'error');
-        return;
-    }
-    
-    // Validate file size (10MB max)
-    if (file.size > 10 * 1024 * 1024) {
-        showMessage('❌ Audio file size must be less than 10MB', 'error');
-        return;
-    }
-    
-    uploadedMusicFile = file;
-    
-    // Show preview
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const preview = document.getElementById('uploadedMusicPreview');
-        preview.src = e.target.result;
-        document.getElementById('musicPreviewContainer').style.display = 'block';
-        document.getElementById('saveMusicBtn').style.display = 'block';
-        
-        // Show upload status
-        const statusDiv = document.getElementById('uploadStatus');
-        statusDiv.className = 'upload-status success';
-        statusDiv.textContent = '✅ Music file ready to save';
-    };
-    reader.readAsDataURL(file);
-    
-    // Upload the file
-    uploadMusicFile(file);
-}
-
-async function uploadMusicFile(file) {
-    try {
-        const statusDiv = document.getElementById('uploadStatus');
-        statusDiv.className = 'upload-status processing';
-        statusDiv.textContent = '🔄 Uploading music file...';
-        
-        const formData = new FormData();
-        formData.append('image', file);
-        
-        const response = await fetch('https://api.zulushop.in/api/v1/user/upload', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const responseText = await response.text();
-        
-        if (response.ok) {
-            let jsonRes;
-            try {
-                jsonRes = JSON.parse(responseText);
-            } catch {
-                throw new Error('Invalid response from server');
+        // Generate Music Button Click - Show Options
+        function generateMusic(productId) {
+            const product = allProducts.find(p => p.id == productId);
+            if (!product) {
+                showMessage('❌ Product not found', 'error');
+                return;
             }
             
-            let url = jsonRes.url || jsonRes.image_url || 
-                     (jsonRes.data ? (typeof jsonRes.data === 'string' ? jsonRes.data : 
-                     jsonRes.data.url || jsonRes.data.image_url) : null);
+            currentMusicProduct = product;
+            openMusicModal();
+        }
+
+        // Open Music Modal with Options
+        function openMusicModal() {
+            const modal = document.getElementById('musicModal');
             
-            if (url) {
-                uploadedMusicUrl = url;
+            // Reset all sections
+            document.getElementById('choiceSection').style.display = 'block';
+            document.getElementById('promptEditorSection').style.display = 'none';
+            document.getElementById('musicProgress').style.display = 'none';
+            document.getElementById('musicLoading').style.display = 'none';
+            document.getElementById('resultsContent').style.display = 'none';
+            document.getElementById('musicError').style.display = 'none';
+            document.getElementById('lyricsResult').style.display = 'none';
+            document.getElementById('styleResult').style.display = 'none';
+            document.getElementById('musicPreviewContainer').style.display = 'none';
+            document.getElementById('saveMusicBtn').style.display = 'none';
+            
+            // Reset results
+            generatedLyrics = '';
+            generatedStyle = '';
+            uploadedMusicUrl = null;
+            uploadedMusicFile = null;
+            currentMode = null;
+            
+            // Set product info
+            const productName = document.getElementById('musicProductName');
+            const productInfo = document.getElementById('musicProductInfo');
+            
+            if (currentMusicProduct) {
+                productName.textContent = currentMusicProduct.name;
+                productInfo.textContent = `ID: ${currentMusicProduct.id} | Generate lyrics and music for this product`;
+            }
+            
+            // Reset upload section
+            resetMusicUploadSection();
+            
+            modal.style.display = 'block';
+            
+            // Add hover effects to buttons
+            const buttons = document.querySelectorAll('#choiceSection button');
+            buttons.forEach(btn => {
+                btn.addEventListener('mouseenter', () => {
+                    btn.style.transform = 'translateY(-4px)';
+                    btn.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
+                });
+                btn.addEventListener('mouseleave', () => {
+                    btn.style.transform = 'translateY(0)';
+                    btn.style.boxShadow = '0 6px 20px rgba(0,0,0,0.15)';
+                });
+            });
+        }
+
+        function closeMusicModal() {
+            document.getElementById('musicModal').style.display = 'none';
+            currentMusicProduct = null;
+            generatedLyrics = '';
+            generatedStyle = '';
+            uploadedMusicUrl = null;
+            uploadedMusicFile = null;
+            currentMode = null;
+        }
+
+        // Edit Prompts Before Generation
+        function editPromptsBeforeGenerate() {
+            document.getElementById('choiceSection').style.display = 'none';
+            
+            // Create prompt editor interface
+            const promptEditorSection = document.getElementById('promptEditorSection');
+            promptEditorSection.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <h3>Edit Prompts Before Generating</h3>
+                    <p style="color: #7f8c8d; margin-bottom: 20px;">Edit both lyrics and style prompts before generation</p>
+                </div>
                 
-                statusDiv.className = 'upload-status success';
-                statusDiv.textContent = '✅ Music uploaded successfully!';
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button id="lyricsTab" class="prompt-tab active" style="
+                        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+                        color: white;
+                        border: none;
+                        padding: 12px 24px;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        flex: 1;
+                    ">Lyrics Prompt</button>
+                    <button id="styleTab" class="prompt-tab" style="
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        border: none;
+                        padding: 12px 24px;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        flex: 1;
+                    ">Style Prompt</button>
+                </div>
                 
-                showMessage('✅ Music uploaded successfully!', 'success');
-                return url;
-            } else {
-                throw new Error('No URL in response');
-            }
-        } else {
-            throw new Error(`Upload failed: ${response.status}`);
+                <div id="lyricsPromptEditor" style="display: block;">
+                    <h4>🎶 Lyrics Generation Prompt</h4>
+                    <div class="prompt-editor">
+                        <textarea id="lyricsPromptTextarea" placeholder="Edit lyrics prompt..." style="width: 100%; min-height: 200px; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.5; resize: vertical;"></textarea>
+                    </div>
+                </div>
+                
+                <div id="stylePromptEditor" style="display: none;">
+                    <h4>🎨 Style Generation Prompt</h4>
+                    <div class="prompt-editor">
+                        <textarea id="stylePromptTextarea" placeholder="Edit style prompt..." style="width: 100%; min-height: 200px; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.5; resize: vertical;"></textarea>
+                    </div>
+                </div>
+                
+                <div class="prompt-actions" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="prompt-btn cancel" onclick="cancelPromptEditing()">
+                        ✕ Cancel
+                    </button>
+                    <button type="button" class="prompt-btn save" onclick="saveBothPromptsAndGenerate()">
+                        💾 Save Both & Generate
+                    </button>
+                </div>
+            `;
+            
+            promptEditorSection.style.display = 'block';
+            
+            // Load current prompts with product data
+            document.getElementById('lyricsPromptTextarea').value = customPrompts.lyrics
+                .replace(/{productName}/g, currentMusicProduct.name || '')
+                .replace(/{description}/g, currentMusicProduct.description || '')
+                .replace(/{category}/g, currentMusicProduct.category_name || '')
+                .replace(/{cat1}/g, currentMusicProduct.cat1_name || '')
+                .replace(/{price}/g, currentMusicProduct.retail_simple_price ? `₹${currentMusicProduct.retail_simple_price}` : '₹0.00')
+                .replace(/{specialPrice}/g, currentMusicProduct.retail_simple_special_price ? `₹${currentMusicProduct.retail_simple_special_price}` : '');
+            
+            document.getElementById('stylePromptTextarea').value = customPrompts.style
+                .replace(/{productName}/g, currentMusicProduct.name || '')
+                .replace(/{description}/g, currentMusicProduct.description || '')
+                .replace(/{category}/g, currentMusicProduct.category_name || '')
+                .replace(/{cat1}/g, currentMusicProduct.cat1_name || '')
+                .replace(/{price}/g, currentMusicProduct.retail_simple_price ? `₹${currentMusicProduct.retail_simple_price}` : '₹0.00')
+                .replace(/{specialPrice}/g, currentMusicProduct.retail_simple_special_price ? `₹${currentMusicProduct.retail_simple_special_price}` : '');
+            
+            // Tab switching
+            document.getElementById('lyricsTab').addEventListener('click', () => {
+                document.getElementById('lyricsTab').classList.add('active');
+                document.getElementById('styleTab').classList.remove('active');
+                document.getElementById('lyricsPromptEditor').style.display = 'block';
+                document.getElementById('stylePromptEditor').style.display = 'none';
+            });
+            
+            document.getElementById('styleTab').addEventListener('click', () => {
+                document.getElementById('styleTab').classList.add('active');
+                document.getElementById('lyricsTab').classList.remove('active');
+                document.getElementById('stylePromptEditor').style.display = 'block';
+                document.getElementById('lyricsPromptEditor').style.display = 'none';
+            });
         }
-    } catch (error) {
-        console.error('Music upload failed:', error);
-        
-        const statusDiv = document.getElementById('uploadStatus');
-        statusDiv.className = 'upload-status error';
-        statusDiv.textContent = `❌ Upload failed: ${error.message}`;
-        
-        showMessage(`❌ Music upload failed: ${error.message}`, 'error');
-        throw error;
-    }
-}
 
-function resetMusicUploadSection() {
-    uploadedMusicUrl = null;
-    uploadedMusicFile = null;
-    document.getElementById('musicPreviewContainer').style.display = 'none';
-    document.getElementById('saveMusicBtn').style.display = 'none';
-    document.getElementById('musicFileInput').value = '';
-    const statusDiv = document.getElementById('uploadStatus');
-    statusDiv.className = 'upload-status';
-    statusDiv.textContent = '';
-}
+        function cancelPromptEditing() {
+            document.getElementById('promptEditorSection').style.display = 'none';
+            document.getElementById('choiceSection').style.display = 'block';
+        }
 
-// Save music URL to product's download_link field
-async function saveMusicToProduct() {
-    if (!currentMusicProduct || !uploadedMusicUrl) {
-        showMessage('❌ Please upload a music file first', 'error');
-        return;
-    }
-    
-    try {
-        showMessage('🔄 Saving music to product...', 'info');
-        
-        // Save to download_link field instead of description
-        const updateData = {
-            download_link: uploadedMusicUrl  // Changed from description to download_link
-        };
-        
-        const response = await fetch(`/api/products/${currentMusicProduct.id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(updateData)
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            // Update the product in allProducts array
-            const productIndex = allProducts.findIndex(p => p.id == currentMusicProduct.id);
-            if (productIndex !== -1) {
-                allProducts[productIndex].download_link = uploadedMusicUrl;
+        function saveBothPromptsAndGenerate() {
+            const lyricsPrompt = document.getElementById('lyricsPromptTextarea').value.trim();
+            const stylePrompt = document.getElementById('stylePromptTextarea').value.trim();
+            
+            if (!lyricsPrompt || !stylePrompt) {
+                showMessage('❌ Both prompts are required', 'error');
+                return;
             }
             
-            showMessage('✅ Music link saved to download_link field!', 'success');
+            // Save prompts (remove the current product-specific replacements)
+            customPrompts.lyrics = lyricsPrompt
+                .replace(currentMusicProduct.name || '', '{productName}')
+                .replace(currentMusicProduct.description || '', '{description}')
+                .replace(currentMusicProduct.category_name || '', '{category}')
+                .replace(currentMusicProduct.cat1_name || '', '{cat1}')
+                .replace(currentMusicProduct.retail_simple_price ? `₹${currentMusicProduct.retail_simple_price}` : '₹0.00', '{price}')
+                .replace(currentMusicProduct.retail_simple_special_price ? `₹${currentMusicProduct.retail_simple_special_price}` : '', '{specialPrice}');
             
-            // Update status in modal
-            const statusDiv = document.getElementById('uploadStatus');
-            statusDiv.className = 'upload-status success';
-            statusDiv.innerHTML = '✅ Music link saved to download_link!';
+            customPrompts.style = stylePrompt
+                .replace(currentMusicProduct.name || '', '{productName}')
+                .replace(currentMusicProduct.description || '', '{description}')
+                .replace(currentMusicProduct.category_name || '', '{category}')
+                .replace(currentMusicProduct.cat1_name || '', '{cat1}')
+                .replace(currentMusicProduct.retail_simple_price ? `₹${currentMusicProduct.retail_simple_price}` : '₹0.00', '{price}')
+                .replace(currentMusicProduct.retail_simple_special_price ? `₹${currentMusicProduct.retail_simple_special_price}` : '', '{specialPrice}');
             
-            // Close modal after delay
-            setTimeout(() => {
-                closeMusicModal();
-                // Refresh display
-                filterProducts();
-            }, 1500);
-        } else {
-            throw new Error(result.error || 'Failed to save music');
+            savePromptsToStorage();
+            
+            // Start generation of both
+            generateBothLyricsAndStyle();
         }
-    } catch (error) {
-        console.error('Error saving music:', error);
-        showMessage(`❌ Error: ${error.message}`, 'error');
-    }
-}
 
-        async function generateLyrics() {
+        // Generate Immediately
+        function generateImmediately() {
+            document.getElementById('choiceSection').style.display = 'none';
+            generateBothLyricsAndStyle();
+        }
+
+        // Generate Both Lyrics and Style in Parallel
+        async function generateBothLyricsAndStyle() {
             if (!currentMusicProduct) return;
             
+            // Show loading and progress
             document.getElementById('musicLoading').style.display = 'block';
+            document.getElementById('musicProgress').style.display = 'block';
+            document.getElementById('promptEditorSection').style.display = 'none';
+            document.getElementById('choiceSection').style.display = 'none';
             document.getElementById('musicError').style.display = 'none';
-            document.getElementById('lyricsContent').style.display = 'none';
-            document.getElementById('generateLyricsBtn').style.display = 'none';
+            document.getElementById('resultsContent').style.display = 'none';
             
-            setMusicTask('Generating lyrics...', 'Creating a 30-second song based on product description');
+            updateMusicProgress(0);
+            setMusicTask('Starting generation...', 'Preparing to generate lyrics and style');
             
             try {
-                const response = await fetch('/api/ai/generate-lyrics', {
+                // Prepare prompts with product data
+                const lyricsPrompt = customPrompts.lyrics
+                    .replace(/{productName}/g, currentMusicProduct.name || '')
+                    .replace(/{description}/g, currentMusicProduct.description || '')
+                    .replace(/{category}/g, currentMusicProduct.category_name || '')
+                    .replace(/{cat1}/g, currentMusicProduct.cat1_name || '')
+                    .replace(/{price}/g, currentMusicProduct.retail_simple_price ? `₹${currentMusicProduct.retail_simple_price}` : '₹0.00')
+                    .replace(/{specialPrice}/g, currentMusicProduct.retail_simple_special_price ? `₹${currentMusicProduct.retail_simple_special_price}` : '');
+                
+                const stylePrompt = customPrompts.style
+                    .replace(/{productName}/g, currentMusicProduct.name || '')
+                    .replace(/{description}/g, currentMusicProduct.description || '')
+                    .replace(/{category}/g, currentMusicProduct.category_name || '')
+                    .replace(/{cat1}/g, currentMusicProduct.cat1_name || '')
+                    .replace(/{price}/g, currentMusicProduct.retail_simple_price ? `₹${currentMusicProduct.retail_simple_price}` : '₹0.00')
+                    .replace(/{specialPrice}/g, currentMusicProduct.retail_simple_special_price ? `₹${currentMusicProduct.retail_simple_special_price}` : '');
+                
+                // Start both requests in parallel
+                setMusicTask('Generating lyrics...', 'Creating lyrics based on product description');
+                updateMusicProgress(25);
+                
+                const lyricsPromise = fetch('/api/ai/generate-lyrics', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         productName: currentMusicProduct.name,
                         description: currentMusicProduct.description || '',
                         category: currentMusicProduct.category_name || '',
-                        cat1: currentMusicProduct.cat1_name || ''
+                        cat1: currentMusicProduct.cat1_name || '',
+                        price: currentMusicProduct.retail_simple_price || 0,
+                        specialPrice: currentMusicProduct.retail_simple_special_price || 0,
+                        prompt: lyricsPrompt
                     })
+                }).then(async response => {
+                    const result = await response.json();
+                    if (result.success && result.lyrics) {
+                        generatedLyrics = result.lyrics;
+                        updateMusicProgress(75);
+                        return result;
+                    } else {
+                        throw new Error(result.error || 'Failed to generate lyrics');
+                    }
+                });
+                
+                setMusicTask('Generating style...', 'Creating music style based on product information');
+                updateMusicProgress(50);
+                
+                const stylePromise = fetch('/api/ai/generate-style', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        productName: currentMusicProduct.name,
+                        description: currentMusicProduct.description || '',
+                        category: currentMusicProduct.category_name || '',
+                        cat1: currentMusicProduct.cat1_name || '',
+                        price: currentMusicProduct.retail_simple_price || 0,
+                        specialPrice: currentMusicProduct.retail_simple_special_price || 0,
+                        prompt: stylePrompt
+                    })
+                }).then(async response => {
+                    const result = await response.json();
+                    if (result.success && result.style) {
+                        generatedStyle = result.style;
+                        updateMusicProgress(90);
+                        return result;
+                    } else {
+                        throw new Error(result.error || 'Failed to generate style');
+                    }
+                });
+                
+                // Wait for both to complete
+                await Promise.all([lyricsPromise, stylePromise]);
+                
+                updateMusicProgress(100);
+                
+                // Show results
+                showGenerationResults();
+                
+            } catch (error) {
+                console.error('Generation error:', error);
+                showMusicError(error.message);
+            }
+        }
+
+        function showGenerationResults() {
+            document.getElementById('musicLoading').style.display = 'none';
+            document.getElementById('resultsContent').style.display = 'block';
+            
+            // Show both results
+            document.getElementById('lyricsResult').style.display = 'block';
+            document.getElementById('styleResult').style.display = 'block';
+            document.getElementById('generatedLyrics').textContent = generatedLyrics;
+            document.getElementById('generatedStyle').textContent = generatedStyle;
+            
+            // Setup drag and drop for music files
+            setupMusicDragAndDrop();
+        }
+
+        function updateMusicProgress(percentage) {
+            document.getElementById('musicProgressBar').style.width = percentage + '%';
+            
+            // Update step indicators
+            const steps = ['step1', 'step2'];
+            steps.forEach((stepId, index) => {
+                const step = document.getElementById(stepId);
+                step.className = 'ai-step';
+                if (percentage >= (index + 1) * 50) {
+                    step.classList.add('completed');
+                } else if (percentage >= index * 50) {
+                    step.classList.add('active');
+                }
+            });
+        }
+
+        function setMusicTask(task, details) {
+            document.getElementById('musicCurrentTask').textContent = task;
+            document.getElementById('musicTaskDetails').textContent = details;
+        }
+
+        function showMusicError(message) {
+            document.getElementById('musicLoading').style.display = 'none';
+            document.getElementById('musicError').style.display = 'block';
+            document.getElementById('musicErrorMessage').textContent = message;
+        }
+
+        function retryGeneration() {
+            document.getElementById('musicError').style.display = 'none';
+            generateBothLyricsAndStyle();
+        }
+
+        // Copy to clipboard
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showMessage('✅ Copied to clipboard!', 'success');
+            }).catch(err => {
+                showMessage('❌ Failed to copy', 'error');
+            });
+        }
+
+        // Setup drag and drop for music files
+        function setupMusicDragAndDrop() {
+            const uploadContainer = document.getElementById('musicUploadContainer');
+            const fileInput = document.getElementById('musicFileInput');
+            
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            // Highlight drop zone
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, unhighlight, false);
+            });
+            
+            // Handle dropped files
+            uploadContainer.addEventListener('drop', handleMusicDrop, false);
+            
+            // Handle file input change
+            fileInput.addEventListener('change', handleMusicFileSelect, false);
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            function highlight() {
+                uploadContainer.classList.add('dragover');
+            }
+            
+            function unhighlight() {
+                uploadContainer.classList.remove('dragover');
+            }
+            
+            function handleMusicDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleMusicFiles(files);
+            }
+            
+            function handleMusicFileSelect(e) {
+                const files = e.target.files;
+                handleMusicFiles(files);
+            }
+        }
+
+        function handleMusicFiles(files) {
+            if (files.length === 0) return;
+            
+            const file = files[0];
+            
+            // Validate file type
+            const validTypes = ['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/x-m4a'];
+            const validExtensions = ['.mp3', '.wav', '.m4a'];
+            const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+            
+            if (!validTypes.includes(file.type) && !validExtensions.includes(fileExtension)) {
+                showMessage('❌ Please select a valid audio file (MP3, WAV, M4A)', 'error');
+                return;
+            }
+            
+            // Validate file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+                showMessage('❌ Audio file size must be less than 10MB', 'error');
+                return;
+            }
+            
+            uploadedMusicFile = file;
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('uploadedMusicPreview');
+                preview.src = e.target.result;
+                document.getElementById('musicPreviewContainer').style.display = 'block';
+                document.getElementById('saveMusicBtn').style.display = 'block';
+                
+                // Show upload status
+                const statusDiv = document.getElementById('uploadStatus');
+                statusDiv.className = 'upload-status success';
+                statusDiv.textContent = '✅ Music file ready to save';
+            };
+            reader.readAsDataURL(file);
+            
+            // Upload the file
+            uploadMusicFile(file);
+        }
+
+        async function uploadMusicFile(file) {
+            try {
+                const statusDiv = document.getElementById('uploadStatus');
+                statusDiv.className = 'upload-status processing';
+                statusDiv.textContent = '🔄 Uploading music file...';
+                
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                const response = await fetch('https://api.zulushop.in/api/v1/user/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const responseText = await response.text();
+                
+                if (response.ok) {
+                    let jsonRes;
+                    try {
+                        jsonRes = JSON.parse(responseText);
+                    } catch {
+                        throw new Error('Invalid response from server');
+                    }
+                    
+                    let url = jsonRes.url || jsonRes.image_url || 
+                             (jsonRes.data ? (typeof jsonRes.data === 'string' ? jsonRes.data : 
+                             jsonRes.data.url || jsonRes.data.image_url) : null);
+                    
+                    if (url) {
+                        uploadedMusicUrl = url;
+                        
+                        statusDiv.className = 'upload-status success';
+                        statusDiv.textContent = '✅ Music uploaded successfully!';
+                        
+                        showMessage('✅ Music uploaded successfully!', 'success');
+                        return url;
+                    } else {
+                        throw new Error('No URL in response');
+                    }
+                } else {
+                    throw new Error(`Upload failed: ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Music upload failed:', error);
+                
+                const statusDiv = document.getElementById('uploadStatus');
+                statusDiv.className = 'upload-status error';
+                statusDiv.textContent = `❌ Upload failed: ${error.message}`;
+                
+                showMessage(`❌ Music upload failed: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        function resetMusicUploadSection() {
+            uploadedMusicUrl = null;
+            uploadedMusicFile = null;
+            document.getElementById('musicPreviewContainer').style.display = 'none';
+            document.getElementById('saveMusicBtn').style.display = 'none';
+            document.getElementById('musicFileInput').value = '';
+            const statusDiv = document.getElementById('uploadStatus');
+            statusDiv.className = 'upload-status';
+            statusDiv.textContent = '';
+        }
+
+        // Save music URL to product's download_link field
+        async function saveMusicToProduct() {
+            if (!currentMusicProduct || !uploadedMusicUrl) {
+                showMessage('❌ Please upload a music file first', 'error');
+                return;
+            }
+            
+            try {
+                showMessage('🔄 Saving music to product...', 'info');
+                
+                // Save to download_link field instead of description
+                const updateData = {
+                    download_link: uploadedMusicUrl  // Changed from description to download_link
+                };
+                
+                const response = await fetch(`/api/products/${currentMusicProduct.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updateData)
                 });
                 
                 const result = await response.json();
                 
-                if (result.success && result.lyrics) {
-                    generatedLyrics = result.lyrics;
-                    
-                    document.getElementById('musicLoading').style.display = 'none';
-                    document.getElementById('lyricsContent').style.display = 'block';
-                    document.getElementById('generateLyricsBtn').style.display = 'block';
-                    
-                    const lyricsContainer = document.getElementById('generatedLyrics');
-                    lyricsContainer.textContent = result.lyrics;
-                    
-                    if (!document.getElementById('copyLyricsBtn')) {
-                        const copyBtn = document.createElement('button');
-                        copyBtn.id = 'copyLyricsBtn';
-                        copyBtn.className = 'image-action-btn';
-                        copyBtn.style.marginTop = '10px';
-                        copyBtn.innerHTML = '📋 Copy Lyrics';
-                        copyBtn.onclick = copyLyricsToClipboard;
-                        lyricsContainer.parentNode.insertBefore(copyBtn, lyricsContainer.nextSibling);
+                if (result.success) {
+                    // Update the product in allProducts array
+                    const productIndex = allProducts.findIndex(p => p.id == currentMusicProduct.id);
+                    if (productIndex !== -1) {
+                        allProducts[productIndex].download_link = uploadedMusicUrl;
                     }
                     
-                    showMessage('✅ Lyrics generated successfully!', 'success');
+                    showMessage('✅ Music link saved to download_link field!', 'success');
+                    
+                    // Update status in modal
+                    const statusDiv = document.getElementById('uploadStatus');
+                    statusDiv.className = 'upload-status success';
+                    statusDiv.innerHTML = '✅ Music link saved to download_link!';
+                    
+                    // Close modal after delay
+                    setTimeout(() => {
+                        closeMusicModal();
+                        // Refresh display
+                        filterProducts();
+                    }, 1500);
                 } else {
-                    throw new Error(result.error || 'Failed to generate lyrics');
+                    throw new Error(result.error || 'Failed to save music');
                 }
             } catch (error) {
-                console.error('Lyrics generation error:', error);
-                showMusicError(error.message);
+                console.error('Error saving music:', error);
+                showMessage(`❌ Error: ${error.message}`, 'error');
             }
         }
         
-
-
-        function retryMusicGeneration() {
-            document.getElementById('musicError').style.display = 'none';
-            generateLyrics();
-        }
-        
-        function copyLyricsToClipboard() {
-            if (!generatedLyrics) return;
+        // DELETE PRODUCT FUNCTIONS
+        // Show delete confirmation modal
+        function confirmDelete(productId, productName, isActive) {
+            event.stopPropagation();
             
-            navigator.clipboard.writeText(generatedLyrics).then(() => {
-                const copyBtn = document.getElementById('copyLyricsBtn');
-                const originalText = copyBtn.innerHTML;
-                copyBtn.innerHTML = '✅ Copied!';
-                copyBtn.style.background = '#4CAF50';
-                
-                setTimeout(() => {
-                    copyBtn.innerHTML = originalText;
-                    copyBtn.style.background = '';
-                }, 2000);
-            });
+            productToDelete = {
+                id: productId,
+                name: productName,
+                isActive: isActive
+            };
+            
+            document.getElementById('deleteProductName').textContent = `Are you sure you want to delete "${productName}"?`;
+            document.getElementById('deleteProductId').textContent = productId;
+            
+            const statusElement = document.getElementById('deleteProductStatus');
+            statusElement.className = `status-indicator ${isActive ? 'active' : 'inactive'}`;
+            statusElement.textContent = isActive ? 'Active' : 'Inactive';
+            
+            document.getElementById('confirmDeleteModal').style.display = 'block';
         }
 
+        // Close delete modal
+        function closeDeleteModal() {
+            document.getElementById('confirmDeleteModal').style.display = 'none';
+            productToDelete = null;
+        }
+
+        // Confirm and delete product
+        async function confirmDeleteProduct() {
+            if (!productToDelete) return;
+            
+            const productId = productToDelete.id;
+            
+            try {
+                showMessage('🔄 Deleting product...', 'info');
+                
+                const response = await fetch(`/api/products/${productId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('✅ Product deleted successfully!', 'success');
+                    
+                    // Remove from allProducts array
+                    const productIndex = allProducts.findIndex(p => p.id == productId);
+                    if (productIndex !== -1) {
+                        allProducts.splice(productIndex, 1);
+                    }
+                    
+                    // Update filter counts and display
+                    calculateFilterCounts();
+                    updateFilterOptions();
+                    filterProducts();
+                    
+                    closeDeleteModal();
+                } else {
+                    showMessage(`❌ Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                showMessage(`❌ Network error: ${error.message}`, 'error');
+            }
+        }
         
         // AI Functions
         function runAITasks(productId) {
@@ -4117,11 +4178,17 @@ async function saveMusicToProduct() {
             if (e.target.classList.contains('modal')) {
                 e.target.style.display = 'none';
             }
+            if (e.target.classList.contains('confirm-delete-modal')) {
+                e.target.style.display = 'none';
+            }
         });
         
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 document.querySelectorAll('.modal').forEach(modal => {
+                    modal.style.display = 'none';
+                });
+                document.querySelectorAll('.confirm-delete-modal').forEach(modal => {
                     modal.style.display = 'none';
                 });
             }
