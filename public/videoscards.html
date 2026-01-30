@@ -379,18 +379,24 @@
             flex-direction: column;
         }
         
-        .card-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 10px;
-            line-height: 1.4;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            min-height: 44px;
-        }
+.card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 10px;
+    line-height: 1.4;
+    
+    /* Multi-line text truncation with fallbacks */
+    display: -webkit-box;
+    display: box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 44px;
+}
         
         .card-id {
             font-size: 12px;
