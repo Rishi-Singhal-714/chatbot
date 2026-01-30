@@ -718,22 +718,61 @@ async function getProductStatsByUpdater() {
 }
 
 async function executeDelete(table, id) {
-  try {
-    const connection = await pool.getConnection();
+  return new Promise((resolve, reject) => {
+    ensureConnection();
     
-    const query = `DELETE FROM ${table} WHERE id = ?`;
-    const [result] = await connection.execute(query, [id]);
+    if (!pool) {
+      reject(new Error('Database connection not available'));
+      return;
+    }
     
-    connection.release();
+    // Get actual table name from mapping
+    const tableName = tableMapping[table];
+    if (!tableName) {
+      reject(new Error(`Invalid table: ${table}`));
+      return;
+    }
     
-    return {
-      affectedRows: result.affectedRows,
-      message: `Deleted 1 record from ${table}`
-    };
-  } catch (error) {
-    console.error(`Error deleting from ${table}:`, error);
-    throw error;
-  }
+    console.log(`🗑️ Deleting from ${tableName} with ID: ${id}`);
+    
+    pool.getConnection(async (err, connection) => {
+      if (err) {
+        console.error('❌ Database connection error:', err);
+        reject(err);
+        return;
+      }
+      
+      try {
+        const query = `DELETE FROM \`${tableName}\` WHERE id = ?`;
+        console.log(`📊 Executing delete query: ${query}`);
+        
+        lastQueryTime = Date.now();
+        
+        const [result] = await connection.query(query, [id]);
+        
+        connection.release();
+        
+        console.log(`✅ Delete successful, affected rows: ${result.affectedRows}`);
+        
+        // Clear cache for this table after delete
+        clearCache(table);
+        
+        setTimeout(() => {
+          console.log('🔌 Closing connection after delete execution');
+          closeConnectionPool();
+        }, 3000);
+        
+        resolve({
+          affectedRows: result.affectedRows,
+          message: `Deleted 1 record from ${tableName}`
+        });
+      } catch (error) {
+        connection.release();
+        console.error(`❌ Error deleting from ${tableName}:`, error);
+        reject(error);
+      }
+    });
+  });
 }
 
 async function getAppConfigsData() {
@@ -750,6 +789,7 @@ module.exports = {
   clearAllCaches,
   getAllCacheStatus,
   getTableColumns,
+  executeDelete, 
   // Connection management
   createConnectionPool: () => createConnectionPool(),
   closeConnectionPool: () => closeConnectionPool(),

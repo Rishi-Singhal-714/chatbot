@@ -4157,6 +4157,73 @@ app.put('/api/appconfigs/:id', async (req, res) => {
     });
   }
 });
+/**
+/**
+ * DELETE video endpoint
+ */
+app.delete('/api/videos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Video ID is required'
+      });
+    }
+
+    console.log(`🗑️ Deleting video with ID: ${id}`);
+
+    // First, get the video to check if it exists
+    const video = await db.getRecordById('videos', id);
+    
+    if (!video) {
+      return res.status(404).json({
+        success: false,
+        error: 'Video not found'
+      });
+    }
+
+    // Get actual table name from mapping
+    const tableName = tableMapping['videos']; // 'shop_able_videos'
+    
+    if (!tableName) {
+      return res.status(500).json({
+        success: false,
+        error: 'Table mapping not found for videos'
+      });
+    }
+
+    // Delete the video from database using executeDelete
+    const result = await db.executeDelete(tableName, id);
+    
+    if (result && result.affectedRows > 0) {
+      // Clear cache to ensure fresh data
+      db.clearCache('videos');
+      
+      console.log(`✅ Video ${id} deleted successfully`);
+      
+      return res.json({
+        success: true,
+        message: 'Video deleted successfully',
+        deletedId: id,
+        affectedRows: result.affectedRows
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to delete video from database'
+      });
+    }
+    
+  } catch (error) {
+    console.error('Error deleting video:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 // Get single appconfigs record
 app.get('/api/appconfigs/:id', async (req, res) => {
   try {
