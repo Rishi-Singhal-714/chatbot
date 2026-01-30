@@ -3,7 +3,6 @@ const mysql = require('mysql2');
 // Database configuration from environment variables
 const dbConfig = {
   host: process.env.DB_HOST || '',
-  
   user: process.env.DB_USER || '',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_DATABASE || 'u130660877_zulu',
