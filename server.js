@@ -3904,6 +3904,260 @@ app.get('/chat/history/:sessionId', async (req, res) => {
     });
   }
 });
+
+/**
+ * Unverified User Chatbot API
+ * POST /api/chatbot
+ * 
+ * EXACTLY same as chat.html for unverified users
+ * No sessions, no saving, no authentication
+ */
+
+app.post('/api/chatbot', async (req, res) => {
+  try {
+    const { message } = req.body;
+    
+    // Validate input
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Message is required'
+      });
+    }
+    
+    const userMessage = message.trim();
+    console.log(`🤖 Chatbot API called: "${userMessage.substring(0, 100)}..."`);
+    
+    // Create a TEMPORARY session ID (just for this request)
+    const tempSessionId = 'temp-' + Date.now();
+    
+    // Create temporary session (unauthenticated) - same as chat.html for unverified users
+    createOrTouchSession(tempSessionId, false);
+    
+    // Get classification - same as chat.html
+    const classification = await classifyAndMatchWithGPT(userMessage);
+    const intent = classification.intent || 'company';
+    
+    console.log(`🎯 Intent detected: ${intent}`);
+    
+    let response;
+    let responseType = 'text';
+    
+    // Handle based on intent - EXACT same logic as chat.html for unverified users
+    
+    // Check if unauthenticated user is trying to access restricted intents
+    if (!['company', 'product'].includes(intent)) {
+      response = `To use this feature, please verify your phone number.`;
+      responseType = 'text';
+    }
+    else if (intent === 'agent') {
+      // Agent intent for unverified users
+      response = `Our representative will connect with you soon. Please verify your phone for faster response.`;
+      responseType = 'text';
+    }
+    else if (intent === 'voice_ai') {
+      // Voice AI for unverified users
+      response = `🎵 *Custom AI Music Message (Premium Add-on)*
+
+For every gift above ₹1,000, you can get a personalised AI song.
+Please verify your phone to access this feature.`;
+      responseType = 'text';
+    }
+    else if (intent === 'seller') {
+      // Seller info for unverified users
+      response = `${SELLER_KNOWLEDGE}\n\nPlease verify your phone to connect with sellers directly.`;
+      responseType = 'text';
+    }
+    else if (intent === 'investors') {
+      // Investor info for unverified users
+      response = `${INVESTOR_KNOWLEDGE}\n\nPlease verify your phone for detailed investor information.`;
+      responseType = 'text';
+    }
+    else if (intent === 'product') {
+      // Product search - use existing matching logic
+      const galleryMatches = await matchGalleriesEnhanced(userMessage, []);
+      const sellerMatches = await matchSellersEnhanced(userMessage, galleryMatches, null);
+      const productMatches = await matchProductsEnhanced(userMessage, []);
+      
+      response = buildConciseResponse(userMessage, galleryMatches, { all: sellerMatches }, productMatches);
+      responseType = 'structured';
+    }
+    else {
+      // Company info - default
+      response = await generateCompanyResponse(userMessage, [], ZULU_CLUB_INFO);
+      responseType = 'text';
+    }
+    
+    // Clean up temporary session
+    delete conversations[tempSessionId];
+    
+    // Format response EXACTLY like chat.html returns
+    const apiResponse = {
+      success: true,
+      response: responseType === 'structured' ? response : { text: response },
+      responseType: responseType,
+      isAuthenticated: false, // Always false for unverified
+      timestamp: new Date().toISOString()
+    };
+    
+    console.log(`✅ API response sent. Type: ${responseType}, Intent: ${intent}`);
+    
+    return res.json(apiResponse);
+    
+  } catch (error) {
+    console.error('❌ Chatbot API error:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Internal server error',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * Simplified Chat API (for testing)
+ * GET /api/chatbot/simple?q=your+message
+ */
+
+app.get('/api/chatbot/simple', async (req, res) => {
+  try {
+    const { q } = req.query;
+    
+    if (!q || typeof q !== 'string') {
+      return res.json({
+        success: false,
+        error: 'Query parameter "q" is required'
+      });
+    }
+    
+    const userMessage = q.trim();
+    console.log(`🤖 Simple API called: "${userMessage}"`);
+    
+    // Same logic as above
+    const tempSessionId = 'temp-simple-' + Date.now();
+    createOrTouchSession(tempSessionId, false);
+    
+    const classification = await classifyAndMatchWithGPT(userMessage);
+    const intent = classification.intent || 'company';
+    
+    let response;
+    let responseType = 'text';
+    
+    // Handle restricted intents for unverified
+    if (!['company', 'product'].includes(intent)) {
+      response = `Please verify your phone to access this feature.`;
+    }
+    else if (intent === 'product') {
+      const galleryMatches = await matchGalleriesEnhanced(userMessage, []);
+      const sellerMatches = await matchSellersEnhanced(userMessage, galleryMatches, null);
+      const productMatches = await matchProductsEnhanced(userMessage, []);
+      
+      const structured = buildConciseResponse(userMessage, galleryMatches, { all: sellerMatches }, productMatches);
+      response = structured;
+      responseType = 'structured';
+    }
+    else {
+      response = await generateCompanyResponse(userMessage, [], ZULU_CLUB_INFO);
+    }
+    
+    delete conversations[tempSessionId];
+    
+    const result = {
+      query: userMessage,
+      intent: intent,
+      response: responseType === 'structured' ? response.text : response,
+      type: responseType
+    };
+    
+    if (responseType === 'structured') {
+      result.data = {
+        products: response.products || [],
+        galleries: response.galleries || [],
+        sellers: response.sellers || []
+      };
+    }
+    
+    return res.json(result);
+    
+  } catch (error) {
+    console.error('Simple API error:', error);
+    return res.json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Test the chatbot with example messages
+ * GET /api/chatbot/test
+ */
+
+app.get('/api/chatbot/test', async (req, res) => {
+  const testMessages = [
+    "Show me home decor products",
+    "What is Zulu Club?",
+    "I want to sell on Zulu",
+    "Tell me about investors",
+    "Connect me to an agent",
+    "Show me fashion items",
+    "Find furniture sellers",
+    "Show me galleries"
+  ];
+  
+  const results = [];
+  
+  for (const message of testMessages) {
+    try {
+      const tempSessionId = 'test-' + Date.now() + '-' + Math.random();
+      createOrTouchSession(tempSessionId, false);
+      
+      const classification = await classifyAndMatchWithGPT(message);
+      const intent = classification.intent;
+      
+      let responseType = 'text';
+      let responseText = '';
+      
+      if (!['company', 'product'].includes(intent)) {
+        responseText = `[RESTRICTED: Verify phone for ${intent}]`;
+      }
+      else if (intent === 'product') {
+        const galleryMatches = await matchGalleriesEnhanced(message, []);
+        const sellerMatches = await matchSellersEnhanced(message, galleryMatches, null);
+        const productMatches = await matchProductsEnhanced(message, []);
+        
+        const structured = buildConciseResponse(message, galleryMatches, { all: sellerMatches }, productMatches);
+        responseText = structured.text;
+        responseType = 'structured';
+      }
+      else {
+        responseText = await generateCompanyResponse(message, [], ZULU_CLUB_INFO);
+      }
+      
+      delete conversations[tempSessionId];
+      
+      results.push({
+        message: message,
+        intent: intent,
+        response: responseText.substring(0, 100) + '...',
+        type: responseType
+      });
+      
+    } catch (error) {
+      results.push({
+        message: message,
+        error: error.message
+      });
+    }
+  }
+  
+  res.json({
+    success: true,
+    tests: results,
+    note: "These are responses for UNVERIFIED users (same as chat.html)"
+  });
+});
+
 // -------------------------
 // New Database Endpoints
 // -------------------------
