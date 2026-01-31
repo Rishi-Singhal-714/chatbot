@@ -2574,11 +2574,11 @@ Generate ONLY the style description, no explanations or additional text.`
                                   title="Run AI Tasks">
                                 🤖 AI Tasks
                             </span>
-                            <span class="info-tag delete" 
-                                  onclick="confirmDelete(${product.id}, '${product.name.replace(/'/g, "\\'")}', ${isActive})"
-                                  title="Delete this product">
-                                🗑️ Delete
-                            </span>
+<span class="info-tag delete" 
+      onclick="confirmDelete(${product.id}, '${product.name.replace(/'/g, "\\'")}', ${isActive}); return false;"
+      title="Delete this product">
+    🗑️ Delete
+</span>
                         </div>
                     </div>
                 `;
@@ -3655,50 +3655,127 @@ Generate ONLY the style description, no explanations or additional text.`
             productToDelete = null;
         }
 
-        // Confirm and delete product
-        async function confirmDeleteProduct() {
-            if (!productToDelete) return;
-            
-            const productId = productToDelete.id;
-            
-            try {
-                showMessage('🔄 Deleting product...', 'info');
-                
-                const response = await fetch(`/api/products/${productId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    showMessage('✅ Product deleted successfully!', 'success');
-                    
-                    // Remove from allProducts array
-                    const productIndex = allProducts.findIndex(p => p.id == productId);
-                    if (productIndex !== -1) {
-                        allProducts.splice(productIndex, 1);
-                    }
-                    
-                    // Update filter counts and display
-                    calculateFilterCounts();
-                    updateFilterOptions();
-                    filterProducts();
-                    
-                    closeDeleteModal();
-                } else {
-                    showMessage(`❌ Error: ${result.error}`, 'error');
-                }
-            } catch (error) {
-                console.error('Delete error:', error);
-                showMessage(`❌ Network error: ${error.message}`, 'error');
-            }
+        // Update this function in your productscards.html script
+function confirmDelete(productId, productName, isActive) {
+    // Ensure event doesn't bubble
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    
+    console.log(`🗑️ Delete requested for product ID: ${productId}, Name: ${productName}`);
+    
+    productToDelete = {
+        id: productId,
+        name: productName,
+        isActive: isActive
+    };
+    
+    // Update modal content
+    document.getElementById('deleteProductName').textContent = `Are you sure you want to delete "${productName}"?`;
+    document.getElementById('deleteProductId').textContent = productId;
+    
+    const statusElement = document.getElementById('deleteProductStatus');
+    statusElement.className = `status-indicator ${isActive ? 'active' : 'inactive'}`;
+    statusElement.textContent = isActive ? 'Active' : 'Inactive';
+    
+    // Show modal with proper styling
+    const modal = document.getElementById('confirmDeleteModal');
+    modal.style.display = 'block';
+    
+    // Add animation
+    modal.style.animation = 'fadeIn 0.3s ease';
+    
+    // Set focus on cancel button for accessibility
+    setTimeout(() => {
+        document.querySelector('.delete-cancel-btn')?.focus();
+    }, 100);
+}
+// Confirm and delete product
+// Confirm and delete product
+async function confirmDeleteProduct() {
+    if (!productToDelete) {
+        showMessage('❌ No product selected for deletion', 'error');
+        return;
+    }
+    
+    const productId = productToDelete.id;
+    const productName = productToDelete.name;
+    
+    try {
+        showMessage('🔄 Deleting product...', 'info');
+        
+        // Create a more robust API call with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
+        // UPDATED ENDPOINT: Using https://api.zulushop.in/api/v1/user/products/:id
+        const response = await fetch(`https://api.zulushop.in/api/v1/user/products/${productId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Server responded with ${response.status}: ${errorText}`);
         }
         
-        // AI Functions
-        function runAITasks(productId) {
+        const result = await response.json();
+        
+        // Check for success based on your API response format
+        if (result.success || result.error === false) {
+            showMessage(`✅ Product "${productName}" deleted successfully!`, 'success');
+            
+            // Remove from allProducts array
+            const productIndex = allProducts.findIndex(p => p.id == productId);
+            if (productIndex !== -1) {
+                allProducts.splice(productIndex, 1);
+            }
+            
+            // Update filter counts and display
+            calculateFilterCounts();
+            updateFilterOptions();
+            filterProducts();
+            
+            // Close modal
+            closeDeleteModal();
+            
+            // Show success animation
+            const deletedCard = document.querySelector(`[data-product-id="${productId}"]`);
+            if (deletedCard) {
+                deletedCard.style.opacity = '0.5';
+                deletedCard.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    deletedCard.style.display = 'none';
+                }, 500);
+            }
+            
+        } else {
+            throw new Error(result.error || result.message || 'Failed to delete product');
+        }
+    } catch (error) {
+        console.error('Delete error:', error);
+        
+        let errorMessage = error.message;
+        if (error.name === 'AbortError') {
+            errorMessage = 'Request timed out. Please try again.';
+        }
+        
+        showMessage(`❌ Error: ${errorMessage}`, 'error');
+        
+        // Keep modal open so user can retry
+        const modal = document.getElementById('confirmDeleteModal');
+        if (modal) {
+            modal.style.display = 'block';
+        }
+    }
+}
+  function runAITasks(productId) {
             const product = allProducts.find(p => p.id == productId);
             if (!product) {
                 showMessage('❌ Product not found', 'error');

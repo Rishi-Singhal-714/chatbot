@@ -16,7 +16,7 @@ let pool = null;
 let isConnectionActive = false;
 let lastQueryTime = 0;
 const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
-
+createConnectionPool();
 // Table name mapping (cache key to actual table name)
 const tableMapping = {
   'products': 'products',
@@ -216,8 +216,8 @@ function ensureConnection() {
   return true;
 }
 
-// Execute query with connection management
-function executeQuery(query) {
+// In requestData.js - Fix the executeQuery function
+function executeQuery(query, params = []) {
   return new Promise((resolve, reject) => {
     ensureConnection();
     
@@ -237,7 +237,8 @@ function executeQuery(query) {
         return;
       }
       
-      connection.query(query, (error, results) => {
+      // Use connection.query instead of connection.execute for better compatibility
+      connection.query(query, params, (error, results) => {
         connection.release();
         
         if (error) {
@@ -246,7 +247,15 @@ function executeQuery(query) {
           return;
         }
         
-        console.log(`✅ Query successful, ${results.length} rows returned`);
+        console.log(`✅ Query successful, results type: ${typeof results}, results:`, results);
+        
+        // Check if results is an array or object
+        if (Array.isArray(results)) {
+          console.log(`✅ ${results.length} rows returned`);
+        } else if (results && typeof results === 'object') {
+          // For operations like DELETE, UPDATE, INSERT
+          console.log(`✅ Operation successful, affected rows: ${results.affectedRows || 0}`);
+        }
         
         setTimeout(() => {
           console.log('🔌 Closing connection after query execution');
@@ -745,6 +754,7 @@ module.exports = {
   getProductStatsByUpdater,
   getAppConfigsData,
   executeUpdate,
+  executeDelete,  // Make sure this is exported
   getRecordById,
   clearCache,
   clearAllCaches,
@@ -753,9 +763,28 @@ module.exports = {
   // Connection management
   createConnectionPool: () => createConnectionPool(),
   closeConnectionPool: () => closeConnectionPool(),
+  refreshConnection: () => {
+    closeConnectionPool();
+    createConnectionPool();
+  },
   ensureConnection: () => ensureConnection(),
+  getPool: () => pool,
+  // Database connection functions
+  getConnection: () => {
+    return new Promise((resolve, reject) => {
+      if (!pool) {
+        createConnectionPool();
+      }
+      pool.getConnection((err, connection) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(connection);
+        }
+      });
+    });
+  },
   // For debugging
   _getCache: () => cache,
-  _getPool: () => pool,
   _getConnectionStatus: () => ({ isConnectionActive, lastQueryTime })
 };

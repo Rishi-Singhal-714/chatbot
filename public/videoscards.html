@@ -2469,89 +2469,170 @@
             document.getElementById('videoPlayerModal').style.display = 'none';
         }
         
-        // Delete video functionality
-        function confirmDeleteVideo(videoId, videoName) {
-            videoToDelete = videoId;
-            document.getElementById('deleteVideoName').textContent = videoName;
-            document.getElementById('deleteConfirmModal').style.display = 'block';
+   // Delete video functionality - SIMPLIFIED VERSION
+function confirmDeleteVideo(videoId, videoName) {
+    videoToDelete = videoId;
+    document.getElementById('deleteVideoName').textContent = videoName;
+    document.getElementById('deleteConfirmModal').style.display = 'block';
+    
+    // Remove any existing click handlers
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    confirmBtn.onclick = null;
+    
+    // Add new click handler
+    confirmBtn.addEventListener('click', function handleDeleteClick() {
+        deleteVideo(videoId);
+        // Remove the listener after use
+        confirmBtn.removeEventListener('click', handleDeleteClick);
+    }, { once: true });
+}
+
+function closeDeleteConfirmModal() {
+    videoToDelete = null;
+    document.getElementById('deleteConfirmModal').style.display = 'none';
+    document.getElementById('deleteVideoName').textContent = '';
+}
+
+// SIMPLE AND RELIABLE DELETE FUNCTION
+async function deleteVideo(videoId) {
+    if (!videoId) {
+        alert('No video selected');
+        closeDeleteConfirmModal();
+        return;
+    }
+    
+    console.log('🗑️ Starting delete process for video ID:', videoId);
+    
+    try {
+        // Show loading
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+        confirmBtn.innerHTML = '⏳ Deleting...';
+        confirmBtn.disabled = true;
+        
+        // Find the video first
+        const video = allVideos.find(v => v.id == videoId);
+        if (!video) {
+            throw new Error('Video not found in local data');
+        }
+        
+        console.log('📹 Video found:', video.name, 'ID:', video.id);
+        
+        // Try the API endpoint
+        const endpoint = `https://api.zulushop.in/api/v1/user/shop_able_videos/${videoId}`;
+        console.log('🌐 Calling DELETE to:', endpoint);
+        
+        // Make the request
+        const response = await fetch(endpoint, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            // Add timeout
+            signal: AbortSignal.timeout(10000)
+        });
+        
+        console.log('📡 Response status:', response.status);
+        
+        // Get response text
+        const responseText = await response.text();
+        console.log('📡 Response text:', responseText);
+        
+        // Check if successful
+        if (response.ok || response.status === 200 || response.status === 204) {
+            console.log('✅ Delete successful!');
             
-            // Set up delete confirmation handler
-            const confirmBtn = document.getElementById('confirmDeleteBtn');
-            confirmBtn.onclick = () => deleteVideo(videoId);
-        }
-        
-        function closeDeleteConfirmModal() {
-            videoToDelete = null;
-            document.getElementById('deleteConfirmModal').style.display = 'none';
-            document.getElementById('deleteVideoName').textContent = '';
-        }
-        
-        async function deleteVideo(videoId) {
-            if (!videoId) {
-                showMessage('❌ No video selected for deletion', 'error');
-                closeDeleteConfirmModal();
-                return;
+            // Update UI immediately
+            showMessage('✅ Video deleted successfully', 'success');
+            
+            // Remove video card with animation
+            const videoCard = document.getElementById(`video-card-${videoId}`);
+            if (videoCard) {
+                // Add fading animation
+                videoCard.style.transition = 'all 0.3s ease';
+                videoCard.style.opacity = '0';
+                videoCard.style.transform = 'scale(0.8)';
+                videoCard.style.height = '0';
+                videoCard.style.margin = '0';
+                videoCard.style.padding = '0';
+                videoCard.style.overflow = 'hidden';
+                
+                // Remove after animation
+                setTimeout(() => {
+                    if (videoCard.parentNode) {
+                        videoCard.parentNode.removeChild(videoCard);
+                        console.log('🗑️ Card removed from DOM');
+                    }
+                }, 300);
             }
             
-            try {
-                showMessage('🔄 Deleting video...', 'info');
-                
-                const response = await fetch(`/api/videos/${videoId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    showMessage('✅ Video deleted successfully', 'success');
-                    
-                    // Remove video card from UI
-                    const videoCard = document.getElementById(`video-card-${videoId}`);
-                    if (videoCard) {
-                        videoCard.style.opacity = '0';
-                        videoCard.style.transform = 'scale(0.8)';
-                        setTimeout(() => {
-                            videoCard.remove();
-                            
-                            // Reload videos if no cards left
-                            const container = document.getElementById('videosContainer');
-                            if (container && container.children.length === 0) {
-                                setTimeout(() => loadVideos(), 1000);
-                            }
-                        }, 300);
-                    }
-                    
-                    // Also remove from local arrays
-                    const videoIndex = allVideos.findIndex(v => v.id == videoId);
-                    if (videoIndex !== -1) {
-                        allVideos.splice(videoIndex, 1);
-                    }
-                    
-                    const filteredIndex = filteredVideos.findIndex(v => v.id == videoId);
-                    if (filteredIndex !== -1) {
-                        filteredVideos.splice(filteredIndex, 1);
-                    }
-                    
-                    // Recalculate filter counts
-                    calculateFilterCounts();
-                    updateFilterCountBadges();
-                    
-                    closeDeleteConfirmModal();
-                    
-                } else {
-                    showMessage(`❌ ${result.error || 'Failed to delete video'}`, 'error');
-                }
-            } catch (error) {
-                console.error('Delete video error:', error);
-                showMessage(`❌ ${error.message}`, 'error');
+            // Remove from data arrays
+            const allIndex = allVideos.findIndex(v => v.id == videoId);
+            if (allIndex !== -1) {
+                allVideos.splice(allIndex, 1);
+                console.log('🗑️ Removed from allVideos array');
             }
+            
+            const filteredIndex = filteredVideos.findIndex(v => v.id == videoId);
+            if (filteredIndex !== -1) {
+                filteredVideos.splice(filteredIndex, 1);
+                console.log('🗑️ Removed from filteredVideos array');
+            }
+            
+            // Update filter counts
+            calculateFilterCounts();
+            updateFilterCountBadges();
+            
+            // Show empty state if no videos left
+            if (filteredVideos.length === 0) {
+                const container = document.getElementById('videosContainer');
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div>🎬</div>
+                        <div style="font-size: 20px; font-weight: 600; margin: 10px 0; color: #2c3e50;">No Videos Found</div>
+                        <div style="color: #7f8c8d;">Try different search or filters</div>
+                        <button onclick="resetFilters()" style="background: #9C27B0; color: white; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; margin-top: 15px;">
+                            Reset All Filters
+                        </button>
+                    </div>
+                `;
+            }
+            
+            // Close modal
+            closeDeleteConfirmModal();
+            
+        } else {
+            // Show error
+            console.error('❌ Delete failed:', responseText);
+            throw new Error(`Delete failed: ${responseText}`);
         }
         
-        // Open edit video modal with custom dropdowns
-        function openEditVideoModal(videoId) {
+    } catch (error) {
+        console.error('❌ Delete error:', error);
+        
+        // Reset button
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+        confirmBtn.innerHTML = '🗑️ Delete Permanently';
+        confirmBtn.disabled = false;
+        
+        // Show error message
+        let errorMessage = 'Failed to delete video';
+        if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+            errorMessage = 'Request timed out. Please try again.';
+        } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+            errorMessage = 'Network error. Please check your connection.';
+        } else if (error.message.includes('404')) {
+            errorMessage = 'Video not found or already deleted.';
+        } else {
+            errorMessage = error.message;
+        }
+        
+        showMessage(`❌ ${errorMessage}`, 'error');
+        
+        // Don't close modal on error so user can retry
+        // closeDeleteConfirmModal();
+    }
+}       function openEditVideoModal(videoId) {
             const video = allVideos.find(v => v.id == videoId);
             if (!video) {
                 showMessage('❌ Video not found', 'error');

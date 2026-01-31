@@ -3578,18 +3578,18 @@ app.post('/admin/logout', (req, res) => {
 
 // List of protected admin pages
 const protectedAdminPages = [
-  '/',
+  // '/',
   '/appconfigs',
   '/categories',
   '/galleries',
   //'/galleriescards',
   '/products',
-  '/productscards',
+  // '/productscards',
   '/sellercards',
   '/sellers',
   '/users',
   '/videos',
-  '/videoscards'
+  // '/videoscards'
 ];
 
 // Apply admin auth middleware to all protected pages
@@ -4095,6 +4095,40 @@ app.put('/api/products/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message
+    });
+  }
+});
+// In your main server file - Fix the DELETE endpoint
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    console.log(`🗑️ Attempting to delete product ID: ${id}`);
+    
+    // Use executeQuery function instead of direct connection
+    const deleteQuery = 'DELETE FROM products WHERE id = ?';
+    
+    // Execute the query
+    const result = await db.executeQuery(deleteQuery, [id]);
+    
+    // Clear products cache
+    db.clearCache('products');
+    
+    console.log(`✅ Product ${id} deleted successfully. Result:`, result);
+    
+    return res.json({
+      success: true,
+      message: 'Product deleted successfully',
+      affectedRows: result.affectedRows || 0,
+      productId: id
+    });
+    
+  } catch (error) {
+    console.error('❌ Error deleting product:', error);
+    
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to delete product'
     });
   }
 });
