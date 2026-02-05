@@ -133,6 +133,19 @@
         th:hover {
             background: #0b7dda;
         }
+        th.sortable:hover {
+            background: linear-gradient(135deg, #0b7dda 0%, #2196F3 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(33, 150, 243, 0.2);
+        }
+        th.sorted-asc {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%) !important;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        th.sorted-desc {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%) !important;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
         td {
             padding: 10px 15px;
             border-bottom: 1px solid #ddd;
@@ -580,6 +593,10 @@
         let pageSize = 50; // Default 50 per page
         let totalPages = 1;
         let totalFilteredItems = 0;
+        
+        // Sorting variables
+        let currentSortColumn = null;
+        let currentSortDirection = 'asc'; // 'asc' or 'desc'
 
         async function loadData() {
             document.getElementById('loading').style.display = 'block';
@@ -961,7 +978,18 @@
             headers.forEach(header => {
                 const displayHeader = header.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                 const isSortable = true;
-                html += `<th class="${isSortable ? 'sortable' : ''}" onclick="sortByColumn('${header}')" title="${isSortable ? 'Click to sort' : ''}">${displayHeader}</th>`;
+                let headerContent = displayHeader;
+                
+                // Add sort indicator if this is the current sort column
+                if (currentSortColumn === header) {
+                    const indicator = currentSortDirection === 'asc' ? ' ↑' : ' ↓';
+                    headerContent += indicator;
+                }
+                
+                html += `<th class="${isSortable ? 'sortable' : ''} ${currentSortColumn === header ? (currentSortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}" 
+                         onclick="sortByColumn('${header}')" 
+                         title="Click to sort ${currentSortColumn === header ? ` (currently ${currentSortDirection === 'asc' ? 'ascending' : 'descending'})` : ''}">
+                         ${headerContent}</th>`;
             });
             html += '</tr>';
             
@@ -1055,27 +1083,96 @@
         }
         
         function sortByColumn(column) {
+            // If clicking the same column, toggle direction
+            if (currentSortColumn === column) {
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                // New column, default to ascending
+                currentSortColumn = column;
+                currentSortDirection = 'asc';
+            }
+            
+            // Sort the data
             const sortedData = [...filteredData].sort((a, b) => {
                 let aVal = a[column];
                 let bVal = b[column];
                 
-                // Handle different data types
-                if (typeof aVal === 'number' && typeof bVal === 'number') {
-                    return aVal - bVal;
-                } else if (typeof aVal === 'string' && typeof bVal === 'string') {
-                    return aVal.localeCompare(bVal);
-                } else if (aVal instanceof Date && bVal instanceof Date) {
-                    return aVal - bVal;
+                // Handle null/undefined values
+                if (aVal === null || aVal === undefined) aVal = '';
+                if (bVal === null || bVal === undefined) bVal = '';
+                
+                // Determine if values are numeric
+                const aNum = typeof aVal === 'number' ? aVal : parseFloat(aVal);
+                const bNum = typeof bVal === 'number' ? bVal : parseFloat(bVal);
+                const aIsNum = !isNaN(aNum) && aVal !== '';
+                const bIsNum = !isNaN(bNum) && bVal !== '';
+                
+                // If both are numbers, compare numerically
+                if (aIsNum && bIsNum) {
+                    return currentSortDirection === 'asc' ? aNum - bNum : bNum - aNum;
+                }
+                
+                // If one is number and one is not, numbers come first in ascending
+                if (aIsNum !== bIsNum) {
+                    if (currentSortDirection === 'asc') {
+                        return aIsNum ? -1 : 1;
+                    } else {
+                        return aIsNum ? 1 : -1;
+                    }
+                }
+                
+                // For dates, try to parse as date
+                if (isValidDate(aVal) && isValidDate(bVal)) {
+                    const aDate = new Date(aVal);
+                    const bDate = new Date(bVal);
+                    return currentSortDirection === 'asc' ? aDate - bDate : bDate - aDate;
+                }
+                
+                // For booleans or status-like fields
+                if (column.toLowerCase() === 'status' || 
+                    column.toLowerCase().includes('active') ||
+                    column.toLowerCase().includes('enabled')) {
+                    const aBool = convertToBoolean(aVal);
+                    const bBool = convertToBoolean(bVal);
+                    if (currentSortDirection === 'asc') {
+                        return aBool === bBool ? 0 : aBool ? 1 : -1;
+                    } else {
+                        return aBool === bBool ? 0 : aBool ? -1 : 1;
+                    }
+                }
+                
+                // Default: string comparison
+                const aStr = String(aVal).toLowerCase();
+                const bStr = String(bVal).toLowerCase();
+                
+                if (currentSortDirection === 'asc') {
+                    return aStr.localeCompare(bStr);
                 } else {
-                    // Convert to string for comparison
-                    return String(aVal || '').localeCompare(String(bVal || ''));
+                    return bStr.localeCompare(aStr);
                 }
             });
             
             filteredData = sortedData;
             displayCurrentPage();
-            showMessage(`Sorted by ${column.replace(/_/g, ' ')}`, 'info');
+            showMessage(`Sorted by ${column.replace(/_/g, ' ')} (${currentSortDirection === 'asc' ? 'A→Z / 0→9' : 'Z→A / 9→0'})`, 'info');
             updatePaginationControls();
+        }
+        
+        // Helper function to check if a string is a valid date
+        function isValidDate(dateString) {
+            const date = new Date(dateString);
+            return date instanceof Date && !isNaN(date);
+        }
+        
+        // Helper function to convert value to boolean
+        function convertToBoolean(value) {
+            if (typeof value === 'boolean') return value;
+            if (typeof value === 'number') return value !== 0;
+            if (typeof value === 'string') {
+                const lower = value.toLowerCase().trim();
+                return lower === 'true' || lower === 'yes' || lower === 'active' || lower === 'on' || lower === '1';
+            }
+            return false;
         }
         
         function openFieldEditModal(cell) {
