@@ -3579,16 +3579,16 @@ app.post('/admin/logout', (req, res) => {
 // List of protected admin pages
 const protectedAdminPages = [
   // '/',
-  '/appconfigs',
-  '/categories',
-  '/galleries',
+  //'/appconfigs',
+  //'/categories',
+  //'/galleries',
   //'/galleriescards',
-  '/products',
+  //'/products',
   // '/productscards',
-  '/sellercards',
-  '/sellers',
-  '/users',
-  '/videos',
+  //'/sellercards',
+  //'/sellers',
+  //'/users',
+  //'/videos',
   // '/videoscards'
 ];
 
@@ -3597,18 +3597,18 @@ protectedAdminPages.forEach(route => {
   app.get(route, checkAdminAuth, (req, res) => {
     // Serve the appropriate HTML file
     const fileMap = {
-      '/': 'index.html',
-      '/appconfigs': 'public/appconfigs.html',
-      '/categories': 'public/categories.html',
-      '/galleries': 'public/galleries.html',
+      //'/': 'index.html',
+      //'/appconfigs': 'public/appconfigs.html',
+      //'/categories': 'public/categories.html',
+      //'/galleries': 'public/galleries.html',
       //'/galleriescards': 'public/galleriescards.html',
-      '/products': 'public/products.html',
-      '/productscards': 'public/productscards.html',
-      '/sellercards': 'public/sellercards.html',
-      '/sellers': 'public/sellers.html',
-      '/users': 'public/users.html',
-      '/videos': 'public/videos.html',
-      '/videoscards': 'public/videoscards.html'
+      //'/products': 'public/products.html',
+      //'/productscards': 'public/productscards.html',
+      //'/sellercards': 'public/sellercards.html',
+      //'/sellers': 'public/sellers.html',
+      //'/users': 'public/users.html',
+      //'/videos': 'public/videos.html',
+      //'/videoscards': 'public/videoscards.html'
     };
     
     const fileName = fileMap[route] || 'index.html';
