@@ -25,8 +25,9 @@ const tableMapping = {
   'videos': 'shop_able_videos',
   'galleries': 'galleries',
   'appconfigs': 'app_configs',
-  'categories': 'categories'
-
+  'categories': 'categories',
+  'socbookinguser': 'soc_booking_user',
+  'soc_booking_user': 'soc_booking_user'  // This is the issue
 };
 
 // Column mapping for each table - ONLY the columns we want to fetch and edit
@@ -70,6 +71,25 @@ const columnMapping = {
     'id', 'name', 'parent_id', 'slug', 'image', 'banner', 'banner1', 'banner2',
     'row_order', 'priority', 'relevant', 'category', 'sub_sub_category',
     'business', 'status', 'clicks', 'by_default', 'IMAGE1', 'IMAGE2'
+  ],
+    'socbookinguser': [
+'id', 'booking_id', 'child_id', 'user_id', 'user_name', 'booking_type', 
+'pickup_location', 'delivery_location', 'phone', 'booking_date', 'stylist_id', 
+'stylist_name', 'rider_id', 'rider_name', 'vehicle_id', 'vehicle_name', 
+'order_id', 'order_status', 'appointment_status', 'stage', 'created_at', 
+'updated_at', 'society_id', 'society_name', 'store_Id', 'store_name', 
+'product_ids', 'variant_ids', 'store_ids', 'seller_id', 'final_time', 
+'nowlater', 'extra_notes', 'video_id', 'concierge', 'concierge_type', 
+'price_point_1', 'price_point_2', 'categories', 'colors', 'concierge_description', 
+'concierge_outlets', 'concierge_malls', 'price_list', 'body_types', 
+'concierge_texture', 'concierge_fabric', 'concierge_trends', 'concierge_occasion', 
+'prompt_chat', 'outlet_total', 'discount', 'club_points', 'final_payable', 
+'amount_due', 'payment_status', 'qr_image', 'receipt', 'product_names', 
+'product_prices', 'product_discounts', 'product_tax_percents', 'product_tax_values', 
+'product_price_excl_tax', 'product_images', 'product_barcodes', 'invoice_pdf', 
+'customer_address', 'consumer_confirm', 'video_json', 'new_categories', 
+'booked_by', 'booked_how', 'booked_from', 'qr_code_id', 'coupon_code', 
+'product_details'
   ]
 };
 
@@ -145,7 +165,26 @@ const cache = {
         business, status, clicks, by_default, IMAGE1, IMAGE2
       FROM u130660877_zulu.categories
     `
-  }
+  },
+'soc_booking_user': {
+  data: null,
+  timestamp: 0,
+  query: `
+    SELECT
+      ${columnMapping.socbookinguser.join(',\n        ')}
+    FROM u130660877_zulu.soc_booking_user
+  `
+  },
+  'socbookinguser': {
+  data: null,
+  timestamp: 0,
+  query: `
+    SELECT
+      ${columnMapping.socbookinguser.join(',\n        ')}
+    FROM u130660877_zulu.soc_booking_user
+  `
+}
+
 };
 
 const CACHE_TTL = 7200000;
@@ -270,6 +309,13 @@ function executeQuery(query, params = []) {
 
 // Execute update query - only updates the specific field
 function executeUpdate(table, id, updateData) {
+    // Handle table alias mapping
+  const tableAliasMap = {
+    'socbookinguser': 'soc_booking_user',
+    'soc_booking_user': 'soc_booking_user'
+  };
+  
+  const actualTable = tableAliasMap[table] || table;
   return new Promise((resolve, reject) => {
     ensureConnection();
     
@@ -280,9 +326,9 @@ function executeUpdate(table, id, updateData) {
     }
     
     // Get actual table name from mapping
-    const tableName = tableMapping[table];
+    const tableName = tableMapping[actualTable];
     if (!tableName) {
-      reject(new Error(`Invalid table: ${table}`));
+      reject(new Error(`Invalid table: ${actualTable}`));
       return;
     }
     
@@ -543,6 +589,14 @@ async function logProductVariantsBeforeUpdate(productId) {
 
 // Get single record by ID - only returns allowed columns
 function getRecordById(table, id) {
+    // Handle table alias mapping
+  const tableAliasMap = {
+    'socbookinguser': 'soc_booking_user',
+    'soc_booking_user': 'soc_booking_user'
+  };
+  
+  const actualTable = tableAliasMap[table] || table;
+  
   return new Promise((resolve, reject) => {
     ensureConnection();
     
@@ -552,9 +606,9 @@ function getRecordById(table, id) {
     }
     
     // Get actual table name from mapping
-    const tableName = tableMapping[table];
+    const tableName = tableMapping[actualTable];
     if (!tableName) {
-      reject(new Error(`Invalid table: ${table}`));
+      reject(new Error(`Invalid table: ${actualTable}`));
       return;
     }
     
@@ -600,32 +654,71 @@ function getRecordById(table, id) {
 
 // Get cached data or fetch from database
 async function getCachedData(type) {
+  // Handle alias mapping
+  const aliasMap = {
+    'socbookinguser': 'soc_booking_user',
+    'soc_booking_user': 'soc_booking_user'
+  };
+  
+  const actualType = aliasMap[type] || type;
+  
+  // Check if cache type exists
+  if (!cache[actualType]) {
+    console.error(`❌ Cache type "${type}" not found. Available types: ${Object.keys(cache).join(', ')}`);
+    throw new Error(`Cache type "${type}" not configured`);
+  }
+  
   const now = Date.now();
   
-  // Check cache
-  if (cache[type].data && (now - cache[type].timestamp) < CACHE_TTL) {
-    console.log(`📦 Returning cached ${type} data (no DB connection needed)`);
-    return cache[type].data;
+  // Check cache with null check
+  if (cache[actualType].data && (now - cache[actualType].timestamp) < CACHE_TTL) {
+    console.log(`📦 Returning cached ${actualType} data (no DB connection needed)`);
+    return cache[actualType].data;
   }
   
   // Fetch from database
-  console.log(`🔄 Fetching ${type} from database...`);
-  const query = cache[type].query;
+  console.log(`🔄 Fetching ${actualType} from database...`);
+  
+  // Ensure query exists
+  if (!cache[actualType].query) {
+    throw new Error(`No query configured for ${actualType}`);
+  }
+  
+  const query = cache[actualType].query;
   const data = await executeQuery(query);
   
-  // Update cache
-  cache[type].data = data;
-  cache[type].timestamp = now;
+  // Update cache for both aliases
+  cache[actualType].data = data;
+  cache[actualType].timestamp = now;
+  
+  // Also update the other alias if it exists
+  if (type !== actualType && cache[type]) {
+    cache[type].data = data;
+    cache[type].timestamp = now;
+  }
   
   return data;
 }
-
 // Clear specific cache
 function clearCache(type) {
-  if (cache[type]) {
+  // Handle alias mapping
+  const aliasMap = {
+    'socbookinguser': 'soc_booking_user',
+    'soc_booking_user': 'soc_booking_user'
+  };
+  
+  const actualType = aliasMap[type] || type;
+  
+  if (cache[actualType]) {
+    cache[actualType].data = null;
+    cache[actualType].timestamp = 0;
+    console.log(`🧹 Cleared cache for ${type}`);
+  }
+  
+  // Also clear the other alias if it exists
+  if (type !== actualType && cache[type]) {
     cache[type].data = null;
     cache[type].timestamp = 0;
-    console.log(`🧹 Cleared cache for ${type}`);
   }
 }
 

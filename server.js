@@ -3456,9 +3456,6 @@ async function handleMessage(sessionId, userMessage, isAuthenticated = false) {
   }
 }
 
-// ===================== REMAINING CODE (UNCHANGED) =====================
-// ===================== ADMIN OTP ROUTES =====================
-
 /**
  * Send OTP for admin pages
  */
@@ -3589,7 +3586,8 @@ const protectedAdminPages = [
   //'/sellers',
   //'/users',
   //'/videos',
-  // '/videoscards'
+  // '/videoscards',
+  // '/socbookinguser'
 ];
 
 // Apply admin auth middleware to all protected pages
@@ -3608,7 +3606,9 @@ protectedAdminPages.forEach(route => {
       //'/sellers': 'public/sellers.html',
       //'/users': 'public/users.html',
       //'/videos': 'public/videos.html',
-      //'/videoscards': 'public/videoscards.html'
+      //'/videoscards': 'public/videoscards.html',
+      //'/socbookinguser': 'public/socbookinguser.html'
+
     };
     
     const fileName = fileMap[route] || 'index.html';
@@ -4228,20 +4228,94 @@ app.get('/api/categories/:id', async (req, res) => {
     });
   }
 });
-// Add categories to the clear-cache endpoint
+// -------------------------
+// SOC Booking Users Endpoints
+// -------------------------
+
+app.get('/api/socbookinguser', async (req, res) => {
+  try {
+    const data = await db.getCachedData('socbookinguser'); // Changed from 'soc_booking_user'
+    
+    res.json({
+      success: true,
+      data: data,
+      count: data.length
+    });
+  } catch (error) {
+    console.error('Error fetching SOC booking users:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Update SOC booking user record
+app.put('/api/socbookinguser/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    // Remove id from update data if present
+    delete updateData.id;
+    
+    const result = await db.executeUpdate('socbookinguser', id, updateData); // Changed from 'soc_booking_user'
+    
+    res.json({
+      success: true,
+      message: 'SOC booking user updated successfully',
+      affectedRows: result.affectedRows
+    });
+  } catch (error) {
+    console.error('Update SOC booking user error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get single SOC booking user record
+app.get('/api/socbookinguser/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const record = await db.getRecordById('socbookinguser', id); // Changed from 'soc_booking_user'
+    
+    if (!record) {
+      return res.status(404).json({
+        success: false,
+        error: 'SOC booking user record not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: record
+    });
+  } catch (error) {
+    console.error('Get SOC booking user record error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 app.post('/api/clear-cache/:type', (req, res) => {
   const { type } = req.params;
   
   if (type === 'all') {
     db.clearAllCaches();
     res.json({ success: true, message: 'All caches cleared' });
-  } else if (['products', 'sellers', 'videos', 'users', 'galleries', 'appconfigs', 'categories'].includes(type)) {
+  } else if (['products', 'sellers', 'videos', 'users', 'galleries', 'appconfigs', 'categories', 'soc_booking_user','socbookinguser'].includes(type)) {
     db.clearCache(type);
     res.json({ success: true, message: `Cache cleared for ${type}` });
   } else {
     res.status(400).json({ success: false, error: 'Invalid cache type' });
   }
 });
+
 // Get product stats by updater
 app.get('/api/product-stats-by-updater', async (req, res) => {
   try {
@@ -4542,20 +4616,7 @@ app.get('/api/users', async (req, res) => {
     });
   }
 });
-// Clear specific cache
-app.post('/api/clear-cache/:type', (req, res) => {
-  const { type } = req.params;
-  
-  if (type === 'all') {
-    db.clearAllCaches();  // Changed from dbFunctions
-    res.json({ success: true, message: 'All caches cleared' });
-  } else if (['products', 'sellers', 'videos', 'users', 'galleries'].includes(type)) {
-    db.clearCache(type);  // Changed from dbFunctions
-    res.json({ success: true, message: `Cache cleared for ${type}` });
-  } else {
-    res.status(400).json({ success: false, error: 'Invalid cache type' });
-  }
-});
+
 // Get cache status
 app.get('/api/cache-status', (req, res) => {
   const status = db.getAllCacheStatus();  // Changed from dbFunctions
@@ -4763,6 +4824,10 @@ app.get('/galleriescards', (req, res) => {
 app.get('/categories', (req, res) => {
   res.sendFile(__dirname + '/public/categories.html');
 });
+app.get('/socbookinguser', (req, res) => {
+  res.sendFile(__dirname + '/public/socbookinguser.html');
+});
+
 app.put('/api/:table/:id', async (req, res) => {
   try {
     const { table, id } = req.params;

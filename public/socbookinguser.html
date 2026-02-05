@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SOC Booking Users - Zulu Club</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #2196F3;
+            padding-bottom: 10px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .back-btn {
+            background: #6c757d;
+            color: white;
+        }
+        .refresh-btn {
+            background: #2196F3;
+            color: white;
+        }
+        .search-box {
+            flex-grow: 1;
+            max-width: 400px;
+            margin-left: auto;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.3s;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: #2196F3;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+        .search-options {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #666;
+        }
+        .search-options label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+        .search-options input[type="checkbox"] {
+            margin: 0;
+            cursor: pointer;
+        }
+        #message {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-weight: bold;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        #loading {
+            padding: 20px;
+            text-align: center;
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            margin: 20px 0;
+            color: #856404;
+        }
+        #error {
+            padding: 20px;
+            text-align: center;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            margin: 20px 0;
+            color: #721c24;
+        }
+        #dataContainer {
+            overflow-x: auto;
+            margin-top: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #2196F3;
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        th:hover {
+            background: #0b7dda;
+        }
+        td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #ddd;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        td.editable:hover {
+            background: #f0f8ff;
+            transform: scale(1.02);
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);
+            z-index: 1;
+        }
+        td.editable::after {
+            content: '✏️';
+            position: absolute;
+            top: 50%;
+            right: 5px;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 10px;
+        }
+        td.editable:hover::after {
+            opacity: 1;
+        }
+        tr:hover td {
+            background: #f9f9f9;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        .cache-info {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 14px;
+            color: #1565c0;
+        }
+        /* Pagination Controls */
+        .pagination-controls {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            border: 1px solid #dee2e6;
+        }
+        .page-size-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+        .page-size-selector select {
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: 2px solid #ddd;
+            background: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .page-size-selector select:focus {
+            outline: none;
+            border-color: #2196F3;
+        }
+        .page-info {
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+        }
+        .pagination-buttons {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .pagination-buttons button {
+            padding: 8px 15px;
+            font-size: 14px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .pagination-buttons button:hover:not(:disabled) {
+            background: #0b7dda;
+            transform: translateY(-2px);
+        }
+        .pagination-buttons button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .page-number {
+            padding: 8px 12px;
+            background: #2196F3;
+            color: white;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 0 2px;
+            cursor: default;
+        }
+        .page-number:hover {
+            background: #0b7dda;
+        }
+        .stats-info {
+            background: #e8f5e9;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 14px;
+            color: #333;
+            border-left: 4px solid #4CAF50;
+        }
+        .stats-info span {
+            font-weight: bold;
+        }
+        .stats-info .total {
+            color: #2196F3;
+        }
+        .stats-info .showing {
+            color: #4CAF50;
+        }
+        .stats-info .active {
+            color: #4CAF50;
+        }
+        .stats-info .inactive {
+            color: #f44336;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        .empty-state .emoji {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .empty-state h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .empty-state p {
+            margin: 0 0 20px 0;
+            max-width: 500px;
+            margin: 0 auto 20px;
+        }
+        mark {
+            background-color: yellow;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+        .modal-header h2 {
+            margin: 0;
+            color: #333;
+            font-size: 1.5rem;
+        }
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #666;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+        .close-modal:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+        .field-info {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196F3;
+        }
+        .field-info h3 {
+            margin: 0 0 5px 0;
+            color: #333;
+            font-size: 16px;
+        }
+        .field-info p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+            font-size: 14px;
+        }
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.3s;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #2196F3;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+            font-family: inherit;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+        .save-btn {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+        .save-btn:hover {
+            background: #218838;
+        }
+        .cancel-btn {
+            background: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+        .cancel-btn:hover {
+            background: #5a6268;
+        }
+        @media (max-width: 768px) {
+            body {
+                margin: 15px;
+            }
+            .controls {
+                flex-direction: column;
+            }
+            .controls button {
+                width: 100%;
+            }
+            .search-box {
+                max-width: 100%;
+                margin-left: 0;
+            }
+            .pagination-controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .stats-info {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            table {
+                font-size: 12px;
+            }
+            th, td {
+                padding: 8px 10px;
+            }
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+            .modal-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🏢 SOC Booking Users</h1>
+    
+    <div class="controls">
+        <button class="back-btn" onclick="location.href='/'">← Back to Dashboard</button>
+        <button class="refresh-btn" onclick="loadData()">🔄 Refresh Data</button>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search by name, mobile, society..." onkeyup="handleSearch()">
+            <div class="search-options">
+                <label>
+                    <input type="checkbox" id="searchMobileOnly" onchange="toggleMobileSearch()">
+                    Search mobile numbers only
+                </label>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stats-info">
+        <span class="total">Total Users: <span id="totalCount">0</span></span>
+        <span class="showing">Showing: <span id="showingCount">0</span></span>
+        <span class="active">Active: <span id="activeCount">0</span></span>
+        <span class="inactive">Inactive: <span id="inactiveCount">0</span></span>
+    </div>
+    
+    <div class="pagination-controls">
+        <div class="page-size-selector">
+            <span>Show:</span>
+            <select id="pageSize" onchange="changePageSize()">
+                <option value="10">10 per page</option>
+                <option value="25">25 per page</option>
+                <option value="50" selected>50 per page</option>
+                <option value="100">100 per page</option>
+                <option value="500">500 per page</option>
+                <option value="0">Show All</option>
+            </select>
+        </div>
+        
+        <div class="page-info">
+            Page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+            (<span id="showingInfo">0</span> users)
+        </div>
+        
+        <div class="pagination-buttons">
+            <button id="firstPageBtn" onclick="goToPage(1)" title="First Page">« First</button>
+            <button id="prevPageBtn" onclick="prevPage()" title="Previous Page">‹ Previous</button>
+            <span id="pageNumbers"></span>
+            <button id="nextPageBtn" onclick="nextPage()" title="Next Page">Next ›</button>
+            <button id="lastPageBtn" onclick="goToLastPage()" title="Last Page">Last »</button>
+        </div>
+    </div>
+    
+    <div id="message"></div>
+    <div id="loading">Loading SOC booking users...</div>
+    <div id="error" style="display: none;"></div>
+    
+    <div id="dataContainer"></div>
+
+    <!-- Edit Modal for Single Field -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit SOC Booking User Field</h2>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            
+            <div class="field-info">
+                <h3 id="fieldName"></h3>
+                <p id="fieldInfo">Editing SOC booking user field</p>
+            </div>
+            
+            <form id="editForm">
+                <div class="form-group">
+                    <label id="fieldLabel"></label>
+                    <div id="fieldInput"></div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="save-btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let allData = [];          // All data from API
+        let filteredData = [];     // Data after filters
+        let currentData = [];      // Data for current page
+        let currentTable = 'socbookinguser';
+        let currentEditId = null;
+        let currentEditField = null;
+        let originalValue = null;
+        
+        // Search and Pagination variables
+        let searchTerm = '';
+        let searchTimeout = null;
+        let searchMobileOnly = false;
+        
+        // Pagination variables
+        let currentPage = 1;
+        let pageSize = 50; // Default 50 per page
+        let totalPages = 1;
+        let totalFilteredItems = 0;
+
+        async function loadData() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('dataContainer').innerHTML = '';
+            
+            try {
+                // Try the main endpoint first
+                let response = await fetch(`/api/${currentTable}`);
+                
+                // Check if response is OK
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                // Check content type
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error(`Expected JSON but got: ${contentType}`);
+                }
+                
+                const data = await response.json();
+                console.log('API Response:', data);
+                
+                if (data && data.success) {
+                    if (Array.isArray(data.data)) {
+                        allData = data.data;
+                        
+                        // Process data for consistent format
+                        if (allData.length > 0) {
+                            allData = allData.map((user, index) => {
+                                // Ensure id exists
+                                if (!user.id && user.ID) user.id = user.ID;
+                                if (!user.id && user.user_id) user.id = user.user_id;
+                                if (!user.id) user.id = index + 1;
+                                
+                                // Process status field
+                                if (user.status !== undefined) {
+                                    let status = user.status;
+                                    if (typeof status === 'string') {
+                                        const statusStr = status.toLowerCase().trim();
+                                        if (statusStr === 'on' || statusStr === 'active' || statusStr === 'true' || statusStr === '1' || statusStr === 'yes') {
+                                            status = 1;
+                                        } else if (statusStr === 'off' || statusStr === 'inactive' || statusStr === 'false' || statusStr === '0' || statusStr === 'no') {
+                                            status = 0;
+                                        } else {
+                                            status = 0; // Default to inactive
+                                        }
+                                    }
+                                    user.status = Number(status) || 0;
+                                }
+                                
+                                // Ensure mobile field exists for searching
+                                if (!user.mobile && user.phone) {
+                                    user.mobile = user.phone;
+                                }
+                                if (!user.mobile && user.contact) {
+                                    user.mobile = user.contact;
+                                }
+                                if (!user.mobile && user.mobile_no) {
+                                    user.mobile = user.mobile_no;
+                                }
+                                if (!user.mobile && user.contact_number) {
+                                    user.mobile = user.contact_number;
+                                }
+                                
+                                // Ensure society field exists
+                                if (!user.society && user.society_name) {
+                                    user.society = user.society_name;
+                                }
+                                if (!user.society && user.soc_name) {
+                                    user.society = user.soc_name;
+                                }
+                                if (!user.society && user.society_name) {
+                                    user.society = user.society_name;
+                                }
+                                
+                                return user;
+                            });
+                        }
+                        
+                        applyFilter();
+                        updateStats();
+                        
+                        // Show cache info
+                        const cacheDiv = document.createElement('div');
+                        cacheDiv.className = 'cache-info';
+                        cacheDiv.innerHTML = `
+                            <strong>Cache Info:</strong> SOC Booking Users data is cached for 2 hours. 
+                            To force fresh data, clear cache from Dashboard.
+                            Database connection closes after 5 minutes of inactivity.
+                        `;
+                        document.getElementById('dataContainer').prepend(cacheDiv);
+                        
+                        showMessage(`✅ Loaded ${allData.length} SOC booking users`, 'success');
+                    } else {
+                        console.error('Invalid data format:', data.data);
+                        showError('Invalid data format received from server');
+                    }
+                } else {
+                    console.error('API returned error:', data);
+                    showError(`API Error: ${data ? data.error || 'Unknown error' : 'No response'}`);
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                
+                // Try test endpoint as fallback
+                try {
+                    console.log('Trying test endpoint...');
+                    const testResponse = await fetch(`/api/${currentTable}-test`);
+                    const testData = await testResponse.json();
+                    
+                    if (testData && testData.success) {
+                        allData = testData.data || [];
+                        
+                        if (allData.length > 0) {
+                            allData = allData.map((user, index) => {
+                                if (!user.id) user.id = index + 1;
+                                return user;
+                            });
+                        }
+                        
+                        applyFilter();
+                        updateStats();
+                        showMessage(`Loaded ${allData.length} test users (fallback mode)`, 'info');
+                    } else {
+                        throw new Error('Both endpoints failed');
+                    }
+                } catch (fallbackError) {
+                    console.error('Fallback also failed:', fallbackError);
+                    showError(`Failed to load data: ${error.message}`);
+                    document.getElementById('dataContainer').innerHTML = 
+                        '<div class="empty-state">📡<h3>Network Error</h3><p>Please check your connection and try again.</p><button class="refresh-btn" onclick="loadData()" style="padding: 10px 20px;">Retry</button></div>';
+                }
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+        
+        function applyFilter() {
+            filteredData = [...allData];
+            
+            // Apply search filter
+            if (searchTerm.trim() !== '') {
+                const searchLower = searchTerm.toLowerCase();
+                filteredData = filteredData.filter(user => {
+                    if (searchMobileOnly) {
+                        // Search mobile numbers only
+                        const mobile = String(user.mobile || user.phone || user.contact || user.mobile_no || user.contact_number || '').toLowerCase();
+                        return mobile.includes(searchLower);
+                    } else {
+                        // Search all fields
+                        return Object.values(user).some(value => {
+                            if (typeof value === 'string') {
+                                return value.toLowerCase().includes(searchLower);
+                            } else if (typeof value === 'number') {
+                                return value.toString().includes(searchTerm);
+                            } else if (typeof value === 'boolean') {
+                                return value.toString().includes(searchLower);
+                            }
+                            return false;
+                        });
+                    }
+                });
+            }
+            
+            totalFilteredItems = filteredData.length;
+            
+            updatePagination();
+            displayCurrentPage();
+            updateSearchResults();
+            updateStats();
+        }
+        
+        function handleSearch() {
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+            
+            searchTimeout = setTimeout(() => {
+                searchTerm = document.getElementById('searchInput').value;
+                currentPage = 1; // Reset to first page when searching
+                applyFilter();
+            }, 500); // 500ms delay for smoother experience
+        }
+        
+        function toggleMobileSearch() {
+            searchMobileOnly = document.getElementById('searchMobileOnly').checked;
+            if (searchTerm.trim() !== '') {
+                currentPage = 1;
+                applyFilter();
+            }
+        }
+        
+        // Pagination functions
+        function updatePagination() {
+            pageSize = parseInt(document.getElementById('pageSize').value) || 50;
+            
+            if (pageSize === 0) {
+                totalPages = 1;
+                currentPage = 1;
+            } else {
+                totalPages = Math.ceil(totalFilteredItems / pageSize);
+                if (currentPage > totalPages) {
+                    currentPage = totalPages || 1;
+                }
+            }
+            
+            updatePaginationControls();
+            updatePageInfo();
+        }
+        
+        function changePageSize() {
+            pageSize = parseInt(document.getElementById('pageSize').value) || 50;
+            currentPage = 1; // Reset to first page
+            applyFilter();
+            showMessage(`Changed page size to ${pageSize === 0 ? 'Show All' : pageSize}`, 'info');
+        }
+        
+        function updatePaginationControls() {
+            document.getElementById('currentPage').textContent = currentPage;
+            document.getElementById('totalPages').textContent = totalPages;
+            
+            // Update button states
+            document.getElementById('firstPageBtn').disabled = currentPage === 1;
+            document.getElementById('prevPageBtn').disabled = currentPage === 1;
+            document.getElementById('nextPageBtn').disabled = currentPage === totalPages || totalPages === 0;
+            document.getElementById('lastPageBtn').disabled = currentPage === totalPages || totalPages === 0;
+            
+            // Update page numbers display
+            updatePageNumbers();
+        }
+        
+        function updatePageNumbers() {
+            const pageNumbersDiv = document.getElementById('pageNumbers');
+            let pageNumbersHTML = '';
+            
+            // Show at most 5 page numbers
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            
+            // Adjust start if we're near the end
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                if (i === currentPage) {
+                    pageNumbersHTML += `<span class="page-number">${i}</span>`;
+                } else {
+                    pageNumbersHTML += `<button onclick="goToPage(${i})" style="padding: 8px 12px; border-radius: 5px; background: #6c757d; color: white; border: none; margin: 0 2px;">${i}</button>`;
+                }
+            }
+            
+            pageNumbersDiv.innerHTML = pageNumbersHTML;
+        }
+        
+        function goToPage(page) {
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                displayCurrentPage();
+                updatePaginationControls();
+            }
+        }
+        
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                displayCurrentPage();
+                updatePaginationControls();
+            }
+        }
+        
+        function nextPage() {
+            if (currentPage < totalPages) {
+                currentPage++;
+                displayCurrentPage();
+                updatePaginationControls();
+            }
+        }
+        
+        function goToLastPage() {
+            currentPage = totalPages;
+            displayCurrentPage();
+            updatePaginationControls();
+        }
+        
+        function displayCurrentPage() {
+            const container = document.getElementById('dataContainer');
+            
+            if (filteredData.length === 0) {
+                container.innerHTML = 
+                    '<div class="empty-state">🏢<h3>No SOC Booking Users Found</h3><p>No users match your search criteria. Try adjusting your search terms.</p></div>';
+                return;
+            }
+            
+            let startIndex, endIndex;
+            
+            if (pageSize === 0) {
+                // Show all
+                startIndex = 0;
+                endIndex = filteredData.length;
+                currentData = filteredData;
+            } else {
+                startIndex = (currentPage - 1) * pageSize;
+                endIndex = Math.min(startIndex + pageSize, filteredData.length);
+                currentData = filteredData.slice(startIndex, endIndex);
+            }
+            
+            displayData(currentData);
+            updatePageInfo();
+        }
+        
+        function updatePageInfo() {
+            let showingText;
+            if (pageSize === 0) {
+                showingText = `${totalFilteredItems}`;
+            } else {
+                const startIndex = (currentPage - 1) * pageSize + 1;
+                const endIndex = Math.min(currentPage * pageSize, totalFilteredItems);
+                showingText = `${startIndex}-${endIndex} of ${totalFilteredItems}`;
+            }
+            
+            document.getElementById('showingInfo').textContent = showingText;
+            document.getElementById('showingCount').textContent = totalFilteredItems;
+        }
+        
+        function updateStats() {
+            if (!allData || !Array.isArray(allData)) {
+                document.getElementById('activeCount').textContent = '0';
+                document.getElementById('inactiveCount').textContent = '0';
+                document.getElementById('totalCount').textContent = '0';
+                document.getElementById('showingCount').textContent = '0';
+                return;
+            }
+            
+            const activeCount = allData.filter(user => {
+                return Number(user.status) === 1;
+            }).length;
+            
+            const inactiveCount = allData.filter(user => {
+                return Number(user.status) === 0;
+            }).length;
+            
+            document.getElementById('activeCount').textContent = activeCount;
+            document.getElementById('inactiveCount').textContent = inactiveCount;
+            document.getElementById('totalCount').textContent = allData.length;
+            document.getElementById('showingCount').textContent = totalFilteredItems;
+        }
+        
+        function updateSearchResults() {
+            if (searchTerm.trim() !== '' && totalFilteredItems > 0) {
+                showMessage(`Found ${totalFilteredItems} SOC booking users matching "${searchTerm}"${searchMobileOnly ? ' (mobile only)' : ''}`, 'info');
+            }
+        }
+        
+        function displayData(data) {
+            const container = document.getElementById('dataContainer');
+            
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                container.innerHTML = 
+                    '<div class="empty-state">🏢<h3>No SOC Booking Users Found</h3><p>No users match your search criteria. Try adjusting your search terms.</p></div>';
+                return;
+            }
+            
+            const firstRow = data[0];
+            if (!firstRow || typeof firstRow !== 'object') {
+                container.innerHTML = '<div class="empty-state">⚠️<h3>Invalid Data</h3><p>Data format is invalid.</p></div>';
+                return;
+            }
+            
+            // Get headers, excluding internal fields
+            const headers = Object.keys(firstRow);
+            
+            let html = '<table>';
+            
+            // Create header row - all columns are clickable
+            html += '<tr>';
+            headers.forEach(header => {
+                const displayHeader = header.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                const isSortable = true;
+                html += `<th class="${isSortable ? 'sortable' : ''}" onclick="sortByColumn('${header}')" title="${isSortable ? 'Click to sort' : ''}">${displayHeader}</th>`;
+            });
+            html += '</tr>';
+            
+            // Create data rows - all cells are editable
+            data.forEach((row, index) => {
+                html += '<tr>';
+                headers.forEach(header => {
+                    let value = row[header];
+                    if (value === null || value === undefined) value = '';
+                    if (typeof value === 'object') {
+                        try {
+                            value = JSON.stringify(value);
+                        } catch (e) {
+                            value = String(value);
+                        }
+                    }
+                    
+                    // Format specific fields
+                    let displayValue = String(value);
+                    let cellStyle = '';
+                    
+                    // Highlight search term in results
+                    if (searchTerm.trim() !== '' && typeof value === 'string') {
+                        const searchLower = searchTerm.toLowerCase();
+                        const valueLower = value.toLowerCase();
+                        if (valueLower.includes(searchLower)) {
+                            const regex = new RegExp(`(${searchTerm})`, 'gi');
+                            displayValue = String(value).replace(regex, '<mark>$1</mark>');
+                            cellStyle += 'background: #fff9c4;';
+                        }
+                    }
+                    
+                    // Style specific fields
+                    if (header === 'status') {
+                        const isActive = Number(value) === 1;
+                        cellStyle += isActive ? 'color: #4CAF50; font-weight: bold;' : 'color: #f44336; font-weight: bold;';
+                        displayValue = isActive ? 'Active' : 'Inactive';
+                    } else if (header === 'mobile' || header === 'phone' || header === 'mobile_no' || header === 'contact_number') {
+                        // Format phone numbers
+                        if (value) {
+                            const phoneStr = String(value).replace(/\D/g, '');
+                            if (phoneStr.length === 10) {
+                                displayValue = `+91 (${phoneStr.slice(0,3)}) ${phoneStr.slice(3,6)}-${phoneStr.slice(6)}`;
+                            }
+                            cellStyle += 'font-weight: bold; color: #2196F3;';
+                        }
+                    } else if (header === 'email') {
+                        cellStyle += 'color: #673AB7; font-weight: bold;';
+                    } else if (header === 'created_at' || header === 'updated_at' || header === 'joining_date' || header === 'created_date') {
+                        // Format dates
+                        if (value) {
+                            const date = new Date(value);
+                            if (!isNaN(date.getTime())) {
+                                displayValue = date.toLocaleDateString('en-IN') + ' ' + date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                            }
+                        }
+                    } else if (header === 'society' || header === 'society_name' || header === 'soc_name') {
+                        cellStyle += 'color: #FF5722; font-weight: bold;';
+                    } else if (header === 'name' || header === 'full_name' || header === 'username') {
+                        cellStyle += 'font-weight: bold; color: #333;';
+                    }
+                    
+                    const truncatedValue = displayValue.substring(0, 50);
+                    const isTruncated = displayValue.length > 50;
+                    const titleText = displayValue.length > 50 ? displayValue : '';
+                    
+                    html += `<td class="editable" 
+                             title="${titleText}\n\nClick to edit ${header}" 
+                             data-id="${row.id}" 
+                             data-field="${header}" 
+                             data-value="${encodeURIComponent(value)}"
+                             onclick="openFieldEditModal(this)"
+                             style="${cellStyle}">
+                        ${isTruncated ? truncatedValue + '...' : truncatedValue}
+                    </td>`;
+                });
+                html += '</tr>';
+            });
+            
+            html += '</table>';
+            
+            // Keep cache info at top
+            const existingCache = container.querySelector('.cache-info');
+            if (existingCache) {
+                container.innerHTML = '';
+                container.appendChild(existingCache);
+                container.insertAdjacentHTML('beforeend', html);
+            } else {
+                container.innerHTML = html;
+            }
+        }
+        
+        function sortByColumn(column) {
+            const sortedData = [...filteredData].sort((a, b) => {
+                let aVal = a[column];
+                let bVal = b[column];
+                
+                // Handle different data types
+                if (typeof aVal === 'number' && typeof bVal === 'number') {
+                    return aVal - bVal;
+                } else if (typeof aVal === 'string' && typeof bVal === 'string') {
+                    return aVal.localeCompare(bVal);
+                } else if (aVal instanceof Date && bVal instanceof Date) {
+                    return aVal - bVal;
+                } else {
+                    // Convert to string for comparison
+                    return String(aVal || '').localeCompare(String(bVal || ''));
+                }
+            });
+            
+            filteredData = sortedData;
+            displayCurrentPage();
+            showMessage(`Sorted by ${column.replace(/_/g, ' ')}`, 'info');
+            updatePaginationControls();
+        }
+        
+        function openFieldEditModal(cell) {
+            const id = cell.getAttribute('data-id');
+            const field = cell.getAttribute('data-field');
+            const value = decodeURIComponent(cell.getAttribute('data-value') || '');
+            
+            currentEditId = id;
+            currentEditField = field;
+            originalValue = value;
+            
+            // Set field name and info
+            const displayField = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            document.getElementById('fieldName').textContent = `Editing ${displayField}`;
+            document.getElementById('fieldLabel').textContent = displayField;
+            document.getElementById('fieldInfo').textContent = `SOC Booking User ID: ${id}`;
+            
+            // Create appropriate input based on field type
+            const fieldInput = document.getElementById('fieldInput');
+            fieldInput.innerHTML = '';
+            
+            let inputHtml = '';
+            
+            // Determine input type based on field name and value
+            if (field.toLowerCase().includes('description') || 
+                field.toLowerCase().includes('bio') ||
+                field.toLowerCase().includes('content') ||
+                field.toLowerCase().includes('remark') ||
+                field.toLowerCase().includes('comment') ||
+                field.toLowerCase().includes('note') ||
+                (String(value).length > 100 && !field.toLowerCase().includes('image'))) {
+                // Textarea for long text
+                inputHtml = `
+                    <textarea id="editValue" name="${field}" class="form-control" rows="4" 
+                              placeholder="Enter ${displayField.toLowerCase()}...">${value}</textarea>
+                `;
+            } else if (field.toLowerCase().includes('toggle') ||
+                      field.toLowerCase().includes('status') ||
+                      field.toLowerCase().includes('active') ||
+                      field.toLowerCase().includes('enabled') ||
+                      field.toLowerCase().includes('verified') ||
+                      field.toLowerCase().includes('approved') ||
+                      field.toLowerCase().includes('blocked')) {
+                // Checkbox for boolean fields
+                const isChecked = value === true || value === 1 || value === '1' || 
+                                 String(value).toLowerCase() === 'true' || 
+                                 String(value).toLowerCase() === 'yes' ||
+                                 String(value).toLowerCase() === 'active' ||
+                                 String(value).toLowerCase() === 'approved';
+                inputHtml = `
+                    <div style="display: flex; align-items: center; gap: 15px; padding: 12px; background: #f8f9fa; border-radius: 5px;">
+                        <input type="checkbox" id="editValue" name="${field}" ${isChecked ? 'checked' : ''} 
+                               class="form-control" style="width: auto; transform: scale(1.3);">
+                        <span style="color: #666; font-size: 14px;">
+                            ${isChecked ? 'Currently: Active/Approved' : 'Currently: Inactive/Not Approved'}
+                        </span>
+                    </div>
+                `;
+            } else if (field.toLowerCase().includes('image') || 
+                      field.toLowerCase().includes('url') ||
+                      field.toLowerCase().includes('avatar') ||
+                      field.toLowerCase().includes('photo') ||
+                      field.toLowerCase().includes('thumbnail') ||
+                      field.toLowerCase().includes('link') ||
+                      field.toLowerCase().includes('profile')) {
+                // URL input with preview
+                inputHtml = `
+                    <input type="url" id="editValue" name="${field}" value="${value}" 
+                           class="form-control" placeholder="https://example.com/image.jpg">
+                    ${value ? `<div style="margin-top: 10px; font-size: 12px; color: #666;">
+                        <a href="${value}" target="_blank" style="color: #2196F3;">🔗 Open Link</a>
+                    </div>` : ''}
+                `;
+            } else if (field.toLowerCase().includes('email')) {
+                // Email input
+                inputHtml = `
+                    <input type="email" id="editValue" name="${field}" value="${value}" 
+                           class="form-control" placeholder="user@example.com">
+                `;
+            } else if (field.toLowerCase().includes('phone') ||
+                      field.toLowerCase().includes('mobile') ||
+                      field.toLowerCase().includes('contact') ||
+                      field.toLowerCase().includes('mobile_no') ||
+                      field.toLowerCase().includes('contact_number')) {
+                // Phone input
+                inputHtml = `
+                    <input type="tel" id="editValue" name="${field}" value="${value}" 
+                           class="form-control" placeholder="+91 9876543210">
+                `;
+            } else if (field.toLowerCase().includes('date') ||
+                      field.toLowerCase().includes('created') ||
+                      field.toLowerCase().includes('updated') ||
+                      field.toLowerCase().includes('joined') ||
+                      field.toLowerCase().includes('booking_date') ||
+                      field.toLowerCase().includes('expiry_date')) {
+                // Date input
+                inputHtml = `
+                    <input type="datetime-local" id="editValue" name="${field}" value="${value}" 
+                           class="form-control">
+                `;
+            } else if (field.toLowerCase().includes('password') ||
+                      field.toLowerCase().includes('token') ||
+                      field.toLowerCase().includes('secret')) {
+                // Password input for sensitive fields
+                inputHtml = `
+                    <input type="password" id="editValue" name="${field}" value="${value}" 
+                           class="form-control" placeholder="Enter ${displayField.toLowerCase()}...">
+                `;
+            } else if (field.toLowerCase().includes('amount') ||
+                      field.toLowerCase().includes('price') ||
+                      field.toLowerCase().includes('fee') ||
+                      field.toLowerCase().includes('cost') ||
+                      field.toLowerCase().includes('rate')) {
+                // Number input for amounts
+                inputHtml = `
+                    <input type="number" id="editValue" name="${field}" value="${value}" 
+                           class="form-control" placeholder="Enter amount..." step="0.01">
+                `;
+            } else {
+                // Default text input
+                inputHtml = `
+                    <input type="text" id="editValue" name="${field}" value="${value}" 
+                           class="form-control" placeholder="Enter ${displayField.toLowerCase()}...">
+                `;
+            }
+            
+            fieldInput.innerHTML = inputHtml;
+            
+            // Focus on the input
+            setTimeout(() => {
+                const input = document.getElementById('editValue');
+                if (input) input.focus();
+            }, 100);
+            
+            // Show modal
+            document.getElementById('editModal').style.display = 'block';
+        }
+        
+        function closeModal() {
+            document.getElementById('editModal').style.display = 'none';
+            currentEditId = null;
+            currentEditField = null;
+            originalValue = null;
+        }
+        
+        document.getElementById('editForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const input = document.getElementById('editValue');
+            let newValue;
+            
+            if (input.type === 'checkbox') {
+                newValue = input.checked ? 1 : 0;
+            } else {
+                newValue = input.value.trim();
+                
+                // Convert empty string to null for database
+                if (newValue === '') {
+                    newValue = null;
+                }
+            }
+            
+            // Check if value actually changed
+            if (JSON.stringify(newValue) === JSON.stringify(originalValue)) {
+                showMessage('ℹ️ No changes detected', 'info');
+                closeModal();
+                return;
+            }
+            
+            try {
+                showMessage('🔄 Saving changes...', 'info');
+                
+                const updateData = {};
+                updateData[currentEditField] = newValue;
+                
+                const response = await fetch(`/api/${currentTable}/${currentEditId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('✅ SOC booking user field updated successfully!', 'success');
+                    
+                    // Update the specific cell in the table
+                    updateTableCell(currentEditId, currentEditField, newValue);
+                    
+                    // Update the allData array
+                    const userIndex = allData.findIndex(user => user.id == currentEditId);
+                    if (userIndex !== -1) {
+                        allData[userIndex][currentEditField] = newValue;
+                        // Reapply filters to update stats
+                        applyFilter();
+                    }
+                    
+                    setTimeout(() => {
+                        closeModal();
+                    }, 1000);
+                } else {
+                    showMessage(`❌ Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ Network error: ${error.message}`, 'error');
+            }
+        });
+        
+        function updateTableCell(id, field, newValue) {
+            // Find and update the specific cell
+            const cells = document.querySelectorAll(`td[data-id="${id}"][data-field="${field}"]`);
+            cells.forEach(cell => {
+                let displayValue = newValue;
+                if (displayValue === null || displayValue === undefined) displayValue = '';
+                if (typeof displayValue === 'object') {
+                    try {
+                        displayValue = JSON.stringify(displayValue);
+                    } catch (e) {
+                        displayValue = String(displayValue);
+                    }
+                }
+                
+                // Format display value based on field type
+                if (field === 'status') {
+                    displayValue = Number(displayValue) === 1 ? 'Active' : 'Inactive';
+                } else if ((field === 'mobile' || field === 'phone' || field === 'mobile_no' || field === 'contact_number') && displayValue) {
+                    const phoneStr = String(displayValue).replace(/\D/g, '');
+                    if (phoneStr.length === 10) {
+                        displayValue = `+91 (${phoneStr.slice(0,3)}) ${phoneStr.slice(3,6)}-${phoneStr.slice(6)}`;
+                    }
+                } else if ((field === 'created_at' || field === 'updated_at' || field === 'joining_date' || field === 'created_date') && displayValue) {
+                    const date = new Date(displayValue);
+                    if (!isNaN(date.getTime())) {
+                        displayValue = date.toLocaleDateString('en-IN') + ' ' + date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                    }
+                }
+                
+                const truncatedValue = String(displayValue).substring(0, 50);
+                const isTruncated = String(displayValue).length > 50;
+                
+                cell.textContent = truncatedValue + (isTruncated ? '...' : '');
+                cell.setAttribute('data-value', encodeURIComponent(newValue));
+                cell.setAttribute('title', `${displayValue}\n\nClick to edit ${field}`);
+                
+                // Add visual feedback
+                cell.style.background = '#d4edda';
+                cell.style.transition = 'background 0.5s';
+                
+                setTimeout(() => {
+                    cell.style.background = '';
+                }, 1000);
+            });
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.style.display = 'block';
+            errorDiv.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; gap: 15px;">
+                    <span style="font-size: 24px;">⚠️</span>
+                    <div>${message}</div>
+                </div>
+            `;
+        }
+        
+        function showMessage(text, type = 'success') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            
+            const colors = {
+                success: { bg: '#d4edda', text: '#155724', border: '#c3e6cb' },
+                error: { bg: '#f8d7da', text: '#721c24', border: '#f5c6cb' },
+                info: { bg: '#d1ecf1', text: '#0c5460', border: '#bee5eb' }
+            };
+            
+            const color = colors[type] || colors.success;
+            messageDiv.style.background = color.bg;
+            messageDiv.style.color = color.text;
+            messageDiv.style.border = `1px solid ${color.border}`;
+            messageDiv.style.opacity = '1';
+            
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+                setTimeout(() => {
+                    messageDiv.textContent = '';
+                }, 300);
+            }, 3000);
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('editModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        };
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default states
+            document.getElementById('pageSize').value = pageSize;
+            document.getElementById('searchMobileOnly').checked = searchMobileOnly;
+            
+            loadData();
+        });
+        
+        function enableFloatingScrollbar(targetSelector) {
+            const target = document.querySelector(targetSelector);
+            if (!target) return;
+
+            // Avoid duplicate scrollbar
+            if (document.getElementById('__floating_scrollbar__')) return;
+
+            const floating = document.createElement('div');
+            floating.id = '__floating_scrollbar__';
+            floating.style.position = 'fixed';
+            floating.style.bottom = '0';
+            floating.style.left = '0';
+            floating.style.right = '0';
+            floating.style.height = '16px';
+            floating.style.overflowX = 'auto';
+            floating.style.overflowY = 'hidden';
+            floating.style.zIndex = '9999';
+
+            const inner = document.createElement('div');
+            inner.style.height = '1px';
+
+            floating.appendChild(inner);
+            document.body.appendChild(floating);
+
+            function sync() {
+                // Always match real scroll width
+                const width = target.scrollWidth;
+                inner.style.width = width + 'px';
+
+                // Keep scroll positions aligned
+                if (floating.scrollLeft !== target.scrollLeft) {
+                    floating.scrollLeft = target.scrollLeft;
+                }
+            }
+
+            // Bidirectional sync
+            floating.addEventListener('scroll', () => {
+                target.scrollLeft = floating.scrollLeft;
+            });
+
+            target.addEventListener('scroll', () => {
+                floating.scrollLeft = target.scrollLeft;
+            });
+
+            // 🔑 AUTO-FIX EVERYTHING
+            new ResizeObserver(sync).observe(target);
+            new MutationObserver(sync).observe(target, {
+                childList: true,
+                subtree: true,
+                attributes: true
+            });
+
+            window.addEventListener('resize', sync);
+
+            // Run continuously until layout stabilizes
+            requestAnimationFrame(function loop() {
+                sync();
+                requestAnimationFrame(loop);
+            });
+        }
+        
+        // Enable floating scrollbar after data loads
+        setTimeout(() => {
+            enableFloatingScrollbar('#dataContainer');
+        }, 1000);
+    </script>
+</body>
+</html>
