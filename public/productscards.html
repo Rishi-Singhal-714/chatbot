@@ -256,6 +256,7 @@
             flex-direction: column;
             position: relative;
             border: 1px solid #f0f0f0;
+            cursor: pointer;
         }
         
         .product-card:hover {
@@ -263,9 +264,32 @@
             box-shadow: 0 15px 30px rgba(0,0,0,0.15);
         }
         
+        .product-card.selected {
+            border: 3px solid #3498db;
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+            background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%);
+        }
+        
+        .product-card.selected:before {
+            content: "✓";
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 30px;
+            height: 30px;
+            background: #3498db;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            z-index: 2;
+        }
+        
         .card-image {
             width: 100%;
-            height: 200px;
+            height: 220px;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             display: flex;
             align-items: center;
@@ -277,10 +301,10 @@
         .card-image img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
             transition: all 0.5s ease;
             opacity: 0;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: white;
         }
         
         .card-image img.loaded {
@@ -288,7 +312,7 @@
         }
         
         .product-card:hover .card-image img {
-            transform: scale(1.1);
+            transform: scale(1.05);
         }
         
         .image-actions {
@@ -393,6 +417,20 @@
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+        
+        .product-card:hover .card-info {
+            opacity: 1;
+            max-height: 200px;
+        }
+        
+        .product-card.selected .card-info {
+            opacity: 1;
+            max-height: 200px;
         }
         
         .info-tag {
@@ -477,6 +515,199 @@
             font-size: 48px;
             display: block;
             margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        /* ===== FLOATING IDS LIST SIDEBAR ===== */
+        .ids-sidebar {
+            position: fixed;
+            top: 120px;
+            right: 20px;
+            width: 320px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            z-index: 1000;
+            transform: translateX(calc(100% - 40px));
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid #e0e0e0;
+            overflow: hidden;
+        }
+        
+        .ids-sidebar.expanded {
+            transform: translateX(0);
+        }
+        
+        .sidebar-toggle {
+            position: absolute;
+            left: -40px;
+            top: 20px;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            border-radius: 8px 0 0 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: -3px 3px 15px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s;
+        }
+        
+        .sidebar-toggle:hover {
+            background: linear-gradient(135deg, #2980b9 0%, #1f639b 100%);
+            transform: scale(1.1);
+        }
+        
+        .sidebar-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .sidebar-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .ids-count {
+            background: #e74c3c;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            min-width: 30px;
+            text-align: center;
+        }
+        
+        .sidebar-content {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        .ids-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .id-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        
+        .id-item:hover {
+            background: #e9ecef;
+            transform: translateX(-5px);
+        }
+        
+        .id-item span {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .remove-id {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        
+        .remove-id:hover {
+            background: #c0392b;
+            transform: scale(1.1);
+        }
+        
+        .sidebar-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .sidebar-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #27ae60 0%, #219653 100%);
+            color: white;
+        }
+        
+        .download-btn:hover {
+            background: linear-gradient(135deg, #219653 0%, #1e874b 100%);
+            transform: translateY(-2px);
+        }
+        
+        .clear-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+        
+        .clear-btn:hover {
+            background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+            transform: translateY(-2px);
+        }
+        
+        .select-all-btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+        }
+        
+        .select-all-btn:hover {
+            background: linear-gradient(135deg, #2980b9 0%, #1f639b 100%);
+            transform: translateY(-2px);
+        }
+        
+        .no-ids-message {
+            text-align: center;
+            padding: 30px 20px;
+            color: #7f8c8d;
+        }
+        
+        .no-ids-message:before {
+            content: "📋";
+            font-size: 48px;
+            display: block;
+            margin-bottom: 15px;
             opacity: 0.5;
         }
         
@@ -1249,6 +1480,34 @@
 <body>
     <h1>Products - Card View</h1>
     
+    <!-- Floating IDs List Sidebar -->
+    <div class="ids-sidebar" id="idsSidebar">
+        <button class="sidebar-toggle" onclick="toggleSidebar()">📋</button>
+        <div class="sidebar-header">
+            <h3>Selected Products <span class="ids-count" id="idsCount">0</span></h3>
+        </div>
+        <div class="sidebar-content">
+            <div class="ids-list" id="idsList">
+                <!-- IDs will be added here dynamically -->
+            </div>
+            <div id="noIdsMessage" class="no-ids-message">
+                No products selected yet.<br>
+                Click on product cards to add them.
+            </div>
+            <div class="sidebar-actions">
+                <button class="sidebar-btn select-all-btn" onclick="selectAllProducts()">
+                    📄 Select All Products
+                </button>
+                <button class="sidebar-btn download-btn" onclick="downloadIdsList()">
+                    ⬇️ Download IDs List
+                </button>
+                <button class="sidebar-btn clear-btn" onclick="clearIdsList()">
+                    🗑️ Clear All
+                </button>
+            </div>
+        </div>
+    </div>
+    
     <!-- Music Generation Modal -->
     <div id="musicModal" class="modal">
         <div class="modal-content" style="max-width: 800px;">
@@ -1789,6 +2048,9 @@
         let searchTimeout = null;
         let debounceTimer = null;
         
+        // IDs List Feature
+        let selectedProductIds = new Set();
+        
         // AI variables
         let currentAIProduct = null;
         let aiResults = {
@@ -2053,6 +2315,7 @@ Generate ONLY the style description, no explanations or additional text.`
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             loadProducts();
+            loadSelectedIds();
             
             // Debounced search
             document.getElementById('searchInput').addEventListener('input', debounce(() => {
@@ -2071,7 +2334,188 @@ Generate ONLY the style description, no explanations or additional text.`
             loadSavedPrompts();
         });
         
-        // Add to existing validation functions
+        // IDs List Functions
+        function toggleSidebar() {
+            const sidebar = document.getElementById('idsSidebar');
+            sidebar.classList.toggle('expanded');
+        }
+        
+        function loadSelectedIds() {
+            const savedIds = localStorage.getItem('selectedProductIds');
+            if (savedIds) {
+                try {
+                    selectedProductIds = new Set(JSON.parse(savedIds));
+                    updateIdsSidebar();
+                } catch (e) {
+                    console.error('Error loading selected IDs:', e);
+                }
+            }
+        }
+        
+        function saveSelectedIds() {
+            localStorage.setItem('selectedProductIds', JSON.stringify([...selectedProductIds]));
+        }
+        
+        function toggleProductSelection(productId) {
+            if (selectedProductIds.has(productId)) {
+                selectedProductIds.delete(productId);
+            } else {
+                selectedProductIds.add(productId);
+            }
+            
+            // Update card appearance
+            const card = document.querySelector(`.product-card[data-product-id="${productId}"]`);
+            if (card) {
+                card.classList.toggle('selected');
+            }
+            
+            updateIdsSidebar();
+            saveSelectedIds();
+        }
+        
+        function updateIdsSidebar() {
+            const idsList = document.getElementById('idsList');
+            const idsCount = document.getElementById('idsCount');
+            const noIdsMessage = document.getElementById('noIdsMessage');
+            
+            idsCount.textContent = selectedProductIds.size;
+            
+            if (selectedProductIds.size === 0) {
+                idsList.innerHTML = '';
+                noIdsMessage.style.display = 'block';
+                return;
+            }
+            
+            noIdsMessage.style.display = 'none';
+            
+            // Clear and rebuild list
+            idsList.innerHTML = '';
+            
+            // Convert Set to Array and sort numerically
+            const sortedIds = Array.from(selectedProductIds).sort((a, b) => a - b);
+            
+            sortedIds.forEach(productId => {
+                const product = allProducts.find(p => p.id == productId);
+                const idItem = document.createElement('div');
+                idItem.className = 'id-item';
+                idItem.innerHTML = `
+                    <span>${productId} - ${product ? product.name : 'Product'}</span>
+                    <button class="remove-id" onclick="removeIdFromList(${productId}); event.stopPropagation();">×</button>
+                `;
+                
+                // Make clickable to scroll to product
+                idItem.addEventListener('click', () => {
+                    scrollToProduct(productId);
+                });
+                
+                idsList.appendChild(idItem);
+            });
+        }
+        
+        function removeIdFromList(productId) {
+            selectedProductIds.delete(productId);
+            
+            // Update card appearance
+            const card = document.querySelector(`.product-card[data-product-id="${productId}"]`);
+            if (card) {
+                card.classList.remove('selected');
+            }
+            
+            updateIdsSidebar();
+            saveSelectedIds();
+        }
+        
+        function selectAllProducts() {
+            selectedProductIds.clear();
+            
+            // Add all currently filtered products
+            filteredProducts.forEach(product => {
+                selectedProductIds.add(product.id);
+            });
+            
+            // Update all cards
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.classList.add('selected');
+            });
+            
+            updateIdsSidebar();
+            saveSelectedIds();
+            
+            showMessage(`✅ Added ${filteredProducts.length} products to selection`, 'success');
+        }
+        
+        function clearIdsList() {
+            if (selectedProductIds.size === 0) {
+                showMessage('❌ No products to clear', 'error');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to remove all ${selectedProductIds.size} selected products?`)) {
+                selectedProductIds.clear();
+                
+                // Update all cards
+                document.querySelectorAll('.product-card.selected').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                
+                updateIdsSidebar();
+                saveSelectedIds();
+                
+                showMessage('✅ All products removed from selection', 'success');
+            }
+        }
+        
+        function downloadIdsList() {
+            if (selectedProductIds.size === 0) {
+                showMessage('❌ No products selected to download', 'error');
+                return;
+            }
+            
+            // Convert Set to Array and sort numerically
+            const sortedIds = Array.from(selectedProductIds).sort((a, b) => a - b);
+            
+            // Create CSV content
+            let csvContent = "Product ID,Product Name,Category,Price,Status\n";
+            
+            sortedIds.forEach(productId => {
+                const product = allProducts.find(p => p.id == productId);
+                if (product) {
+                    const status = product.status == '1' || product.status == 1 ? 'Active' : 'Inactive';
+                    const price = product.retail_simple_special_price || product.retail_simple_price || '0';
+                    csvContent += `${productId},"${product.name.replace(/"/g, '""')}","${product.category_name || ''}",${price},${status}\n`;
+                } else {
+                    csvContent += `${productId},"Product not found",,,\n`;
+                }
+            });
+            
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `product_ids_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showMessage(`✅ Downloaded ${selectedProductIds.size} product IDs`, 'success');
+        }
+        
+        function scrollToProduct(productId) {
+            const card = document.querySelector(`.product-card[data-product-id="${productId}"]`);
+            if (card) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // Highlight briefly
+                card.style.animation = 'none';
+                setTimeout(() => {
+                    card.style.animation = 'successPulse 0.6s ease';
+                }, 10);
+            }
+        }
+        
+        // Validation functions
         function validateName(input) {
             const value = input.value.trim();
             if (!value || value.length < 2) {
@@ -2495,11 +2939,14 @@ Generate ONLY the style description, no explanations or additional text.`
                                        product.retail_simple_price &&
                                        parseFloat(product.retail_simple_special_price) < parseFloat(product.retail_simple_price);
                 
+                const isSelected = selectedProductIds.has(product.id);
+                
                 const productTags = product.tags ? product.tags.split(',').slice(0, 3) : [];
                 const productExtraDesc = product.extra_description || '';
                 
                 const card = document.createElement('div');
-                card.className = 'product-card';
+                card.className = `product-card ${isSelected ? 'selected' : ''}`;
+                card.setAttribute('data-product-id', product.id);
                 card.innerHTML = `
                     <div class="card-image">
                         <img data-src="${product.image || ''}" alt="${product.name}" 
@@ -2560,28 +3007,37 @@ Generate ONLY the style description, no explanations or additional text.`
                                 </span>
                             ` : ''}
                             <span class="info-tag edit" 
-                                  onclick="openEditOptionsModal(${product.id})"
+                                  onclick="openEditOptionsModal(${product.id}); event.stopPropagation();"
                                   title="Edit all fields">
                                 ✏️ Edit Product
                             </span>
                             <span class="info-tag music" 
-                                  onclick="generateMusic(${product.id})"
+                                  onclick="generateMusic(${product.id}); event.stopPropagation();"
                                   title="Generate song lyrics and music">
                                 🎵 Generate Music
                             </span>
                             <span class="info-tag ai" 
-                                  onclick="runAITasks(${product.id})"
+                                  onclick="runAITasks(${product.id}); event.stopPropagation();"
                                   title="Run AI Tasks">
                                 🤖 AI Tasks
                             </span>
 <span class="info-tag delete" 
-      onclick="confirmDelete(${product.id}, '${product.name.replace(/'/g, "\\'")}', ${isActive}); return false;"
+      onclick="confirmDelete(${product.id}, '${product.name.replace(/'/g, "\\'")}', ${isActive}); event.stopPropagation();"
       title="Delete this product">
     🗑️ Delete
 </span>
                         </div>
                     </div>
                 `;
+                
+                // Add click event for selection
+                card.addEventListener('click', function(e) {
+                    // Don't trigger if clicking on buttons or links
+                    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.closest('button') || e.target.closest('a')) {
+                        return;
+                    }
+                    toggleProductSelection(product.id);
+                });
                 
                 fragment.appendChild(card);
             }
@@ -3735,6 +4191,13 @@ async function confirmDeleteProduct() {
             const productIndex = allProducts.findIndex(p => p.id == productId);
             if (productIndex !== -1) {
                 allProducts.splice(productIndex, 1);
+            }
+            
+            // Remove from selected IDs if present
+            if (selectedProductIds.has(productId)) {
+                selectedProductIds.delete(productId);
+                updateIdsSidebar();
+                saveSelectedIds();
             }
             
             // Update filter counts and display
