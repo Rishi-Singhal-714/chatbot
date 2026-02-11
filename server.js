@@ -4019,6 +4019,60 @@ Please verify your phone to access this feature.`;
  * GET /api/chatbot/simple?q=your+message
  */
 
+/**
+ * Simple galleries API - get only the fields you need
+ * Example: /api/galleries/simple?fields=id,name,priority,status,version,image1
+ */
+app.get('/api/galleries/simple', async (req, res) => {
+  try {
+    const { fields } = req.query;
+    
+    if (!fields) {
+      return res.json({
+        success: false,
+        error: 'Please specify fields. Example: /api/galleries/simple?fields=id,name,priority'
+      });
+    }
+    
+    // Get all galleries data
+    const data = await db.getCachedData('galleries');
+    
+    // Split fields by comma
+    const fieldList = fields.split(',').map(f => f.trim());
+    
+    // Filter each gallery to include only requested fields
+    const filteredData = data.map(gallery => {
+      const result = {};
+      
+      fieldList.forEach(field => {
+        // Get the value if field exists, otherwise null
+        if (gallery[field] !== undefined) {
+          result[field] = gallery[field];
+        } else {
+          result[field] = null;
+        }
+      });
+      
+      return result;
+    });
+    
+    // Simple response
+    return res.json({
+      success: true,
+      data: filteredData,
+      count: filteredData.length,
+      fields: fieldList
+    });
+    
+  } catch (error) {
+    console.error('Error in simple galleries API:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 app.get('/api/chatbot/simple', async (req, res) => {
   try {
     const { q } = req.query;
@@ -4545,15 +4599,37 @@ app.get('/api/appconfigs/:id', async (req, res) => {
     });
   }
 });
+// Replace the existing /api/galleries endpoint with this simpler version
 app.get('/api/galleries', async (req, res) => {
   try {
     const data = await db.getCachedData('galleries');
     
+    // If fields parameter provided, filter the data
+    if (req.query.fields) {
+      const fields = req.query.fields.split(',').map(f => f.trim());
+      const filteredData = data.map(gallery => {
+        const result = {};
+        fields.forEach(field => {
+          result[field] = gallery[field] !== undefined ? gallery[field] : null;
+        });
+        return result;
+      });
+      
+      return res.json({
+        success: true,
+        data: filteredData,
+        count: filteredData.length,
+        fields: fields
+      });
+    }
+    
+    // Otherwise return all data
     res.json({
       success: true,
       data: data,
       count: data.length
     });
+    
   } catch (error) {
     console.error('Error fetching galleries:', error);
     res.status(500).json({
@@ -4562,6 +4638,7 @@ app.get('/api/galleries', async (req, res) => {
     });
   }
 });
+
 // Get sellers data
 app.get('/api/sellers', async (req, res) => {
   try {
