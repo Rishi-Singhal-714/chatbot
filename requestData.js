@@ -61,7 +61,10 @@ const columnMapping = {
     'subtitle', 'title', 'tags', 'bottom_slider', 'created_at', 'updated_at', 
     'cat1_names', 'shopable_video_ids', 'business_id', 'priority', 'version', 
     'tracking_bar', 'show_title', 'show_subtitle', 'showBanner', 'showVideos', 
-    'showProducts'
+    'showProducts','Image1_Calm', 'Image1_Nostalgic', 'Image1_Playful', 'Image1_Confident', 'Image1_Ambitious', 'Image1_Introspective',
+    'Image2_Calm', 'Image2_Nostalgic', 'Image2_Playful', 'Image2_Confident', 'Image2_Ambitious', 'Image2_Introspective',
+    'Image3_Calm', 'Image3_Nostalgic', 'Image3_Playful', 'Image3_Confident', 'Image3_Ambitious', 'Image3_Introspective',
+    'Image4_Calm', 'Image4_Nostalgic', 'Image4_Playful', 'Image4_Confident', 'Image4_Ambitious', 'Image4_Introspective'
   ],
   'appconfigs': [
     'id', 'announcement1', 'announcement2', 'created_at', 
