@@ -4933,28 +4933,101 @@ app.post('/api/ai/generate-banners', async (req, res) => {
             for (const mood of MOODS) {
                 // Build the detailed prompt for this specific image
                 const userPrompt = `
+Zulu Club — Mood-Based Banner Generation
+
+You are generating ONE image for a 6-mood banner set.
+
+🔢 Context
+Total moods per banner: 6
+This image represents ONLY the "${mood}" mood variant.
+All 6 variants must feel like emotional progressions of the SAME concept.
+
+🆔 Banner Details (Source of Truth — Use EXACT Text)
 Mood: ${mood}
-Typography: ${getTypographyForMood(mood)}
+Typography (STRICT): ${getTypographyForMood(mood)}
+
 Banner ID: ${bannerId}
 Banner Name: ${bannerName}
+Size: ${banner.size || ''}
+
 Title: ${banner.title || ''}
 Sub Title: ${banner.sub_title || ''}
 Description: ${banner.description || ''}
 CTA: ${banner.cta || ''}
-Background concept: ${banner.background || 'mood based'}
+
+Background: ${banner.background || 'mood based'}
 Object: ${banner.object || 'lifestyle object'}
 
-Inspiration: ${inspiration || 'Bollywood landscape'}
+Inspiration Philosophy:
+${inspiration || 'Bollywood landscape'}
 
-Rules to apply:
-- Title and Sub Title on the left, with clear top and left margins, left-aligned.
-- Object placed bottom-center to bottom-right, never overlapping text.
-- CTA placed bottom-left or bottom-right with consistent margins.
-- Description either below subtitle or near CTA.
-- Ultra-realistic, premium lifestyle, editorial style.
-- Mood drives lighting, color palette, texture, and typography feel.
-- Composition, object identity, and camera angle remain consistent across all 6 moods for this banner.
-- No spelling mistakes; text must match exactly the fields above.
+🟥 ABSOLUTE TEXT RULES (OVERRIDE ALL)
+- ZERO spelling mistakes.
+- Text must match Title, Sub Title, Description, CTA EXACTLY as provided.
+- NO paraphrasing.
+- Preserve capitalization exactly.
+
+🧱 LAYOUT STRUCTURE (MANDATORY)
+- Title and Sub Title:
+  • ALWAYS on LEFT
+  • Clear margin from TOP and LEFT
+  • LEFT-ALIGNED only
+  • Prominent and readable
+- Description:
+  • Either directly below Sub Title
+  • OR placed near CTA (if visually stronger)
+- Object:
+  • ALWAYS bottom-center to bottom-right
+  • NEVER overlap text
+  • Maintain same object identity across all moods
+- CTA:
+  • Only bottom-left OR bottom-right
+  • Consistent margins
+  • No overlap
+
+🎭 MOOD EXECUTION RULE
+Composition must remain structurally consistent with other 5 moods.
+Camera angle must remain similar.
+Object placement must remain similar.
+
+Mood variation happens ONLY through:
+- Lighting
+- Color temperature
+- Contrast
+- Texture feel
+- Emotional energy
+- Typography personality (STRICT mood font)
+
+Mood must drive:
+- Background atmosphere
+- Lighting maturity
+- Color palette
+- Texture depth
+- Typography feel
+
+No drastic shocks between moods.
+Emotional flow must feel natural when scrolling through all 6.
+
+🖼️ GLOBAL VISUAL STYLE
+- Ultra-realistic
+- Premium lifestyle
+- Editorial (not ecommerce noisy)
+- Clean negative space on LEFT
+- No clutter
+- No gimmicks
+- No illustration unless explicitly required
+
+🔎 FINAL SELF-CHECK (MANDATORY BEFORE OUTPUT)
+- No spelling errors
+- Exact text match
+- Correct alignment
+- No overlaps
+- Object bottom-center/right
+- CTA correctly placed
+- Mood instantly recognizable
+- Feels like Zulu Club visual universe
+
+Generate only the "${mood}" variant image for this banner.
 `;
 
                 // Create a blank base64 image of the correct size
