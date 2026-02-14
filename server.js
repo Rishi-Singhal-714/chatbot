@@ -16,6 +16,7 @@ const productEnhanceRouter = require('./productEnhance');
 const FormData = require('form-data');
 const { File } = require("undici");
 const cookieParser = require('cookie-parser');
+const { createCanvas } = require('canvas');
 
 
 // Import database functions
@@ -2003,6 +2004,303 @@ function matchSellersByCategoryEnhanced(query, detectedGender = null) {
   
   return matches.sort((a, b) => b.score - a.score).slice(0, 10);
 }
+// Helper: normalize size string to one of 'Landscape', 'Portrait', 'Square'
+function normalizeSize(sizeStr) {
+    if (!sizeStr) return 'Landscape';
+    const s = sizeStr.toLowerCase().replace(/\s+/g, '');
+    if (s.includes('landscape') || s === 'landscape') return 'Landscape';
+    if (s.includes('portrait') || s === 'portrait') return 'Portrait';
+    if (s.includes('square') || s === 'square') return 'Square';
+    return 'Landscape'; // default
+}
+
+
+// Helper: create a blank base64 image of given size
+function createBlankBase64(width, height, color = '#f5f5f5') {
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, width, height);
+    return canvas.toDataURL('image/jpeg').split(',')[1]; // return base64 without header
+}
+
+// Typography mapping per mood
+function getTypographyForMood(mood) {
+    const map = {
+        CALM: 'Lato',
+        NOSTALGIC: 'Playfair Display',
+        PLAYFUL: 'Montserrat',
+        CONFIDENT: 'Inter',
+        AMBITIOUS: 'Klein',
+        INTROSPECTIVE: 'Cormorant Garamond'
+    };
+    return map[mood] || 'sans-serif';
+}
+
+// System prompt – exactly as you provided
+const SYSTEM_PROMPT = `Zulu Club — Mood-Driven Banner Generation Engine
+
+You are generating premium lifestyle banners for Zulu Club, a mood-based shopping app.
+
+Each banner must help users navigate feelings and intent, not just products.
+
+🔢 SCALE & EXPECTATION (NON-NEGOTIABLE)
+
+Total Banner Rows: 11
+
+Total Moods: 6
+
+Total Images to Generate: 66
+
+For EACH Banner ID, you must generate 6 images, one per mood:
+
+CALM
+
+NOSTALGIC
+
+PLAYFUL
+
+CONFIDENT
+
+AMBITIOUS
+
+INTROSPECTIVE
+
+These 6 images must feel like emotional variations of the same idea,
+not 6 unrelated designs.
+
+🟥 ABSOLUTE PRIORITY RULES (OVERRIDE ALL)
+
+ZERO spelling mistakes
+
+Text must match DATA_TABLE fields exactly
+
+No paraphrasing
+
+Text placement
+
+Title and Sub Title
+
+Always on the LEFT
+
+Clear margin from TOP + LEFT
+
+LEFT-ALIGNED only
+
+Prominent and readable
+
+Object placement
+
+Always BOTTOM-CENTER to BOTTOM-RIGHT
+
+Never overlaps text
+
+CTA placement
+
+Only BOTTOM-LEFT or BOTTOM-RIGHT
+
+Consistent margins
+
+No overlap
+
+Description placement
+
+Either:
+
+Directly below Sub Title, OR
+
+Near CTA (if visually appropriate)
+
+Mood integrity
+
+Mood drives:
+
+Background
+
+Lighting
+
+Color palette
+
+Texture
+
+Typography feel
+
+No drastic shocks between moods
+
+Emotional flow must feel natural while scrolling
+
+Typography inspiration (STRICT)
+
+CALM → Lato
+
+NOSTALGIC → Playfair Display
+
+PLAYFUL → Montserrat
+
+CONFIDENT → Inter
+
+AMBITIOUS → Klein
+
+INTROSPECTIVE → Cormorant Garamond
+
+🟦 INPUT A — DATA_TABLE (SOURCE OF TRUTH)
+
+Each row represents one banner concept.
+
+For each row, you must generate 6 mood variants.
+
+Columns (use exactly):
+
+Banner ID
+
+Banner Name
+
+Size
+
+Title
+
+Sub Title
+
+Description
+
+CTA
+
+Background
+
+Object
+
+🟩 INPUT B — INSPIRATION_TEXT
+
+Defines the emotional philosophy behind:
+
+Every pixel
+
+Every object
+
+Every word
+
+This ensures brand soul consistency across all 66 images.
+
+🟨 INPUT C — INSPIRATION_IMAGE
+
+Defines:
+
+Realism
+
+Texture quality
+
+Lighting maturity
+
+Lifestyle authenticity
+
+All outputs must feel like they belong to the same visual universe.
+
+🟪 INPUT D — MOOD_BASED_GUIDELINE_NOTE
+
+Defines how each mood is expressed.
+
+Only the active mood’s guideline should be applied per image.
+
+🎭 MOOD FLOW RULE (VERY IMPORTANT)
+
+When generating the 6 moods for the same banner:
+
+Composition stays structurally consistent
+
+Object identity stays the same
+
+Camera angle stays similar
+
+Changes happen via:
+
+Lighting
+
+Color temperature
+
+Contrast
+
+Emotional energy
+
+This ensures:
+
+Users feel emotional progression, not disorientation.
+
+🧾 OUTPUT STRUCTURE (STRICT)
+📁 Folder Structure
+/ZuluClub_Banners/
+  /Banner_<Banner ID>_<Banner Name>/
+
+📄 Filename Convention (MANDATORY)
+<BannerName>_<Mood>.png
+
+Example
+Deliver_ASAP_CALM.png
+Deliver_ASAP_NOSTALGIC.png
+Deliver_ASAP_PLAYFUL.png
+Deliver_ASAP_CONFIDENT.png
+Deliver_ASAP_AMBITIOUS.png
+Deliver_ASAP_INTROSPECTIVE.png
+
+
+Repeat for all 11 banners → 66 total images
+
+🖼️ VISUAL STYLE (GLOBAL)
+
+Ultra-realistic
+
+Premium lifestyle
+
+Editorial, not ecommerce-noisy
+
+Clean negative space on the LEFT
+
+No illustration unless explicitly implied
+
+No clutter
+
+No gimmicks
+
+✅ FINAL SELF-CHECK (MANDATORY)
+
+Before finalizing each image:
+
+No spelling errors
+
+Correct alignment
+
+No overlaps
+
+Object bottom-center/right
+
+CTA correctly placed
+
+Mood instantly recognizable
+
+Feels like Zulu Club, not generic
+
+🔒 FINAL STATUS
+
+This system now guarantees:
+
+66 coherent images
+
+Strong mood storytelling
+
+Visual consistency across navigation
+
+Emotional continuity without shock
+
+Scalable banner generation`;
+
+// Moods list
+const MOODS = ['CALM', 'NOSTALGIC', 'PLAYFUL', 'CONFIDENT', 'AMBITIOUS', 'INTROSPECTIVE'];
+
+// Size mapping – note the corrected dimensions!
+const SIZE_MAP = {
+    Landscape: { width: 1536, height: 1024 },  // landscape: wider than tall
+    Portrait:  { width: 1024, height: 1536 },  // portrait: taller than wide
+    Square:    { width: 1024, height: 1024 }
+};
 
 /**
  * GPT-powered seller matching
@@ -4599,6 +4897,161 @@ app.get('/api/appconfigs/:id', async (req, res) => {
     });
   }
 });
+
+
+// SSE endpoint for AI generation
+app.post('/api/ai/generate-banners', async (req, res) => {
+    try {
+        const { json: bannerJson, inspiration } = req.body;
+        if (!bannerJson || !bannerJson.banners) {
+            return res.status(400).json({ success: false, error: 'Invalid JSON: missing banners array' });
+        }
+
+        // Set SSE headers
+        res.writeHead(200, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive'
+        });
+
+        const sendEvent = (data) => {
+            res.write(`data: ${JSON.stringify(data)}\n\n`);
+        };
+
+        // Loop through each banner and mood
+        for (const banner of bannerJson.banners) {
+            const bannerId = banner.banner_id;
+            const bannerName = banner.banner_name;
+            const safeName = bannerName.replace(/[^a-zA-Z0-9]/g, '_');
+            
+            // Normalize the size field
+            const rawSize = banner.size || 'Landscape';
+            const normalizedSize = normalizeSize(rawSize);
+            const dimensions = SIZE_MAP[normalizedSize] || SIZE_MAP.Landscape;
+            const { width, height } = dimensions;
+
+            for (const mood of MOODS) {
+                // Build the detailed prompt for this specific image
+                const userPrompt = `
+Mood: ${mood}
+Typography: ${getTypographyForMood(mood)}
+Banner ID: ${bannerId}
+Banner Name: ${bannerName}
+Title: ${banner.title || ''}
+Sub Title: ${banner.sub_title || ''}
+Description: ${banner.description || ''}
+CTA: ${banner.cta || ''}
+Background concept: ${banner.background || 'mood based'}
+Object: ${banner.object || 'lifestyle object'}
+
+Inspiration: ${inspiration || 'Bollywood landscape'}
+
+Rules to apply:
+- Title and Sub Title on the left, with clear top and left margins, left-aligned.
+- Object placed bottom-center to bottom-right, never overlapping text.
+- CTA placed bottom-left or bottom-right with consistent margins.
+- Description either below subtitle or near CTA.
+- Ultra-realistic, premium lifestyle, editorial style.
+- Mood drives lighting, color palette, texture, and typography feel.
+- Composition, object identity, and camera angle remain consistent across all 6 moods for this banner.
+- No spelling mistakes; text must match exactly the fields above.
+`;
+
+                // Create a blank base64 image of the correct size
+                const blankBase64 = createBlankBase64(width, height, '#ffffff');
+
+                try {
+                    const response = await openai.responses.create({
+                        model: "gpt-4.1",
+                        tools: [{
+                            type: "image_generation",
+                            size: `${width}x${height}`,
+                            quality: "medium"
+                        }],
+                        input: [{
+                            role: "user",
+                            content: [
+                                { type: "input_text", text: SYSTEM_PROMPT + "\n\n" + userPrompt },
+                                {
+                                    type: "input_image",
+                                    image_url: `data:image/jpeg;base64,${blankBase64}`
+                                }
+                            ]
+                        }]
+                    });
+
+                    const outputs = response.output.filter(o => o.type === "image_generation_call");
+                    if (!outputs.length) {
+                        throw new Error("No image generation output");
+                    }
+
+                    const imageBase64 = outputs[0].result;
+                    const imageBuffer = Buffer.from(imageBase64, 'base64');
+
+                    // --- Upload to your custom API ---
+                    const formData = new FormData();
+                    formData.append('image', imageBuffer, {
+                        filename: `${safeName}_${mood}.png`,
+                        contentType: 'image/png',
+                    });
+
+                    const uploadResponse = await axios.post(
+                        'https://api.zulushop.in/api/v1/user/upload',
+                        formData,
+                        {
+                            headers: {
+                                ...formData.getHeaders(),
+                            },
+                        }
+                    );
+
+                    let imageUrl = null;
+                    // Parse the response to extract the URL (adjust according to actual response structure)
+                    if (uploadResponse.data) {
+                        // Try common response formats
+                        imageUrl = uploadResponse.data.url || 
+                                  uploadResponse.data.image_url || 
+                                  (uploadResponse.data.data && 
+                                   (typeof uploadResponse.data.data === 'string' 
+                                    ? uploadResponse.data.data 
+                                    : uploadResponse.data.data.url || uploadResponse.data.data.image_url));
+                    }
+
+                    if (!imageUrl) {
+                        throw new Error('Could not extract image URL from upload response');
+                    }
+
+                    // Send the public URL to the client
+                    sendEvent({
+                        bannerId,
+                        bannerName,
+                        mood,
+                        imageUrl,           // public URL from your API
+                    });
+
+                } catch (err) {
+                    console.error(`Error generating ${bannerName} ${mood}:`, err.message);
+                    sendEvent({ error: `Failed on ${bannerName} ${mood}: ${err.message}` });
+                }
+
+                await new Promise(r => setTimeout(r, 500)); // rate limit
+            }
+        }
+
+        sendEvent({ done: true });
+        res.end();
+
+    } catch (error) {
+        console.error('Fatal error:', error);
+        if (!res.headersSent) {
+            res.status(500).json({ success: false, error: error.message });
+        } else {
+            res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+            res.end();
+        }
+    }
+});
+
 // Replace the existing /api/galleries endpoint with this simpler version
 app.get('/api/galleries', async (req, res) => {
   try {

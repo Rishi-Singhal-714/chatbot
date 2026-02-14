@@ -3,6 +3,7 @@
 <head>
     <title>Base Moods - Admin</title>
     <style>
+        /* (All existing styles remain exactly the same) */
         * {
             margin: 0;
             padding: 0;
@@ -73,6 +74,25 @@
         .refresh-btn {
             background: #2196F3;
             color: white;
+        }
+        .ai-btn {
+            background: #9C27B0;
+            color: white;
+        }
+        .stop-btn {
+            background: #dc3545;
+            color: white;
+        }
+        .fix-btn {
+            background: #ff9800;
+            color: white;
+        }
+        .download-btn {
+            background: #4CAF50;
+            color: white;
+            padding: 4px 8px;
+            font-size: 12px;
+            border-radius: 20px;
         }
 
         .search-box {
@@ -275,7 +295,7 @@
             background: white;
             border-radius: 32px;
             width: 90%;
-            max-width: 800px;  /* Wider for hero BG */
+            max-width: 900px;  /* Increased for extra buttons */
             max-height: 85vh;
             overflow-y: auto;
             box-shadow: 0 40px 80px rgba(0, 0, 0, 0.3);
@@ -545,8 +565,9 @@
             justify-content: flex-end;
             padding: 20px 24px 24px;
             border-top: 2px solid #eef2f6;
+            flex-wrap: wrap;
         }
-        .save-btn, .cancel-btn {
+        .save-btn, .cancel-btn, .stop-btn, .next-btn {
             padding: 12px 28px;
             border-radius: 40px;
             font-weight: 600;
@@ -560,6 +581,57 @@
             background: #95a5a6;
             color: white;
         }
+        .stop-btn {
+            background: #dc3545;
+            color: white;
+        }
+        .next-btn {
+            background: #2196F3;
+            color: white;
+        }
+
+        /* AI progress gallery */
+        .progress-img {
+            width: 100px;
+            height: auto;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .img-container {
+            position: relative;
+            display: inline-block;
+        }
+        .img-download {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+        }
+        .img-download:hover {
+            background: black;
+        }
+        .size-error {
+            background-color: #ffebee;
+            border: 2px solid #f44336;
+        }
+        .size-fix-dropdown {
+            padding: 4px;
+            border-radius: 20px;
+            border: 1px solid #ccc;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -568,6 +640,7 @@
     <div class="controls">
         <button class="back-btn" onclick="location.href='/'">← Dashboard</button>
         <button class="refresh-btn" onclick="loadMoods()">🔄 Refresh</button>
+        <button class="ai-btn" onclick="openAIModal()">🤖 AI Generate</button>
         <div class="search-box">
             <input type="text" id="searchInput" placeholder="Search by name...">
         </div>
@@ -599,6 +672,74 @@
         </div>
     </div>
 
+    <!-- AI Generation Modal -->
+    <div id="aiModal" class="modal">
+        <div class="modal-content" style="max-width: 1000px;">
+            <div class="modal-header">
+                <h2>🤖 AI Banner Generation</h2>
+                <button class="close-modal" onclick="closeAIModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 15px;">Upload your banner JSON and set an inspiration text.</p>
+                
+                <input type="file" id="jsonFile" accept=".json" style="margin-bottom: 15px; display: block;">
+                
+                <textarea id="aiJsonInput" rows="6" style="width: 100%; padding: 12px; border-radius: 16px; border: 2px solid #dde3e9; font-family: monospace; font-size: 13px;" placeholder="Or paste JSON here..."></textarea>
+                
+                <div style="margin: 15px 0; display: flex; gap: 10px; align-items: center;">
+                    <label style="font-weight: 600;">Inspiration Text</label>
+                    <input type="text" id="aiInspiration" value="Bollywood landscape field" style="flex: 1; padding: 12px 16px; border: 2px solid #dde3e9; border-radius: 40px;">
+                    <button class="fix-btn" onclick="checkAndFixSizes()">🔍 Check & Fix Sizes</button>
+                </div>
+
+                <!-- Preview Table -->
+                <div id="jsonPreview" style="margin-top: 20px; display: none;">
+                    <h3 style="margin-bottom: 10px;">📋 Banner Preview <span id="bannerCount" style="font-size: 14px; color: #666;"></span></h3>
+                    <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 12px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                            <thead>
+                                <tr style="background: #f0f0f0;">
+                                    <th style="padding: 8px;">ID</th>
+                                    <th style="padding: 8px;">Name</th>
+                                    <th style="padding: 8px;">Size</th>
+                                    <th style="padding: 8px;">Title</th>
+                                    <th style="padding: 8px;">Sub Title</th>
+                                    <th style="padding: 8px;">Description</th>
+                                    <th style="padding: 8px;">CTA</th>
+                                    <th style="padding: 8px;">Background</th>
+                                    <th style="padding: 8px;">Object</th>
+                                    <th style="padding: 8px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="previewBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Generation progress & controls -->
+                <div id="aiProgressArea" style="margin-top: 20px; display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4>Generated Images</h4>
+                        <div>
+                            <button class="stop-btn" id="stopGenerationBtn" onclick="stopGeneration()" style="display: none;">⏹️ Stop</button>
+                            <button class="next-btn" id="nextBannerBtn" onclick="nextBanner()" style="display: none;">⏩ Proceed to Next</button>
+                            <button class="cancel-btn" id="exitAfterBannerBtn" onclick="exitAfterBanner()" style="display: none;">🚪 Exit</button>
+                            <!-- NEW BUTTON: Download Links CSV -->
+                            <button class="download-btn" id="downloadCsvBtn" onclick="downloadLinksCsv()" style="display: none;">📥 Download Links CSV</button>
+                        </div>
+                    </div>
+                    <div id="aiProgress" style="max-height: 400px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 10px; background: #f5f5f5; padding: 10px; border-radius: 16px; border: 1px solid #ddd;"></div>
+                    <div id="aiStatus" style="margin-top: 10px; font-weight: 500; color: #333;"></div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="cancel-btn" onclick="closeAIModal()">Cancel</button>
+                <button class="save-btn" id="proceedBtn" onclick="startFullGeneration()" style="background: #9C27B0; display: none;">✨ Generate All 66 Images</button>
+                <button class="save-btn" id="previewBtn" onclick="previewJson()" style="background: #2196F3;">🔍 Preview JSON</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let allMoods = [];
         let currentEditMoodId = null;
@@ -609,10 +750,19 @@
 
         // Base image size in pixels
         const BASE_IMAGE_SIZE = 120;
+        let currentParsedJson = null;
 
         // Global state for Hero BG modal
         let currentHeroUrls = [];
         let currentHeroIndex = 0;
+
+        // AI generation state
+        let abortController = null;
+        let currentBannerIndex = 0;
+        let isGenerating = false;
+
+        // --- NEW: Store generated links for CSV ---
+        let generatedLinks = [];
 
         function showMessage(text, type = 'success') {
             const msg = document.getElementById('message');
@@ -629,6 +779,375 @@
             setTimeout(() => msg.style.display = 'none', 4000);
         }
 
+        // ---------- Size validation ----------
+        const VALID_SIZES = ['Landscape', 'Portrait', 'Square'];
+
+        function normalizeSizeString(s) {
+            if (!s) return '';
+            const lower = s.toLowerCase().replace(/\s+/g, '');
+            if (lower.includes('landscape')) return 'Landscape';
+            if (lower.includes('portrait')) return 'Portrait';
+            if (lower.includes('square')) return 'Square';
+            return s; // return original if unknown
+        }
+
+        function checkAndFixSizes() {
+            if (!currentParsedJson) {
+                alert('Please preview JSON first.');
+                return;
+            }
+            const banners = currentParsedJson.banners;
+            let fixed = false;
+            banners.forEach((b, idx) => {
+                const orig = b.size || '';
+                const norm = normalizeSizeString(orig);
+                if (!VALID_SIZES.includes(norm)) {
+                    // Show a dropdown in the table row
+                    const row = document.querySelector(`#previewBody tr:nth-child(${idx+1})`);
+                    if (row) {
+                        const sizeCell = row.cells[2];
+                        sizeCell.innerHTML = `<select class="size-fix-dropdown" data-index="${idx}" onchange="updateSize(${idx}, this.value)">${VALID_SIZES.map(s => `<option value="${s}" ${s===norm?'selected':''}>${s}</option>`).join('')}</select>`;
+                        sizeCell.classList.add('size-error');
+                    }
+                    fixed = true;
+                }
+            });
+            if (!fixed) {
+                alert('All sizes are valid!');
+            }
+        }
+
+        function updateSize(index, newSize) {
+            currentParsedJson.banners[index].size = newSize;
+            // Optionally update the cell display to show fixed
+            const row = document.querySelector(`#previewBody tr:nth-child(${index+1})`);
+            if (row) {
+                const sizeCell = row.cells[2];
+                sizeCell.innerHTML = newSize;
+                sizeCell.classList.remove('size-error');
+            }
+        }
+
+        // ---------- Preview ----------
+        function previewJson() {
+            const fileInput = document.getElementById('jsonFile');
+            const jsonText = document.getElementById('aiJsonInput').value;
+            let parsedJson;
+
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        parsedJson = JSON.parse(e.target.result);
+                        showPreview(parsedJson);
+                    } catch (err) {
+                        alert('Invalid JSON file');
+                    }
+                };
+                reader.readAsText(file);
+            } else if (jsonText.trim()) {
+                try {
+                    parsedJson = JSON.parse(jsonText);
+                    showPreview(parsedJson);
+                } catch (err) {
+                    alert('Invalid JSON');
+                }
+            } else {
+                alert('Please upload a JSON file or paste JSON');
+            }
+        }
+
+        function showPreview(parsedJson) {
+            currentParsedJson = parsedJson;
+            const banners = parsedJson.banners || [];
+            if (banners.length === 0) {
+                alert('No banners found in JSON. Make sure the JSON has a "banners" array.');
+                return;
+            }
+            const tbody = document.getElementById('previewBody');
+            tbody.innerHTML = '';
+            banners.forEach((b, idx) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="padding: 6px; border-bottom: 1px solid #eee;">${b.banner_id || ''}</td>
+                    <td style="padding: 6px; border-bottom: 1px solid #eee;">${b.banner_name || ''}</td>
+                    <td style="padding: 6px; border-bottom: 1px solid #eee;">${b.size || ''}</td>
+                    <td style="padding: 6px; border-bottom: 1px solid #eee;">${b.title || ''}</td>
+                    <td style="padding: 6px; border-bottom: 1px solid #eee;">${b.sub_title || ''}</td>
+                    <td style="padding: 6px; border-bottom: 1px solid #eee;">${b.description || ''}</td>
+                    <td style="padding: 6px; border-bottom: 1px solid #eee;">${b.cta || ''}</td>
+                    <td style="padding: 6px; border-bottom: 1px solid #eee;">${b.background || ''}</td>
+                    <td style="padding: 6px; border-bottom: 1px solid #eee;">${b.object || ''}</td>
+                    <td style="padding: 6px; border-bottom: 1px solid #eee;">
+                        <button class="save-btn" style="padding: 4px 8px; font-size: 12px;" onclick="generateSingleBanner(${idx})">Generate</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            document.getElementById('bannerCount').innerText = `(${banners.length} banners)`;
+            document.getElementById('jsonPreview').style.display = 'block';
+            document.getElementById('previewBtn').style.display = 'none';
+            document.getElementById('proceedBtn').style.display = 'inline-flex';
+        }
+
+        // ---------- Generation control ----------
+        async function startFullGeneration() {
+            if (!currentParsedJson) return;
+            generatedLinks = []; // reset links
+            document.getElementById('downloadCsvBtn').style.display = 'none'; // hide CSV button
+            currentBannerIndex = 0;
+            document.getElementById('aiProgressArea').style.display = 'block';
+            document.getElementById('stopGenerationBtn').style.display = 'inline-flex';
+            document.getElementById('nextBannerBtn').style.display = 'none';
+            document.getElementById('exitAfterBannerBtn').style.display = 'none';
+            await generateFromIndex(currentBannerIndex, 'all');
+        }
+
+        async function generateSingleBanner(idx) {
+            if (!currentParsedJson) return;
+            generatedLinks = []; // reset links for single banner
+            document.getElementById('downloadCsvBtn').style.display = 'none';
+            currentBannerIndex = idx;
+            document.getElementById('aiProgressArea').style.display = 'block';
+            document.getElementById('stopGenerationBtn').style.display = 'inline-flex';
+            document.getElementById('nextBannerBtn').style.display = 'none';
+            document.getElementById('exitAfterBannerBtn').style.display = 'none';
+            await generateFromIndex(idx, 'single');
+        }
+
+        async function generateFromIndex(startIdx, mode) {
+            if (!currentParsedJson) return;
+            const banners = currentParsedJson.banners;
+            if (startIdx >= banners.length) {
+                document.getElementById('aiStatus').innerText = '✅ All banners processed.';
+                document.getElementById('stopGenerationBtn').style.display = 'none';
+                return;
+            }
+
+            abortController = new AbortController();
+            isGenerating = true;
+
+            // Prepare a JSON with only the current banner (or all from startIdx if mode='all')
+            let bannersToSend;
+            if (mode === 'single') {
+                bannersToSend = [banners[startIdx]];
+            } else {
+                bannersToSend = banners.slice(startIdx);
+            }
+            const partialJson = { ...currentParsedJson, banners: bannersToSend };
+
+            const inspiration = document.getElementById('aiInspiration').value;
+            const progressDiv = document.getElementById('aiProgress');
+            const statusDiv = document.getElementById('aiStatus');
+
+            try {
+                const response = await fetch('/api/ai/generate-banners', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    signal: abortController.signal,
+                    body: JSON.stringify({ json: partialJson, inspiration })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    statusDiv.innerText = '❌ Error: ' + err.error;
+                    isGenerating = false;
+                    document.getElementById('stopGenerationBtn').style.display = 'none';
+                    return;
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n\n');
+                    buffer = lines.pop();
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const data = JSON.parse(line.slice(6));
+                            if (data.error) {
+                                statusDiv.innerText = '❌ Error: ' + data.error;
+                                isGenerating = false;
+                                document.getElementById('stopGenerationBtn').style.display = 'none';
+                                return;
+                            }
+                            if (data.done) {
+                                // Finished this batch
+                                if (mode === 'single') {
+                                    statusDiv.innerText = `✅ Banner ${banners[startIdx].banner_name} completed.`;
+                                    document.getElementById('stopGenerationBtn').style.display = 'none';
+                                    document.getElementById('nextBannerBtn').style.display = 'inline-flex';
+                                    document.getElementById('exitAfterBannerBtn').style.display = 'inline-flex';
+                                } else {
+                                    // 'all' mode finished all banners
+                                    statusDiv.innerText = '✅ All 66 images generated!';
+                                    document.getElementById('stopGenerationBtn').style.display = 'none';
+                                }
+                                // Show CSV download button if we have links
+                                if (generatedLinks.length > 0) {
+                                    document.getElementById('downloadCsvBtn').style.display = 'inline-flex';
+                                }
+                                isGenerating = false;
+                                break;
+                            }
+                            // Display image with download button
+                            const container = document.createElement('div');
+                            container.className = 'img-container';
+                            const img = document.createElement('img');
+                            img.src = data.imageUrl;
+                            img.className = 'progress-img';
+                            img.title = `${data.bannerName} - ${data.mood}`;
+                            container.appendChild(img);
+                            const downloadLink = document.createElement('a');
+                            downloadLink.href = data.imageUrl;
+                            downloadLink.download = `${data.bannerName}_${data.mood}.png`;
+                            downloadLink.className = 'img-download';
+                            downloadLink.innerHTML = '⬇️';
+                            downloadLink.onclick = (e) => e.stopPropagation();
+                            container.appendChild(downloadLink);
+                            progressDiv.appendChild(container);
+                            statusDiv.innerText = `Generated: ${data.bannerName} (${data.mood})`;
+
+                            // --- NEW: Store link for CSV ---
+                            generatedLinks.push({
+                                bannerId: data.bannerId,
+                                bannerName: data.bannerName,
+                                mood: data.mood,
+                                url: data.imageUrl
+                            });
+                        }
+                    }
+                }
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    statusDiv.innerText = '⏹️ Generation stopped.';
+                } else {
+                    statusDiv.innerText = '❌ Network error: ' + err.message;
+                }
+                isGenerating = false;
+                document.getElementById('stopGenerationBtn').style.display = 'none';
+            }
+        }
+
+        function stopGeneration() {
+            if (abortController) {
+                abortController.abort();
+                abortController = null;
+                isGenerating = false;
+                document.getElementById('stopGenerationBtn').style.display = 'none';
+                document.getElementById('nextBannerBtn').style.display = 'none';
+                document.getElementById('exitAfterBannerBtn').style.display = 'none';
+            }
+        }
+
+        function nextBanner() {
+            if (currentBannerIndex + 1 < currentParsedJson.banners.length) {
+                currentBannerIndex++;
+                document.getElementById('aiProgress').innerHTML = ''; // clear images for next banner (optional)
+                document.getElementById('stopGenerationBtn').style.display = 'inline-flex';
+                document.getElementById('nextBannerBtn').style.display = 'none';
+                document.getElementById('exitAfterBannerBtn').style.display = 'none';
+                generateFromIndex(currentBannerIndex, 'single');
+            } else {
+                document.getElementById('aiStatus').innerText = '✅ No more banners.';
+                document.getElementById('nextBannerBtn').style.display = 'none';
+                document.getElementById('exitAfterBannerBtn').style.display = 'none';
+            }
+        }
+
+        function exitAfterBanner() {
+            // Just hide the progress controls, keep images
+            document.getElementById('stopGenerationBtn').style.display = 'none';
+            document.getElementById('nextBannerBtn').style.display = 'none';
+            document.getElementById('exitAfterBannerBtn').style.display = 'none';
+            document.getElementById('aiStatus').innerText = 'Generation paused. You can close or start again.';
+            isGenerating = false;
+            if (abortController) {
+                abortController.abort();
+                abortController = null;
+            }
+        }
+
+        // --- NEW: Download CSV of links ---
+        function downloadLinksCsv() {
+            if (generatedLinks.length === 0) {
+                alert('No links to download.');
+                return;
+            }
+
+            // Define CSV headers
+            const headers = ['Banner ID', 'Banner Name', 'Mood', 'Image URL'];
+            const rows = generatedLinks.map(item => [
+                item.bannerId,
+                item.bannerName,
+                item.mood,
+                item.url
+            ]);
+
+            // Build CSV string
+            let csvContent = headers.join(',') + '\n';
+            rows.forEach(row => {
+                // Escape fields that may contain commas
+                const escapedRow = row.map(cell => {
+                    if (typeof cell === 'string' && (cell.includes(',') || cell.includes('"'))) {
+                        return `"${cell.replace(/"/g, '""')}"`;
+                    }
+                    return cell;
+                }).join(',');
+                csvContent += escapedRow + '\n';
+            });
+
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'generated_links.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // ---------- Modal open/close ----------
+        function openAIModal() {
+            document.getElementById('aiJsonInput').value = '';
+            document.getElementById('aiInspiration').value = 'Bollywood landscape field';
+            document.getElementById('aiProgress').innerHTML = '';
+            document.getElementById('aiStatus').innerText = '';
+            document.getElementById('aiProgressArea').style.display = 'none';
+            document.getElementById('jsonPreview').style.display = 'none';
+            document.getElementById('previewBtn').style.display = 'inline-flex';
+            document.getElementById('proceedBtn').style.display = 'none';
+            document.getElementById('downloadCsvBtn').style.display = 'none'; // hide CSV button
+            generatedLinks = []; // reset links
+            currentParsedJson = null;
+            document.getElementById('aiModal').classList.add('show');
+        }
+
+        function closeAIModal() {
+            if (abortController) {
+                abortController.abort();
+                abortController = null;
+            }
+            document.getElementById('aiModal').classList.remove('show');
+            // Reset preview
+            document.getElementById('jsonPreview').style.display = 'none';
+            document.getElementById('previewBtn').style.display = 'inline-flex';
+            document.getElementById('proceedBtn').style.display = 'none';
+            document.getElementById('aiProgressArea').style.display = 'none';
+            document.getElementById('downloadCsvBtn').style.display = 'none';
+            generatedLinks = [];
+            currentParsedJson = null;
+        }
+
+        // ---------- Existing functions (unchanged) ----------
         async function loadMoods() {
             document.getElementById('loading').style.display = 'block';
             document.getElementById('error').style.display = 'none';
@@ -1092,6 +1611,8 @@
         window.addEventListener('click', (event) => {
             const modal = document.getElementById('editModal');
             if (event.target === modal) closeEditModal();
+            const aiModal = document.getElementById('aiModal');
+            if (event.target === aiModal) closeAIModal();
         });
         // Load on page start
         loadMoods();
