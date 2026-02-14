@@ -4966,7 +4966,6 @@ ${inspiration || 'Bollywood landscape'}
 - Text must match Title, Sub Title, Description, CTA EXACTLY as provided.
 - NO paraphrasing.
 - Preserve capitalization exactly.
-
 🧱 LAYOUT STRUCTURE (MANDATORY)
 - Title and Sub Title:
   • ALWAYS on LEFT
