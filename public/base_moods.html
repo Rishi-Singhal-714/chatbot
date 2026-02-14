@@ -104,6 +104,31 @@
             font-size: 18px;
         }
 
+        /* Image size slider */
+        .size-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            padding: 8px 16px;
+            border-radius: 40px;
+            border: 2px solid #e0e0e0;
+        }
+        .size-control label {
+            font-weight: 600;
+            color: #1e2b3a;
+            font-size: 14px;
+        }
+        .size-control input {
+            width: 140px;
+        }
+        #sizeValue {
+            min-width: 45px;
+            text-align: center;
+            font-weight: 600;
+            color: #9C27B0;
+        }
+
         #message {
             padding: 16px 24px;
             border-radius: 40px;
@@ -142,66 +167,70 @@
             font-weight: 500;
         }
 
-        /* Cards Grid */
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 24px;
+        /* ----- Transposed table: fields as rows, moods as columns ----- */
+        .table-container {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            overflow-x: auto;
             margin-top: 20px;
         }
 
-        .mood-card {
-            background: white;
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            cursor: pointer;
-            transition: transform 0.25s, box-shadow 0.3s;
-            border: 1px solid rgba(255,255,255,0.8);
-            backdrop-filter: blur(2px);
-        }
-        .mood-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 35px rgba(156,39,176,0.15);
+        table {
+            border-collapse: collapse;
+            font-size: 13px;
+            min-width: 100%;
         }
 
-        .card-preview {
-            height: 180px;
-            background: #f2f2f2;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-        .card-preview img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.5s;
-        }
-        .mood-card:hover .card-preview img {
-            transform: scale(1.05);
-        }
-
-        .card-content {
-            padding: 20px;
-        }
-        .card-title {
-            font-size: 20px;
-            font-weight: 600;
+        th {
+            text-align: left;
+            padding: 16px 12px;
+            background: #f4f7fb;
             color: #1e2b3a;
-            margin-bottom: 6px;
+            font-weight: 600;
+            border-bottom: 3px solid #9C27B0;
+            white-space: nowrap;
         }
-        .card-meta {
-            color: #6b7a8a;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
+
+        td {
+            padding: 16px 12px;
+            border-bottom: 1px solid #e9ecf0;
+            vertical-align: middle;
+        }
+
+        /* First column (field names) styling - not clickable */
+        td:first-child, th:first-child {
+            background-color: #f9fafc;
+            font-weight: 500;
+            color: #2c3e50;
+            border-right: 2px solid #d0d9e2;
+        }
+
+        /* Make data cells clickable */
+        td:not(:first-child) {
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        td:not(:first-child):hover {
+            background: #e1d5e7;
+        }
+
+        /* Images inside table – responsive and adjustable via slider */
+        .table-img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            border-radius: 8px;
+            background: #f0f2f5;
+            border: 1px solid #d0d9e2;
+            pointer-events: none;
+            max-height: 120px;
+            transition: max-height 0.1s ease;
         }
 
         .empty-state {
-            grid-column: 1 / -1;
             text-align: center;
             padding: 80px 30px;
             background: white;
@@ -209,6 +238,7 @@
             border: 2px dashed #b0c4d9;
             color: #5f7a9a;
             font-size: 20px;
+            margin-top: 20px;
         }
         .empty-state:before {
             content: "🎨";
@@ -218,7 +248,7 @@
             opacity: 0.5;
         }
 
-        /* ---------- MODAL (enhanced) ---------- */
+        /* ---------- MODAL (enhanced for multi-image) ---------- */
         .modal {
             display: none;
             position: fixed;
@@ -245,7 +275,7 @@
             background: white;
             border-radius: 32px;
             width: 90%;
-            max-width: 1100px;
+            max-width: 800px;  /* Wider for hero BG */
             max-height: 85vh;
             overflow-y: auto;
             box-shadow: 0 40px 80px rgba(0, 0, 0, 0.3);
@@ -259,26 +289,27 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 24px 32px;
+            padding: 20px 24px;
             background: linear-gradient(135deg, #9C27B0, #7B1FA2);
             color: white;
             border-radius: 32px 32px 0 0;
         }
         .modal-header h2 {
             margin: 0;
-            font-size: 26px;
+            font-size: 22px;
             font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
+            word-break: break-word;
         }
         .close-modal {
             background: rgba(255,255,255,0.2);
             border: none;
-            width: 48px;
-            height: 48px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            font-size: 32px;
+            font-size: 28px;
             color: white;
             cursor: pointer;
             display: flex;
@@ -292,91 +323,58 @@
         }
 
         .modal-body {
-            padding: 32px;
+            padding: 24px;
         }
 
-        /* Field cards inside modal */
-        .fields-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 24px;
-        }
-
-        .field-card {
+        /* Single field card (for non-hero fields) */
+        .single-field-card {
             background: #f9fafc;
             border: 2px solid #e9ecf0;
             border-radius: 24px;
-            padding: 18px;
-            transition: border-color 0.2s, box-shadow 0.2s;
+            padding: 20px;
         }
-        .field-card:hover {
-            border-color: #9C27B0;
-            box-shadow: 0 10px 20px rgba(156,39,176,0.08);
-        }
-        .field-card.dirty {
-            border-color: #ff9800;
-            background: #fffaf0;
-        }
-
-        .field-label {
+        .single-field-card .field-label {
             font-weight: 600;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
             color: #2c3e50;
-            font-size: 15px;
+            font-size: 16px;
             text-transform: capitalize;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .dirty-indicator {
-            width: 10px;
-            height: 10px;
-            background: #ff9800;
-            border-radius: 50%;
-            display: inline-block;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .field-card.dirty .dirty-indicator {
-            opacity: 1;
         }
 
         .image-preview {
             width: 100%;
-            max-height: 160px;
+            max-height: 200px;
             object-fit: contain;
             background: #eef2f6;
             border-radius: 16px;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
             cursor: pointer;
             border: 1px solid #d0d9e2;
-            transition: 0.2s;
         }
         .image-preview:hover {
             opacity: 0.9;
         }
 
         .upload-area {
-            margin: 12px 0 8px;
+            margin: 16px 0 12px;
         }
         .upload-btn-small {
             background: #2196F3;
             color: white;
             border: none;
-            padding: 10px 16px;
+            padding: 10px 20px;
             border-radius: 30px;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             transition: 0.2s;
             box-shadow: 0 4px 8px rgba(33,150,243,0.2);
         }
         .upload-btn-small:hover {
             background: #1976D2;
-            transform: scale(1.02);
         }
 
         .file-input {
@@ -384,9 +382,9 @@
         }
 
         .uploading-indicator {
-            font-size: 12px;
+            font-size: 13px;
             color: #2196F3;
-            margin-top: 6px;
+            margin-top: 8px;
             display: none;
             align-items: center;
             gap: 6px;
@@ -394,34 +392,165 @@
 
         .text-field {
             width: 100%;
-            padding: 12px 16px;
+            padding: 14px 18px;
             border: 2px solid #dde3e9;
-            border-radius: 30px;
-            font-size: 14px;
-            transition: 0.2s;
-            margin-top: 8px;
+            border-radius: 40px;
+            font-size: 15px;
+            margin-top: 16px;
             background: white;
         }
         .text-field:focus {
             border-color: #9C27B0;
             outline: none;
-            box-shadow: 0 0 0 3px rgba(156,39,176,0.1);
+        }
+
+        /* Hero BG specific styles */
+        .hero-bg-editor {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .carousel-container {
+            position: relative;
+            text-align: center;
+            background: #f0f2f5;
+            border-radius: 16px;
+            padding: 10px;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .carousel-image {
+            max-width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+        .carousel-prev, .carousel-next, .carousel-remove {
+            position: absolute;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            z-index: 10;
+        }
+        .carousel-prev:hover, .carousel-next:hover, .carousel-remove:hover {
+            background: rgba(0,0,0,0.8);
+        }
+        .carousel-prev {
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .carousel-next {
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .carousel-remove {
+            right: 10px;
+            top: 10px;
+            background: #dc3545;
+            width: 36px;
+            height: 36px;
+            font-size: 16px;
+        }
+        .image-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            max-height: 120px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #f9fafc;
+            border-radius: 12px;
+            border: 1px solid #e9ecf0;
+        }
+        .image-list-item {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .image-list-item.selected {
+            border-color: #9C27B0;
+        }
+        .image-list-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .image-list-item button {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 20px;
+            height: 20px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 12px;
+            line-height: 1;
+            padding: 0;
+            cursor: pointer;
+            display: none;
+        }
+        .image-list-item:hover button {
+            display: block;
+        }
+        .add-image {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .add-image input {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 16px;
+            border: 2px solid #dde3e9;
+            border-radius: 40px;
+            font-size: 14px;
+        }
+        .add-image button {
+            padding: 12px 24px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .add-image button.upload-btn-small {
+            background: #2196F3;
         }
 
         .modal-actions {
             display: flex;
             gap: 16px;
             justify-content: flex-end;
-            padding: 24px 32px;
+            padding: 20px 24px 24px;
             border-top: 2px solid #eef2f6;
-            background: #f8fafd;
-            border-radius: 0 0 32px 32px;
         }
         .save-btn, .cancel-btn {
-            padding: 14px 32px;
+            padding: 12px 28px;
             border-radius: 40px;
             font-weight: 600;
-            font-size: 16px;
+            font-size: 15px;
         }
         .save-btn {
             background: #27ae60;
@@ -442,33 +571,49 @@
         <div class="search-box">
             <input type="text" id="searchInput" placeholder="Search by name...">
         </div>
+        <!-- Image size slider -->
+        <div class="size-control">
+            <label>🔍 Image size</label>
+            <input type="range" id="imageSizeSlider" min="50" max="200" value="100" step="5">
+            <span id="sizeValue">100%</span>
+        </div>
     </div>
 
     <div id="message"></div>
     <div id="loading">✨ Loading moods...</div>
     <div id="error"></div>
-    <div id="cardsContainer" class="cards-grid"></div>
+    <div id="tableContainer" class="table-container"></div>
 
-    <!-- Edit Modal (improved) -->
+    <!-- Single Field Edit Modal (also used for Hero BG) -->
     <div id="editModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>✏️ Edit Base Mood</h2>
+                <h2 id="modalTitle">✏️ Edit Field</h2>
                 <button class="close-modal" onclick="closeEditModal()">&times;</button>
             </div>
             <div class="modal-body" id="modalBody"></div>
             <div class="modal-actions">
                 <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
-                <button class="save-btn" onclick="saveMood()">💾 Save Changes</button>
+                <button class="save-btn" onclick="saveSingleField()">💾 Save</button>
             </div>
         </div>
     </div>
 
     <script>
         let allMoods = [];
-        let currentEditId = null;
+        let currentEditMoodId = null;
+        let currentEditField = null;
 
-        // Helper to show styled messages
+        // Slideshow intervals
+        let slideshowIntervals = [];
+
+        // Base image size in pixels
+        const BASE_IMAGE_SIZE = 120;
+
+        // Global state for Hero BG modal
+        let currentHeroUrls = [];
+        let currentHeroIndex = 0;
+
         function showMessage(text, type = 'success') {
             const msg = document.getElementById('message');
             msg.textContent = text;
@@ -484,7 +629,6 @@
             setTimeout(() => msg.style.display = 'none', 4000);
         }
 
-        // Load data
         async function loadMoods() {
             document.getElementById('loading').style.display = 'block';
             document.getElementById('error').style.display = 'none';
@@ -503,165 +647,396 @@
             }
         }
 
-        // Filter and render cards
         function filterAndDisplay() {
             const search = document.getElementById('searchInput').value.toLowerCase();
             const filtered = allMoods.filter(m => (m.name || '').toLowerCase().includes(search));
-            displayCards(filtered);
+            displayTransposedTable(filtered);
         }
 
-        function displayCards(moods) {
-            const container = document.getElementById('cardsContainer');
+        const allFields = [
+            'id', 'name', 'logos', 'hero_bg', 'deliver_asap', 'category_banner',
+            'visit_us', 'home_banner', 'watch_banner', 'visit_banner', 'listen_banner',
+            'cart_banner', 'profile_bg', 'concierge'
+        ];
+
+        const fieldLabels = {
+            id: 'ID',
+            name: 'Name',
+            logos: 'Logos',
+            hero_bg: 'Hero BG',
+            deliver_asap: 'Deliver ASAP',
+            category_banner: 'Category Banner',
+            visit_us: 'Visit Us',
+            home_banner: 'Home Banner',
+            watch_banner: 'Watch Banner',
+            visit_banner: 'Visit Banner',
+            listen_banner: 'Listen Banner',
+            cart_banner: 'Cart Banner',
+            profile_bg: 'Profile BG',
+            concierge: 'Concierge'
+        };
+
+        function displayTransposedTable(moods) {
+            // Clear any existing slideshow intervals
+            slideshowIntervals.forEach(clearInterval);
+            slideshowIntervals = [];
+
+            const container = document.getElementById('tableContainer');
             if (!moods.length) {
                 container.innerHTML = '<div class="empty-state">No moods found</div>';
                 return;
             }
-            let html = '';
+
+            // Build header: first column "Field", then each mood
+            let headerRow = '<tr><th>Field</th>';
             moods.forEach(m => {
-                const previewUrl = m.logos || m.hero_bg || 'https://via.placeholder.com/300x200?text=No+Image';
-                html += `
-                    <div class="mood-card" onclick="openEditModal(${m.id})">
-                        <div class="card-preview">
-                            <img src="${previewUrl}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x200?text=Error'">
-                        </div>
-                        <div class="card-content">
-                            <div class="card-title">${escapeHtml(m.name) || 'Unnamed'}</div>
-                            <div class="card-meta"><span>🆔 ${m.id}</span></div>
-                        </div>
-                    </div>
-                `;
+                const displayName = escapeHtml(m.name) || `Mood ${m.id}`;
+                headerRow += `<th>${displayName} (ID: ${m.id})</th>`;
             });
-            container.innerHTML = html;
+            headerRow += '</tr>';
+
+            // Build body rows: one per field
+            let bodyRows = '';
+            allFields.forEach(field => {
+                bodyRows += '<tr>';
+                bodyRows += `<td>${fieldLabels[field] || field.replace(/_/g, ' ')}</td>`;
+
+                moods.forEach(m => {
+                    if (field === 'id') {
+                        bodyRows += `<td onclick="openFieldEditModal(${m.id}, 'id')">${m.id}</td>`;
+                    } else if (field === 'name') {
+                        const name = escapeHtml(m.name) || '';
+                        bodyRows += `<td onclick="openFieldEditModal(${m.id}, 'name')">${name}</td>`;
+                    } else if (field === 'hero_bg') {
+                        // Special handling for hero_bg: multiple images
+                        const urls = m.hero_bg ? m.hero_bg.split(',').map(s => s.trim()).filter(s => s) : [];
+                        const slideshowId = `slideshow-${m.id}`;
+                        bodyRows += `<td onclick="openHeroBgModal(${m.id})" id="${slideshowId}">`;
+                        if (urls.length > 0) {
+                            // Store URLs in data attribute for slideshow
+                            bodyRows += `<img class="table-img slideshow-img" src="${escapeHtml(urls[0])}" data-urls="${escapeHtml(urls.join(','))}" style="max-height: ${getCurrentImageSize()}px;">`;
+                        } else {
+                            bodyRows += `<img class="table-img" src="https://via.placeholder.com/300x200?text=No+Image" style="max-height: ${getCurrentImageSize()}px;">`;
+                        }
+                        bodyRows += `</td>`;
+                    } else {
+                        const url = m[field] || '';
+                        bodyRows += `<td onclick="openFieldEditModal(${m.id}, '${field}')">`;
+                        bodyRows += `<img class="table-img" src="${escapeHtml(url)}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'" style="max-height: ${getCurrentImageSize()}px;">`;
+                        bodyRows += `</td>`;
+                    }
+                });
+                bodyRows += '</tr>';
+            });
+
+            container.innerHTML = `<table><thead>${headerRow}</thead><tbody>${bodyRows}</tbody></table>`;
+
+            // Start slideshows for hero_bg cells
+            moods.forEach(m => {
+                const slideshowCell = document.getElementById(`slideshow-${m.id}`);
+                if (slideshowCell) {
+                    const img = slideshowCell.querySelector('.slideshow-img');
+                    if (img) {
+                        const urls = img.dataset.urls ? img.dataset.urls.split(',').map(s => s.trim()) : [];
+                        if (urls.length > 1) {
+                            let index = 0;
+                            const interval = setInterval(() => {
+                                index = (index + 1) % urls.length;
+                                img.src = urls[index];
+                            }, 2000);
+                            slideshowIntervals.push(interval);
+                        }
+                    }
+                }
+            });
+
+            // Apply current image size from slider
+            updateImageSizes();
         }
 
-        // Simple escape for innerHTML safety
+        function getCurrentImageSize() {
+            const slider = document.getElementById('imageSizeSlider');
+            const percent = slider ? parseInt(slider.value) : 100;
+            return Math.round(BASE_IMAGE_SIZE * percent / 100);
+        }
+
+        function updateImageSizes() {
+            const size = getCurrentImageSize();
+            document.querySelectorAll('.table-img').forEach(img => {
+                img.style.maxHeight = size + 'px';
+            });
+            const slider = document.getElementById('imageSizeSlider');
+            if (slider) {
+                document.getElementById('sizeValue').textContent = slider.value + '%';
+            }
+        }
+
         function escapeHtml(unsafe) {
-            if (!unsafe) return unsafe;
+            if (!unsafe) return '';
             return unsafe.replace(/[&<>"]/g, function(m) {
-                if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; if(m === '"') return '&quot;';
+                if(m === '&') return '&amp;';
+                if(m === '<') return '&lt;';
+                if(m === '>') return '&gt;';
+                if(m === '"') return '&quot;';
                 return m;
             });
         }
 
-        // Open modal with smooth animation
-        function openEditModal(id) {
-            const mood = allMoods.find(m => m.id === id);
+        // ---------- Single field edit modal (for non-hero fields) ----------
+        function openFieldEditModal(moodId, field) {
+            const mood = allMoods.find(m => m.id === moodId);
             if (!mood) return;
-            currentEditId = id;
 
-            const fieldNames = [
-                'name', 'logos', 'hero_bg', 'deliver_asap', 'category_banner',
-                'visit_us', 'home_banner', 'watch_banner', 'visit_banner', 'listen_banner',
-                'cart_banner', 'profile_bg', 'concierge'
-            ];
+            currentEditMoodId = moodId;
+            currentEditField = field;
 
-            let html = '<div class="fields-grid">';
-            fieldNames.forEach(field => {
-                const value = mood[field] || '';
-                const isImage = field !== 'name';
-                html += `<div class="field-card" data-field="${field}">`;
-                html += `<div class="field-label">${field.replace(/_/g, ' ')}<span class="dirty-indicator"></span></div>`;
+            const moodName = mood.name || `Mood ${moodId}`;
+            document.getElementById('modalTitle').innerHTML = `✏️ Edit ${fieldLabels[field] || field} for "${escapeHtml(moodName)}"`;
 
-                if (isImage) {
-                    html += `
-                        <img class="image-preview" src="${escapeHtml(value)}" 
-                             onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'"
-                             onclick="window.open(this.src, '_blank')">
-                        <div class="upload-area">
-                            <button class="upload-btn-small" onclick="document.getElementById('file-${field}').click()">
-                                📁 Upload New
-                            </button>
-                            <input type="file" class="file-input" id="file-${field}" accept="image/*">
-                            <span class="uploading-indicator" id="uploading-${field}">⏳ Uploading...</span>
-                        </div>
-                        <input type="text" class="text-field" id="input-${field}" 
-                               value="${escapeHtml(value)}" placeholder="Image URL" oninput="markDirty('${field}')">
-                    `;
-                } else {
-                    html += `<input type="text" class="text-field" id="input-${field}" 
-                                   value="${escapeHtml(value)}" oninput="markDirty('${field}')">`;
-                }
-                html += '</div>';
-            });
+            const value = mood[field] || '';
+            const isImage = field !== 'name' && field !== 'id';
+
+            let html = `<div class="single-field-card">`;
+            html += `<div class="field-label">${fieldLabels[field] || field}</div>`;
+
+            if (isImage) {
+                html += `
+                    <img class="image-preview" id="single-preview" src="${escapeHtml(value)}" 
+                         onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'"
+                         onclick="window.open(this.src, '_blank')">
+                    <div class="upload-area">
+                        <button class="upload-btn-small" onclick="document.getElementById('single-file-input').click()">
+                            📁 Upload New
+                        </button>
+                        <input type="file" class="file-input" id="single-file-input" accept="image/*">
+                        <span class="uploading-indicator" id="single-uploading">⏳ Uploading...</span>
+                    </div>
+                    <input type="text" class="text-field" id="single-field-input" 
+                           value="${escapeHtml(value)}" placeholder="Image URL">
+                `;
+            } else {
+                html += `<input type="text" class="text-field" id="single-field-input" value="${escapeHtml(value)}" placeholder="Enter value">`;
+            }
+
             html += '</div>';
             document.getElementById('modalBody').innerHTML = html;
 
-            // Attach file upload listeners
-            fieldNames.filter(f => f !== 'name').forEach(field => {
-                const fileInput = document.getElementById(`file-${field}`);
-                if (fileInput) {
-                    fileInput.addEventListener('change', async (e) => {
-                        const file = e.target.files[0];
-                        if (!file) return;
-                        const indicator = document.getElementById(`uploading-${field}`);
-                        indicator.style.display = 'inline-flex';
-                        const formData = new FormData();
-                        formData.append('image', file);
-                        try {
-                            const res = await fetch('https://api.zulushop.in/api/v1/user/upload', {
-                                method: 'POST',
-                                body: formData
-                            });
-                            const data = await res.json();
-                            const url = data.url || data.image_url;
-                            if (url) {
-                                const preview = fileInput.closest('.field-card').querySelector('.image-preview');
-                                preview.src = url;
-                                document.getElementById(`input-${field}`).value = url;
-                                markDirty(field);
-                                showMessage('✅ Image uploaded', 'success');
-                            } else {
-                                showMessage('❌ Upload failed: no URL', 'error');
-                            }
-                        } catch (err) {
-                            showMessage('❌ Upload error: ' + err.message, 'error');
-                        } finally {
-                            indicator.style.display = 'none';
-                            fileInput.value = '';
+            // Attach file upload if image field
+            if (isImage) {
+                const fileInput = document.getElementById('single-file-input');
+                fileInput.addEventListener('change', async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const indicator = document.getElementById('single-uploading');
+                    indicator.style.display = 'inline-flex';
+                    const formData = new FormData();
+                    formData.append('image', file);
+                    try {
+                        const res = await fetch('https://api.zulushop.in/api/v1/user/upload', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        const data = await res.json();
+                        const url = data.url || data.image_url;
+                        if (url) {
+                            document.getElementById('single-preview').src = url;
+                            document.getElementById('single-field-input').value = url;
+                            showMessage('✅ Image uploaded', 'success');
+                        } else {
+                            showMessage('❌ Upload failed: no URL', 'error');
                         }
-                    });
-                }
-            });
+                    } catch (err) {
+                        showMessage('❌ Upload error: ' + err.message, 'error');
+                    } finally {
+                        indicator.style.display = 'none';
+                        fileInput.value = '';
+                    }
+                });
+            }
 
-            // Show modal with class
             const modal = document.getElementById('editModal');
             modal.classList.add('show');
         }
 
-        // Mark a field as dirty (edited)
-        function markDirty(field) {
-            const card = document.querySelector(`.field-card[data-field="${field}"]`);
-            if (card) card.classList.add('dirty');
+        // ---------- Hero BG multi-image modal ----------
+        function openHeroBgModal(moodId) {
+            const mood = allMoods.find(m => m.id === moodId);
+            if (!mood) return;
+
+            currentEditMoodId = moodId;
+            currentEditField = 'hero_bg';
+
+            const urls = mood.hero_bg ? mood.hero_bg.split(',').map(s => s.trim()).filter(s => s) : [];
+            currentHeroUrls = [...urls];
+            currentHeroIndex = 0;
+
+            const moodName = mood.name || `Mood ${moodId}`;
+            document.getElementById('modalTitle').innerHTML = `✏️ Edit Hero BG for "${escapeHtml(moodName)}"`;
+
+            renderHeroBgModal();
+
+            const modal = document.getElementById('editModal');
+            modal.classList.add('show');
         }
 
-        // Save all changes
-        async function saveMood() {
-            if (!currentEditId) return;
+        function renderHeroBgModal() {
+            let html = `<div class="hero-bg-editor">`;
 
-            const fieldNames = [
-                'name', 'logos', 'hero_bg', 'deliver_asap', 'category_banner',
-                'visit_us', 'home_banner', 'watch_banner', 'visit_banner', 'listen_banner',
-                'cart_banner', 'profile_bg', 'concierge'
-            ];
-            const updateData = {};
-            fieldNames.forEach(field => {
-                const input = document.getElementById(`input-${field}`);
-                if (input) updateData[field] = input.value;
+            // Carousel
+            html += `<div class="carousel-container">`;
+            if (currentHeroUrls.length > 0) {
+                html += `<img class="carousel-image" src="${escapeHtml(currentHeroUrls[currentHeroIndex])}" id="carousel-img">`;
+                html += `<button class="carousel-prev" onclick="carouselPrev()">❮</button>`;
+                html += `<button class="carousel-next" onclick="carouselNext()">❯</button>`;
+                html += `<button class="carousel-remove" onclick="removeCurrentImage()">✖</button>`;
+            } else {
+                html += `<p>No images</p>`;
+            }
+            html += `</div>`;
+
+            // Thumbnail list
+            html += `<div class="image-list">`;
+            currentHeroUrls.forEach((url, index) => {
+                const selectedClass = index === currentHeroIndex ? 'selected' : '';
+                html += `<div class="image-list-item ${selectedClass}" data-index="${index}" onclick="carouselGoTo(${index})">`;
+                html += `<img src="${escapeHtml(url)}">`;
+                html += `<button onclick="removeImage(${index}); event.stopPropagation();">✖</button>`;
+                html += `</div>`;
             });
+            html += `</div>`;
+
+            // Add new image
+            html += `<div class="add-image">`;
+            html += `<input type="text" id="new-image-url" placeholder="Image URL">`;
+            html += `<button onclick="addImage()">Add URL</button>`;
+            html += `<button class="upload-btn-small" onclick="document.getElementById('hero-file-input').click()">📁 Upload</button>`;
+            html += `<input type="file" id="hero-file-input" accept="image/*" style="display:none">`;
+            html += `<span class="uploading-indicator" id="hero-uploading">⏳ Uploading...</span>`;
+            html += `</div>`;
+
+            html += `</div>`;
+            document.getElementById('modalBody').innerHTML = html;
+
+            // Attach file upload
+            const fileInput = document.getElementById('hero-file-input');
+            fileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const indicator = document.getElementById('hero-uploading');
+                indicator.style.display = 'inline-flex';
+                const formData = new FormData();
+                formData.append('image', file);
+                try {
+                    const res = await fetch('https://api.zulushop.in/api/v1/user/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await res.json();
+                    const url = data.url || data.image_url;
+                    if (url) {
+                        currentHeroUrls.push(url);
+                        if (currentHeroUrls.length === 1) currentHeroIndex = 0;
+                        renderHeroBgModal();
+                        showMessage('✅ Image uploaded', 'success');
+                    } else {
+                        showMessage('❌ Upload failed: no URL', 'error');
+                    }
+                } catch (err) {
+                    showMessage('❌ Upload error: ' + err.message, 'error');
+                } finally {
+                    indicator.style.display = 'none';
+                    fileInput.value = '';
+                }
+            });
+        }
+
+        // Carousel navigation functions (global)
+        window.carouselPrev = function() {
+            if (currentHeroUrls.length > 0) {
+                currentHeroIndex = (currentHeroIndex - 1 + currentHeroUrls.length) % currentHeroUrls.length;
+                renderHeroBgModal();
+            }
+        };
+
+        window.carouselNext = function() {
+            if (currentHeroUrls.length > 0) {
+                currentHeroIndex = (currentHeroIndex + 1) % currentHeroUrls.length;
+                renderHeroBgModal();
+            }
+        };
+
+        window.carouselGoTo = function(index) {
+            if (index >= 0 && index < currentHeroUrls.length) {
+                currentHeroIndex = index;
+                renderHeroBgModal();
+            }
+        };
+
+        window.removeCurrentImage = function() {
+            if (currentHeroUrls.length > 0) {
+                currentHeroUrls.splice(currentHeroIndex, 1);
+                if (currentHeroIndex >= currentHeroUrls.length) {
+                    currentHeroIndex = Math.max(0, currentHeroUrls.length - 1);
+                }
+                renderHeroBgModal();
+            }
+        };
+
+        window.removeImage = function(index) {
+            if (index >= 0 && index < currentHeroUrls.length) {
+                currentHeroUrls.splice(index, 1);
+                if (currentHeroIndex >= currentHeroUrls.length) {
+                    currentHeroIndex = Math.max(0, currentHeroUrls.length - 1);
+                } else if (index < currentHeroIndex) {
+                    currentHeroIndex--;
+                }
+                renderHeroBgModal();
+            }
+        };
+
+        window.addImage = function() {
+            const input = document.getElementById('new-image-url');
+            const url = input.value.trim();
+            if (url) {
+                currentHeroUrls.push(url);
+                if (currentHeroUrls.length === 1) currentHeroIndex = 0;
+                input.value = '';
+                renderHeroBgModal();
+            }
+        };
+
+        // ---------- Save functions ----------
+        async function saveSingleField() {
+            if (!currentEditMoodId || !currentEditField) return;
+
+            // Special handling for hero_bg
+            if (currentEditField === 'hero_bg') {
+                await saveHeroBg();
+                return;
+            }
+
+            const input = document.getElementById('single-field-input');
+            if (!input) return;
+
+            const newValue = input.value;
+            const updateData = {};
+            updateData[currentEditField] = newValue;
 
             try {
-                const res = await fetch(`/api/base_moods/${currentEditId}`, {
+                const res = await fetch(`/api/base_moods/${currentEditMoodId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updateData)
                 });
                 const result = await res.json();
                 if (result.success) {
-                    const idx = allMoods.findIndex(m => m.id === currentEditId);
-                    if (idx !== -1) allMoods[idx] = { ...allMoods[idx], ...updateData };
+                    const idx = allMoods.findIndex(m => m.id === currentEditMoodId);
+                    if (idx !== -1) {
+                        allMoods[idx][currentEditField] = newValue;
+                    }
                     filterAndDisplay();
                     closeEditModal();
-                    showMessage('✅ Mood updated successfully', 'success');
+                    showMessage('✅ Field updated successfully', 'success');
                 } else {
                     showMessage('❌ Error: ' + result.error, 'error');
                 }
@@ -670,22 +1045,54 @@
             }
         }
 
-        // Close modal with animation
+        async function saveHeroBg() {
+            if (!currentEditMoodId) return;
+            const newValue = currentHeroUrls.join(', ');
+            const updateData = { hero_bg: newValue };
+            try {
+                const res = await fetch(`/api/base_moods/${currentEditMoodId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+                const result = await res.json();
+                if (result.success) {
+                    const idx = allMoods.findIndex(m => m.id === currentEditMoodId);
+                    if (idx !== -1) {
+                        allMoods[idx].hero_bg = newValue;
+                    }
+                    filterAndDisplay();
+                    closeEditModal();
+                    showMessage('✅ Hero BG updated successfully', 'success');
+                } else {
+                    showMessage('❌ Error: ' + result.error, 'error');
+                }
+            } catch (err) {
+                showMessage('❌ Save failed: ' + err.message, 'error');
+            }
+        }
+
         function closeEditModal() {
             const modal = document.getElementById('editModal');
             modal.classList.remove('show');
-            currentEditId = null;
+            currentEditMoodId = null;
+            currentEditField = null;
+            currentHeroUrls = [];
+            currentHeroIndex = 0;
         }
 
         // Search listener
         document.getElementById('searchInput').addEventListener('input', filterAndDisplay);
-
-        // Close modal when clicking outside content (but not during animation)
+        // Image size slider listener
+        document.getElementById('imageSizeSlider').addEventListener('input', function(e) {
+            document.getElementById('sizeValue').textContent = e.target.value + '%';
+            updateImageSizes();
+        });
+        // Close modal when clicking outside
         window.addEventListener('click', (event) => {
             const modal = document.getElementById('editModal');
             if (event.target === modal) closeEditModal();
         });
-
         // Load on page start
         loadMoods();
     </script>

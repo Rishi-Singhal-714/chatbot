@@ -4925,10 +4925,10 @@ app.get('/api/moods', async (req, res) => {
   }
 });
 
-app.get('/api/moods/:id', async (req, res) => {
+app.get('/api/moods/:mood_id', async (req, res) => {
   try {
-    const { id } = req.params;
-    const record = await db.getRecordById('moods', id);
+    const { mood_id } = req.params;
+    const record = await db.getRecordById('moods', mood_id);
     if (!record) return res.status(404).json({ success: false, error: 'Mood not found' });
     res.json({ success: true, data: record });
   } catch (error) {
@@ -4937,12 +4937,12 @@ app.get('/api/moods/:id', async (req, res) => {
   }
 });
 
-app.put('/api/moods/:id', async (req, res) => {
+app.put('/api/moods/:mood_id', async (req, res) => {
   try {
-    const { id } = req.params;
+    const { mood_id } = req.params;
     const updateData = req.body;
     delete updateData.mood_id;  // primary key
-    const result = await db.executeUpdate('moods', id, updateData);
+    const result = await db.executeUpdate('moods', mood_id, updateData);
     res.json({ success: true, message: 'Mood updated', affectedRows: result.affectedRows });
   } catch (error) {
     console.error('Update mood error:', error);
@@ -4950,10 +4950,10 @@ app.put('/api/moods/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/moods/:id', async (req, res) => {
+app.delete('/api/moods/:mood_id', async (req, res) => {
   try {
-    const { id } = req.params;
-    const result = await db.executeDelete('moods', id);
+    const { mood_id } = req.params;
+    const result = await db.executeDelete('moods', mood_id);
     db.clearCache('moods');
     res.json({ success: true, message: 'Mood deleted', affectedRows: result.affectedRows });
   } catch (error) {

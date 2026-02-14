@@ -105,7 +105,7 @@ const columnMapping = {
 ],  
 'moods': [
     'mood_id', 'user_mood', 'parent_mood', 'description',
-    'inspiration', 'advice', 'logo', 'created_at', 'updated_at'
+    'inspiration', 'advice', 'logo','for_you','home','men','women','kids','track_ids', 'created_at', 'updated_at'
   ],
   'tracks': [
     'id', 'old_name', 'name', 'description', 'genre', 'base_mood',
