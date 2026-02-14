@@ -4362,7 +4362,7 @@ app.post('/api/clear-cache/:type', (req, res) => {
   if (type === 'all') {
     db.clearAllCaches();
     res.json({ success: true, message: 'All caches cleared' });
-  } else if (['products', 'sellers', 'videos', 'users', 'galleries', 'appconfigs', 'categories', 'soc_booking_user','socbookinguser', 'base_moods'].includes(type)) {
+  } else if (['products', 'sellers', 'videos', 'users', 'galleries', 'appconfigs', 'categories', 'soc_booking_user','socbookinguser', 'base_moods', 'moods', 'tracks', 'business'].includes(type)) {
     db.clearCache(type);
     res.json({ success: true, message: `Cache cleared for ${type}` });
   } else {
@@ -4907,6 +4907,161 @@ app.get('/socbookinguser', (req, res) => {
 app.get('/base_moods', (req, res) => {
   res.sendFile(__dirname + '/public/base_moods.html');
 });
+app.get('/moods', (req, res) => res.sendFile(__dirname + '/public/moods.html'));
+app.get('/tracks', (req, res) => res.sendFile(__dirname + '/public/tracks.html'));
+app.get('/business', (req, res) => res.sendFile(__dirname + '/public/business.html'));
+
+
+// -------------------------
+// Moods Endpoints
+// -------------------------
+app.get('/api/moods', async (req, res) => {
+  try {
+    const data = await db.getCachedData('moods');
+    res.json({ success: true, data: data, count: data.length });
+  } catch (error) {
+    console.error('Error fetching moods:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/moods/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const record = await db.getRecordById('moods', id);
+    if (!record) return res.status(404).json({ success: false, error: 'Mood not found' });
+    res.json({ success: true, data: record });
+  } catch (error) {
+    console.error('Get mood error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.put('/api/moods/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    delete updateData.mood_id;  // primary key
+    const result = await db.executeUpdate('moods', id, updateData);
+    res.json({ success: true, message: 'Mood updated', affectedRows: result.affectedRows });
+  } catch (error) {
+    console.error('Update mood error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.delete('/api/moods/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await db.executeDelete('moods', id);
+    db.clearCache('moods');
+    res.json({ success: true, message: 'Mood deleted', affectedRows: result.affectedRows });
+  } catch (error) {
+    console.error('Delete mood error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// -------------------------
+// Tracks Endpoints
+// -------------------------
+app.get('/api/tracks', async (req, res) => {
+  try {
+    const data = await db.getCachedData('tracks');
+    res.json({ success: true, data: data, count: data.length });
+  } catch (error) {
+    console.error('Error fetching tracks:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/tracks/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const record = await db.getRecordById('tracks', id);
+    if (!record) return res.status(404).json({ success: false, error: 'Track not found' });
+    res.json({ success: true, data: record });
+  } catch (error) {
+    console.error('Get track error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.put('/api/tracks/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    delete updateData.id;
+    const result = await db.executeUpdate('tracks', id, updateData);
+    res.json({ success: true, message: 'Track updated', affectedRows: result.affectedRows });
+  } catch (error) {
+    console.error('Update track error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.delete('/api/tracks/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await db.executeDelete('tracks', id);
+    db.clearCache('tracks');
+    res.json({ success: true, message: 'Track deleted', affectedRows: result.affectedRows });
+  } catch (error) {
+    console.error('Delete track error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// -------------------------
+// Business Endpoints
+// -------------------------
+app.get('/api/business', async (req, res) => {
+  try {
+    const data = await db.getCachedData('business');
+    res.json({ success: true, data: data, count: data.length });
+  } catch (error) {
+    console.error('Error fetching business:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/business/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const record = await db.getRecordById('business', id);
+    if (!record) return res.status(404).json({ success: false, error: 'Business not found' });
+    res.json({ success: true, data: record });
+  } catch (error) {
+    console.error('Get business error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.put('/api/business/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    delete updateData.id;
+    const result = await db.executeUpdate('business', id, updateData);
+    res.json({ success: true, message: 'Business updated', affectedRows: result.affectedRows });
+  } catch (error) {
+    console.error('Update business error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.delete('/api/business/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await db.executeDelete('business', id);
+    db.clearCache('business');
+    res.json({ success: true, message: 'Business deleted', affectedRows: result.affectedRows });
+  } catch (error) {
+    console.error('Delete business error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // -------------------------
 // Base Moods Endpoints
 // -------------------------

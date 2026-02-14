@@ -28,7 +28,10 @@ const tableMapping = {
   'categories': 'categories',
   'socbookinguser': 'soc_booking_user',
   'soc_booking_user': 'soc_booking_user',  // This is the issue
-  'base_moods': 'base_moods'
+  'base_moods': 'base_moods',
+  'moods': 'moods',
+  'tracks': 'tracks',
+  'business': 'business'
 };
 
 // Column mapping for each table - ONLY the columns we want to fetch and edit
@@ -99,7 +102,23 @@ const columnMapping = {
   'id', 'name', 'logos', 'hero_bg', 'deliver_asap', 'category_banner',
   'visit_us', 'home_banner', 'watch_banner', 'visit_banner', 'listen_banner',
   'cart_banner', 'profile_bg', 'concierge', 'created_at', 'updated_at'
-]
+],  
+'moods': [
+    'mood_id', 'user_mood', 'parent_mood', 'description',
+    'inspiration', 'advice', 'logo', 'created_at', 'updated_at'
+  ],
+  'tracks': [
+    'id', 'old_name', 'name', 'description', 'genre', 'base_mood',
+    'user_moods', 'sections', 'prompt1', 'prompt2', 'old_id',
+    'filename', 'reference', 'created_at', 'updated_at'
+  ],
+  'business': [
+    'id', 'name', 'image1', 'image2', 'banner1', 'banner2', 'catId',
+    'gallery_id', 'home_component_id', 'watch_component_id',
+    'try_component_id', 'visit_component_id', 'club_component_id',
+    'type', 'priority', 'featured_outlets', 'catId2', 'showcat2',
+    'visit_category_ids'
+  ]
 };
 
 // In-memory cache (2 hours = 7200000 ms)
@@ -201,7 +220,34 @@ const cache = {
       ${columnMapping.base_moods.join(',\n        ')}
     FROM u130660877_zulu.base_moods
   `
-}
+},
+  moods: {
+    data: null,
+    timestamp: 0,
+    query: `
+      SELECT
+      ${columnMapping.moods.join(',\n        ')}
+      FROM u130660877_zulu.moods
+    `
+  },
+  tracks: {
+    data: null,
+    timestamp: 0,
+    query: `
+      SELECT
+      ${columnMapping.tracks.join(',\n        ')}
+      FROM u130660877_zulu.tracks
+    `
+  },
+  business: {
+    data: null,
+    timestamp: 0,
+    query: `
+      SELECT
+      ${columnMapping.business.join(',\n        ')}
+      FROM u130660877_zulu.business
+    `
+  }
 };
 
 const CACHE_TTL = 7200000;

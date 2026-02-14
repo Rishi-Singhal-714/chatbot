@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tracks - Admin</title>
+    <style>
+        /* (same CSS as before – include the full block) */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: #f4f7fb;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #1a2639;
+            font-weight: 600;
+            font-size: 2.2rem;
+            margin-bottom: 2rem;
+            border-bottom: 3px solid #4f46e5;
+            padding-bottom: 0.75rem;
+            display: inline-block;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+            border: 1px solid rgba(255,255,255,0.5);
+            margin-bottom: 2rem;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        .back-btn {
+            background: #5a6b7a;
+            color: white;
+        }
+        .refresh-btn {
+            background: #2196F3;
+            color: white;
+        }
+
+        .search-box {
+            flex: 1;
+            max-width: 380px;
+            position: relative;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 12px 48px 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 40px;
+            font-size: 15px;
+            transition: 0.3s;
+            background: white;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 4px rgba(79,70,229,0.15);
+        }
+        .search-box:after {
+            content: "🔍";
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7f8c8d;
+            font-size: 18px;
+        }
+
+        #message {
+            padding: 16px 24px;
+            border-radius: 40px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            display: none;
+            animation: slideDown 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #loading {
+            text-align: center;
+            padding: 50px;
+            background: #fff8e7;
+            border: 2px solid #ffe0a3;
+            border-radius: 40px;
+            color: #7d5d23;
+            font-weight: 600;
+            font-size: 18px;
+            margin: 30px 0;
+        }
+
+        #error {
+            padding: 30px;
+            background: #ffe6e6;
+            border: 2px solid #ffb3b3;
+            border-radius: 40px;
+            color: #b00020;
+            display: none;
+            margin: 30px 0;
+            font-weight: 500;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        .mood-card {
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: transform 0.25s, box-shadow 0.3s;
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+        .mood-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 35px rgba(79,70,229,0.15);
+        }
+
+        .card-preview {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background: #eef2f6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .music-icon {
+            font-size: 4rem;
+            line-height: 1;
+            color: #4f46e5;
+            margin-bottom: 8px;
+        }
+
+        .audio-player {
+            width: 100%;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            background: rgba(0,0,0,0.7);
+            padding: 6px 8px;
+            box-sizing: border-box;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .card-preview:hover .audio-player {
+            opacity: 1;
+        }
+        .audio-player audio {
+            width: 100%;
+            height: 32px;
+            display: block;
+        }
+        audio {
+            border-radius: 16px;
+        }
+
+        .card-content {
+            padding: 16px;
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e2b3a;
+            margin-bottom: 4px;
+        }
+        .card-meta {
+            color: #6b7a8a;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 80px 30px;
+            background: white;
+            border-radius: 40px;
+            border: 2px dashed #b0c4d9;
+            color: #5f7a9a;
+            font-size: 20px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+        .modal.show {
+            display: block;
+            opacity: 1;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            background: white;
+            border-radius: 32px;
+            width: 90%;
+            max-width: 1100px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+        .modal.show .modal-content {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 32px;
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            color: white;
+            border-radius: 32px 32px 0 0;
+        }
+        .modal-header h2 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 600;
+        }
+        .close-modal {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            font-size: 32px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        .close-modal:hover {
+            background: rgba(255,255,255,0.3);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 32px;
+        }
+
+        .fields-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 24px;
+        }
+
+        .field-card {
+            background: #f9fafc;
+            border: 2px solid #e9ecf0;
+            border-radius: 24px;
+            padding: 18px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .field-card:hover {
+            border-color: #4f46e5;
+            box-shadow: 0 10px 20px rgba(79,70,229,0.08);
+        }
+        .field-card.dirty {
+            border-color: #f97316;
+            background: #fffaf0;
+        }
+
+        .field-label {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #2c3e50;
+            font-size: 15px;
+            text-transform: capitalize;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .dirty-indicator {
+            width: 10px;
+            height: 10px;
+            background: #f97316;
+            border-radius: 50%;
+            display: inline-block;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .field-card.dirty .dirty-indicator {
+            opacity: 1;
+        }
+
+        /* We won't show image preview for audio, but keep the class for consistency */
+        .image-preview {
+            display: none;
+        }
+
+        .upload-area {
+            margin: 12px 0 8px;
+        }
+        .upload-btn-small {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+            box-shadow: 0 4px 8px rgba(33,150,243,0.2);
+        }
+        .upload-btn-small:hover {
+            background: #1976D2;
+            transform: scale(1.02);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .uploading-indicator {
+            font-size: 12px;
+            color: #2196F3;
+            margin-top: 6px;
+            display: none;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .text-field {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #dde3e9;
+            border-radius: 30px;
+            font-size: 14px;
+            transition: 0.2s;
+            margin-top: 8px;
+            background: white;
+        }
+        .text-field:focus {
+            border-color: #4f46e5;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: flex-end;
+            padding: 24px 32px;
+            border-top: 2px solid #eef2f6;
+            background: #f8fafd;
+            border-radius: 0 0 32px 32px;
+        }
+        .save-btn, .cancel-btn {
+            padding: 14px 32px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .save-btn {
+            background: #27ae60;
+            color: white;
+        }
+        .cancel-btn {
+            background: #95a5a6;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <h1>Tracks</h1>
+
+        <div class="controls">
+            <button class="back-btn" onclick="location.href='/'">← Dashboard</button>
+            <button class="refresh-btn" onclick="loadItems()">🔄 Refresh</button>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by name...">
+            </div>
+        </div>
+
+        <div id="message"></div>
+        <div id="loading">Loading tracks...</div>
+        <div id="error"></div>
+        <div id="cardsContainer" class="cards-grid"></div>
+
+        <!-- Edit Modal -->
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Edit Track</h2>
+                    <button class="close-modal" onclick="closeEditModal()">&times;</button>
+                </div>
+                <div class="modal-body" id="modalBody"></div>
+                <div class="modal-actions">
+                    <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
+                    <button class="save-btn" onclick="saveItem()">💾 Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allItems = [];
+        let currentEditId = null;
+
+        const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/300x200?text=No+Image';
+        const API_BASE = '/api/tracks';
+        const TABLE_ID_FIELD = 'id';
+
+        // All fields in order (excluding primary key)
+        const fieldNames = [
+            'old_name', 'name', 'description', 'genre', 'base_mood',
+            'user_moods', 'sections', 'prompt1', 'prompt2', 'old_id',
+            'filename', 'reference'
+        ];
+
+        // Fields that are uploadable – we include 'filename' for audio
+        const uploadableFields = ['filename'];
+
+        // Helper to convert relative paths to absolute URLs
+        function getFullMediaUrl(url) {
+            if (!url) return '';
+            if (url.startsWith('http://') || url.startsWith('https://')) return url;
+            if (url.startsWith('/')) return `https://zulushop.in${url}`;
+            return `https://zulushop.in/${url}`;
+        }
+
+        // Safely escape HTML
+        function escapeHtml(unsafe) {
+            if (unsafe === null || unsafe === undefined) return '';
+            const str = String(unsafe);
+            return str.replace(/[&<>"]/g, function(m) {
+                if(m === '&') return '&amp;';
+                if(m === '<') return '&lt;';
+                if(m === '>') return '&gt;';
+                if(m === '"') return '&quot;';
+                return m;
+            });
+        }
+
+        function showMessage(text, type = 'success') {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            const colors = {
+                success: { bg: '#dff0d8', color: '#3c763d' },
+                error: { bg: '#f2dede', color: '#a94442' },
+                info: { bg: '#d9edf7', color: '#31708f' }
+            };
+            const s = colors[type] || colors.success;
+            msg.style.backgroundColor = s.bg;
+            msg.style.color = s.color;
+            msg.style.display = 'block';
+            setTimeout(() => msg.style.display = 'none', 4000);
+        }
+
+        async function loadItems() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            try {
+                const res = await fetch(API_BASE);
+                const data = await res.json();
+                if (data.success) {
+                    allItems = data.data;
+                    filterAndDisplay();
+                } else throw new Error(data.error);
+            } catch (err) {
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = 'Error: ' + err.message;
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function filterAndDisplay() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allItems.filter(item => 
+                (item.name || '').toLowerCase().includes(search)
+            );
+            displayCards(filtered);
+        }
+
+        function displayCards(items) {
+            const container = document.getElementById('cardsContainer');
+            if (!items.length) {
+                container.innerHTML = '<div class="empty-state">No tracks found</div>';
+                return;
+            }
+            let html = '';
+            items.forEach(item => {
+                const audioSrc = getFullMediaUrl(item.filename);
+                html += `
+                    <div class="mood-card" onclick="openEditModal(${item.id})">
+                        <div class="card-preview">
+                            <div class="music-icon">🎵</div>
+                            ${audioSrc ? `
+                                <div class="audio-player" onclick="event.stopPropagation()">
+                                    <audio controls src="${escapeHtml(audioSrc)}">
+                                        Your browser does not support the audio element.
+                                    </audio>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="card-content">
+                            <div class="card-title">${escapeHtml(item.name) || 'Unnamed'}</div>
+                            <div class="card-meta">ID: ${item.id}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function openEditModal(id) {
+            const item = allItems.find(i => i.id === id);
+            if (!item) return;
+            currentEditId = id;
+
+            let html = '<div class="fields-grid">';
+            fieldNames.forEach(field => {
+                const rawValue = item[field];
+                const value = escapeHtml(rawValue);
+                const isUploadable = uploadableFields.includes(field);
+                html += `<div class="field-card" data-field="${field}">`;
+                html += `<div class="field-label">${field.replace(/_/g, ' ')}<span class="dirty-indicator"></span></div>`;
+
+                if (isUploadable) {
+                    // For filename (audio), show upload button + text field
+                    const acceptAttr = field === 'filename' ? 'audio/*' : 'image/*'; // though only filename is uploadable
+                    html += `
+                        <div class="upload-area">
+                            <button class="upload-btn-small" onclick="document.getElementById('file-${field}').click()">
+                                Upload New
+                            </button>
+                            <input type="file" class="file-input" id="file-${field}" accept="${acceptAttr}">
+                            <span class="uploading-indicator" id="uploading-${field}">Uploading...</span>
+                        </div>
+                        <input type="text" class="text-field" id="input-${field}" 
+                               value="${value}" placeholder="File URL" oninput="markDirty('${field}')">
+                    `;
+                } else {
+                    // Regular text field
+                    html += `<input type="text" class="text-field" id="input-${field}" 
+                                   value="${value}" oninput="markDirty('${field}')" placeholder="Enter value">`;
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+            document.getElementById('modalBody').innerHTML = html;
+
+            // Attach file upload listeners for uploadable fields
+            uploadableFields.forEach(field => {
+                const fileInput = document.getElementById(`file-${field}`);
+                if (fileInput) {
+                    fileInput.addEventListener('change', async (e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        const indicator = document.getElementById(`uploading-${field}`);
+                        indicator.style.display = 'inline-flex';
+                        const formData = new FormData();
+                        formData.append('image', file); // endpoint expects 'image' but accepts any file
+                        try {
+                            const res = await fetch('https://api.zulushop.in/api/v1/user/upload', {
+                                method: 'POST',
+                                body: formData
+                            });
+                            const data = await res.json();
+                            const url = data.url || data.image_url;
+                            if (url) {
+                                // For filename, we don't have an image preview, just update the input
+                                document.getElementById(`input-${field}`).value = url;
+                                markDirty(field);
+                                showMessage('File uploaded successfully', 'success');
+                            } else {
+                                showMessage('Upload failed: no URL', 'error');
+                            }
+                        } catch (err) {
+                            showMessage('Upload error: ' + err.message, 'error');
+                        } finally {
+                            indicator.style.display = 'none';
+                            fileInput.value = '';
+                        }
+                    });
+                }
+            });
+
+            const modal = document.getElementById('editModal');
+            modal.classList.add('show');
+        }
+
+        function markDirty(field) {
+            const card = document.querySelector(`.field-card[data-field="${field}"]`);
+            if (card) card.classList.add('dirty');
+        }
+
+        async function saveItem() {
+            if (!currentEditId) return;
+
+            const updateData = {};
+            fieldNames.forEach(field => {
+                const input = document.getElementById(`input-${field}`);
+                if (input) updateData[field] = input.value;
+            });
+
+            try {
+                const res = await fetch(`${API_BASE}/${currentEditId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+                const result = await res.json();
+                if (result.success) {
+                    const idx = allItems.findIndex(i => i.id === currentEditId);
+                    if (idx !== -1) allItems[idx] = { ...allItems[idx], ...updateData };
+                    filterAndDisplay();
+                    closeEditModal();
+                    showMessage('Track updated successfully', 'success');
+                } else {
+                    showMessage('Error: ' + result.error, 'error');
+                }
+            } catch (err) {
+                showMessage('Save failed: ' + err.message, 'error');
+            }
+        }
+
+        function closeEditModal() {
+            const modal = document.getElementById('editModal');
+            modal.classList.remove('show');
+            currentEditId = null;
+        }
+
+        document.getElementById('searchInput').addEventListener('input', filterAndDisplay);
+
+        window.addEventListener('click', (event) => {
+            const modal = document.getElementById('editModal');
+            if (event.target === modal) closeEditModal();
+        });
+
+        loadItems();
+    </script>
+</body>
+</html>
