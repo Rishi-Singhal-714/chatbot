@@ -27,7 +27,8 @@ const tableMapping = {
   'appconfigs': 'app_configs',
   'categories': 'categories',
   'socbookinguser': 'soc_booking_user',
-  'soc_booking_user': 'soc_booking_user'  // This is the issue
+  'soc_booking_user': 'soc_booking_user',  // This is the issue
+  'base_moods': 'base_moods'
 };
 
 // Column mapping for each table - ONLY the columns we want to fetch and edit
@@ -93,7 +94,12 @@ const columnMapping = {
 'customer_address', 'consumer_confirm', 'video_json', 'new_categories', 
 'booked_by', 'booked_how', 'booked_from', 'qr_code_id', 'coupon_code', 
 'product_details'
-  ]
+  ],
+  'base_moods': [
+  'id', 'name', 'logos', 'hero_bg', 'deliver_asap', 'category_banner',
+  'visit_us', 'home_banner', 'watch_banner', 'visit_banner', 'listen_banner',
+  'cart_banner', 'profile_bg', 'concierge', 'created_at', 'updated_at'
+]
 };
 
 // In-memory cache (2 hours = 7200000 ms)
@@ -186,8 +192,16 @@ const cache = {
       ${columnMapping.socbookinguser.join(',\n        ')}
     FROM u130660877_zulu.soc_booking_user
   `
+},
+'base_moods': {
+  data: null,
+  timestamp: 0,
+  query: `
+    SELECT 
+      ${columnMapping.base_moods.join(',\n        ')}
+    FROM u130660877_zulu.base_moods
+  `
 }
-
 };
 
 const CACHE_TTL = 7200000;

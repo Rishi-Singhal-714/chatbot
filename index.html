@@ -3,223 +3,377 @@
 <head>
     <title>Zulu Club Dashboard</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background: #f5f5f5;
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-        }
-        h3 {
-            color: #444;
-            margin: 20px 0 10px 0;
-        }
-        .main-buttons {
+            background: #f4f7fb;
+            padding: 2rem;
+            min-height: 100vh;
             display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin: 30px 0;
-            flex-wrap: wrap;
+            flex-direction: column;
+            align-items: center;
         }
+
+        .dashboard {
+            max-width: 1400px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #1a2639;
+            font-weight: 600;
+            font-size: 2.2rem;
+            margin-bottom: 2rem;
+            border-bottom: 3px solid #4f46e5;
+            padding-bottom: 0.75rem;
+            display: inline-block;
+        }
+
+        h3 {
+            color: #2d3a4f;
+            font-weight: 600;
+            font-size: 1.3rem;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .main-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin: 2rem 0;
+        }
+
         .main-buttons button {
-            padding: 15px 25px;
-            font-size: 16px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 12px 10px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #1e293b;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            backdrop-filter: blur(4px);
         }
+
         .main-buttons button:hover {
-            background: #45a049;
+            background: #4f46e5;
+            color: white;
+            border-color: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(79,70,229,0.2);
         }
+
         .cache-controls {
             background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin: 20px 0;
+            border-radius: 24px;
+            padding: 1.8rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+            border: 1px solid rgba(255,255,255,0.5);
+            backdrop-filter: blur(8px);
+            margin: 2rem 0;
         }
+
         .cache-buttons {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 10px;
-            margin: 15px 0;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 1.5rem 0;
         }
+
         .cache-buttons button {
-            padding: 10px 15px;
+            padding: 12px 16px;
             border: none;
-            border-radius: 5px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 14px;
             cursor: pointer;
-            font-weight: bold;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #f8fafc;
+            color: #1e293b;
+            border: 1px solid #e2e8f0;
         }
-        .clear-btn {
-            background: #f44336;
-            color: white;
+
+        .cache-buttons button:hover {
+            background: #fee2e2;
+            border-color: #f87171;
+            color: #b91c1c;
+            transform: translateY(-2px);
         }
+
         .control-panel {
             display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+            justify-content: flex-start;
         }
+
         .control-panel button {
-            padding: 12px 25px;
-            font-size: 16px;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
+
         .clear-all {
-            background: #ff9800;
+            background: #f97316;
             color: white;
         }
+
+        .clear-all:hover {
+            background: #ea580c;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(249,115,22,0.3);
+        }
+
         .check-status {
-            background: #9C27B0;
+            background: #8b5cf6;
             color: white;
         }
-        #message {
-            padding: 15px;
-            border-radius: 5px;
-            margin: 20px 0;
-            text-align: center;
-            font-weight: bold;
+
+        .check-status:hover {
+            background: #7c3aed;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(139,92,246,0.3);
         }
+
+        #message {
+            padding: 16px 24px;
+            border-radius: 40px;
+            margin: 1.5rem 0;
+            font-weight: 500;
+            display: none;
+            animation: slideIn 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         #cacheStatus {
             background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 24px;
+            padding: 1.8rem;
+            margin-top: 2rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+            border: 1px solid rgba(255,255,255,0.5);
         }
+
+        #cacheStatus h4 {
+            color: #1e293b;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
         #cacheStatus ul {
             list-style: none;
-            padding: 0;
         }
+
         #cacheStatus li {
-            padding: 8px;
-            margin: 5px 0;
-            background: #f9f9f9;
-            border-radius: 4px;
+            padding: 10px 12px;
+            margin: 6px 0;
+            background: #f8fafc;
+            border-radius: 40px;
+            font-size: 14px;
+            border: 1px solid #e2e8f0;
         }
-        hr {
-            margin: 30px 0;
-            border: none;
-            border-top: 2px solid #ddd;
-        }
-        @media (max-width: 768px) {
-            body {
-                margin: 20px;
-            }
-            .main-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-            .main-buttons button {
-                width: 100%;
-                max-width: 300px;
-            }
-        }
+
         table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-  background: white;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  border-radius: 5px;
-  overflow: hidden;
-}
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        }
 
-th {
-  background: #4CAF50;
-  color: white;
-  padding: 12px 15px;
-  text-align: left;
-  font-weight: bold;
-}
+        th {
+            background: #4f46e5;
+            color: white;
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 500;
+        }
 
-td {
-  padding: 12px 15px;
-  border-bottom: 1px solid #eee;
-}
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #edf2f7;
+        }
 
-tr:hover {
-  background-color: #f5f5f5;
-}
+        tr:last-child td {
+            border-bottom: none;
+        }
 
-tr:last-child td {
-  border-bottom: none;
-}
+        hr {
+            border: none;
+            border-top: 2px solid #eef2f6;
+            margin: 2rem 0;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            .main-buttons { grid-template-columns: repeat(2, 1fr); }
+            .cache-buttons { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
-    <h1>Zulu Club Dashboard</h1>
-    
-<div class="main-buttons">
-    <button onclick="location.href='/products'">Products</button>
-    <button onclick="location.href='/productscards'">Products Cards</button>
-    <button onclick="location.href='/sellers'">Sellers</button>
-    <button onclick="location.href='/sellercards'">Seller Cards</button>
-    <button onclick="location.href='/videos'">Videos</button>
-    <button onclick="location.href='/videoscards'">Videos Cards</button>
-    <button onclick="location.href='/users'">Users</button>
-    <button onclick="location.href='/galleries'">Galleries</button>
-    <button onclick="location.href='/galleriescards'">Galleries Cards</button>
-    <button onclick="location.href='/appconfigs'">App Configs</button>
-    <button onclick="location.href='/categories'">Categories</button>
-    <button onclick="location.href='/socbookinguser'">Soc Booking User</button>
-    <button onclick="location.href='/chat'">Chatbot</button>
-</div>
-    
-    <hr>
-    
-    <div class="cache-controls">
-        <h3>Cache Controls</h3>
-        <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
-            Data is cached for 2 hours. Clear cache to force fresh data from database.<br>
-            Database connection automatically closes after 5 minutes of inactivity.
-        </p>
-        
-<div class="cache-buttons">
-    <button class="clear-btn" onclick="clearCache('products')">🗑️ Clear Products Cache</button>
-    <button class="clear-btn" onclick="clearCache('sellers')">🗑️ Clear Sellers Cache</button>
-    <button class="clear-btn" onclick="clearCache('videos')">🗑️ Clear Videos Cache</button>
-    <button class="clear-btn" onclick="clearCache('users')">🗑️ Clear Users Cache</button>
-    <button class="clear-btn" onclick="clearCache('galleries')">🗑️ Clear Galleries Cache</button>
-    <button class="clear-btn" onclick="getProductStats()">📊 Product Stats by Updater</button>
-</div>
-        
-        <div class="control-panel">
-            <button class="clear-all" onclick="clearAllCache()">🔥 Clear All Caches</button>
-            <button class="check-status" onclick="checkCacheStatus()">🔍 Check Cache Status</button>
+    <div class="dashboard">
+        <h1>Zulu Club Dashboard</h1>
+
+        <div class="main-buttons">
+            <button onclick="location.href='/products'">Products</button>
+            <button onclick="location.href='/productscards'">Products Cards</button>
+            <button onclick="location.href='/sellers'">Sellers</button>
+            <button onclick="location.href='/sellercards'">Seller Cards</button>
+            <button onclick="location.href='/videos'">Videos</button>
+            <button onclick="location.href='/videoscards'">Videos Cards</button>
+            <button onclick="location.href='/users'">Users</button>
+            <button onclick="location.href='/galleries'">Galleries</button>
+            <button onclick="location.href='/galleriescards'">Galleries Cards</button>
+            <button onclick="location.href='/appconfigs'">App Configs</button>
+            <button onclick="location.href='/categories'">Categories</button>
+            <button onclick="location.href='/socbookinguser'">Soc Booking User</button>
+            <button onclick="location.href='/base_moods'">Base Moods</button>
+            <button onclick="location.href='/chat'">Chatbot</button>
         </div>
+
+        <hr>
+
+        <div class="cache-controls">
+            <h3>Cache Controls</h3>
+            <p style="color: #5a6a7a; font-size: 14px; margin-bottom: 20px; line-height: 1.6;">
+                Data is cached for 2 hours. Clear cache to force fresh data from database.<br>
+                Database connection automatically closes after 5 minutes of inactivity.
+            </p>
+
+            <div class="cache-buttons">
+                <button onclick="clearCache('products')">Clear Products</button>
+                <button onclick="clearCache('sellers')">Clear Sellers</button>
+                <button onclick="clearCache('videos')">Clear Videos</button>
+                <button onclick="clearCache('users')">Clear Users</button>
+                <button onclick="clearCache('galleries')">Clear Galleries</button>
+                <button onclick="getProductStats()">Product Stats</button>
+            </div>
+
+            <div class="control-panel">
+                <button class="clear-all" onclick="clearAllCache()">Clear All Caches</button>
+                <button class="check-status" onclick="checkCacheStatus()">Check Cache Status</button>
+            </div>
+        </div>
+
+        <div id="message"></div>
+        <div id="cacheStatus"></div>
     </div>
-    
-    <div id="message"></div>
-    <div id="cacheStatus" style="margin-top: 20px;"></div>
 
     <script>
         async function clearCache(type) {
             try {
                 const response = await fetch(`/api/clear-cache/${type}`, { method: 'POST' });
                 const data = await response.json();
-                
-                if (data.success) {
-                    showMessage(`✅ ${data.message}`, 'success');
-                } else {
-                    showMessage(`❌ Error: ${data.error}`, 'error');
-                }
+                if (data.success) showMessage(`✅ ${data.message}`, 'success');
+                else showMessage(`❌ Error: ${data.error}`, 'error');
             } catch (error) {
                 showMessage(`❌ Network error: ${error.message}`, 'error');
             }
         }
-        
+
         async function clearAllCache() {
             try {
                 const response = await fetch('/api/clear-cache/all', { method: 'POST' });
                 const data = await response.json();
-                
+                if (data.success) showMessage(`✅ ${data.message}`, 'success');
+                else showMessage(`❌ Error: ${data.error}`, 'error');
+            } catch (error) {
+                showMessage(`❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkCacheStatus() {
+            try {
+                const response = await fetch('/api/cache-status');
+                const data = await response.json();
+
                 if (data.success) {
-                    showMessage(`✅ ${data.message}`, 'success');
+                    let html = '<h4>Cache Status (2h TTL):</h4><ul>';
+
+                    Object.keys(data.cacheStatus).forEach(key => {
+                        if (key !== 'connection') {
+                            const status = data.cacheStatus[key];
+                            const cacheType = key.charAt(0).toUpperCase() + key.slice(1);
+                            html += `<li>${cacheType}: `;
+                            if (status.cached) {
+                                html += `✅ Cached (${status.dataCount} records, ${Math.floor(status.age/60)} min old)`;
+                            } else {
+                                html += `❌ Not cached`;
+                            }
+                            html += `</li>`;
+                        }
+                    });
+
+                    const conn = data.cacheStatus.connection;
+                    html += '<hr style="margin: 15px 0;">';
+                    html += '<h4>Database Connection:</h4>';
+                    html += `<li>Status: ${conn.active ? '✅ Active' : '❌ Closed'}</li>`;
+                    if (conn.active) html += `<li>Idle for: ${conn.idleTime} seconds</li>`;
+                    html += `<li>Auto‑close after 5 minutes idle</li>`;
+                    html += '</ul>';
+
+                    document.getElementById('cacheStatus').innerHTML = html;
+                }
+            } catch (error) {
+                showMessage(`❌ Error checking cache: ${error.message}`, 'error');
+            }
+        }
+
+        async function getProductStats() {
+            try {
+                const response = await fetch('/api/product-stats-by-updater');
+                const data = await response.json();
+
+                if (data.success) {
+                    let html = '<h4>Product Stats by Updater</h4>';
+                    if (data.data.length === 0) {
+                        html += '<p>No data available.</p>';
+                    } else {
+                        html += '<table><thead><tr><th>Updater</th><th>Total Products</th></tr></thead><tbody>';
+                        data.data.forEach(item => {
+                            html += `<tr><td>${item.Updated_by || 'Unknown'}</td><td>${item.total_products}</td></tr>`;
+                        });
+                        html += '</tbody></table>';
+                        html += `<p style="margin-top:10px; color:#666;">Total updaters: ${data.count}</p>`;
+                    }
+                    document.getElementById('cacheStatus').innerHTML = html;
+                    showMessage('✅ Product stats loaded', 'success');
                 } else {
                     showMessage(`❌ Error: ${data.error}`, 'error');
                 }
@@ -227,104 +381,20 @@ tr:last-child td {
                 showMessage(`❌ Network error: ${error.message}`, 'error');
             }
         }
-        
-        async function checkCacheStatus() {
-    try {
-        const response = await fetch('/api/cache-status');
-        const data = await response.json();
-        
-        if (data.success) {
-            let html = '<h4>Cache Status (2 hours TTL):</h4><ul>';
-            
-            Object.keys(data.cacheStatus).forEach(key => {
-                if (key !== 'connection') {
-                    const status = data.cacheStatus[key];
-                    const cacheType = key.charAt(0).toUpperCase() + key.slice(1);
-                    
-                    html += `<li>${cacheType}: `;
-                    if (status.cached) {
-                        html += `✅ Cached (${status.dataCount} records, ${Math.floor(status.age/60)} min old)`;
-                    } else {
-                        html += `❌ Not cached`;
-                    }
-                    html += `</li>`;
-                }
-            });
-            
-            // Add connection status
-            const conn = data.cacheStatus.connection;
-            html += '<hr style="margin: 15px 0;">';
-            html += '<h4>Database Connection:</h4>';
-            html += `<li>Status: ${conn.active ? '✅ Active' : '❌ Closed'}</li>`;
-            if (conn.active) {
-                html += `<li>Idle for: ${conn.idleTime} seconds</li>`;
-            }
-            html += `<li>Auto-close: After 5 minutes idle</li>`;
-            
-            html += '</ul>';
-            document.getElementById('cacheStatus').innerHTML = html;
-        }
-    } catch (error) {
-        showMessage(`❌ Error checking cache: ${error.message}`, 'error');
-    }
-}
-        
+
         function showMessage(text, type = 'success') {
             const messageDiv = document.getElementById('message');
             messageDiv.textContent = text;
-            messageDiv.style.color = type === 'error' ? '#721c24' : '#155724';
-            messageDiv.style.background = type === 'error' ? '#f8d7da' : '#d4edda';
-            messageDiv.style.border = `1px solid ${type === 'error' ? '#f5c6cb' : '#c3e6cb'}`;
-            
-            setTimeout(() => {
-                messageDiv.textContent = '';
-                messageDiv.style.background = '';
-                messageDiv.style.border = 'none';
-            }, 5000);
+            const colors = {
+                success: { bg: '#dff0d8', color: '#3c763d' },
+                error: { bg: '#f2dede', color: '#a94442' }
+            };
+            const s = colors[type] || colors.success;
+            messageDiv.style.backgroundColor = s.bg;
+            messageDiv.style.color = s.color;
+            messageDiv.style.display = 'block';
+            setTimeout(() => { messageDiv.style.display = 'none'; }, 5000);
         }
-        // In index.html, add this function to the script section:
-async function getProductStats() {
-  try {
-    const response = await fetch('/api/product-stats-by-updater');
-    const data = await response.json();
-    
-    if (data.success) {
-      // Format the data as a table
-      let html = '<h4>Product Stats by Updater:</h4>';
-      html += '<p>Showing who updated products and how many:</p>';
-      
-      if (data.data.length === 0) {
-        html += '<p>No data available.</p>';
-      } else {
-        html += '<table style="width:100%; border-collapse:collapse; margin-top:20px;">';
-        html += '<thead><tr style="background:#4CAF50; color:white;">';
-        html += '<th style="padding:10px; text-align:left;">Updater</th>';
-        html += '<th style="padding:10px; text-align:left;">Total Products</th>';
-        html += '</tr></thead>';
-        html += '<tbody>';
-        
-        data.data.forEach(item => {
-          html += '<tr style="border-bottom:1px solid #ddd;">';
-          html += `<td style="padding:10px;">${item.Updated_by || 'Unknown'}</td>`;
-          html += `<td style="padding:10px;">${item.total_products}</td>`;
-          html += '</tr>';
-        });
-        
-        html += '</tbody>';
-        html += '</table>';
-        html += `<p style="margin-top:10px; color:#666;">Total updaters: ${data.count}</p>`;
-      }
-      
-      // Display in the cacheStatus div
-      document.getElementById('cacheStatus').innerHTML = html;
-      showMessage('✅ Product stats loaded successfully', 'success');
-    } else {
-      showMessage(`❌ Error: ${data.error}`, 'error');
-    }
-  } catch (error) {
-    showMessage(`❌ Network error: ${error.message}`, 'error');
-  }
-}
     </script>
 </body>
 </html>

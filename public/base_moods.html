@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Base Moods - Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f0f4f8 0%, #d9e2ec 100%);
+            min-height: 100vh;
+            padding: 30px;
+        }
+
+        h1 {
+            color: #1e2b3a;
+            border-bottom: 4px solid #9C27B0;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            font-size: 32px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.5px;
+        }
+        h1:before {
+            content: "🎨";
+            font-size: 36px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            padding: 18px 24px;
+            border-radius: 16px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,255,255,0.5);
+            margin-bottom: 30px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        .back-btn {
+            background: #5a6b7a;
+            color: white;
+        }
+        .refresh-btn {
+            background: #2196F3;
+            color: white;
+        }
+
+        .search-box {
+            flex: 1;
+            max-width: 380px;
+            position: relative;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 12px 48px 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 40px;
+            font-size: 15px;
+            transition: 0.3s;
+            background: white;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: #9C27B0;
+            box-shadow: 0 0 0 4px rgba(156,39,176,0.15);
+        }
+        .search-box:after {
+            content: "🔍";
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7f8c8d;
+            font-size: 18px;
+        }
+
+        #message {
+            padding: 16px 24px;
+            border-radius: 40px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            display: none;
+            animation: slideDown 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #loading {
+            text-align: center;
+            padding: 50px;
+            background: #fff8e7;
+            border: 2px solid #ffe0a3;
+            border-radius: 40px;
+            color: #7d5d23;
+            font-weight: 600;
+            font-size: 18px;
+            margin: 30px 0;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        #error {
+            padding: 30px;
+            background: #ffe6e6;
+            border: 2px solid #ffb3b3;
+            border-radius: 40px;
+            color: #b00020;
+            display: none;
+            margin: 30px 0;
+            font-weight: 500;
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        .mood-card {
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: transform 0.25s, box-shadow 0.3s;
+            border: 1px solid rgba(255,255,255,0.8);
+            backdrop-filter: blur(2px);
+        }
+        .mood-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 35px rgba(156,39,176,0.15);
+        }
+
+        .card-preview {
+            height: 180px;
+            background: #f2f2f2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .card-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+        .mood-card:hover .card-preview img {
+            transform: scale(1.05);
+        }
+
+        .card-content {
+            padding: 20px;
+        }
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e2b3a;
+            margin-bottom: 6px;
+        }
+        .card-meta {
+            color: #6b7a8a;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 80px 30px;
+            background: white;
+            border-radius: 40px;
+            border: 2px dashed #b0c4d9;
+            color: #5f7a9a;
+            font-size: 20px;
+        }
+        .empty-state:before {
+            content: "🎨";
+            font-size: 64px;
+            display: block;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        /* ---------- MODAL (enhanced) ---------- */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+        .modal.show {
+            display: block;
+            opacity: 1;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            background: white;
+            border-radius: 32px;
+            width: 90%;
+            max-width: 1100px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+        .modal.show .modal-content {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 32px;
+            background: linear-gradient(135deg, #9C27B0, #7B1FA2);
+            color: white;
+            border-radius: 32px 32px 0 0;
+        }
+        .modal-header h2 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .close-modal {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            font-size: 32px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        .close-modal:hover {
+            background: rgba(255,255,255,0.3);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 32px;
+        }
+
+        /* Field cards inside modal */
+        .fields-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 24px;
+        }
+
+        .field-card {
+            background: #f9fafc;
+            border: 2px solid #e9ecf0;
+            border-radius: 24px;
+            padding: 18px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .field-card:hover {
+            border-color: #9C27B0;
+            box-shadow: 0 10px 20px rgba(156,39,176,0.08);
+        }
+        .field-card.dirty {
+            border-color: #ff9800;
+            background: #fffaf0;
+        }
+
+        .field-label {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #2c3e50;
+            font-size: 15px;
+            text-transform: capitalize;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .dirty-indicator {
+            width: 10px;
+            height: 10px;
+            background: #ff9800;
+            border-radius: 50%;
+            display: inline-block;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .field-card.dirty .dirty-indicator {
+            opacity: 1;
+        }
+
+        .image-preview {
+            width: 100%;
+            max-height: 160px;
+            object-fit: contain;
+            background: #eef2f6;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            border: 1px solid #d0d9e2;
+            transition: 0.2s;
+        }
+        .image-preview:hover {
+            opacity: 0.9;
+        }
+
+        .upload-area {
+            margin: 12px 0 8px;
+        }
+        .upload-btn-small {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+            box-shadow: 0 4px 8px rgba(33,150,243,0.2);
+        }
+        .upload-btn-small:hover {
+            background: #1976D2;
+            transform: scale(1.02);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .uploading-indicator {
+            font-size: 12px;
+            color: #2196F3;
+            margin-top: 6px;
+            display: none;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .text-field {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #dde3e9;
+            border-radius: 30px;
+            font-size: 14px;
+            transition: 0.2s;
+            margin-top: 8px;
+            background: white;
+        }
+        .text-field:focus {
+            border-color: #9C27B0;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(156,39,176,0.1);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: flex-end;
+            padding: 24px 32px;
+            border-top: 2px solid #eef2f6;
+            background: #f8fafd;
+            border-radius: 0 0 32px 32px;
+        }
+        .save-btn, .cancel-btn {
+            padding: 14px 32px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .save-btn {
+            background: #27ae60;
+            color: white;
+        }
+        .cancel-btn {
+            background: #95a5a6;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Base Moods</h1>
+
+    <div class="controls">
+        <button class="back-btn" onclick="location.href='/'">← Dashboard</button>
+        <button class="refresh-btn" onclick="loadMoods()">🔄 Refresh</button>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search by name...">
+        </div>
+    </div>
+
+    <div id="message"></div>
+    <div id="loading">✨ Loading moods...</div>
+    <div id="error"></div>
+    <div id="cardsContainer" class="cards-grid"></div>
+
+    <!-- Edit Modal (improved) -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ Edit Base Mood</h2>
+                <button class="close-modal" onclick="closeEditModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-actions">
+                <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
+                <button class="save-btn" onclick="saveMood()">💾 Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allMoods = [];
+        let currentEditId = null;
+
+        // Helper to show styled messages
+        function showMessage(text, type = 'success') {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            const colors = {
+                success: { bg: '#d4edda', color: '#155724' },
+                error: { bg: '#f8d7da', color: '#721c24' },
+                info: { bg: '#d1ecf1', color: '#0c5460' }
+            };
+            const s = colors[type] || colors.success;
+            msg.style.backgroundColor = s.bg;
+            msg.style.color = s.color;
+            msg.style.display = 'block';
+            setTimeout(() => msg.style.display = 'none', 4000);
+        }
+
+        // Load data
+        async function loadMoods() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            try {
+                const res = await fetch('/api/base_moods');
+                const data = await res.json();
+                if (data.success) {
+                    allMoods = data.data;
+                    filterAndDisplay();
+                } else throw new Error(data.error);
+            } catch (err) {
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = 'Error: ' + err.message;
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // Filter and render cards
+        function filterAndDisplay() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allMoods.filter(m => (m.name || '').toLowerCase().includes(search));
+            displayCards(filtered);
+        }
+
+        function displayCards(moods) {
+            const container = document.getElementById('cardsContainer');
+            if (!moods.length) {
+                container.innerHTML = '<div class="empty-state">No moods found</div>';
+                return;
+            }
+            let html = '';
+            moods.forEach(m => {
+                const previewUrl = m.logos || m.hero_bg || 'https://via.placeholder.com/300x200?text=No+Image';
+                html += `
+                    <div class="mood-card" onclick="openEditModal(${m.id})">
+                        <div class="card-preview">
+                            <img src="${previewUrl}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x200?text=Error'">
+                        </div>
+                        <div class="card-content">
+                            <div class="card-title">${escapeHtml(m.name) || 'Unnamed'}</div>
+                            <div class="card-meta"><span>🆔 ${m.id}</span></div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // Simple escape for innerHTML safety
+        function escapeHtml(unsafe) {
+            if (!unsafe) return unsafe;
+            return unsafe.replace(/[&<>"]/g, function(m) {
+                if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; if(m === '"') return '&quot;';
+                return m;
+            });
+        }
+
+        // Open modal with smooth animation
+        function openEditModal(id) {
+            const mood = allMoods.find(m => m.id === id);
+            if (!mood) return;
+            currentEditId = id;
+
+            const fieldNames = [
+                'name', 'logos', 'hero_bg', 'deliver_asap', 'category_banner',
+                'visit_us', 'home_banner', 'watch_banner', 'visit_banner', 'listen_banner',
+                'cart_banner', 'profile_bg', 'concierge'
+            ];
+
+            let html = '<div class="fields-grid">';
+            fieldNames.forEach(field => {
+                const value = mood[field] || '';
+                const isImage = field !== 'name';
+                html += `<div class="field-card" data-field="${field}">`;
+                html += `<div class="field-label">${field.replace(/_/g, ' ')}<span class="dirty-indicator"></span></div>`;
+
+                if (isImage) {
+                    html += `
+                        <img class="image-preview" src="${escapeHtml(value)}" 
+                             onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'"
+                             onclick="window.open(this.src, '_blank')">
+                        <div class="upload-area">
+                            <button class="upload-btn-small" onclick="document.getElementById('file-${field}').click()">
+                                📁 Upload New
+                            </button>
+                            <input type="file" class="file-input" id="file-${field}" accept="image/*">
+                            <span class="uploading-indicator" id="uploading-${field}">⏳ Uploading...</span>
+                        </div>
+                        <input type="text" class="text-field" id="input-${field}" 
+                               value="${escapeHtml(value)}" placeholder="Image URL" oninput="markDirty('${field}')">
+                    `;
+                } else {
+                    html += `<input type="text" class="text-field" id="input-${field}" 
+                                   value="${escapeHtml(value)}" oninput="markDirty('${field}')">`;
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+            document.getElementById('modalBody').innerHTML = html;
+
+            // Attach file upload listeners
+            fieldNames.filter(f => f !== 'name').forEach(field => {
+                const fileInput = document.getElementById(`file-${field}`);
+                if (fileInput) {
+                    fileInput.addEventListener('change', async (e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        const indicator = document.getElementById(`uploading-${field}`);
+                        indicator.style.display = 'inline-flex';
+                        const formData = new FormData();
+                        formData.append('image', file);
+                        try {
+                            const res = await fetch('https://api.zulushop.in/api/v1/user/upload', {
+                                method: 'POST',
+                                body: formData
+                            });
+                            const data = await res.json();
+                            const url = data.url || data.image_url;
+                            if (url) {
+                                const preview = fileInput.closest('.field-card').querySelector('.image-preview');
+                                preview.src = url;
+                                document.getElementById(`input-${field}`).value = url;
+                                markDirty(field);
+                                showMessage('✅ Image uploaded', 'success');
+                            } else {
+                                showMessage('❌ Upload failed: no URL', 'error');
+                            }
+                        } catch (err) {
+                            showMessage('❌ Upload error: ' + err.message, 'error');
+                        } finally {
+                            indicator.style.display = 'none';
+                            fileInput.value = '';
+                        }
+                    });
+                }
+            });
+
+            // Show modal with class
+            const modal = document.getElementById('editModal');
+            modal.classList.add('show');
+        }
+
+        // Mark a field as dirty (edited)
+        function markDirty(field) {
+            const card = document.querySelector(`.field-card[data-field="${field}"]`);
+            if (card) card.classList.add('dirty');
+        }
+
+        // Save all changes
+        async function saveMood() {
+            if (!currentEditId) return;
+
+            const fieldNames = [
+                'name', 'logos', 'hero_bg', 'deliver_asap', 'category_banner',
+                'visit_us', 'home_banner', 'watch_banner', 'visit_banner', 'listen_banner',
+                'cart_banner', 'profile_bg', 'concierge'
+            ];
+            const updateData = {};
+            fieldNames.forEach(field => {
+                const input = document.getElementById(`input-${field}`);
+                if (input) updateData[field] = input.value;
+            });
+
+            try {
+                const res = await fetch(`/api/base_moods/${currentEditId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+                const result = await res.json();
+                if (result.success) {
+                    const idx = allMoods.findIndex(m => m.id === currentEditId);
+                    if (idx !== -1) allMoods[idx] = { ...allMoods[idx], ...updateData };
+                    filterAndDisplay();
+                    closeEditModal();
+                    showMessage('✅ Mood updated successfully', 'success');
+                } else {
+                    showMessage('❌ Error: ' + result.error, 'error');
+                }
+            } catch (err) {
+                showMessage('❌ Save failed: ' + err.message, 'error');
+            }
+        }
+
+        // Close modal with animation
+        function closeEditModal() {
+            const modal = document.getElementById('editModal');
+            modal.classList.remove('show');
+            currentEditId = null;
+        }
+
+        // Search listener
+        document.getElementById('searchInput').addEventListener('input', filterAndDisplay);
+
+        // Close modal when clicking outside content (but not during animation)
+        window.addEventListener('click', (event) => {
+            const modal = document.getElementById('editModal');
+            if (event.target === modal) closeEditModal();
+        });
+
+        // Load on page start
+        loadMoods();
+    </script>
+</body>
+</html>

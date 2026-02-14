@@ -4362,7 +4362,7 @@ app.post('/api/clear-cache/:type', (req, res) => {
   if (type === 'all') {
     db.clearAllCaches();
     res.json({ success: true, message: 'All caches cleared' });
-  } else if (['products', 'sellers', 'videos', 'users', 'galleries', 'appconfigs', 'categories', 'soc_booking_user','socbookinguser'].includes(type)) {
+  } else if (['products', 'sellers', 'videos', 'users', 'galleries', 'appconfigs', 'categories', 'soc_booking_user','socbookinguser', 'base_moods'].includes(type)) {
     db.clearCache(type);
     res.json({ success: true, message: `Cache cleared for ${type}` });
   } else {
@@ -4903,6 +4903,74 @@ app.get('/categories', (req, res) => {
 });
 app.get('/socbookinguser', (req, res) => {
   res.sendFile(__dirname + '/public/socbookinguser.html');
+});
+app.get('/base_moods', (req, res) => {
+  res.sendFile(__dirname + '/public/base_moods.html');
+});
+// -------------------------
+// Base Moods Endpoints
+// -------------------------
+
+// Get all base moods
+app.get('/api/base_moods', async (req, res) => {
+  try {
+    const data = await db.getCachedData('base_moods');
+    res.json({
+      success: true,
+      data: data,
+      count: data.length
+    });
+  } catch (error) {
+    console.error('Error fetching base moods:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get single base mood record
+app.get('/api/base_moods/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const record = await db.getRecordById('base_moods', id);
+    if (!record) {
+      return res.status(404).json({ success: false, error: 'Base mood not found' });
+    }
+    res.json({ success: true, data: record });
+  } catch (error) {
+    console.error('Get base mood error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Update base mood record
+app.put('/api/base_moods/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    delete updateData.id;  // never update the primary key
+
+    const result = await db.executeUpdate('base_moods', id, updateData);
+    res.json({
+      success: true,
+      message: 'Base mood updated successfully',
+      affectedRows: result.affectedRows
+    });
+  } catch (error) {
+    console.error('Update base mood error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// (Optional) Delete base mood
+app.delete('/api/base_moods/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await db.executeDelete('base_moods', id);
+    db.clearCache('base_moods');
+    res.json({ success: true, message: 'Base mood deleted', affectedRows: result.affectedRows });
+  } catch (error) {
+    console.error('Delete base mood error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 app.put('/api/:table/:id', async (req, res) => {
