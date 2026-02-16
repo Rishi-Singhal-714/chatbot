@@ -4902,7 +4902,7 @@ app.get('/api/appconfigs/:id', async (req, res) => {
 // SSE endpoint for AI generation
 app.post('/api/ai/generate-banners', async (req, res) => {
     try {
-        const { json: bannerJson, inspiration } = req.body;
+        const { json: bannerJson, inspiration, systemPrompt, userPromptTemplate } = req.body;
         if (!bannerJson || !bannerJson.banners) {
             return res.status(400).json({ success: false, error: 'Invalid JSON: missing banners array' });
         }
@@ -4918,6 +4918,9 @@ app.post('/api/ai/generate-banners', async (req, res) => {
             res.write(`data: ${JSON.stringify(data)}\n\n`);
         };
 
+        // Use provided system prompt or fallback to default
+        const finalSystemPrompt = systemPrompt || SYSTEM_PROMPT;
+
         // Loop through each banner and mood
         for (const banner of bannerJson.banners) {
             const bannerId = banner.banner_id;
@@ -4931,8 +4934,25 @@ app.post('/api/ai/generate-banners', async (req, res) => {
             const { width, height } = dimensions;
 
             for (const mood of MOODS) {
-                // Build the detailed prompt for this specific image
-                const userPrompt = `
+                // Build the user prompt
+                let finalUserPrompt;
+                if (userPromptTemplate) {
+                    // Replace placeholders with actual values
+                    finalUserPrompt = userPromptTemplate
+                        .replace(/{mood}/g, mood)
+                        .replace(/{bannerId}/g, bannerId)
+                        .replace(/{bannerName}/g, bannerName)
+                        .replace(/{title}/g, banner.title || '')
+                        .replace(/{sub_title}/g, banner.sub_title || '')
+                        .replace(/{description}/g, banner.description || '')
+                        .replace(/{cta}/g, banner.cta || '')
+                        .replace(/{background}/g, banner.background || 'mood based')
+                        .replace(/{object}/g, banner.object || 'lifestyle object')
+                        .replace(/{size}/g, banner.size || 'Landscape')
+                        .replace(/{inspiration}/g, inspiration || 'Bollywood landscape');
+                } else {
+                    // Fallback to the default detailed prompt (as before)
+                    finalUserPrompt = `
 Zulu Club — Mood-Based Banner Generation
 
 You are generating ONE image for a 6-mood banner set.
@@ -5028,6 +5048,7 @@ Emotional flow must feel natural when scrolling through all 6.
 
 Generate only the "${mood}" variant image for this banner.
 `;
+                }
 
                 // Create a blank base64 image of the correct size
                 const blankBase64 = createBlankBase64(width, height, '#ffffff');
@@ -5043,7 +5064,7 @@ Generate only the "${mood}" variant image for this banner.
                         input: [{
                             role: "user",
                             content: [
-                                { type: "input_text", text: SYSTEM_PROMPT + "\n\n" + userPrompt },
+                                { type: "input_text", text: finalSystemPrompt + "\n\n" + finalUserPrompt },
                                 {
                                     type: "input_image",
                                     image_url: `data:image/jpeg;base64,${blankBase64}`

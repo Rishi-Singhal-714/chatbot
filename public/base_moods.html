@@ -94,6 +94,46 @@
             font-size: 12px;
             border-radius: 20px;
         }
+        .update-btn {
+            background: #ff9800;
+            color: white;
+            padding: 4px 8px;
+            font-size: 12px;
+            border-radius: 20px;
+        }
+        .ai-small {
+            background: #9C27B0;
+            color: white;
+            padding: 2px 6px;
+            font-size: 12px;
+            border-radius: 20px;
+            margin-left: 6px;
+        }
+        .placeholder-btn {
+            background: #e0e0e0;
+            color: #333;
+            padding: 4px 8px;
+            font-size: 12px;
+            border-radius: 16px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            border: none;
+            cursor: pointer;
+            box-shadow: none;
+        }
+        .placeholder-btn:hover {
+            background: #d0d0d0;
+        }
+        .copy-btn {
+            background: #2196F3;
+            color: white;
+            padding: 4px 8px;
+            font-size: 12px;
+            border-radius: 16px;
+            margin-left: 10px;
+            border: none;
+            cursor: pointer;
+        }
 
         .search-box {
             flex: 1;
@@ -219,7 +259,7 @@
             vertical-align: middle;
         }
 
-        /* First column (field names) styling - not clickable */
+        /* First column (field names) styling - not clickable, but with AI button */
         td:first-child, th:first-child {
             background-color: #f9fafc;
             font-weight: 500;
@@ -295,7 +335,7 @@
             background: white;
             border-radius: 32px;
             width: 90%;
-            max-width: 900px;  /* Increased for extra buttons */
+            max-width: 900px;
             max-height: 85vh;
             overflow-y: auto;
             box-shadow: 0 40px 80px rgba(0, 0, 0, 0.3);
@@ -632,6 +672,51 @@
             border: 1px solid #ccc;
             font-size: 12px;
         }
+
+        /* Banner edit form */
+        .banner-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .banner-form .full-width {
+            grid-column: span 2;
+        }
+        .banner-form label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .banner-form input, .banner-form textarea, .banner-form select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #dde3e9;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+
+        /* Default prompts display */
+        .default-prompts {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none;
+        }
+        .default-prompts pre {
+            white-space: pre-wrap;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .prompt-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
     </style>
 </head>
 <body>
@@ -640,7 +725,7 @@
     <div class="controls">
         <button class="back-btn" onclick="location.href='/'">← Dashboard</button>
         <button class="refresh-btn" onclick="loadMoods()">🔄 Refresh</button>
-        <button class="ai-btn" onclick="openAIModal()">🤖 AI Generate</button>
+        <button class="ai-btn" onclick="openAIModal()">🤖 AI Generate (JSON Upload)</button>
         <div class="search-box">
             <input type="text" id="searchInput" placeholder="Search by name...">
         </div>
@@ -672,11 +757,11 @@
         </div>
     </div>
 
-    <!-- AI Generation Modal -->
+    <!-- AI Generation Modal (for JSON upload) -->
     <div id="aiModal" class="modal">
         <div class="modal-content" style="max-width: 1000px;">
             <div class="modal-header">
-                <h2>🤖 AI Banner Generation</h2>
+                <h2>🤖 AI Banner Generation (JSON Upload)</h2>
                 <button class="close-modal" onclick="closeAIModal()">&times;</button>
             </div>
             <div class="modal-body">
@@ -690,6 +775,409 @@
                     <label style="font-weight: 600;">Inspiration Text</label>
                     <input type="text" id="aiInspiration" value="Bollywood landscape field" style="flex: 1; padding: 12px 16px; border: 2px solid #dde3e9; border-radius: 40px;">
                     <button class="fix-btn" onclick="checkAndFixSizes()">🔍 Check & Fix Sizes</button>
+                </div>
+
+                <!-- Advanced Prompt Settings (with placeholders for both) -->
+                <div style="margin: 20px 0; border-top: 2px solid #e0e0e0; padding-top: 20px;">
+                    <details>
+                        <summary style="font-weight: 600; cursor: pointer; color: #9C27B0;">⚙️ Advanced Prompt Settings (optional)</summary>
+                        <div style="margin-top: 15px;">
+                            <!-- System Prompt -->
+                            <label style="font-weight: 600;">System Prompt (overrides default)</label>
+                            <div style="margin-bottom: 10px;">
+                                <span style="font-size: 12px; color: #666;">Placeholders (click to insert):</span>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{mood}')">{mood}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{bannerId}')">{bannerId}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{bannerName}')">{bannerName}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{title}')">{title}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{sub_title}')">{sub_title}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{description}')">{description}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{cta}')">{cta}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{background}')">{background}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{object}')">{object}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{size}')">{size}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{inspiration}')">{inspiration}</button>
+                            </div>
+                            <textarea id="systemPrompt" rows="8" style="width: 100%; padding: 12px; border-radius: 16px; border: 2px solid #dde3e9; font-family: monospace; font-size: 13px; margin-bottom: 15px;" placeholder="Leave empty to use default system prompt"></textarea>
+
+                            <!-- User Prompt Template -->
+                            <label style="font-weight: 600;">User Prompt Template</label>
+                            <div style="margin-bottom: 10px;">
+                                <span style="font-size: 12px; color: #666;">Placeholders (click to insert):</span>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{mood}')">{mood}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{bannerId}')">{bannerId}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{bannerName}')">{bannerName}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{title}')">{title}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{sub_title}')">{sub_title}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{description}')">{description}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{cta}')">{cta}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{background}')">{background}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{object}')">{object}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{size}')">{size}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{inspiration}')">{inspiration}</button>
+                            </div>
+                            <textarea id="userPromptTemplate" rows="8" style="width: 100%; padding: 12px; border-radius: 16px; border: 2px solid #dde3e9; font-family: monospace; font-size: 13px;" placeholder="Leave empty to use default user prompt"></textarea>
+                            
+                            <button class="fix-btn" style="margin-top: 10px;" onclick="toggleDefaultPrompts('ai')">📋 Show Default Prompts</button>
+                            <div id="aiDefaultPrompts" class="default-prompts">
+                                <div class="prompt-header">
+                                    <h4>Default System Prompt</h4>
+                                    <button class="copy-btn" onclick="copyToClipboard(defaultSystemPrompt)">Copy</button>
+                                </div>
+                                <pre id="defaultSystemPromptPre">Zulu Club — Mood-Driven Banner Generation Engine
+
+You are generating premium lifestyle banners for Zulu Club, a mood-based shopping app.
+
+Each banner must help users navigate feelings and intent, not just products.
+
+🔢 SCALE & EXPECTATION (NON-NEGOTIABLE)
+
+Total Banner Rows: 11
+
+Total Moods: 6
+
+Total Images to Generate: 66
+
+For EACH Banner ID, you must generate 6 images, one per mood:
+
+CALM
+
+NOSTALGIC
+
+PLAYFUL
+
+CONFIDENT
+
+AMBITIOUS
+
+INTROSPECTIVE
+
+These 6 images must feel like emotional variations of the same idea,
+not 6 unrelated designs.
+
+🟥 ABSOLUTE PRIORITY RULES (OVERRIDE ALL)
+
+ZERO spelling mistakes
+
+Text must match DATA_TABLE fields exactly
+
+No paraphrasing
+
+Text placement
+
+Title and Sub Title
+
+Always on the LEFT
+
+Clear margin from TOP + LEFT
+
+LEFT-ALIGNED only
+
+Prominent and readable
+
+Object placement
+
+Always BOTTOM-CENTER to BOTTOM-RIGHT
+
+Never overlaps text
+
+CTA placement
+
+Only BOTTOM-LEFT or BOTTOM-RIGHT
+
+Consistent margins
+
+No overlap
+
+Description placement
+
+Either:
+
+Directly below Sub Title, OR
+
+Near CTA (if visually appropriate)
+
+Mood integrity
+
+Mood drives:
+
+Background
+
+Lighting
+
+Color palette
+
+Texture
+
+Typography feel
+
+No drastic shocks between moods
+
+Emotional flow must feel natural while scrolling
+
+Typography inspiration (STRICT)
+
+CALM → Lato
+
+NOSTALGIC → Playfair Display
+
+PLAYFUL → Montserrat
+
+CONFIDENT → Inter
+
+AMBITIOUS → Klein
+
+INTROSPECTIVE → Cormorant Garamond
+
+🟦 INPUT A — DATA_TABLE (SOURCE OF TRUTH)
+
+Each row represents one banner concept.
+
+For each row, you must generate 6 mood variants.
+
+Columns (use exactly):
+
+Banner ID
+
+Banner Name
+
+Size
+
+Title
+
+Sub Title
+
+Description
+
+CTA
+
+Background
+
+Object
+
+🟩 INPUT B — INSPIRATION_TEXT
+
+Defines the emotional philosophy behind:
+
+Every pixel
+
+Every object
+
+Every word
+
+This ensures brand soul consistency across all 66 images.
+
+🟨 INPUT C — INSPIRATION_IMAGE
+
+Defines:
+
+Realism
+
+Texture quality
+
+Lighting maturity
+
+Lifestyle authenticity
+
+All outputs must feel like they belong to the same visual universe.
+
+🟪 INPUT D — MOOD_BASED_GUIDELINE_NOTE
+
+Defines how each mood is expressed.
+
+Only the active mood’s guideline should be applied per image.
+
+🎭 MOOD FLOW RULE (VERY IMPORTANT)
+
+When generating the 6 moods for the same banner:
+
+Composition stays structurally consistent
+
+Object identity stays the same
+
+Camera angle stays similar
+
+Changes happen via:
+
+Lighting
+
+Color temperature
+
+Contrast
+
+Emotional energy
+
+This ensures:
+
+Users feel emotional progression, not disorientation.
+
+🧾 OUTPUT STRUCTURE (STRICT)
+📁 Folder Structure
+/ZuluClub_Banners/
+  /Banner_<Banner ID>_<Banner Name>/
+
+📄 Filename Convention (MANDATORY)
+<BannerName>_<Mood>.png
+
+Example
+Deliver_ASAP_CALM.png
+Deliver_ASAP_NOSTALGIC.png
+Deliver_ASAP_PLAYFUL.png
+Deliver_ASAP_CONFIDENT.png
+Deliver_ASAP_AMBITIOUS.png
+Deliver_ASAP_INTROSPECTIVE.png
+
+
+Repeat for all 11 banners → 66 total images
+
+🖼️ VISUAL STYLE (GLOBAL)
+
+Ultra-realistic
+
+Premium lifestyle
+
+Editorial, not ecommerce-noisy
+
+Clean negative space on the LEFT
+
+No illustration unless explicitly implied
+
+No clutter
+
+No gimmicks
+
+✅ FINAL SELF-CHECK (MANDATORY)
+
+Before finalizing each image:
+
+No spelling errors
+
+Correct alignment
+
+No overlaps
+
+Object bottom-center/right
+
+CTA correctly placed
+
+Mood instantly recognizable
+
+Feels like Zulu Club, not generic
+
+🔒 FINAL STATUS
+
+This system now guarantees:
+
+66 coherent images
+
+Strong mood storytelling
+
+Visual consistency across navigation
+
+Emotional continuity without shock
+
+Scalable banner generation</pre>
+                                <div class="prompt-header">
+                                    <h4>Default User Prompt (for one mood)</h4>
+                                    <button class="copy-btn" onclick="copyToClipboard(defaultUserPrompt)">Copy</button>
+                                </div>
+                                <pre id="defaultUserPromptPre">Zulu Club — Mood-Based Banner Generation
+
+You are generating ONE image for a 6-mood banner set.
+
+🔢 Context
+Total moods per banner: 6
+This image represents ONLY the "{mood}" mood variant.
+All 6 variants must feel like emotional progressions of the SAME concept.
+
+🆔 Banner Details (Source of Truth — Use EXACT Text)
+Mood: {mood}
+Typography (STRICT): [varies by mood]
+
+Banner ID: {bannerId}
+Banner Name: {bannerName}
+Size: {size}
+
+Title: {title}
+Sub Title: {sub_title}
+Description: {description}
+CTA: {cta}
+
+Background: {background}
+Object: {object}
+
+Inspiration Philosophy:
+{inspiration}
+
+🟥 ABSOLUTE TEXT RULES (OVERRIDE ALL)
+- ZERO spelling mistakes.
+- Text must match Title, Sub Title, Description, CTA EXACTLY as provided.
+- NO paraphrasing.
+- Preserve capitalization exactly.
+🧱 LAYOUT STRUCTURE (MANDATORY)
+- Title and Sub Title:
+  • ALWAYS on LEFT
+  • Clear margin from TOP and LEFT
+  • LEFT-ALIGNED only
+  • Prominent and readable
+- Description:
+  • Either directly below Sub Title
+  • OR placed near CTA (if visually stronger)
+- Object:
+  • ALWAYS bottom-center to bottom-right
+  • NEVER overlap text
+  • Maintain same object identity across all moods
+- CTA:
+  • Only bottom-left OR bottom-right
+  • Consistent margins
+  • No overlap
+
+🎭 MOOD EXECUTION RULE
+Composition must remain structurally consistent with other 5 moods.
+Camera angle must remain similar.
+Object placement must remain similar.
+
+Mood variation happens ONLY through:
+- Lighting
+- Color temperature
+- Contrast
+- Texture feel
+- Emotional energy
+- Typography personality (STRICT mood font)
+
+Mood must drive:
+- Background atmosphere
+- Lighting maturity
+- Color palette
+- Texture depth
+- Typography feel
+
+No drastic shocks between moods.
+Emotional flow must feel natural when scrolling through all 6.
+
+🖼️ GLOBAL VISUAL STYLE
+- Ultra-realistic
+- Premium lifestyle
+- Editorial (not ecommerce noisy)
+- Clean negative space on LEFT
+- No clutter
+- No gimmicks
+- No illustration unless explicitly required
+
+🔎 FINAL SELF-CHECK (MANDATORY BEFORE OUTPUT)
+- No spelling errors
+- Exact text match
+- Correct alignment
+- No overlaps
+- Object bottom-center/right
+- CTA correctly placed
+- Mood instantly recognizable
+- Feels like Zulu Club visual universe
+
+Generate only the "{mood}" variant image for this banner.</pre>
+                            </div>
+                        </div>
+                    </details>
                 </div>
 
                 <!-- Preview Table -->
@@ -724,8 +1212,10 @@
                             <button class="stop-btn" id="stopGenerationBtn" onclick="stopGeneration()" style="display: none;">⏹️ Stop</button>
                             <button class="next-btn" id="nextBannerBtn" onclick="nextBanner()" style="display: none;">⏩ Proceed to Next</button>
                             <button class="cancel-btn" id="exitAfterBannerBtn" onclick="exitAfterBanner()" style="display: none;">🚪 Exit</button>
-                            <!-- NEW BUTTON: Download Links CSV -->
-                            <button class="download-btn" id="downloadCsvBtn" onclick="downloadLinksCsv()" style="display: none;">📥 Download Links CSV</button>
+                            <!-- Download Links CSV button -->
+                            <button class="download-btn" id="downloadCsvBtn" onclick="downloadLinksCsv()" style="display: none;">📥 Download CSV</button>
+                            <!-- Manual DB Update button -->
+                            <button class="update-btn" id="updateDbBtn" onclick="manualUpdateDb()" style="display: none;">🔄 Update DB</button>
                         </div>
                     </div>
                     <div id="aiProgress" style="max-height: 400px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 10px; background: #f5f5f5; padding: 10px; border-radius: 16px; border: 1px solid #ddd;"></div>
@@ -734,13 +1224,863 @@
             </div>
             <div class="modal-actions">
                 <button class="cancel-btn" onclick="closeAIModal()">Cancel</button>
-                <button class="save-btn" id="proceedBtn" onclick="startFullGeneration()" style="background: #9C27B0; display: none;">✨ Generate All 66 Images</button>
                 <button class="save-btn" id="previewBtn" onclick="previewJson()" style="background: #2196F3;">🔍 Preview JSON</button>
             </div>
         </div>
     </div>
 
+    <!-- Individual Banner AI Generation Modal -->
+    <div id="bannerAiModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 id="bannerAiModalTitle">🤖 Generate for <span id="bannerFieldName"></span></h2>
+                <button class="close-modal" onclick="closeBannerAIModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="bannerForm" class="banner-form">
+                    <input type="hidden" id="bannerField" value="">
+                    <div class="full-width">
+                        <label>Title</label>
+                        <input type="text" id="bannerTitle" value="">
+                    </div>
+                    <div>
+                        <label>Sub Title</label>
+                        <input type="text" id="bannerSubTitle" value="">
+                    </div>
+                    <div>
+                        <label>Description</label>
+                        <input type="text" id="bannerDescription" value="">
+                    </div>
+                    <div>
+                        <label>CTA</label>
+                        <input type="text" id="bannerCta" value="">
+                    </div>
+                    <div>
+                        <label>Background</label>
+                        <input type="text" id="bannerBackground" value="mood based">
+                    </div>
+                    <div>
+                        <label>Object</label>
+                        <input type="text" id="bannerObject" value="">
+                    </div>
+                    <!-- New Size dropdown -->
+                    <div class="full-width">
+                        <label>Size</label>
+                        <select id="bannerSize">
+                            <option value="Landscape" selected>Landscape</option>
+                            <option value="Portrait">Portrait</option>
+                            <option value="Square">Square</option>
+                        </select>
+                    </div>
+                    <div class="full-width">
+                        <label>Inspiration Text</label>
+                        <input type="text" id="bannerInspiration" value="Bollywood landscape field">
+                    </div>
+                </form>
+
+                <!-- Advanced Prompt Settings (with placeholders for both) -->
+                <div style="margin: 20px 0; border-top: 2px solid #e0e0e0; padding-top: 20px;">
+                    <details>
+                        <summary style="font-weight: 600; cursor: pointer; color: #9C27B0;">⚙️ Advanced Prompt Settings (optional)</summary>
+                        <div style="margin-top: 15px;">
+                            <!-- System Prompt -->
+                            <label style="font-weight: 600;">System Prompt (overrides default)</label>
+                            <div style="margin-bottom: 10px;">
+                                <span style="font-size: 12px; color: #666;">Placeholders (click to insert):</span>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerSystemPrompt', '{mood}')">{mood}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerSystemPrompt', '{bannerId}')">{bannerId}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerSystemPrompt', '{bannerName}')">{bannerName}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerSystemPrompt', '{title}')">{title}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerSystemPrompt', '{sub_title}')">{sub_title}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerSystemPrompt', '{description}')">{description}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerSystemPrompt', '{cta}')">{cta}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerSystemPrompt', '{background}')">{background}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerSystemPrompt', '{object}')">{object}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerSystemPrompt', '{size}')">{size}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerSystemPrompt', '{inspiration}')">{inspiration}</button>
+                            </div>
+                            <textarea id="bannerSystemPrompt" rows="6" style="width: 100%; padding: 12px; border-radius: 16px; border: 2px solid #dde3e9; font-family: monospace; font-size: 13px; margin-bottom: 15px;" placeholder="Leave empty to use default system prompt"></textarea>
+
+                            <!-- User Prompt Template -->
+                            <label style="font-weight: 600;">User Prompt Template</label>
+                            <div style="margin-bottom: 10px;">
+                                <span style="font-size: 12px; color: #666;">Placeholders (click to insert):</span>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerUserPromptTemplate', '{mood}')">{mood}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerUserPromptTemplate', '{bannerId}')">{bannerId}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerUserPromptTemplate', '{bannerName}')">{bannerName}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerUserPromptTemplate', '{title}')">{title}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerUserPromptTemplate', '{sub_title}')">{sub_title}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerUserPromptTemplate', '{description}')">{description}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerUserPromptTemplate', '{cta}')">{cta}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerUserPromptTemplate', '{background}')">{background}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerUserPromptTemplate', '{object}')">{object}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerUserPromptTemplate', '{size}')">{size}</button>
+                                <button class="placeholder-btn" onclick="insertPlaceholder('bannerUserPromptTemplate', '{inspiration}')">{inspiration}</button>
+                            </div>
+                            <textarea id="bannerUserPromptTemplate" rows="6" style="width: 100%; padding: 12px; border-radius: 16px; border: 2px solid #dde3e9; font-family: monospace; font-size: 13px;" placeholder="Leave empty to use default user prompt"></textarea>
+
+                            <button class="fix-btn" style="margin-top: 10px;" onclick="toggleDefaultPrompts('banner')">📋 Show Default Prompts</button>
+                            <div id="bannerDefaultPrompts" class="default-prompts">
+                                <div class="prompt-header">
+                                    <h4>Default System Prompt</h4>
+                                    <button class="copy-btn" onclick="copyToClipboard(defaultSystemPrompt)">Copy</button>
+                                </div>
+                                <pre>Zulu Club — Mood-Driven Banner Generation Engine
+
+You are generating premium lifestyle banners for Zulu Club, a mood-based shopping app.
+
+Each banner must help users navigate feelings and intent, not just products.
+
+🔢 SCALE & EXPECTATION (NON-NEGOTIABLE)
+
+Total Banner Rows: 11
+
+Total Moods: 6
+
+Total Images to Generate: 66
+
+For EACH Banner ID, you must generate 6 images, one per mood:
+
+CALM
+
+NOSTALGIC
+
+PLAYFUL
+
+CONFIDENT
+
+AMBITIOUS
+
+INTROSPECTIVE
+
+These 6 images must feel like emotional variations of the same idea,
+not 6 unrelated designs.
+
+🟥 ABSOLUTE PRIORITY RULES (OVERRIDE ALL)
+
+ZERO spelling mistakes
+
+Text must match DATA_TABLE fields exactly
+
+No paraphrasing
+
+Text placement
+
+Title and Sub Title
+
+Always on the LEFT
+
+Clear margin from TOP + LEFT
+
+LEFT-ALIGNED only
+
+Prominent and readable
+
+Object placement
+
+Always BOTTOM-CENTER to BOTTOM-RIGHT
+
+Never overlaps text
+
+CTA placement
+
+Only BOTTOM-LEFT or BOTTOM-RIGHT
+
+Consistent margins
+
+No overlap
+
+Description placement
+
+Either:
+
+Directly below Sub Title, OR
+
+Near CTA (if visually appropriate)
+
+Mood integrity
+
+Mood drives:
+
+Background
+
+Lighting
+
+Color palette
+
+Texture
+
+Typography feel
+
+No drastic shocks between moods
+
+Emotional flow must feel natural while scrolling
+
+Typography inspiration (STRICT)
+
+CALM → Lato
+
+NOSTALGIC → Playfair Display
+
+PLAYFUL → Montserrat
+
+CONFIDENT → Inter
+
+AMBITIOUS → Klein
+
+INTROSPECTIVE → Cormorant Garamond
+
+🟦 INPUT A — DATA_TABLE (SOURCE OF TRUTH)
+
+Each row represents one banner concept.
+
+For each row, you must generate 6 mood variants.
+
+Columns (use exactly):
+
+Banner ID
+
+Banner Name
+
+Size
+
+Title
+
+Sub Title
+
+Description
+
+CTA
+
+Background
+
+Object
+
+🟩 INPUT B — INSPIRATION_TEXT
+
+Defines the emotional philosophy behind:
+
+Every pixel
+
+Every object
+
+Every word
+
+This ensures brand soul consistency across all 66 images.
+
+🟨 INPUT C — INSPIRATION_IMAGE
+
+Defines:
+
+Realism
+
+Texture quality
+
+Lighting maturity
+
+Lifestyle authenticity
+
+All outputs must feel like they belong to the same visual universe.
+
+🟪 INPUT D — MOOD_BASED_GUIDELINE_NOTE
+
+Defines how each mood is expressed.
+
+Only the active mood’s guideline should be applied per image.
+
+🎭 MOOD FLOW RULE (VERY IMPORTANT)
+
+When generating the 6 moods for the same banner:
+
+Composition stays structurally consistent
+
+Object identity stays the same
+
+Camera angle stays similar
+
+Changes happen via:
+
+Lighting
+
+Color temperature
+
+Contrast
+
+Emotional energy
+
+This ensures:
+
+Users feel emotional progression, not disorientation.
+
+🧾 OUTPUT STRUCTURE (STRICT)
+📁 Folder Structure
+/ZuluClub_Banners/
+  /Banner_<Banner ID>_<Banner Name>/
+
+📄 Filename Convention (MANDATORY)
+<BannerName>_<Mood>.png
+
+Example
+Deliver_ASAP_CALM.png
+Deliver_ASAP_NOSTALGIC.png
+Deliver_ASAP_PLAYFUL.png
+Deliver_ASAP_CONFIDENT.png
+Deliver_ASAP_AMBITIOUS.png
+Deliver_ASAP_INTROSPECTIVE.png
+
+
+Repeat for all 11 banners → 66 total images
+
+🖼️ VISUAL STYLE (GLOBAL)
+
+Ultra-realistic
+
+Premium lifestyle
+
+Editorial, not ecommerce-noisy
+
+Clean negative space on the LEFT
+
+No illustration unless explicitly implied
+
+No clutter
+
+No gimmicks
+
+✅ FINAL SELF-CHECK (MANDATORY)
+
+Before finalizing each image:
+
+No spelling errors
+
+Correct alignment
+
+No overlaps
+
+Object bottom-center/right
+
+CTA correctly placed
+
+Mood instantly recognizable
+
+Feels like Zulu Club, not generic
+
+🔒 FINAL STATUS
+
+This system now guarantees:
+
+66 coherent images
+
+Strong mood storytelling
+
+Visual consistency across navigation
+
+Emotional continuity without shock
+
+Scalable banner generation</pre>
+                                <div class="prompt-header">
+                                    <h4>Default User Prompt (for one mood)</h4>
+                                    <button class="copy-btn" onclick="copyToClipboard(defaultUserPrompt)">Copy</button>
+                                </div>
+                                <pre>Zulu Club — Mood-Based Banner Generation
+
+You are generating ONE image for a 6-mood banner set.
+
+🔢 Context
+Total moods per banner: 6
+This image represents ONLY the "{mood}" mood variant.
+All 6 variants must feel like emotional progressions of the SAME concept.
+
+🆔 Banner Details (Source of Truth — Use EXACT Text)
+Mood: {mood}
+Typography (STRICT): [varies by mood]
+
+Banner ID: {bannerId}
+Banner Name: {bannerName}
+Size: {size}
+
+Title: {title}
+Sub Title: {sub_title}
+Description: {description}
+CTA: {cta}
+
+Background: {background}
+Object: {object}
+
+Inspiration Philosophy:
+{inspiration}
+
+🟥 ABSOLUTE TEXT RULES (OVERRIDE ALL)
+- ZERO spelling mistakes.
+- Text must match Title, Sub Title, Description, CTA EXACTLY as provided.
+- NO paraphrasing.
+- Preserve capitalization exactly.
+🧱 LAYOUT STRUCTURE (MANDATORY)
+- Title and Sub Title:
+  • ALWAYS on LEFT
+  • Clear margin from TOP and LEFT
+  • LEFT-ALIGNED only
+  • Prominent and readable
+- Description:
+  • Either directly below Sub Title
+  • OR placed near CTA (if visually stronger)
+- Object:
+  • ALWAYS bottom-center to bottom-right
+  • NEVER overlap text
+  • Maintain same object identity across all moods
+- CTA:
+  • Only bottom-left OR bottom-right
+  • Consistent margins
+  • No overlap
+
+🎭 MOOD EXECUTION RULE
+Composition must remain structurally consistent with other 5 moods.
+Camera angle must remain similar.
+Object placement must remain similar.
+
+Mood variation happens ONLY through:
+- Lighting
+- Color temperature
+- Contrast
+- Texture feel
+- Emotional energy
+- Typography personality (STRICT mood font)
+
+Mood must drive:
+- Background atmosphere
+- Lighting maturity
+- Color palette
+- Texture depth
+- Typography feel
+
+No drastic shocks between moods.
+Emotional flow must feel natural when scrolling through all 6.
+
+🖼️ GLOBAL VISUAL STYLE
+- Ultra-realistic
+- Premium lifestyle
+- Editorial (not ecommerce noisy)
+- Clean negative space on LEFT
+- No clutter
+- No gimmicks
+- No illustration unless explicitly required
+
+🔎 FINAL SELF-CHECK (MANDATORY BEFORE OUTPUT)
+- No spelling errors
+- Exact text match
+- Correct alignment
+- No overlaps
+- Object bottom-center/right
+- CTA correctly placed
+- Mood instantly recognizable
+- Feels like Zulu Club visual universe
+
+Generate only the "{mood}" variant image for this banner.</pre>
+                            </div>
+                        </div>
+                    </details>
+                </div>
+
+                <div id="bannerProgressArea" style="margin-top: 20px; display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4>Generated Images</h4>
+                        <div>
+                            <button class="stop-btn" id="bannerStopBtn" onclick="stopBannerGeneration()" style="display: none;">⏹️ Stop</button>
+                        </div>
+                    </div>
+                    <div id="bannerProgress" style="max-height: 300px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 10px; background: #f5f5f5; padding: 10px; border-radius: 16px;"></div>
+                    <div id="bannerStatus" style="margin-top: 10px; font-weight: 500;"></div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="cancel-btn" onclick="closeBannerAIModal()">Cancel</button>
+                <button class="save-btn" onclick="startBannerGeneration()" style="background: #9C27B0;">✨ Generate All 6 Moods</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // ----- Default prompts (constants for copying) -----
+        const defaultSystemPrompt = `Zulu Club — Mood-Driven Banner Generation Engine
+
+You are generating premium lifestyle banners for Zulu Club, a mood-based shopping app.
+
+Each banner must help users navigate feelings and intent, not just products.
+
+🔢 SCALE & EXPECTATION (NON-NEGOTIABLE)
+
+Total Banner Rows: 11
+
+Total Moods: 6
+
+Total Images to Generate: 66
+
+For EACH Banner ID, you must generate 6 images, one per mood:
+
+CALM
+
+NOSTALGIC
+
+PLAYFUL
+
+CONFIDENT
+
+AMBITIOUS
+
+INTROSPECTIVE
+
+These 6 images must feel like emotional variations of the same idea,
+not 6 unrelated designs.
+
+🟥 ABSOLUTE PRIORITY RULES (OVERRIDE ALL)
+
+ZERO spelling mistakes
+
+Text must match DATA_TABLE fields exactly
+
+No paraphrasing
+
+Text placement
+
+Title and Sub Title
+
+Always on the LEFT
+
+Clear margin from TOP + LEFT
+
+LEFT-ALIGNED only
+
+Prominent and readable
+
+Object placement
+
+Always BOTTOM-CENTER to BOTTOM-RIGHT
+
+Never overlaps text
+
+CTA placement
+
+Only BOTTOM-LEFT or BOTTOM-RIGHT
+
+Consistent margins
+
+No overlap
+
+Description placement
+
+Either:
+
+Directly below Sub Title, OR
+
+Near CTA (if visually appropriate)
+
+Mood integrity
+
+Mood drives:
+
+Background
+
+Lighting
+
+Color palette
+
+Texture
+
+Typography feel
+
+No drastic shocks between moods
+
+Emotional flow must feel natural while scrolling
+
+Typography inspiration (STRICT)
+
+CALM → Lato
+
+NOSTALGIC → Playfair Display
+
+PLAYFUL → Montserrat
+
+CONFIDENT → Inter
+
+AMBITIOUS → Klein
+
+INTROSPECTIVE → Cormorant Garamond
+
+🟦 INPUT A — DATA_TABLE (SOURCE OF TRUTH)
+
+Each row represents one banner concept.
+
+For each row, you must generate 6 mood variants.
+
+Columns (use exactly):
+
+Banner ID
+
+Banner Name
+
+Size
+
+Title
+
+Sub Title
+
+Description
+
+CTA
+
+Background
+
+Object
+
+🟩 INPUT B — INSPIRATION_TEXT
+
+Defines the emotional philosophy behind:
+
+Every pixel
+
+Every object
+
+Every word
+
+This ensures brand soul consistency across all 66 images.
+
+🟨 INPUT C — INSPIRATION_IMAGE
+
+Defines:
+
+Realism
+
+Texture quality
+
+Lighting maturity
+
+Lifestyle authenticity
+
+All outputs must feel like they belong to the same visual universe.
+
+🟪 INPUT D — MOOD_BASED_GUIDELINE_NOTE
+
+Defines how each mood is expressed.
+
+Only the active mood’s guideline should be applied per image.
+
+🎭 MOOD FLOW RULE (VERY IMPORTANT)
+
+When generating the 6 moods for the same banner:
+
+Composition stays structurally consistent
+
+Object identity stays the same
+
+Camera angle stays similar
+
+Changes happen via:
+
+Lighting
+
+Color temperature
+
+Contrast
+
+Emotional energy
+
+This ensures:
+
+Users feel emotional progression, not disorientation.
+
+🧾 OUTPUT STRUCTURE (STRICT)
+📁 Folder Structure
+/ZuluClub_Banners/
+  /Banner_<Banner ID>_<Banner Name>/
+
+📄 Filename Convention (MANDATORY)
+<BannerName>_<Mood>.png
+
+Example
+Deliver_ASAP_CALM.png
+Deliver_ASAP_NOSTALGIC.png
+Deliver_ASAP_PLAYFUL.png
+Deliver_ASAP_CONFIDENT.png
+Deliver_ASAP_AMBITIOUS.png
+Deliver_ASAP_INTROSPECTIVE.png
+
+
+Repeat for all 11 banners → 66 total images
+
+🖼️ VISUAL STYLE (GLOBAL)
+
+Ultra-realistic
+
+Premium lifestyle
+
+Editorial, not ecommerce-noisy
+
+Clean negative space on the LEFT
+
+No illustration unless explicitly implied
+
+No clutter
+
+No gimmicks
+
+✅ FINAL SELF-CHECK (MANDATORY)
+
+Before finalizing each image:
+
+No spelling errors
+
+Correct alignment
+
+No overlaps
+
+Object bottom-center/right
+
+CTA correctly placed
+
+Mood instantly recognizable
+
+Feels like Zulu Club, not generic
+
+🔒 FINAL STATUS
+
+This system now guarantees:
+
+66 coherent images
+
+Strong mood storytelling
+
+Visual consistency across navigation
+
+Emotional continuity without shock
+
+Scalable banner generation`;
+
+        const defaultUserPrompt = `Zulu Club — Mood-Based Banner Generation
+
+You are generating ONE image for a 6-mood banner set.
+
+🔢 Context
+Total moods per banner: 6
+This image represents ONLY the "{mood}" mood variant.
+All 6 variants must feel like emotional progressions of the SAME concept.
+
+🆔 Banner Details (Source of Truth — Use EXACT Text)
+Mood: {mood}
+Typography (STRICT): [varies by mood]
+
+Banner ID: {bannerId}
+Banner Name: {bannerName}
+Size: {size}
+
+Title: {title}
+Sub Title: {sub_title}
+Description: {description}
+CTA: {cta}
+
+Background: {background}
+Object: {object}
+
+Inspiration Philosophy:
+{inspiration}
+
+🟥 ABSOLUTE TEXT RULES (OVERRIDE ALL)
+- ZERO spelling mistakes.
+- Text must match Title, Sub Title, Description, CTA EXACTLY as provided.
+- NO paraphrasing.
+- Preserve capitalization exactly.
+🧱 LAYOUT STRUCTURE (MANDATORY)
+- Title and Sub Title:
+  • ALWAYS on LEFT
+  • Clear margin from TOP and LEFT
+  • LEFT-ALIGNED only
+  • Prominent and readable
+- Description:
+  • Either directly below Sub Title
+  • OR placed near CTA (if visually stronger)
+- Object:
+  • ALWAYS bottom-center to bottom-right
+  • NEVER overlap text
+  • Maintain same object identity across all moods
+- CTA:
+  • Only bottom-left OR bottom-right
+  • Consistent margins
+  • No overlap
+
+🎭 MOOD EXECUTION RULE
+Composition must remain structurally consistent with other 5 moods.
+Camera angle must remain similar.
+Object placement must remain similar.
+
+Mood variation happens ONLY through:
+- Lighting
+- Color temperature
+- Contrast
+- Texture feel
+- Emotional energy
+- Typography personality (STRICT mood font)
+
+Mood must drive:
+- Background atmosphere
+- Lighting maturity
+- Color palette
+- Texture depth
+- Typography feel
+
+No drastic shocks between moods.
+Emotional flow must feel natural when scrolling through all 6.
+
+🖼️ GLOBAL VISUAL STYLE
+- Ultra-realistic
+- Premium lifestyle
+- Editorial (not ecommerce noisy)
+- Clean negative space on LEFT
+- No clutter
+- No gimmicks
+- No illustration unless explicitly required
+
+🔎 FINAL SELF-CHECK (MANDATORY BEFORE OUTPUT)
+- No spelling errors
+- Exact text match
+- Correct alignment
+- No overlaps
+- Object bottom-center/right
+- CTA correctly placed
+- Mood instantly recognizable
+- Feels like Zulu Club visual universe
+
+Generate only the "{mood}" variant image for this banner.`;
+
+        // ----- Helper functions -----
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showMessage('✅ Copied to clipboard', 'success');
+            }).catch(err => {
+                showMessage('❌ Failed to copy', 'error');
+            });
+        }
+
+        function insertPlaceholder(textareaId, placeholder) {
+            const textarea = document.getElementById(textareaId);
+            if (!textarea) return;
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            const newText = text.substring(0, start) + placeholder + text.substring(end);
+            textarea.value = newText;
+            textarea.selectionStart = textarea.selectionEnd = start + placeholder.length;
+            textarea.focus();
+        }
+
+        function toggleDefaultPrompts(modal) {
+            const div = document.getElementById(modal + 'DefaultPrompts');
+            if (div.style.display === 'none' || div.style.display === '') {
+                div.style.display = 'block';
+            } else {
+                div.style.display = 'none';
+            }
+        }
+
+        // ----- Existing variables and functions (keep everything below) -----
         let allMoods = [];
         let currentEditMoodId = null;
         let currentEditField = null;
@@ -756,13 +2096,64 @@
         let currentHeroUrls = [];
         let currentHeroIndex = 0;
 
-        // AI generation state
+        // AI generation state (for JSON upload)
         let abortController = null;
         let currentBannerIndex = 0;
         let isGenerating = false;
 
-        // --- NEW: Store generated links for CSV ---
+        // AI generation state for individual banner
+        let bannerAbortController = null;
+        let bannerIsGenerating = false;
+
+        // Store generated links for CSV and DB updates
         let generatedLinks = [];
+        let lastGeneratedBannerId = null;
+
+        // Mapping from banner_id to base_moods field name
+        const bannerFieldMap = {
+            1: 'deliver_asap',
+            2: 'category_banner',
+            3: 'visit_us',
+            4: 'concierge',
+            5: 'home_banner',
+            6: 'watch_banner',
+            7: 'visit_banner',
+            8: 'listen_banner',
+            9: 'cart_banner',
+            10: 'profile_bg',
+            11: 'hero_bg'
+        };
+
+        // Inverse mapping from field name to banner_id
+        const fieldToBannerId = {};
+        for (const [id, field] of Object.entries(bannerFieldMap)) {
+            fieldToBannerId[field] = parseInt(id);
+        }
+
+        // Default JSON data for each banner ID (from your example)
+        const bannerDefaults = {
+            1: { title: "We deliver", sub_title: "ASAP", description: "or less", cta: "100 MINS", background: "mood based", object: "Hard paper shopping bag" },
+            2: { title: "Discover all", sub_title: "Categories", description: "", cta: "SHOP NOW", background: "mood based", object: "Life style objects as per mood" },
+            3: { title: "Golf Course Extn", sub_title: "Sec 65", description: "Near World Mark", cta: "Gurgaon", background: "mood based", object: "Showroom" },
+            4: { title: "Decorate your home", sub_title: "with AI", description: "", cta: "START", background: "mood based", object: "AI Decorates your home" },
+            5: { title: "Your daily dose", sub_title: "of Happiness", description: "YOUR VIBE", cta: "DISCOVER", background: "mood based", object: "Life style couch vibe" },
+            6: { title: "The best of", sub_title: "Life & Style", description: "Near You", cta: "", background: "mood based", object: "Life style videos in a mobile app" },
+            7: { title: "Life style", sub_title: "Outlets", description: "across Gurgram", cta: "", background: "mood based", object: "Life style markets & malls" },
+            8: { title: "Feel", sub_title: "the Music", description: "Get Excited", cta: "", background: "mood based", object: "Life style music & mood based feelings" },
+            9: { title: "Rs 500 off", sub_title: "on your 1st order", description: "", cta: "ORDER NOW", background: "mood based", object: "Life style checkout" },
+            10: { title: "Your wish", sub_title: "is our command", description: "", cta: "CHAT NOW", background: "mood based", object: "Concierge bell" },
+            11: { title: "", sub_title: "", description: "", cta: "", background: "mood based landscape scenes", object: "" }
+        };
+
+        // Mapping from mood name to mood id (1-6)
+        const moodNameToId = {
+            'nostalgic': 1,
+            'playful': 2,
+            'confident': 3,
+            'calm': 4,
+            'ambitious': 5,
+            'introspective': 6
+        };
 
         function showMessage(text, type = 'success') {
             const msg = document.getElementById('message');
@@ -788,7 +2179,7 @@
             if (lower.includes('landscape')) return 'Landscape';
             if (lower.includes('portrait')) return 'Portrait';
             if (lower.includes('square')) return 'Square';
-            return s; // return original if unknown
+            return s;
         }
 
         function checkAndFixSizes() {
@@ -802,7 +2193,6 @@
                 const orig = b.size || '';
                 const norm = normalizeSizeString(orig);
                 if (!VALID_SIZES.includes(norm)) {
-                    // Show a dropdown in the table row
                     const row = document.querySelector(`#previewBody tr:nth-child(${idx+1})`);
                     if (row) {
                         const sizeCell = row.cells[2];
@@ -819,7 +2209,6 @@
 
         function updateSize(index, newSize) {
             currentParsedJson.banners[index].size = newSize;
-            // Optionally update the cell display to show fixed
             const row = document.querySelector(`#previewBody tr:nth-child(${index+1})`);
             if (row) {
                 const sizeCell = row.cells[2];
@@ -888,38 +2277,28 @@
             document.getElementById('bannerCount').innerText = `(${banners.length} banners)`;
             document.getElementById('jsonPreview').style.display = 'block';
             document.getElementById('previewBtn').style.display = 'none';
-            document.getElementById('proceedBtn').style.display = 'inline-flex';
         }
 
-        // ---------- Generation control ----------
-        async function startFullGeneration() {
-            if (!currentParsedJson) return;
-            generatedLinks = []; // reset links
-            document.getElementById('downloadCsvBtn').style.display = 'none'; // hide CSV button
-            currentBannerIndex = 0;
-            document.getElementById('aiProgressArea').style.display = 'block';
-            document.getElementById('stopGenerationBtn').style.display = 'inline-flex';
-            document.getElementById('nextBannerBtn').style.display = 'none';
-            document.getElementById('exitAfterBannerBtn').style.display = 'none';
-            await generateFromIndex(currentBannerIndex, 'all');
-        }
-
+        // ---------- Generation control (for JSON upload) ----------
         async function generateSingleBanner(idx) {
             if (!currentParsedJson) return;
-            generatedLinks = []; // reset links for single banner
+            generatedLinks = [];
+            lastGeneratedBannerId = null;
             document.getElementById('downloadCsvBtn').style.display = 'none';
+            document.getElementById('updateDbBtn').style.display = 'none';
             currentBannerIndex = idx;
+            document.getElementById('aiProgress').innerHTML = '';
             document.getElementById('aiProgressArea').style.display = 'block';
             document.getElementById('stopGenerationBtn').style.display = 'inline-flex';
             document.getElementById('nextBannerBtn').style.display = 'none';
             document.getElementById('exitAfterBannerBtn').style.display = 'none';
-            await generateFromIndex(idx, 'single');
+            await generateFromIndex(idx);
         }
 
-        async function generateFromIndex(startIdx, mode) {
+        async function generateFromIndex(idx) {
             if (!currentParsedJson) return;
             const banners = currentParsedJson.banners;
-            if (startIdx >= banners.length) {
+            if (idx >= banners.length) {
                 document.getElementById('aiStatus').innerText = '✅ All banners processed.';
                 document.getElementById('stopGenerationBtn').style.display = 'none';
                 return;
@@ -928,16 +2307,13 @@
             abortController = new AbortController();
             isGenerating = true;
 
-            // Prepare a JSON with only the current banner (or all from startIdx if mode='all')
-            let bannersToSend;
-            if (mode === 'single') {
-                bannersToSend = [banners[startIdx]];
-            } else {
-                bannersToSend = banners.slice(startIdx);
-            }
+            const bannersToSend = [banners[idx]];
             const partialJson = { ...currentParsedJson, banners: bannersToSend };
 
             const inspiration = document.getElementById('aiInspiration').value;
+            const systemPrompt = document.getElementById('systemPrompt').value.trim() || undefined;
+            const userTemplate = document.getElementById('userPromptTemplate').value.trim() || undefined;
+
             const progressDiv = document.getElementById('aiProgress');
             const statusDiv = document.getElementById('aiStatus');
 
@@ -946,7 +2322,12 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     signal: abortController.signal,
-                    body: JSON.stringify({ json: partialJson, inspiration })
+                    body: JSON.stringify({ 
+                        json: partialJson, 
+                        inspiration,
+                        systemPrompt,
+                        userPromptTemplate: userTemplate
+                    })
                 });
 
                 if (!response.ok) {
@@ -978,25 +2359,22 @@
                                 return;
                             }
                             if (data.done) {
-                                // Finished this batch
-                                if (mode === 'single') {
-                                    statusDiv.innerText = `✅ Banner ${banners[startIdx].banner_name} completed.`;
-                                    document.getElementById('stopGenerationBtn').style.display = 'none';
-                                    document.getElementById('nextBannerBtn').style.display = 'inline-flex';
-                                    document.getElementById('exitAfterBannerBtn').style.display = 'inline-flex';
-                                } else {
-                                    // 'all' mode finished all banners
-                                    statusDiv.innerText = '✅ All 66 images generated!';
-                                    document.getElementById('stopGenerationBtn').style.display = 'none';
-                                }
-                                // Show CSV download button if we have links
+                                statusDiv.innerText = `✅ Banner ${banners[idx].banner_name} completed.`;
+                                document.getElementById('stopGenerationBtn').style.display = 'none';
+                                document.getElementById('nextBannerBtn').style.display = 'inline-flex';
+                                document.getElementById('exitAfterBannerBtn').style.display = 'inline-flex';
+
+                                lastGeneratedBannerId = banners[idx].banner_id;
+                                await updateMoodFields(generatedLinks, lastGeneratedBannerId);
+                                downloadLinksCsv();
+
                                 if (generatedLinks.length > 0) {
                                     document.getElementById('downloadCsvBtn').style.display = 'inline-flex';
+                                    document.getElementById('updateDbBtn').style.display = 'inline-flex';
                                 }
                                 isGenerating = false;
                                 break;
                             }
-                            // Display image with download button
                             const container = document.createElement('div');
                             container.className = 'img-container';
                             const img = document.createElement('img');
@@ -1014,11 +2392,10 @@
                             progressDiv.appendChild(container);
                             statusDiv.innerText = `Generated: ${data.bannerName} (${data.mood})`;
 
-                            // --- NEW: Store link for CSV ---
                             generatedLinks.push({
                                 bannerId: data.bannerId,
                                 bannerName: data.bannerName,
-                                mood: data.mood,
+                                mood: data.mood.toLowerCase(),
                                 url: data.imageUrl
                             });
                         }
@@ -1035,6 +2412,266 @@
             }
         }
 
+        // ---------- Individual Banner AI Generation ----------
+        function openBannerAIModal(fieldName) {
+            const bannerId = fieldToBannerId[fieldName];
+            if (!bannerId) {
+                alert('Unknown field');
+                return;
+            }
+            const defaults = bannerDefaults[bannerId] || {};
+            document.getElementById('bannerField').value = fieldName;
+            document.getElementById('bannerFieldName').innerText = fieldName.replace(/_/g, ' ');
+            document.getElementById('bannerTitle').value = defaults.title || '';
+            document.getElementById('bannerSubTitle').value = defaults.sub_title || '';
+            document.getElementById('bannerDescription').value = defaults.description || '';
+            document.getElementById('bannerCta').value = defaults.cta || '';
+            document.getElementById('bannerBackground').value = defaults.background || 'mood based';
+            document.getElementById('bannerObject').value = defaults.object || '';
+            document.getElementById('bannerSize').value = 'Landscape'; // default
+            document.getElementById('bannerInspiration').value = 'Bollywood landscape field';
+            
+            document.getElementById('bannerProgress').innerHTML = '';
+            document.getElementById('bannerStatus').innerText = '';
+            document.getElementById('bannerProgressArea').style.display = 'none';
+            
+            document.getElementById('bannerAiModal').classList.add('show');
+        }
+
+        function closeBannerAIModal() {
+            if (bannerAbortController) {
+                bannerAbortController.abort();
+                bannerAbortController = null;
+                bannerIsGenerating = false;
+            }
+            document.getElementById('bannerAiModal').classList.remove('show');
+        }
+
+        async function startBannerGeneration() {
+            const fieldName = document.getElementById('bannerField').value;
+            const bannerId = fieldToBannerId[fieldName];
+            if (!bannerId) return;
+
+            const bannerData = {
+                banner_id: bannerId,
+                banner_name: fieldName.replace(/_/g, ' '),
+                size: document.getElementById('bannerSize').value,
+                title: document.getElementById('bannerTitle').value,
+                sub_title: document.getElementById('bannerSubTitle').value,
+                description: document.getElementById('bannerDescription').value,
+                cta: document.getElementById('bannerCta').value,
+                background: document.getElementById('bannerBackground').value,
+                object: document.getElementById('bannerObject').value
+            };
+            const inspiration = document.getElementById('bannerInspiration').value;
+            const systemPrompt = document.getElementById('bannerSystemPrompt').value.trim() || undefined;
+            const userTemplate = document.getElementById('bannerUserPromptTemplate').value.trim() || undefined;
+
+            const requestJson = {
+                version: "1.0",
+                total_banners: 1,
+                banners: [bannerData]
+            };
+
+            generatedLinks = [];
+            lastGeneratedBannerId = bannerId;
+            document.getElementById('bannerProgress').innerHTML = '';
+            document.getElementById('bannerStatus').innerText = '';
+            document.getElementById('bannerProgressArea').style.display = 'block';
+            document.getElementById('bannerStopBtn').style.display = 'inline-flex';
+
+            bannerAbortController = new AbortController();
+            bannerIsGenerating = true;
+
+            const progressDiv = document.getElementById('bannerProgress');
+            const statusDiv = document.getElementById('bannerStatus');
+
+            try {
+                const response = await fetch('/api/ai/generate-banners', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    signal: bannerAbortController.signal,
+                    body: JSON.stringify({ 
+                        json: requestJson, 
+                        inspiration,
+                        systemPrompt,
+                        userPromptTemplate: userTemplate
+                    })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    statusDiv.innerText = '❌ Error: ' + err.error;
+                    bannerIsGenerating = false;
+                    document.getElementById('bannerStopBtn').style.display = 'none';
+                    return;
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n\n');
+                    buffer = lines.pop();
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const data = JSON.parse(line.slice(6));
+                            if (data.error) {
+                                statusDiv.innerText = '❌ Error: ' + data.error;
+                                bannerIsGenerating = false;
+                                document.getElementById('bannerStopBtn').style.display = 'none';
+                                return;
+                            }
+                            if (data.done) {
+                                statusDiv.innerText = `✅ Banner ${fieldName} completed.`;
+                                document.getElementById('bannerStopBtn').style.display = 'none';
+
+                                await updateMoodFields(generatedLinks, bannerId);
+                                downloadLinksCsv();
+
+                                bannerIsGenerating = false;
+                                break;
+                            }
+                            const container = document.createElement('div');
+                            container.className = 'img-container';
+                            const img = document.createElement('img');
+                            img.src = data.imageUrl;
+                            img.className = 'progress-img';
+                            img.title = `${data.bannerName} - ${data.mood}`;
+                            container.appendChild(img);
+                            const downloadLink = document.createElement('a');
+                            downloadLink.href = data.imageUrl;
+                            downloadLink.download = `${data.bannerName}_${data.mood}.png`;
+                            downloadLink.className = 'img-download';
+                            downloadLink.innerHTML = '⬇️';
+                            downloadLink.onclick = (e) => e.stopPropagation();
+                            container.appendChild(downloadLink);
+                            progressDiv.appendChild(container);
+                            statusDiv.innerText = `Generated: ${data.bannerName} (${data.mood})`;
+
+                            generatedLinks.push({
+                                bannerId: data.bannerId,
+                                bannerName: data.bannerName,
+                                mood: data.mood.toLowerCase(),
+                                url: data.imageUrl
+                            });
+                        }
+                    }
+                }
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    statusDiv.innerText = '⏹️ Generation stopped.';
+                } else {
+                    statusDiv.innerText = '❌ Network error: ' + err.message;
+                }
+                bannerIsGenerating = false;
+                document.getElementById('bannerStopBtn').style.display = 'none';
+            }
+        }
+
+        function stopBannerGeneration() {
+            if (bannerAbortController) {
+                bannerAbortController.abort();
+                bannerAbortController = null;
+                bannerIsGenerating = false;
+                document.getElementById('bannerStopBtn').style.display = 'none';
+            }
+        }
+
+        // ---------- Common update function ----------
+        async function updateMoodFields(links, bannerId) {
+            const field = bannerFieldMap[bannerId];
+            if (!field) {
+                showMessage(`Unknown banner ID ${bannerId}`, 'error');
+                return;
+            }
+
+            let successCount = 0;
+            let errorMessages = [];
+
+            for (const link of links) {
+                const moodId = moodNameToId[link.mood.toLowerCase()];
+                if (!moodId) {
+                    errorMessages.push(`Unknown mood: ${link.mood}`);
+                    continue;
+                }
+
+                try {
+                    console.log(`Fetching current data for mood ${moodId}...`);
+                    const getRes = await fetch(`/api/base_moods/${moodId}`, {
+                        credentials: 'same-origin'
+                    });
+                    if (!getRes.ok) {
+                        errorMessages.push(`Mood ${moodId}: Failed to fetch current data (HTTP ${getRes.status})`);
+                        continue;
+                    }
+                    const getData = await getRes.json();
+                    if (!getData.success) {
+                        errorMessages.push(`Mood ${moodId}: Error fetching current data: ${getData.error}`);
+                        continue;
+                    }
+                    const mood = getData.data;
+
+                    mood[field] = link.url;
+                    delete mood.id;
+                    delete mood.created_at;
+                    delete mood.updated_at;
+
+                    console.log(`Updating mood ${moodId} with:`, mood);
+
+                    const putRes = await fetch(`/api/base_moods/${moodId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'same-origin',
+                        body: JSON.stringify(mood)
+                    });
+
+                    const responseText = await putRes.text();
+                    let result;
+                    try {
+                        result = JSON.parse(responseText);
+                    } catch (e) {
+                        errorMessages.push(`Mood ${moodId}: Non‑JSON response (HTTP ${putRes.status}) – ${responseText.slice(0,100)}`);
+                        continue;
+                    }
+
+                    if (putRes.ok && result.success) {
+                        const idx = allMoods.findIndex(m => m.id === moodId);
+                        if (idx !== -1) allMoods[idx][field] = link.url;
+                        successCount++;
+                        console.log(`✅ Mood ${moodId} updated successfully`);
+                    } else {
+                        errorMessages.push(`Mood ${moodId}: ${result.error || 'Unknown'} (HTTP ${putRes.status})`);
+                    }
+                } catch (err) {
+                    errorMessages.push(`Mood ${moodId}: Network error – ${err.message}`);
+                }
+            }
+
+            if (successCount > 0) {
+                showMessage(`✅ Updated ${successCount} moods for "${field}"`, 'success');
+            }
+            if (errorMessages.length > 0) {
+                showMessage(`❌ Errors:\n${errorMessages.join('\n')}`, 'error');
+            }
+
+            filterAndDisplay();
+        }
+
+        // Manual DB update button handler (for JSON upload)
+        async function manualUpdateDb() {
+            if (!generatedLinks.length || !lastGeneratedBannerId) {
+                showMessage('No recent generation to update from.', 'error');
+                return;
+            }
+            await updateMoodFields(generatedLinks, lastGeneratedBannerId);
+        }
+
         function stopGeneration() {
             if (abortController) {
                 abortController.abort();
@@ -1049,11 +2686,15 @@
         function nextBanner() {
             if (currentBannerIndex + 1 < currentParsedJson.banners.length) {
                 currentBannerIndex++;
-                document.getElementById('aiProgress').innerHTML = ''; // clear images for next banner (optional)
+                generatedLinks = [];
+                lastGeneratedBannerId = null;
+                document.getElementById('aiProgress').innerHTML = '';
                 document.getElementById('stopGenerationBtn').style.display = 'inline-flex';
                 document.getElementById('nextBannerBtn').style.display = 'none';
                 document.getElementById('exitAfterBannerBtn').style.display = 'none';
-                generateFromIndex(currentBannerIndex, 'single');
+                document.getElementById('downloadCsvBtn').style.display = 'none';
+                document.getElementById('updateDbBtn').style.display = 'none';
+                generateFromIndex(currentBannerIndex);
             } else {
                 document.getElementById('aiStatus').innerText = '✅ No more banners.';
                 document.getElementById('nextBannerBtn').style.display = 'none';
@@ -1062,7 +2703,6 @@
         }
 
         function exitAfterBanner() {
-            // Just hide the progress controls, keep images
             document.getElementById('stopGenerationBtn').style.display = 'none';
             document.getElementById('nextBannerBtn').style.display = 'none';
             document.getElementById('exitAfterBannerBtn').style.display = 'none';
@@ -1074,14 +2714,13 @@
             }
         }
 
-        // --- NEW: Download CSV of links ---
+        // Download CSV of links
         function downloadLinksCsv() {
             if (generatedLinks.length === 0) {
                 alert('No links to download.');
                 return;
             }
 
-            // Define CSV headers
             const headers = ['Banner ID', 'Banner Name', 'Mood', 'Image URL'];
             const rows = generatedLinks.map(item => [
                 item.bannerId,
@@ -1090,10 +2729,8 @@
                 item.url
             ]);
 
-            // Build CSV string
             let csvContent = headers.join(',') + '\n';
             rows.forEach(row => {
-                // Escape fields that may contain commas
                 const escapedRow = row.map(cell => {
                     if (typeof cell === 'string' && (cell.includes(',') || cell.includes('"'))) {
                         return `"${cell.replace(/"/g, '""')}"`;
@@ -1103,7 +2740,6 @@
                 csvContent += escapedRow + '\n';
             });
 
-            // Create download link
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
@@ -1115,18 +2751,21 @@
             URL.revokeObjectURL(url);
         }
 
-        // ---------- Modal open/close ----------
+        // ---------- Modal open/close (JSON upload) ----------
         function openAIModal() {
             document.getElementById('aiJsonInput').value = '';
             document.getElementById('aiInspiration').value = 'Bollywood landscape field';
+            document.getElementById('systemPrompt').value = '';
+            document.getElementById('userPromptTemplate').value = '';
             document.getElementById('aiProgress').innerHTML = '';
             document.getElementById('aiStatus').innerText = '';
             document.getElementById('aiProgressArea').style.display = 'none';
             document.getElementById('jsonPreview').style.display = 'none';
             document.getElementById('previewBtn').style.display = 'inline-flex';
-            document.getElementById('proceedBtn').style.display = 'none';
-            document.getElementById('downloadCsvBtn').style.display = 'none'; // hide CSV button
-            generatedLinks = []; // reset links
+            document.getElementById('downloadCsvBtn').style.display = 'none';
+            document.getElementById('updateDbBtn').style.display = 'none';
+            generatedLinks = [];
+            lastGeneratedBannerId = null;
             currentParsedJson = null;
             document.getElementById('aiModal').classList.add('show');
         }
@@ -1137,13 +2776,13 @@
                 abortController = null;
             }
             document.getElementById('aiModal').classList.remove('show');
-            // Reset preview
             document.getElementById('jsonPreview').style.display = 'none';
             document.getElementById('previewBtn').style.display = 'inline-flex';
-            document.getElementById('proceedBtn').style.display = 'none';
             document.getElementById('aiProgressArea').style.display = 'none';
             document.getElementById('downloadCsvBtn').style.display = 'none';
+            document.getElementById('updateDbBtn').style.display = 'none';
             generatedLinks = [];
+            lastGeneratedBannerId = null;
             currentParsedJson = null;
         }
 
@@ -1196,7 +2835,6 @@
         };
 
         function displayTransposedTable(moods) {
-            // Clear any existing slideshow intervals
             slideshowIntervals.forEach(clearInterval);
             slideshowIntervals = [];
 
@@ -1206,7 +2844,6 @@
                 return;
             }
 
-            // Build header: first column "Field", then each mood
             let headerRow = '<tr><th>Field</th>';
             moods.forEach(m => {
                 const displayName = escapeHtml(m.name) || `Mood ${m.id}`;
@@ -1214,11 +2851,14 @@
             });
             headerRow += '</tr>';
 
-            // Build body rows: one per field
             let bodyRows = '';
             allFields.forEach(field => {
                 bodyRows += '<tr>';
-                bodyRows += `<td>${fieldLabels[field] || field.replace(/_/g, ' ')}</td>`;
+                let fieldDisplay = fieldLabels[field] || field.replace(/_/g, ' ');
+                if (field !== 'id' && field !== 'name') {
+                    fieldDisplay += `<button class="ai-small" onclick="openBannerAIModal('${field}')" title="Generate AI images for this banner">🤖</button>`;
+                }
+                bodyRows += `<td>${fieldDisplay}</td>`;
 
                 moods.forEach(m => {
                     if (field === 'id') {
@@ -1227,12 +2867,10 @@
                         const name = escapeHtml(m.name) || '';
                         bodyRows += `<td onclick="openFieldEditModal(${m.id}, 'name')">${name}</td>`;
                     } else if (field === 'hero_bg') {
-                        // Special handling for hero_bg: multiple images
                         const urls = m.hero_bg ? m.hero_bg.split(',').map(s => s.trim()).filter(s => s) : [];
                         const slideshowId = `slideshow-${m.id}`;
                         bodyRows += `<td onclick="openHeroBgModal(${m.id})" id="${slideshowId}">`;
                         if (urls.length > 0) {
-                            // Store URLs in data attribute for slideshow
                             bodyRows += `<img class="table-img slideshow-img" src="${escapeHtml(urls[0])}" data-urls="${escapeHtml(urls.join(','))}" style="max-height: ${getCurrentImageSize()}px;">`;
                         } else {
                             bodyRows += `<img class="table-img" src="https://via.placeholder.com/300x200?text=No+Image" style="max-height: ${getCurrentImageSize()}px;">`;
@@ -1250,7 +2888,6 @@
 
             container.innerHTML = `<table><thead>${headerRow}</thead><tbody>${bodyRows}</tbody></table>`;
 
-            // Start slideshows for hero_bg cells
             moods.forEach(m => {
                 const slideshowCell = document.getElementById(`slideshow-${m.id}`);
                 if (slideshowCell) {
@@ -1269,7 +2906,6 @@
                 }
             });
 
-            // Apply current image size from slider
             updateImageSizes();
         }
 
@@ -1340,7 +2976,6 @@
             html += '</div>';
             document.getElementById('modalBody').innerHTML = html;
 
-            // Attach file upload if image field
             if (isImage) {
                 const fileInput = document.getElementById('single-file-input');
                 fileInput.addEventListener('change', async (e) => {
@@ -1401,7 +3036,6 @@
         function renderHeroBgModal() {
             let html = `<div class="hero-bg-editor">`;
 
-            // Carousel
             html += `<div class="carousel-container">`;
             if (currentHeroUrls.length > 0) {
                 html += `<img class="carousel-image" src="${escapeHtml(currentHeroUrls[currentHeroIndex])}" id="carousel-img">`;
@@ -1413,7 +3047,6 @@
             }
             html += `</div>`;
 
-            // Thumbnail list
             html += `<div class="image-list">`;
             currentHeroUrls.forEach((url, index) => {
                 const selectedClass = index === currentHeroIndex ? 'selected' : '';
@@ -1424,7 +3057,6 @@
             });
             html += `</div>`;
 
-            // Add new image
             html += `<div class="add-image">`;
             html += `<input type="text" id="new-image-url" placeholder="Image URL">`;
             html += `<button onclick="addImage()">Add URL</button>`;
@@ -1436,7 +3068,6 @@
             html += `</div>`;
             document.getElementById('modalBody').innerHTML = html;
 
-            // Attach file upload
             const fileInput = document.getElementById('hero-file-input');
             fileInput.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
@@ -1528,7 +3159,6 @@
         async function saveSingleField() {
             if (!currentEditMoodId || !currentEditField) return;
 
-            // Special handling for hero_bg
             if (currentEditField === 'hero_bg') {
                 await saveHeroBg();
                 return;
@@ -1613,6 +3243,8 @@
             if (event.target === modal) closeEditModal();
             const aiModal = document.getElementById('aiModal');
             if (event.target === aiModal) closeAIModal();
+            const bannerAiModal = document.getElementById('bannerAiModal');
+            if (event.target === bannerAiModal) closeBannerAIModal();
         });
         // Load on page start
         loadMoods();
