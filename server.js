@@ -4222,7 +4222,7 @@ app.get('/chat/history/:sessionId', async (req, res) => {
 // const multer = require('multer');
 // const upload = multer({ storage: multer.memoryStorage() });
 
-app.post('/api/chatbot', async (req, res) => {
+app.post('/api/chatbot', upload.fields([{ name: 'media', maxCount: 1 }]), async (req, res) => {
   try {
     // Determine if this is an authenticated request (has conversation_id and user_id)
     const hasConversationId = req.body.conversation_id && req.body.user_id;
@@ -4243,7 +4243,6 @@ app.post('/api/chatbot', async (req, res) => {
 
       const classification = await classifyAndMatchWithGPT(userMessage);
       const intent = classification.intent || 'company';
-      console.log('🔍 Intent after classification:', intent); // <-- DEBUG LOG 1
 
       let response;
       let responseType = 'text';
@@ -4251,15 +4250,10 @@ app.post('/api/chatbot', async (req, res) => {
       if (!['company', 'product'].includes(intent)) {
         response = `Please verify your phone to access this feature.`;
       } else if (intent === 'product') {
-        console.log('✅ Entering product block'); // <-- DEBUG LOG 2
         const galleryMatches = await matchGalleriesEnhanced(userMessage, []);
-        console.log('📸 Gallery matches:', galleryMatches.length); // <-- DEBUG LOG 3
         const sellerMatches = await matchSellersEnhanced(userMessage, galleryMatches, null);
-        console.log('🛒 Seller matches:', sellerMatches.length); // <-- DEBUG LOG 4
         const productMatches = await matchProductsEnhanced(userMessage, []);
-        console.log('📦 Product matches:', productMatches.length); // <-- DEBUG LOG 5
         const structured = buildConciseResponse(userMessage, galleryMatches, { all: sellerMatches }, productMatches);
-        console.log('📤 Structured response type:', structured.type); // <-- DEBUG LOG 6
         response = structured;
         responseType = 'structured';
       } else {
@@ -4267,10 +4261,6 @@ app.post('/api/chatbot', async (req, res) => {
       }
 
       delete conversations[tempSessionId];
-
-      // Final response logs
-      console.log('📨 Final response type:', responseType); // <-- DEBUG LOG 7
-      console.log('📨 Final response text:', responseType === 'structured' ? response.text : response); // <-- DEBUG LOG 8
 
       const apiResponse = {
         success: true,
@@ -4291,9 +4281,9 @@ app.post('/api/chatbot', async (req, res) => {
       message_type = 'user',
       chat_preference = 'ai',
       message: userMessageText,
-      media = null
     } = req.body;
 
+    // Validate required fields
     if (!conversation_id || !user_id || !userMessageText) {
       return res.status(400).json({
         success: false,
@@ -4301,23 +4291,50 @@ app.post('/api/chatbot', async (req, res) => {
       });
     }
 
-    // Insert user message into database (media is stored as-is)
+    // Handle media file upload if present
+    let mediaUrl = null;
+    if (req.files && req.files.media && req.files.media.length > 0) {
+      const mediaFile = req.files.media[0];
+      const formData = new FormData();
+      formData.append('image', mediaFile.buffer, {
+        filename: `${conversation_id}_${user_id}.jpg`,
+        contentType: mediaFile.mimetype,
+      });
+
+      try {
+        const uploadResponse = await axios.post(UPLOAD_API_URL, formData, {
+          headers: formData.getHeaders(),
+        });
+        // Extract URL – adjust according to actual response structure
+        mediaUrl = uploadResponse.data.url || uploadResponse.data.image_url || null;
+        if (!mediaUrl) {
+          console.warn('Could not extract media URL from upload response:', uploadResponse.data);
+        }
+      } catch (uploadErr) {
+        console.error('Media upload failed:', uploadErr.message);
+        // Continue even if upload fails, mediaUrl stays null
+      }
+    }
+
+    // Insert user message into database using conversationDb
     try {
       await conversationDb.insertUserMessage({
         conversation_id,
         user_id,
         username,
         message: userMessageText,
-        media,
+        media: mediaUrl,
         chat_preference,
       });
     } catch (dbErr) {
       console.error('Failed to insert user message into conversation_messages:', dbErr);
+      // Optionally, you might still want to continue but log the error.
+      // For now, we'll proceed but the message won't be stored.
     }
 
-    // Process the user message through the chatbot logic (temporary session)
+    // Process the user message through the chatbot logic (using a temporary session)
     const tempSessionId = `temp-${Date.now()}`;
-    createOrTouchSession(tempSessionId, false);
+    createOrTouchSession(tempSessionId, false); // isAuthenticated = false (can be refined later)
     const result = await handleMessage(tempSessionId, userMessageText, false);
     delete conversations[tempSessionId];
 
@@ -4352,7 +4369,7 @@ app.post('/api/chatbot', async (req, res) => {
       recommendationJson = JSON.stringify({});
     }
 
-    // Insert assistant response – do NOT set zulu_sender_type
+    // Insert assistant response into database
     try {
       await conversationDb.insertAssistantMessage({
         conversation_id,
@@ -4366,6 +4383,7 @@ app.post('/api/chatbot', async (req, res) => {
       console.error('Failed to insert assistant message into conversation_messages:', dbErr);
     }
 
+    // Return the same response format as before
     return res.json({
       success: true,
       response: result.response,
