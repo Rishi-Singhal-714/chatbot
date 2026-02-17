@@ -4375,7 +4375,7 @@ app.post('/api/chatbot', async (req, res) => {
 });
 
 /**
- * Simple galleries API - get only the fields you need
+ * Simple Simple galleries API - get only the fields you need
  * Example: /api/galleries/simple?fields=id,name,priority,status,version,image1
  */
 app.get('/api/galleries/simple', async (req, res) => {
