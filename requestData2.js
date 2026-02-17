@@ -108,7 +108,6 @@ async function insertUserMessage({ conversation_id, user_id, username, message, 
     media,
     message_type: 'user',
     chat_preference,
-    zulu_sender_type: null
   });
 }
 
@@ -124,7 +123,6 @@ async function insertAssistantMessage({ conversation_id, user_id, username, mess
     media: null,
     message_type: 'zulu',
     chat_preference,
-    zulu_sender_type: 'ai',
     recommendation_json
   });
 }
