@@ -4224,9 +4224,10 @@ app.get('/chat/history/:sessionId', async (req, res) => {
 
 app.post('/api/chatbot', async (req, res) => {
   try {
+    // Determine if this is an authenticated request (has conversation_id and user_id)
     const hasConversationId = req.body.conversation_id && req.body.user_id;
 
-    // -------------------- UNAUTHENTICATED FLOW --------------------
+    // -------------------- UNAUTHENTICATED FLOW (backward compatible) --------------------
     if (!hasConversationId) {
       const { message } = req.body;
       if (!message || typeof message !== 'string' || message.trim().length === 0) {
@@ -4236,11 +4237,13 @@ app.post('/api/chatbot', async (req, res) => {
       const userMessage = message.trim();
       console.log(`🤖 Chatbot API (unauthenticated) called: "${userMessage.substring(0, 100)}..."`);
 
+      // Create a temporary session (same as before)
       const tempSessionId = 'temp-' + Date.now();
       createOrTouchSession(tempSessionId, false);
 
       const classification = await classifyAndMatchWithGPT(userMessage);
       const intent = classification.intent || 'company';
+      console.log('🔍 Intent after classification:', intent); // <-- DEBUG LOG 1
 
       let response;
       let responseType = 'text';
@@ -4248,10 +4251,15 @@ app.post('/api/chatbot', async (req, res) => {
       if (!['company', 'product'].includes(intent)) {
         response = `Please verify your phone to access this feature.`;
       } else if (intent === 'product') {
+        console.log('✅ Entering product block'); // <-- DEBUG LOG 2
         const galleryMatches = await matchGalleriesEnhanced(userMessage, []);
+        console.log('📸 Gallery matches:', galleryMatches.length); // <-- DEBUG LOG 3
         const sellerMatches = await matchSellersEnhanced(userMessage, galleryMatches, null);
+        console.log('🛒 Seller matches:', sellerMatches.length); // <-- DEBUG LOG 4
         const productMatches = await matchProductsEnhanced(userMessage, []);
+        console.log('📦 Product matches:', productMatches.length); // <-- DEBUG LOG 5
         const structured = buildConciseResponse(userMessage, galleryMatches, { all: sellerMatches }, productMatches);
+        console.log('📤 Structured response type:', structured.type); // <-- DEBUG LOG 6
         response = structured;
         responseType = 'structured';
       } else {
@@ -4260,16 +4268,22 @@ app.post('/api/chatbot', async (req, res) => {
 
       delete conversations[tempSessionId];
 
-      return res.json({
+      // Final response logs
+      console.log('📨 Final response type:', responseType); // <-- DEBUG LOG 7
+      console.log('📨 Final response text:', responseType === 'structured' ? response.text : response); // <-- DEBUG LOG 8
+
+      const apiResponse = {
         success: true,
         response: responseType === 'structured' ? response : { text: response },
         responseType,
         isAuthenticated: false,
         timestamp: new Date().toISOString()
-      });
+      };
+
+      return res.json(apiResponse);
     }
 
-    // -------------------- AUTHENTICATED FLOW --------------------
+    // -------------------- AUTHENTICATED FLOW (with DB storage) --------------------
     const {
       conversation_id,
       user_id,
@@ -4294,12 +4308,11 @@ app.post('/api/chatbot', async (req, res) => {
         user_id,
         username,
         message: userMessageText,
-        media,                 // directly store the provided string
+        media,
         chat_preference,
       });
     } catch (dbErr) {
       console.error('Failed to insert user message into conversation_messages:', dbErr);
-      // Continue even if storage fails
     }
 
     // Process the user message through the chatbot logic (temporary session)
@@ -4348,7 +4361,6 @@ app.post('/api/chatbot', async (req, res) => {
         message: assistantMessage,
         chat_preference,
         recommendation_json: recommendationJson,
-        // zulu_sender_type is omitted → defaults to NULL
       });
     } catch (dbErr) {
       console.error('Failed to insert assistant message into conversation_messages:', dbErr);
