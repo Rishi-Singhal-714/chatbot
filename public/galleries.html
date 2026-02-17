@@ -726,6 +726,46 @@
             color: #333;
             font-size: 13px;
         }
+        /* Gallery AI Modal specific */
+        #galleryAiModal .modal-content {
+            max-width: 900px;
+        }
+        #galleryAiModal .full-width {
+            grid-column: span 2;
+        }
+        #galleryAiModal .img-container {
+            position: relative;
+            display: inline-block;
+        }
+        #galleryAiModal .progress-img {
+            width: 100px;
+            height: auto;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+        #galleryAiModal .img-download {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+        }
+        #galleryAiModal .stop-btn {
+            background: #dc3545;
+            color: white;
+        }
+        #galleryAiModal .save-btn {
+            background: #27ae60;
+        }
         @media (max-width: 768px) {
             body {
                 margin: 15px;
@@ -1039,6 +1079,92 @@
         </div>
     </div>
 
+    <!-- Gallery AI Generation Modal -->
+    <div id="galleryAiModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2 id="galleryAiModalTitle">🤖 Generate Mood Images</h2>
+                <button class="close-modal" onclick="closeGalleryAIModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="galleryAiForm">
+                    <p style="margin-bottom: 15px;">Fill the details below to generate 6 mood variants for the selected size set.</p>
+                    
+                    <!-- Hidden field for gallery ID -->
+                    <input type="hidden" id="galleryAiId" value="">
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label style="font-weight: 600;">Title</label>
+                            <input type="text" id="galleryAiTitle" class="form-control" placeholder="Title">
+                        </div>
+                        <div>
+                            <label style="font-weight: 600;">Sub Title</label>
+                            <input type="text" id="galleryAiSubTitle" class="form-control" placeholder="Sub Title">
+                        </div>
+                        <div>
+                            <label style="font-weight: 600;">Description</label>
+                            <input type="text" id="galleryAiDescription" class="form-control" placeholder="Description">
+                        </div>
+                        <div>
+                            <label style="font-weight: 600;">CTA</label>
+                            <input type="text" id="galleryAiCta" class="form-control" placeholder="CTA (optional)">
+                        </div>
+                        <div>
+                            <label style="font-weight: 600;">Background</label>
+                            <input type="text" id="galleryAiBackground" class="form-control" value="mood based">
+                        </div>
+                        <div>
+                            <label style="font-weight: 600;">Object</label>
+                            <input type="text" id="galleryAiObject" class="form-control" placeholder="e.g. lifestyle object">
+                        </div>
+                        <div class="full-width" style="grid-column: span 2;">
+                            <label style="font-weight: 600;">Inspiration Text</label>
+                            <input type="text" id="galleryAiInspiration" class="form-control" value="Bollywood landscape field">
+                        </div>
+                    </div>
+
+                    <!-- Advanced Prompt Settings (optional) -->
+                    <details style="margin: 20px 0; border-top: 1px solid #e0e0e0; padding-top: 15px;">
+                        <summary style="font-weight: 600; cursor: pointer; color: #9C27B0;">⚙️ Advanced Prompt Settings</summary>
+                        <div style="margin-top: 15px;">
+                            <label style="font-weight: 600;">System Prompt (overrides default)</label>
+                            <textarea id="galleryAiSystemPrompt" rows="6" class="form-control" placeholder="Leave empty to use default system prompt"></textarea>
+
+                            <label style="font-weight: 600; margin-top: 15px;">User Prompt Template</label>
+                            <textarea id="galleryAiUserPrompt" rows="6" class="form-control" placeholder="Leave empty to use default user prompt"></textarea>
+                        </div>
+                    </details>
+
+                    <!-- Size Set Selection -->
+                    <div style="display: flex; gap: 15px; margin: 20px 0; justify-content: center;">
+                        <button class="save-btn" onclick="generateGallerySet('square')" style="background: #2196F3;">⬛ Generate Square Set (Image1)</button>
+                        <button class="save-btn" onclick="generateGallerySet('portrait')" style="background: #4CAF50;">📱 Generate Portrait Set (Image2)</button>
+                        <button class="save-btn" onclick="generateGallerySet('landscape')" style="background: #FF9800;">🖥️ Generate Landscape Set (Image3)</button>
+                    </div>
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <button class="save-btn" onclick="generateAllGallerySets()" style="background: #9C27B0; width: 80%;">✨ Generate All 3 Sets (18 images)</button>
+                    </div>
+
+                    <!-- Progress Area -->
+                    <div id="galleryAiProgressArea" style="margin-top: 20px; display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h4>Generated Images</h4>
+                            <div>
+                                <button class="stop-btn" id="galleryStopBtn" onclick="stopGalleryGeneration()" style="display: none;">⏹️ Stop</button>
+                            </div>
+                        </div>
+                        <div id="galleryAiProgress" style="max-height: 300px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 10px; background: #f5f5f5; padding: 10px; border-radius: 16px;"></div>
+                        <div id="galleryAiStatus" style="margin-top: 10px; font-weight: 500;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="cancel-btn" onclick="closeGalleryAIModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Global variables
         let allData = [];          // All data from API
@@ -1076,6 +1202,13 @@
         let totalPages = 1;
         let totalFilteredItems = 0;
 
+        // Gallery AI generation variables
+        let galleryAbortController = null;
+        let galleryIsGenerating = false;
+        let currentGalleryId = null;
+        let currentSet = null; // 'square', 'portrait', 'landscape'
+        let galleryGeneratedLinks = [];
+
         // Helper function to get full image URL
         function getFullImageUrl(url) {
             if (!url || url.trim() === '') {
@@ -1102,9 +1235,13 @@
                               'image_1', 'image_2', 'image_3', 'image_4',
                               'imageone', 'imagetwo', 'imagethree', 'imagefour',
                               'image_one', 'image_two', 'image_three', 'image_four',
-                              'main_image', 'thumbnail', 'cover', 'banner'];
+                              'main_image', 'thumbnail', 'cover', 'banner',
+                              // Include mood image fields
+                              'Image1_Calm', 'Image1_Nostalgic', 'Image1_Playful', 'Image1_Confident', 'Image1_Ambitious', 'Image1_Introspective',
+                              'Image2_Calm', 'Image2_Nostalgic', 'Image2_Playful', 'Image2_Confident', 'Image2_Ambitious', 'Image2_Introspective',
+                              'Image3_Calm', 'Image3_Nostalgic', 'Image3_Playful', 'Image3_Confident', 'Image3_Ambitious', 'Image3_Introspective'];
             
-            return imgFields.includes(fieldName.toLowerCase());
+            return imgFields.includes(fieldName) || fieldName.startsWith('Image');
         }
 
         // Helper function to check if URL is external (not from zulushop.in)
@@ -1783,6 +1920,8 @@
                 const sortClass = isSortable ? 'sortable' : '';
                 html += `<th class="${sortClass}" onclick="sortByColumn('${header}')" title="${isSortable ? 'Click to sort' : ''}">${displayHeader}</th>`;
             });
+            // NEW: AI Actions column header
+            html += '<th style="background: #9C27B0;">🤖 AI Actions</th>';
             html += '</tr>';
             
             // Create data rows
@@ -1987,6 +2126,10 @@
                         </td>`;
                     }
                 });
+                // NEW: AI button cell
+                html += '<td style="text-align: center; vertical-align: middle;">';
+                html += `<button class="ai-small" onclick="openGalleryAIModal(${row.id})" title="Generate mood images for this gallery" style="background: #9C27B0; color: white; border: none; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer;">✨ Generate</button>`;
+                html += '</td>';
                 html += '</tr>';
             });
             
@@ -2774,11 +2917,258 @@
         // Add event listener for edit form submission
         document.getElementById('editForm').addEventListener('submit', handleEditSubmit);
         
+        // ---------- Gallery AI Generation ----------
+        function openGalleryAIModal(galleryId) {
+            const gallery = allData.find(g => g.id == galleryId);
+            if (!gallery) {
+                showMessage('Gallery not found', 'error');
+                return;
+            }
+            currentGalleryId = galleryId;
+
+            // Pre-fill form with gallery data (adjust field names as needed)
+            document.getElementById('galleryAiId').value = galleryId;
+            document.getElementById('galleryAiTitle').value = gallery.heading || gallery.title || '';
+            document.getElementById('galleryAiSubTitle').value = gallery.subtitle || '';
+            document.getElementById('galleryAiDescription').value = gallery.description || '';
+            document.getElementById('galleryAiCta').value = ''; // galleries may not have CTA
+            document.getElementById('galleryAiBackground').value = 'mood based';
+            document.getElementById('galleryAiObject').value = '';
+            document.getElementById('galleryAiInspiration').value = 'Bollywood landscape field';
+            document.getElementById('galleryAiSystemPrompt').value = '';
+            document.getElementById('galleryAiUserPrompt').value = '';
+
+            // Reset progress
+            document.getElementById('galleryAiProgress').innerHTML = '';
+            document.getElementById('galleryAiStatus').innerText = '';
+            document.getElementById('galleryAiProgressArea').style.display = 'none';
+            document.getElementById('galleryStopBtn').style.display = 'none';
+
+            document.getElementById('galleryAiModalTitle').innerHTML = `🤖 Generate Mood Images for "${gallery.name || gallery.heading || 'Gallery'}"`;
+            document.getElementById('galleryAiModal').classList.add('show');
+        }
+
+        function closeGalleryAIModal() {
+            if (galleryAbortController) {
+                galleryAbortController.abort();
+                galleryAbortController = null;
+            }
+            document.getElementById('galleryAiModal').classList.remove('show');
+            currentGalleryId = null;
+            currentSet = null;
+            galleryGeneratedLinks = [];
+        }
+
+        function stopGalleryGeneration() {
+            if (galleryAbortController) {
+                galleryAbortController.abort();
+                galleryAbortController = null;
+                galleryIsGenerating = false;
+                document.getElementById('galleryStopBtn').style.display = 'none';
+            }
+        }
+
+        // Map set name to size string and field prefix
+        const setConfig = {
+            square:   { size: 'Square',   prefix: 'Image1_' },
+            portrait: { size: 'Portrait', prefix: 'Image2_' },
+            landscape:{ size: 'Landscape',prefix: 'Image3_' }
+        };
+
+        async function generateGallerySet(setType) {
+            if (!currentGalleryId) return;
+            currentSet = setType;
+
+            const galleryId = currentGalleryId;
+            const gallery = allData.find(g => g.id == galleryId);
+            if (!gallery) return;
+
+            // Gather form data
+            const bannerData = {
+                banner_id: galleryId,  // use gallery id as banner_id (for reference)
+                banner_name: gallery.name || gallery.heading || `Gallery ${galleryId}`,
+                size: setConfig[setType].size,
+                title: document.getElementById('galleryAiTitle').value,
+                sub_title: document.getElementById('galleryAiSubTitle').value,
+                description: document.getElementById('galleryAiDescription').value,
+                cta: document.getElementById('galleryAiCta').value,
+                background: document.getElementById('galleryAiBackground').value,
+                object: document.getElementById('galleryAiObject').value
+            };
+            const inspiration = document.getElementById('galleryAiInspiration').value;
+            const systemPrompt = document.getElementById('galleryAiSystemPrompt').value.trim() || undefined;
+            const userTemplate = document.getElementById('galleryAiUserPrompt').value.trim() || undefined;
+
+            const requestJson = {
+                version: "1.0",
+                total_banners: 1,
+                banners: [bannerData]
+            };
+
+            galleryGeneratedLinks = [];
+            document.getElementById('galleryAiProgress').innerHTML = '';
+            document.getElementById('galleryAiStatus').innerText = '';
+            document.getElementById('galleryAiProgressArea').style.display = 'block';
+            document.getElementById('galleryStopBtn').style.display = 'inline-flex';
+
+            galleryAbortController = new AbortController();
+            galleryIsGenerating = true;
+
+            const progressDiv = document.getElementById('galleryAiProgress');
+            const statusDiv = document.getElementById('galleryAiStatus');
+
+            try {
+                const response = await fetch('/api/ai/generate-banners', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    signal: galleryAbortController.signal,
+                    body: JSON.stringify({ 
+                        json: requestJson, 
+                        inspiration,
+                        systemPrompt,
+                        userPromptTemplate: userTemplate
+                    })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    statusDiv.innerText = '❌ Error: ' + err.error;
+                    galleryIsGenerating = false;
+                    document.getElementById('galleryStopBtn').style.display = 'none';
+                    return;
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n\n');
+                    buffer = lines.pop();
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const data = JSON.parse(line.slice(6));
+                            if (data.error) {
+                                statusDiv.innerText = '❌ Error: ' + data.error;
+                                galleryIsGenerating = false;
+                                document.getElementById('galleryStopBtn').style.display = 'none';
+                                return;
+                            }
+                            if (data.done) {
+                                statusDiv.innerText = `✅ ${setType} set completed.`;
+                                document.getElementById('galleryStopBtn').style.display = 'none';
+
+                                // Update gallery with generated links
+                                await updateGalleryMoodFields(galleryGeneratedLinks, galleryId, setType);
+                                
+                                galleryIsGenerating = false;
+                                break;
+                            }
+                            const container = document.createElement('div');
+                            container.className = 'img-container';
+                            const img = document.createElement('img');
+                            img.src = data.imageUrl;
+                            img.className = 'progress-img';
+                            img.title = `${data.bannerName} - ${data.mood}`;
+                            container.appendChild(img);
+                            const downloadLink = document.createElement('a');
+                            downloadLink.href = data.imageUrl;
+                            downloadLink.download = `${data.bannerName}_${data.mood}.png`;
+                            downloadLink.className = 'img-download';
+                            downloadLink.innerHTML = '⬇️';
+                            downloadLink.onclick = (e) => e.stopPropagation();
+                            container.appendChild(downloadLink);
+                            progressDiv.appendChild(container);
+                            statusDiv.innerText = `Generated: ${data.bannerName} (${data.mood})`;
+
+                            galleryGeneratedLinks.push({
+                                bannerId: data.bannerId,
+                                bannerName: data.bannerName,
+                                mood: data.mood.toLowerCase(),
+                                url: data.imageUrl
+                            });
+                        }
+                    }
+                }
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    statusDiv.innerText = '⏹️ Generation stopped.';
+                } else {
+                    statusDiv.innerText = '❌ Network error: ' + err.message;
+                }
+                galleryIsGenerating = false;
+                document.getElementById('galleryStopBtn').style.display = 'none';
+            }
+        }
+
+        async function generateAllGallerySets() {
+            // Run sequentially: square, portrait, landscape
+            for (const set of ['square', 'portrait', 'landscape']) {
+                await generateGallerySet(set);
+                // Small delay between sets
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            showMessage('✅ All three sets generated!', 'success');
+        }
+
+        // Update gallery fields after generation
+        async function updateGalleryMoodFields(links, galleryId, setType) {
+            const prefix = setConfig[setType].prefix; // e.g. "Image1_"
+            let successCount = 0;
+            let errorMessages = [];
+
+            for (const link of links) {
+                // Capitalize first letter of mood: calm -> Calm, nostalgic -> Nostalgic, etc.
+                const moodCapitalized = link.mood.charAt(0).toUpperCase() + link.mood.slice(1);
+                const fieldName = prefix + moodCapitalized; // e.g. "Image1_Calm"
+
+                try {
+                    const updateData = {};
+                    updateData[fieldName] = link.url;
+
+                    const response = await fetch(`/api/galleries/${galleryId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updateData)
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        // Update local allData
+                        const galleryIdx = allData.findIndex(g => g.id == galleryId);
+                        if (galleryIdx !== -1) {
+                            allData[galleryIdx][fieldName] = link.url;
+                        }
+                        successCount++;
+                    } else {
+                        errorMessages.push(`Failed to update ${fieldName}: ${result.error}`);
+                    }
+                } catch (err) {
+                    errorMessages.push(`Network error updating ${fieldName}: ${err.message}`);
+                }
+            }
+
+            if (successCount > 0) {
+                showMessage(`✅ Updated ${successCount} images for ${setType} set`, 'success');
+            }
+            if (errorMessages.length > 0) {
+                showMessage(`❌ Errors: ${errorMessages.join('; ')}`, 'error');
+            }
+
+            // Refresh the table to show new images
+            applyFilter();
+        }
+        
         // Close modals when clicking outside
         window.onclick = function(event) {
             const editModal = document.getElementById('editModal');
             const imageModal = document.getElementById('imageUploadModal');
             const externalModal = document.getElementById('externalLinkModal');
+            const galleryAiModal = document.getElementById('galleryAiModal');
             
             if (event.target === editModal) {
                 closeModal();
@@ -2789,6 +3179,9 @@
             if (event.target === externalModal) {
                 closeExternalLinkModal();
             }
+            if (event.target === galleryAiModal) {
+                closeGalleryAIModal();
+            }
         };
         
         // Close modals with Escape key
@@ -2797,6 +3190,7 @@
                 closeModal();
                 closeImageModal();
                 closeExternalLinkModal();
+                closeGalleryAIModal();
             }
         });
         

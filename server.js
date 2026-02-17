@@ -1,4 +1,5 @@
 require('dotenv').config();
+const multer = require('multer');
 const express = require('express');
 const axios = require('axios');
 const { OpenAI } = require('openai');
@@ -17,6 +18,8 @@ const FormData = require('form-data');
 const { File } = require("undici");
 const cookieParser = require('cookie-parser');
 const { createCanvas } = require('canvas');
+const conversationDb = require('./requestData2');
+const upload = multer({ storage: multer.memoryStorage() });
 
 
 // Import database functions
@@ -4211,111 +4214,187 @@ app.get('/chat/history/:sessionId', async (req, res) => {
  * No sessions, no saving, no authentication
  */
 
-app.post('/api/chatbot', async (req, res) => {
+app.post('/api/chatbot', upload.fields([{ name: 'media', maxCount: 1 }]), async (req, res) => {
   try {
-    const { message } = req.body;
-    
-    // Validate input
-    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+    // Determine if this is an authenticated request (has conversation_id and user_id)
+    const hasConversationId = req.body.conversation_id && req.body.user_id;
+
+    // -------------------- UNAUTHENTICATED FLOW (backward compatible) --------------------
+    if (!hasConversationId) {
+      const { message } = req.body;
+      if (!message || typeof message !== 'string' || message.trim().length === 0) {
+        return res.status(400).json({ success: false, error: 'Message is required' });
+      }
+
+      const userMessage = message.trim();
+      console.log(`🤖 Chatbot API (unauthenticated) called: "${userMessage.substring(0, 100)}..."`);
+
+      // Create a temporary session (same as before)
+      const tempSessionId = 'temp-' + Date.now();
+      createOrTouchSession(tempSessionId, false);
+
+      const classification = await classifyAndMatchWithGPT(userMessage);
+      const intent = classification.intent || 'company';
+
+      let response;
+      let responseType = 'text';
+
+      if (!['company', 'product'].includes(intent)) {
+        response = `Please verify your phone to access this feature.`;
+      } else if (intent === 'product') {
+        const galleryMatches = await matchGalleriesEnhanced(userMessage, []);
+        const sellerMatches = await matchSellersEnhanced(userMessage, galleryMatches, null);
+        const productMatches = await matchProductsEnhanced(userMessage, []);
+        const structured = buildConciseResponse(userMessage, galleryMatches, { all: sellerMatches }, productMatches);
+        response = structured;
+        responseType = 'structured';
+      } else {
+        response = await generateCompanyResponse(userMessage, [], ZULU_CLUB_INFO);
+      }
+
+      delete conversations[tempSessionId];
+
+      const apiResponse = {
+        success: true,
+        response: responseType === 'structured' ? response : { text: response },
+        responseType,
+        isAuthenticated: false,
+        timestamp: new Date().toISOString()
+      };
+
+      return res.json(apiResponse);
+    }
+
+    // -------------------- AUTHENTICATED FLOW (with DB storage) --------------------
+    const {
+      conversation_id,
+      user_id,
+      username = '',
+      message_type = 'user',
+      chat_preference = 'ai',
+      message: userMessageText,
+    } = req.body;
+
+    // Validate required fields
+    if (!conversation_id || !user_id || !userMessageText) {
       return res.status(400).json({
         success: false,
-        error: 'Message is required'
+        error: 'conversation_id, user_id, and message are required'
       });
     }
-    
-    const userMessage = message.trim();
-    console.log(`🤖 Chatbot API called: "${userMessage.substring(0, 100)}..."`);
-    
-    // Create a TEMPORARY session ID (just for this request)
-    const tempSessionId = 'temp-' + Date.now();
-    
-    // Create temporary session (unauthenticated) - same as chat.html for unverified users
-    createOrTouchSession(tempSessionId, false);
-    
-    // Get classification - same as chat.html
-    const classification = await classifyAndMatchWithGPT(userMessage);
-    const intent = classification.intent || 'company';
-    
-    console.log(`🎯 Intent detected: ${intent}`);
-    
-    let response;
-    let responseType = 'text';
-    
-    // Handle based on intent - EXACT same logic as chat.html for unverified users
-    
-    // Check if unauthenticated user is trying to access restricted intents
-    if (!['company', 'product'].includes(intent)) {
-      response = `To use this feature, please verify your phone number.`;
-      responseType = 'text';
-    }
-    else if (intent === 'agent') {
-      // Agent intent for unverified users
-      response = `Our representative will connect with you soon. Please verify your phone for faster response.`;
-      responseType = 'text';
-    }
-    else if (intent === 'voice_ai') {
-      // Voice AI for unverified users
-      response = `🎵 *Custom AI Music Message (Premium Add-on)*
 
-For every gift above ₹1,000, you can get a personalised AI song.
-Please verify your phone to access this feature.`;
-      responseType = 'text';
+    // Handle media file upload if present
+    let mediaUrl = null;
+    if (req.files && req.files.media && req.files.media.length > 0) {
+      const mediaFile = req.files.media[0];
+      const formData = new FormData();
+      formData.append('image', mediaFile.buffer, {
+        filename: `${conversation_id}_${user_id}.jpg`,
+        contentType: mediaFile.mimetype,
+      });
+
+      try {
+        const uploadResponse = await axios.post(UPLOAD_API_URL, formData, {
+          headers: formData.getHeaders(),
+        });
+        // Extract URL – adjust according to actual response structure
+        mediaUrl = uploadResponse.data.url || uploadResponse.data.image_url || null;
+        if (!mediaUrl) {
+          console.warn('Could not extract media URL from upload response:', uploadResponse.data);
+        }
+      } catch (uploadErr) {
+        console.error('Media upload failed:', uploadErr.message);
+        // Continue even if upload fails, mediaUrl stays null
+      }
     }
-    else if (intent === 'seller') {
-      // Seller info for unverified users
-      response = `${SELLER_KNOWLEDGE}\n\nPlease verify your phone to connect with sellers directly.`;
-      responseType = 'text';
+
+    // Insert user message into database using conversationDb
+    try {
+      await conversationDb.insertUserMessage({
+        conversation_id,
+        user_id,
+        username,
+        message: userMessageText,
+        media: mediaUrl,
+        chat_preference,
+      });
+    } catch (dbErr) {
+      console.error('Failed to insert user message into conversation_messages:', dbErr);
+      // Optionally, you might still want to continue but log the error.
+      // For now, we'll proceed but the message won't be stored.
     }
-    else if (intent === 'investors') {
-      // Investor info for unverified users
-      response = `${INVESTOR_KNOWLEDGE}\n\nPlease verify your phone for detailed investor information.`;
-      responseType = 'text';
-    }
-    else if (intent === 'product') {
-      // Product search - use existing matching logic
-      const galleryMatches = await matchGalleriesEnhanced(userMessage, []);
-      const sellerMatches = await matchSellersEnhanced(userMessage, galleryMatches, null);
-      const productMatches = await matchProductsEnhanced(userMessage, []);
-      
-      response = buildConciseResponse(userMessage, galleryMatches, { all: sellerMatches }, productMatches);
-      responseType = 'structured';
-    }
-    else {
-      // Company info - default
-      response = await generateCompanyResponse(userMessage, [], ZULU_CLUB_INFO);
-      responseType = 'text';
-    }
-    
-    // Clean up temporary session
+
+    // Process the user message through the chatbot logic (using a temporary session)
+    const tempSessionId = `temp-${Date.now()}`;
+    createOrTouchSession(tempSessionId, false); // isAuthenticated = false (can be refined later)
+    const result = await handleMessage(tempSessionId, userMessageText, false);
     delete conversations[tempSessionId];
-    
-    // Format response EXACTLY like chat.html returns
-    const apiResponse = {
+
+    // Prepare assistant message and recommendation JSON
+    let assistantMessage = '';
+    let recommendationJson = null;
+
+    if (result.success && result.response) {
+      if (result.responseType === 'structured') {
+        assistantMessage = result.response.text;
+        const structured = result.response;
+        const recommendation = {
+          product_links: structured.products?.map(p => p.link || '').filter(Boolean) || [],
+          product_names: structured.products?.map(p => p.name || '').filter(Boolean) || [],
+          product_price: structured.products?.map(p => p.price || '').filter(Boolean) || [],
+          galleries_links: structured.galleries?.map(g => g.link || '').filter(Boolean) || [],
+          galleries_names: structured.galleries?.map(g => g.name || '').filter(Boolean) || [],
+          seller_link: structured.sellers?.map(s => s.link || '').filter(Boolean) || [],
+          seller_id: structured.sellers?.map(s => s.id || '').filter(Boolean) || [],
+        };
+        recommendationJson = JSON.stringify(recommendation);
+      } else {
+        assistantMessage = result.response.text;
+        recommendationJson = JSON.stringify({
+          product_links: [], product_names: [], product_price: [],
+          galleries_links: [], galleries_names: [],
+          seller_link: [], seller_id: []
+        });
+      }
+    } else {
+      assistantMessage = 'Sorry, I encountered an error.';
+      recommendationJson = JSON.stringify({});
+    }
+
+    // Insert assistant response into database
+    try {
+      await conversationDb.insertAssistantMessage({
+        conversation_id,
+        user_id,
+        username,
+        message: assistantMessage,
+        chat_preference,
+        recommendation_json: recommendationJson,
+      });
+    } catch (dbErr) {
+      console.error('Failed to insert assistant message into conversation_messages:', dbErr);
+    }
+
+    // Return the same response format as before
+    return res.json({
       success: true,
-      response: responseType === 'structured' ? response : { text: response },
-      responseType: responseType,
-      isAuthenticated: false, // Always false for unverified
-      timestamp: new Date().toISOString()
-    };
-    
-    console.log(`✅ API response sent. Type: ${responseType}, Intent: ${intent}`);
-    
-    return res.json(apiResponse);
-    
+      response: result.response,
+      responseType: result.responseType,
+      isAuthenticated: true,
+      timestamp: new Date().toISOString(),
+      conversation_id,
+      user_id,
+    });
+
   } catch (error) {
-    console.error('❌ Chatbot API error:', error);
+    console.error('Chatbot API error:', error);
     return res.status(500).json({
       success: false,
-      error: error.message || 'Internal server error',
+      error: error.message,
       timestamp: new Date().toISOString()
     });
   }
 });
-
-/**
- * Simplified Chat API (for testing)
- * GET /api/chatbot/simple?q=your+message
- */
 
 /**
  * Simple galleries API - get only the fields you need
@@ -4439,11 +4518,6 @@ app.get('/api/chatbot/simple', async (req, res) => {
     });
   }
 });
-
-/**
- * Test the chatbot with example messages
- * GET /api/chatbot/test
- */
 
 app.get('/api/chatbot/test', async (req, res) => {
   const testMessages = [
