@@ -4962,8 +4962,52 @@ app.get('/api/appconfigs/:id', async (req, res) => {
   }
 });
 
+// ----------------------------------------------------------------------
+// GET /api/prompts – fetch all prompts (uses cache)
+// ----------------------------------------------------------------------
+app.get('/api/prompts', async (req, res) => {
+    try {
+        const requestData = require('./requestData'); // adjust path as necessary
+        const results = await requestData.getCachedData('prompts');
+        res.json({ success: true, data: results });
+    } catch (error) {
+        console.error('Error fetching prompts:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
 
-// SSE endpoint for AI generation
+// ----------------------------------------------------------------------
+// PUT /api/prompts/:id – update a prompt by ID
+// ----------------------------------------------------------------------
+app.put('/api/prompts/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, system_prompt, user_prompt, comments } = req.body;
+
+        // Validate required fields
+        if (!name || !system_prompt || !user_prompt) {
+            return res.status(400).json({ success: false, error: 'name, system_prompt, and user_prompt are required' });
+        }
+
+        const requestData = require('./requestData'); // adjust path as necessary
+
+        // Prepare update data
+        const updateData = { name, system_prompt, user_prompt, comments };
+
+        // Execute update (table name is 'prompts', which we added to tableMapping)
+        await requestData.executeUpdate('prompts', id, updateData);
+
+        // Clear the cache so next GET fetches fresh data
+        requestData.clearCache('prompts');
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error updating prompt:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// SSE endpoint for AI generation – updated to accept selected moods
 app.post('/api/ai/generate-banners', async (req, res) => {
     try {
         const { json: bannerJson, inspiration, systemPrompt, userPromptTemplate } = req.body;
@@ -4985,7 +5029,23 @@ app.post('/api/ai/generate-banners', async (req, res) => {
         // Use provided system prompt or fallback to default
         const finalSystemPrompt = systemPrompt || SYSTEM_PROMPT;
 
-        // Loop through each banner and mood
+        // Determine which moods to generate
+        const allMoods = ['CALM', 'NOSTALGIC', 'PLAYFUL', 'CONFIDENT', 'AMBITIOUS', 'INTROSPECTIVE'];
+        let moodsToGenerate = allMoods;
+
+        if (bannerJson.moods && Array.isArray(bannerJson.moods) && bannerJson.moods.length > 0) {
+            // Convert incoming mood names to uppercase and filter to valid ones
+            moodsToGenerate = bannerJson.moods
+                .map(m => m.toUpperCase())
+                .filter(m => allMoods.includes(m));
+
+            if (moodsToGenerate.length === 0) {
+                // If all provided moods are invalid, fallback to all moods
+                moodsToGenerate = allMoods;
+            }
+        }
+
+        // Loop through each banner and the selected moods
         for (const banner of bannerJson.banners) {
             const bannerId = banner.banner_id;
             const bannerName = banner.banner_name;
@@ -4997,11 +5057,10 @@ app.post('/api/ai/generate-banners', async (req, res) => {
             const dimensions = SIZE_MAP[normalizedSize] || SIZE_MAP.Landscape;
             const { width, height } = dimensions;
 
-            for (const mood of MOODS) {
-                // Build the user prompt
+            for (const mood of moodsToGenerate) {
+                // Build the user prompt (same as before)
                 let finalUserPrompt;
                 if (userPromptTemplate) {
-                    // Replace placeholders with actual values
                     finalUserPrompt = userPromptTemplate
                         .replace(/{mood}/g, mood)
                         .replace(/{bannerId}/g, bannerId)
@@ -5015,7 +5074,7 @@ app.post('/api/ai/generate-banners', async (req, res) => {
                         .replace(/{size}/g, banner.size || 'Landscape')
                         .replace(/{inspiration}/g, inspiration || 'Bollywood landscape');
                 } else {
-                    // Fallback to the default detailed prompt (as before)
+                    // Fallback to default detailed prompt (unchanged)
                     finalUserPrompt = `
 Zulu Club — Mood-Based Banner Generation
 
@@ -5165,7 +5224,6 @@ Generate only the "${mood}" variant image for this banner.
                     let imageUrl = null;
                     // Parse the response to extract the URL (adjust according to actual response structure)
                     if (uploadResponse.data) {
-                        // Try common response formats
                         imageUrl = uploadResponse.data.url || 
                                   uploadResponse.data.image_url || 
                                   (uploadResponse.data.data && 

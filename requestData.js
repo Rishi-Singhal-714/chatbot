@@ -31,7 +31,9 @@ const tableMapping = {
   'base_moods': 'base_moods',
   'moods': 'moods',
   'tracks': 'tracks',
-  'business': 'business'
+  'business': 'business',
+    'prompts': 'prompts'   // <-- add this line
+
 };
 
 // Column mapping for each table - ONLY the columns we want to fetch and edit
@@ -101,7 +103,8 @@ const columnMapping = {
   'base_moods': [
   'id', 'name', 'logos', 'hero_bg', 'deliver_asap', 'category_banner',
   'visit_us', 'home_banner', 'watch_banner', 'visit_banner', 'listen_banner',
-  'cart_banner', 'profile_bg', 'concierge', 'created_at', 'updated_at'
+  'cart_banner', 'profile_bg', 'concierge', 'created_at', 'updated_at','visit2_bg',
+  'watch2_bg','decorate2_bg','ask_zulu2_bg','sound2_bg','concierge2_bg'
 ],  
 'moods': [
     'mood_id', 'user_mood', 'parent_mood', 'description',
@@ -118,6 +121,9 @@ const columnMapping = {
     'try_component_id', 'visit_component_id', 'club_component_id',
     'type', 'priority', 'featured_outlets', 'catId2', 'showcat2',
     'visit_category_ids'
+  ],   
+  'prompts': [
+    'id', 'name', 'system_prompt', 'user_prompt', 'comments'
   ]
 };
 
@@ -246,6 +252,16 @@ const cache = {
       SELECT
       ${columnMapping.business.join(',\n        ')}
       FROM u130660877_zulu.business
+    `
+  },  
+  'prompts': {
+    data: null,
+    timestamp: 0,
+    query: `
+      SELECT
+        ${columnMapping.prompts.join(',\n        ')}
+      FROM u130660877_zulu.prompts
+      ORDER BY id DESC
     `
   }
 };

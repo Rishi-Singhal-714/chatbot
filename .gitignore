@@ -8,5 +8,5 @@ node_modules/
 # Ignore configs
 server copy.js
 package-lock.json
-
+public/base_moods copy.html
 README.md

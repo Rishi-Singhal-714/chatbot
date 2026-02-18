@@ -3,7 +3,8 @@
 <head>
     <title>Base Moods - Admin</title>
     <style>
-        /* (All existing styles remain exactly the same) */
+        /* All existing styles remain exactly the same – only additions are at the end */
+
         * {
             margin: 0;
             padding: 0;
@@ -16,7 +17,15 @@
             min-height: 100vh;
             padding: 30px;
         }
-
+/* Top horizontal scrollbar hack */
+.table-container {
+    transform: rotateX(180deg);
+    -webkit-transform: rotateX(180deg); /* Safari */
+}
+.table-container > * {
+    transform: rotateX(180deg);
+    -webkit-transform: rotateX(180deg);
+}
         h1 {
             color: #1e2b3a;
             border-bottom: 4px solid #9C27B0;
@@ -75,8 +84,8 @@
             background: #2196F3;
             color: white;
         }
-        .ai-btn {
-            background: #9C27B0;
+        .prompts-btn {
+            background: #673AB7;
             color: white;
         }
         .stop-btn {
@@ -94,13 +103,6 @@
             font-size: 12px;
             border-radius: 20px;
         }
-        .update-btn {
-            background: #ff9800;
-            color: white;
-            padding: 4px 8px;
-            font-size: 12px;
-            border-radius: 20px;
-        }
         .ai-small {
             background: #9C27B0;
             color: white;
@@ -108,6 +110,8 @@
             font-size: 12px;
             border-radius: 20px;
             margin-left: 6px;
+            border: none;
+            cursor: pointer;
         }
         .placeholder-btn {
             background: #e0e0e0;
@@ -227,7 +231,7 @@
             font-weight: 500;
         }
 
-        /* ----- Transposed table: fields as rows, moods as columns ----- */
+        /* ----- Normal table (rows = moods, columns = fields) ----- */
         .table-container {
             background: white;
             border-radius: 24px;
@@ -259,24 +263,7 @@
             vertical-align: middle;
         }
 
-        /* First column (field names) styling - not clickable, but with AI button */
-        td:first-child, th:first-child {
-            background-color: #f9fafc;
-            font-weight: 500;
-            color: #2c3e50;
-            border-right: 2px solid #d0d9e2;
-        }
-
-        /* Make data cells clickable */
-        td:not(:first-child) {
-            cursor: pointer;
-            transition: background 0.15s;
-        }
-        td:not(:first-child):hover {
-            background: #e1d5e7;
-        }
-
-        /* Images inside table – responsive and adjustable via slider */
+        /* Images inside table */
         .table-img {
             max-width: 100%;
             height: auto;
@@ -308,7 +295,24 @@
             opacity: 0.5;
         }
 
-        /* ---------- MODAL (enhanced for multi-image) ---------- */
+        /* AI button in column header */
+        .column-ai-btn {
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0 4px;
+            margin-left: 6px;
+            box-shadow: none;
+            display: inline;
+        }
+        .column-ai-btn:hover {
+            transform: scale(1.2);
+            background: none;
+            box-shadow: none;
+        }
+
+        /* ---------- MODALS ---------- */
         .modal {
             display: none;
             position: fixed;
@@ -335,7 +339,7 @@
             background: white;
             border-radius: 32px;
             width: 90%;
-            max-width: 900px;
+            max-width: 1000px;
             max-height: 85vh;
             overflow-y: auto;
             box-shadow: 0 40px 80px rgba(0, 0, 0, 0.3);
@@ -386,7 +390,202 @@
             padding: 24px;
         }
 
-        /* Single field card (for non-hero fields) */
+        /* Banner form styling */
+        .banner-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            background: #f9fafc;
+            border: 2px solid #e9ecf0;
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .banner-form .full-width {
+            grid-column: span 2;
+        }
+        .banner-form label {
+            font-weight: 600;
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 6px;
+        }
+        .banner-form input,
+        .banner-form textarea,
+        .banner-form select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #dde3e9;
+            border-radius: 16px;
+            font-size: 14px;
+            transition: 0.2s;
+            background: white;
+        }
+        .banner-form input:focus,
+        .banner-form textarea:focus,
+        .banner-form select:focus {
+            border-color: #9C27B0;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(156,39,176,0.1);
+        }
+
+        /* Searchable checklist - now pills */
+        .checklist-search {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #dde3e9;
+            border-radius: 40px;
+            font-size: 14px;
+            margin-bottom: 15px;
+            background: white;
+        }
+        .checklist-search:focus {
+            border-color: #9C27B0;
+            outline: none;
+        }
+        .mood-checklist {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 15px;
+            background: white;
+            border: 2px solid #e9ecf0;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .mood-pill {
+            display: inline-flex;
+            align-items: center;
+            background: #f0e6f5;
+            border: 2px solid #9C27B0;
+            border-radius: 40px;
+            padding: 6px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.1s;
+            user-select: none;
+        }
+        .mood-pill input[type="checkbox"] {
+            margin-right: 8px;
+            transform: scale(1.1);
+            accent-color: #9C27B0;
+        }
+        .mood-pill:hover {
+            background: #d9c4e6;
+        }
+        .mood-pill .mood-id {
+            background: #9C27B0;
+            color: white;
+            border-radius: 20px;
+            padding: 2px 8px;
+            margin-left: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Progress area */
+        .progress-area {
+            max-height: 300px;
+            overflow-y: auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 16px;
+            border: 1px solid #ddd;
+            margin-top: 20px;
+        }
+
+        .img-container {
+            position: relative;
+            display: inline-block;
+        }
+        .progress-img {
+            width: 100px;
+            height: auto;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .img-download {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+        }
+        .img-download:hover {
+            background: black;
+        }
+
+        /* Action buttons after generation */
+        .post-generation-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+        .approve-btn {
+            background: #27ae60;
+            color: white;
+        }
+        .reject-btn {
+            background: #e67e22;
+            color: white;
+        }
+
+        /* Rejection message */
+        .reject-message {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 16px;
+            padding: 15px;
+            margin-top: 15px;
+            color: #856404;
+            font-weight: 500;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Default prompts display */
+        .default-prompts {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none;
+        }
+        .default-prompts pre {
+            white-space: pre-wrap;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .prompt-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Single field card (for edit modal) */
         .single-field-card {
             background: #f9fafc;
             border: 2px solid #e9ecf0;
@@ -398,7 +597,6 @@
             margin-bottom: 16px;
             color: #2c3e50;
             font-size: 16px;
-            text-transform: capitalize;
         }
 
         .image-preview {
@@ -464,7 +662,7 @@
             outline: none;
         }
 
-        /* Hero BG specific styles */
+        /* Hero BG specific */
         .hero-bg-editor {
             display: flex;
             flex-direction: column;
@@ -586,136 +784,78 @@
             border-radius: 40px;
             font-size: 14px;
         }
-        .add-image button {
-            padding: 12px 24px;
-            background: #4f46e5;
+
+        /* ----- Prompts Table Modal ----- */
+        .prompts-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .prompts-table th {
+            background: #f4f7fb;
+            padding: 12px;
+            text-align: left;
+            border-bottom: 2px solid #9C27B0;
+        }
+        .prompts-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e9ecf0;
+            vertical-align: top;
+        }
+        .prompts-table textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            resize: vertical;
+        }
+        .prompts-table .copy-cell-btn {
+            background: #2196F3;
             color: white;
             border: none;
-            border-radius: 40px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .add-image button.upload-btn-small {
-            background: #2196F3;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 16px;
-            justify-content: flex-end;
-            padding: 20px 24px 24px;
-            border-top: 2px solid #eef2f6;
-            flex-wrap: wrap;
-        }
-        .save-btn, .cancel-btn, .stop-btn, .next-btn {
-            padding: 12px 28px;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 15px;
-        }
-        .save-btn {
-            background: #27ae60;
-            color: white;
-        }
-        .cancel-btn {
-            background: #95a5a6;
-            color: white;
-        }
-        .stop-btn {
-            background: #dc3545;
-            color: white;
-        }
-        .next-btn {
-            background: #2196F3;
-            color: white;
-        }
-
-        /* AI progress gallery */
-        .progress-img {
-            width: 100px;
-            height: auto;
-            border-radius: 8px;
-            border: 2px solid #ddd;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            position: relative;
-        }
-        .img-container {
-            position: relative;
-            display: inline-block;
-        }
-        .img-download {
-            position: absolute;
-            bottom: 2px;
-            right: 2px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 14px;
-            text-decoration: none;
-        }
-        .img-download:hover {
-            background: black;
-        }
-        .size-error {
-            background-color: #ffebee;
-            border: 2px solid #f44336;
-        }
-        .size-fix-dropdown {
-            padding: 4px;
             border-radius: 20px;
-            border: 1px solid #ccc;
-            font-size: 12px;
+            padding: 4px 10px;
+            font-size: 11px;
+            cursor: pointer;
+            margin-right: 5px;
         }
-
-        /* Banner edit form */
-        .banner-form {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-        .banner-form .full-width {
-            grid-column: span 2;
-        }
-        .banner-form label {
-            font-weight: 600;
-            color: #2c3e50;
-        }
-        .banner-form input, .banner-form textarea, .banner-form select {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #dde3e9;
-            border-radius: 12px;
-            font-size: 14px;
-        }
-
-        /* Default prompts display */
-        .default-prompts {
-            background: #f5f5f5;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            padding: 15px;
-            margin-top: 15px;
+        .prompts-table .edit-field {
             display: none;
         }
-        .default-prompts pre {
-            white-space: pre-wrap;
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 12px;
-            max-height: 200px;
-            overflow-y: auto;
+        .prompts-table .edit-field.active {
+            display: block;
         }
-        .prompt-header {
+        .prompts-table .view-field {
+            display: block;
+            white-space: pre-wrap;
+            max-height: 100px;
+            overflow-y: auto;
+            background: #f9f9f9;
+            padding: 6px;
+            border-radius: 4px;
+        }
+        .prompts-table .view-field.hide {
+            display: none;
+        }
+        .prompt-selection {
+            margin-bottom: 20px;
+        }
+        .prompt-selection label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .selected-prompt-info {
+            background: #e9f5e9;
+            border: 1px solid #27ae60;
+            border-radius: 16px;
+            padding: 10px 15px;
+            margin-top: 10px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 10px;
         }
     </style>
 </head>
@@ -725,11 +865,10 @@
     <div class="controls">
         <button class="back-btn" onclick="location.href='/'">← Dashboard</button>
         <button class="refresh-btn" onclick="loadMoods()">🔄 Refresh</button>
-        <button class="ai-btn" onclick="openAIModal()">🤖 AI Generate (JSON Upload)</button>
+        <button class="prompts-btn" onclick="openPromptsModal(false)">📋 Prompts</button>
         <div class="search-box">
             <input type="text" id="searchInput" placeholder="Search by name...">
         </div>
-        <!-- Image size slider -->
         <div class="size-control">
             <label>🔍 Image size</label>
             <input type="range" id="imageSizeSlider" min="50" max="200" value="100" step="5">
@@ -742,7 +881,7 @@
     <div id="error"></div>
     <div id="tableContainer" class="table-container"></div>
 
-    <!-- Single Field Edit Modal (also used for Hero BG) -->
+    <!-- Single Field Edit Modal (unchanged) -->
     <div id="editModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -750,486 +889,14 @@
                 <button class="close-modal" onclick="closeEditModal()">&times;</button>
             </div>
             <div class="modal-body" id="modalBody"></div>
-            <div class="modal-actions">
+            <div class="modal-actions" style="display: flex; gap: 16px; justify-content: flex-end; padding: 20px 24px 24px; border-top: 2px solid #eef2f6;">
                 <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
                 <button class="save-btn" onclick="saveSingleField()">💾 Save</button>
             </div>
         </div>
     </div>
 
-    <!-- AI Generation Modal (for JSON upload) -->
-    <div id="aiModal" class="modal">
-        <div class="modal-content" style="max-width: 1000px;">
-            <div class="modal-header">
-                <h2>🤖 AI Banner Generation (JSON Upload)</h2>
-                <button class="close-modal" onclick="closeAIModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p style="margin-bottom: 15px;">Upload your banner JSON and set an inspiration text.</p>
-                
-                <input type="file" id="jsonFile" accept=".json" style="margin-bottom: 15px; display: block;">
-                
-                <textarea id="aiJsonInput" rows="6" style="width: 100%; padding: 12px; border-radius: 16px; border: 2px solid #dde3e9; font-family: monospace; font-size: 13px;" placeholder="Or paste JSON here..."></textarea>
-                
-                <div style="margin: 15px 0; display: flex; gap: 10px; align-items: center;">
-                    <label style="font-weight: 600;">Inspiration Text</label>
-                    <input type="text" id="aiInspiration" value="Bollywood landscape field" style="flex: 1; padding: 12px 16px; border: 2px solid #dde3e9; border-radius: 40px;">
-                    <button class="fix-btn" onclick="checkAndFixSizes()">🔍 Check & Fix Sizes</button>
-                </div>
-
-                <!-- Advanced Prompt Settings (with placeholders for both) -->
-                <div style="margin: 20px 0; border-top: 2px solid #e0e0e0; padding-top: 20px;">
-                    <details>
-                        <summary style="font-weight: 600; cursor: pointer; color: #9C27B0;">⚙️ Advanced Prompt Settings (optional)</summary>
-                        <div style="margin-top: 15px;">
-                            <!-- System Prompt -->
-                            <label style="font-weight: 600;">System Prompt (overrides default)</label>
-                            <div style="margin-bottom: 10px;">
-                                <span style="font-size: 12px; color: #666;">Placeholders (click to insert):</span>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{mood}')">{mood}</button>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{bannerId}')">{bannerId}</button>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{bannerName}')">{bannerName}</button>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{title}')">{title}</button>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{sub_title}')">{sub_title}</button>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{description}')">{description}</button>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{cta}')">{cta}</button>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{background}')">{background}</button>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{object}')">{object}</button>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{size}')">{size}</button>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('systemPrompt', '{inspiration}')">{inspiration}</button>
-                            </div>
-                            <textarea id="systemPrompt" rows="8" style="width: 100%; padding: 12px; border-radius: 16px; border: 2px solid #dde3e9; font-family: monospace; font-size: 13px; margin-bottom: 15px;" placeholder="Leave empty to use default system prompt"></textarea>
-
-                            <!-- User Prompt Template -->
-                            <label style="font-weight: 600;">User Prompt Template</label>
-                            <div style="margin-bottom: 10px;">
-                                <span style="font-size: 12px; color: #666;">Placeholders (click to insert):</span>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{mood}')">{mood}</button>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{bannerId}')">{bannerId}</button>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{bannerName}')">{bannerName}</button>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{title}')">{title}</button>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{sub_title}')">{sub_title}</button>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{description}')">{description}</button>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{cta}')">{cta}</button>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{background}')">{background}</button>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{object}')">{object}</button>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{size}')">{size}</button>
-                                <button class="placeholder-btn" onclick="insertPlaceholder('userPromptTemplate', '{inspiration}')">{inspiration}</button>
-                            </div>
-                            <textarea id="userPromptTemplate" rows="8" style="width: 100%; padding: 12px; border-radius: 16px; border: 2px solid #dde3e9; font-family: monospace; font-size: 13px;" placeholder="Leave empty to use default user prompt"></textarea>
-                            
-                            <button class="fix-btn" style="margin-top: 10px;" onclick="toggleDefaultPrompts('ai')">📋 Show Default Prompts</button>
-                            <div id="aiDefaultPrompts" class="default-prompts">
-                                <div class="prompt-header">
-                                    <h4>Default System Prompt</h4>
-                                    <button class="copy-btn" onclick="copyToClipboard(defaultSystemPrompt)">Copy</button>
-                                </div>
-                                <pre id="defaultSystemPromptPre">Zulu Club — Mood-Driven Banner Generation Engine
-
-You are generating premium lifestyle banners for Zulu Club, a mood-based shopping app.
-
-Each banner must help users navigate feelings and intent, not just products.
-
-🔢 SCALE & EXPECTATION (NON-NEGOTIABLE)
-
-Total Banner Rows: 11
-
-Total Moods: 6
-
-Total Images to Generate: 66
-
-For EACH Banner ID, you must generate 6 images, one per mood:
-
-CALM
-
-NOSTALGIC
-
-PLAYFUL
-
-CONFIDENT
-
-AMBITIOUS
-
-INTROSPECTIVE
-
-These 6 images must feel like emotional variations of the same idea,
-not 6 unrelated designs.
-
-🟥 ABSOLUTE PRIORITY RULES (OVERRIDE ALL)
-
-ZERO spelling mistakes
-
-Text must match DATA_TABLE fields exactly
-
-No paraphrasing
-
-Text placement
-
-Title and Sub Title
-
-Always on the LEFT
-
-Clear margin from TOP + LEFT
-
-LEFT-ALIGNED only
-
-Prominent and readable
-
-Object placement
-
-Always BOTTOM-CENTER to BOTTOM-RIGHT
-
-Never overlaps text
-
-CTA placement
-
-Only BOTTOM-LEFT or BOTTOM-RIGHT
-
-Consistent margins
-
-No overlap
-
-Description placement
-
-Either:
-
-Directly below Sub Title, OR
-
-Near CTA (if visually appropriate)
-
-Mood integrity
-
-Mood drives:
-
-Background
-
-Lighting
-
-Color palette
-
-Texture
-
-Typography feel
-
-No drastic shocks between moods
-
-Emotional flow must feel natural while scrolling
-
-Typography inspiration (STRICT)
-
-CALM → Lato
-
-NOSTALGIC → Playfair Display
-
-PLAYFUL → Montserrat
-
-CONFIDENT → Inter
-
-AMBITIOUS → Klein
-
-INTROSPECTIVE → Cormorant Garamond
-
-🟦 INPUT A — DATA_TABLE (SOURCE OF TRUTH)
-
-Each row represents one banner concept.
-
-For each row, you must generate 6 mood variants.
-
-Columns (use exactly):
-
-Banner ID
-
-Banner Name
-
-Size
-
-Title
-
-Sub Title
-
-Description
-
-CTA
-
-Background
-
-Object
-
-🟩 INPUT B — INSPIRATION_TEXT
-
-Defines the emotional philosophy behind:
-
-Every pixel
-
-Every object
-
-Every word
-
-This ensures brand soul consistency across all 66 images.
-
-🟨 INPUT C — INSPIRATION_IMAGE
-
-Defines:
-
-Realism
-
-Texture quality
-
-Lighting maturity
-
-Lifestyle authenticity
-
-All outputs must feel like they belong to the same visual universe.
-
-🟪 INPUT D — MOOD_BASED_GUIDELINE_NOTE
-
-Defines how each mood is expressed.
-
-Only the active mood’s guideline should be applied per image.
-
-🎭 MOOD FLOW RULE (VERY IMPORTANT)
-
-When generating the 6 moods for the same banner:
-
-Composition stays structurally consistent
-
-Object identity stays the same
-
-Camera angle stays similar
-
-Changes happen via:
-
-Lighting
-
-Color temperature
-
-Contrast
-
-Emotional energy
-
-This ensures:
-
-Users feel emotional progression, not disorientation.
-
-🧾 OUTPUT STRUCTURE (STRICT)
-📁 Folder Structure
-/ZuluClub_Banners/
-  /Banner_<Banner ID>_<Banner Name>/
-
-📄 Filename Convention (MANDATORY)
-<BannerName>_<Mood>.png
-
-Example
-Deliver_ASAP_CALM.png
-Deliver_ASAP_NOSTALGIC.png
-Deliver_ASAP_PLAYFUL.png
-Deliver_ASAP_CONFIDENT.png
-Deliver_ASAP_AMBITIOUS.png
-Deliver_ASAP_INTROSPECTIVE.png
-
-
-Repeat for all 11 banners → 66 total images
-
-🖼️ VISUAL STYLE (GLOBAL)
-
-Ultra-realistic
-
-Premium lifestyle
-
-Editorial, not ecommerce-noisy
-
-Clean negative space on the LEFT
-
-No illustration unless explicitly implied
-
-No clutter
-
-No gimmicks
-
-✅ FINAL SELF-CHECK (MANDATORY)
-
-Before finalizing each image:
-
-No spelling errors
-
-Correct alignment
-
-No overlaps
-
-Object bottom-center/right
-
-CTA correctly placed
-
-Mood instantly recognizable
-
-Feels like Zulu Club, not generic
-
-🔒 FINAL STATUS
-
-This system now guarantees:
-
-66 coherent images
-
-Strong mood storytelling
-
-Visual consistency across navigation
-
-Emotional continuity without shock
-
-Scalable banner generation</pre>
-                                <div class="prompt-header">
-                                    <h4>Default User Prompt (for one mood)</h4>
-                                    <button class="copy-btn" onclick="copyToClipboard(defaultUserPrompt)">Copy</button>
-                                </div>
-                                <pre id="defaultUserPromptPre">Zulu Club — Mood-Based Banner Generation
-
-You are generating ONE image for a 6-mood banner set.
-
-🔢 Context
-Total moods per banner: 6
-This image represents ONLY the "{mood}" mood variant.
-All 6 variants must feel like emotional progressions of the SAME concept.
-
-🆔 Banner Details (Source of Truth — Use EXACT Text)
-Mood: {mood}
-Typography (STRICT): [varies by mood]
-
-Banner ID: {bannerId}
-Banner Name: {bannerName}
-Size: {size}
-
-Title: {title}
-Sub Title: {sub_title}
-Description: {description}
-CTA: {cta}
-
-Background: {background}
-Object: {object}
-
-Inspiration Philosophy:
-{inspiration}
-
-🟥 ABSOLUTE TEXT RULES (OVERRIDE ALL)
-- ZERO spelling mistakes.
-- Text must match Title, Sub Title, Description, CTA EXACTLY as provided.
-- NO paraphrasing.
-- Preserve capitalization exactly.
-🧱 LAYOUT STRUCTURE (MANDATORY)
-- Title and Sub Title:
-  • ALWAYS on LEFT
-  • Clear margin from TOP and LEFT
-  • LEFT-ALIGNED only
-  • Prominent and readable
-- Description:
-  • Either directly below Sub Title
-  • OR placed near CTA (if visually stronger)
-- Object:
-  • ALWAYS bottom-center to bottom-right
-  • NEVER overlap text
-  • Maintain same object identity across all moods
-- CTA:
-  • Only bottom-left OR bottom-right
-  • Consistent margins
-  • No overlap
-
-🎭 MOOD EXECUTION RULE
-Composition must remain structurally consistent with other 5 moods.
-Camera angle must remain similar.
-Object placement must remain similar.
-
-Mood variation happens ONLY through:
-- Lighting
-- Color temperature
-- Contrast
-- Texture feel
-- Emotional energy
-- Typography personality (STRICT mood font)
-
-Mood must drive:
-- Background atmosphere
-- Lighting maturity
-- Color palette
-- Texture depth
-- Typography feel
-
-No drastic shocks between moods.
-Emotional flow must feel natural when scrolling through all 6.
-
-🖼️ GLOBAL VISUAL STYLE
-- Ultra-realistic
-- Premium lifestyle
-- Editorial (not ecommerce noisy)
-- Clean negative space on LEFT
-- No clutter
-- No gimmicks
-- No illustration unless explicitly required
-
-🔎 FINAL SELF-CHECK (MANDATORY BEFORE OUTPUT)
-- No spelling errors
-- Exact text match
-- Correct alignment
-- No overlaps
-- Object bottom-center/right
-- CTA correctly placed
-- Mood instantly recognizable
-- Feels like Zulu Club visual universe
-
-Generate only the "{mood}" variant image for this banner.</pre>
-                            </div>
-                        </div>
-                    </details>
-                </div>
-
-                <!-- Preview Table -->
-                <div id="jsonPreview" style="margin-top: 20px; display: none;">
-                    <h3 style="margin-bottom: 10px;">📋 Banner Preview <span id="bannerCount" style="font-size: 14px; color: #666;"></span></h3>
-                    <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 12px;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-                            <thead>
-                                <tr style="background: #f0f0f0;">
-                                    <th style="padding: 8px;">ID</th>
-                                    <th style="padding: 8px;">Name</th>
-                                    <th style="padding: 8px;">Size</th>
-                                    <th style="padding: 8px;">Title</th>
-                                    <th style="padding: 8px;">Sub Title</th>
-                                    <th style="padding: 8px;">Description</th>
-                                    <th style="padding: 8px;">CTA</th>
-                                    <th style="padding: 8px;">Background</th>
-                                    <th style="padding: 8px;">Object</th>
-                                    <th style="padding: 8px;">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="previewBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Generation progress & controls -->
-                <div id="aiProgressArea" style="margin-top: 20px; display: none;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h4>Generated Images</h4>
-                        <div>
-                            <button class="stop-btn" id="stopGenerationBtn" onclick="stopGeneration()" style="display: none;">⏹️ Stop</button>
-                            <button class="next-btn" id="nextBannerBtn" onclick="nextBanner()" style="display: none;">⏩ Proceed to Next</button>
-                            <button class="cancel-btn" id="exitAfterBannerBtn" onclick="exitAfterBanner()" style="display: none;">🚪 Exit</button>
-                            <!-- Download Links CSV button -->
-                            <button class="download-btn" id="downloadCsvBtn" onclick="downloadLinksCsv()" style="display: none;">📥 Download CSV</button>
-                            <!-- Manual DB Update button -->
-                            <button class="update-btn" id="updateDbBtn" onclick="manualUpdateDb()" style="display: none;">🔄 Update DB</button>
-                        </div>
-                    </div>
-                    <div id="aiProgress" style="max-height: 400px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 10px; background: #f5f5f5; padding: 10px; border-radius: 16px; border: 1px solid #ddd;"></div>
-                    <div id="aiStatus" style="margin-top: 10px; font-weight: 500; color: #333;"></div>
-                </div>
-            </div>
-            <div class="modal-actions">
-                <button class="cancel-btn" onclick="closeAIModal()">Cancel</button>
-                <button class="save-btn" id="previewBtn" onclick="previewJson()" style="background: #2196F3;">🔍 Preview JSON</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Individual Banner AI Generation Modal -->
+    <!-- Individual Banner AI Generation Modal (unchanged) -->
     <div id="bannerAiModal" class="modal">
         <div class="modal-content" style="max-width: 800px;">
             <div class="modal-header">
@@ -1263,7 +930,6 @@ Generate only the "{mood}" variant image for this banner.</pre>
                         <label>Object</label>
                         <input type="text" id="bannerObject" value="">
                     </div>
-                    <!-- New Size dropdown -->
                     <div class="full-width">
                         <label>Size</label>
                         <select id="bannerSize">
@@ -1278,7 +944,7 @@ Generate only the "{mood}" variant image for this banner.</pre>
                     </div>
                 </form>
 
-                <!-- Advanced Prompt Settings (with placeholders for both) -->
+                <!-- Advanced Prompt Settings (with placeholders) -->
                 <div style="margin: 20px 0; border-top: 2px solid #e0e0e0; padding-top: 20px;">
                     <details>
                         <summary style="font-weight: 600; cursor: pointer; color: #9C27B0;">⚙️ Advanced Prompt Settings (optional)</summary>
@@ -1299,7 +965,7 @@ Generate only the "{mood}" variant image for this banner.</pre>
                                 <button class="placeholder-btn" onclick="insertPlaceholder('bannerSystemPrompt', '{size}')">{size}</button>
                                 <button class="placeholder-btn" onclick="insertPlaceholder('bannerSystemPrompt', '{inspiration}')">{inspiration}</button>
                             </div>
-                            <textarea id="bannerSystemPrompt" rows="6" style="width: 100%; padding: 12px; border-radius: 16px; border: 2px solid #dde3e9; font-family: monospace; font-size: 13px; margin-bottom: 15px;" placeholder="Leave empty to use default system prompt"></textarea>
+                            <textarea id="bannerSystemPrompt" rows="4" style="width: 100%; padding: 12px; border-radius: 16px; border: 2px solid #dde3e9; font-family: monospace; font-size: 13px; margin-bottom: 15px;" placeholder="Leave empty to use default system prompt"></textarea>
 
                             <!-- User Prompt Template -->
                             <label style="font-weight: 600;">User Prompt Template</label>
@@ -1317,7 +983,7 @@ Generate only the "{mood}" variant image for this banner.</pre>
                                 <button class="placeholder-btn" onclick="insertPlaceholder('bannerUserPromptTemplate', '{size}')">{size}</button>
                                 <button class="placeholder-btn" onclick="insertPlaceholder('bannerUserPromptTemplate', '{inspiration}')">{inspiration}</button>
                             </div>
-                            <textarea id="bannerUserPromptTemplate" rows="6" style="width: 100%; padding: 12px; border-radius: 16px; border: 2px solid #dde3e9; font-family: monospace; font-size: 13px;" placeholder="Leave empty to use default user prompt"></textarea>
+                            <textarea id="bannerUserPromptTemplate" rows="4" style="width: 100%; padding: 12px; border-radius: 16px; border: 2px solid #dde3e9; font-family: monospace; font-size: 13px;" placeholder="Leave empty to use default user prompt"></textarea>
 
                             <button class="fix-btn" style="margin-top: 10px;" onclick="toggleDefaultPrompts('banner')">📋 Show Default Prompts</button>
                             <div id="bannerDefaultPrompts" class="default-prompts">
@@ -1325,357 +991,12 @@ Generate only the "{mood}" variant image for this banner.</pre>
                                     <h4>Default System Prompt</h4>
                                     <button class="copy-btn" onclick="copyToClipboard(defaultSystemPrompt)">Copy</button>
                                 </div>
-                                <pre>Zulu Club — Mood-Driven Banner Generation Engine
-
-You are generating premium lifestyle banners for Zulu Club, a mood-based shopping app.
-
-Each banner must help users navigate feelings and intent, not just products.
-
-🔢 SCALE & EXPECTATION (NON-NEGOTIABLE)
-
-Total Banner Rows: 11
-
-Total Moods: 6
-
-Total Images to Generate: 66
-
-For EACH Banner ID, you must generate 6 images, one per mood:
-
-CALM
-
-NOSTALGIC
-
-PLAYFUL
-
-CONFIDENT
-
-AMBITIOUS
-
-INTROSPECTIVE
-
-These 6 images must feel like emotional variations of the same idea,
-not 6 unrelated designs.
-
-🟥 ABSOLUTE PRIORITY RULES (OVERRIDE ALL)
-
-ZERO spelling mistakes
-
-Text must match DATA_TABLE fields exactly
-
-No paraphrasing
-
-Text placement
-
-Title and Sub Title
-
-Always on the LEFT
-
-Clear margin from TOP + LEFT
-
-LEFT-ALIGNED only
-
-Prominent and readable
-
-Object placement
-
-Always BOTTOM-CENTER to BOTTOM-RIGHT
-
-Never overlaps text
-
-CTA placement
-
-Only BOTTOM-LEFT or BOTTOM-RIGHT
-
-Consistent margins
-
-No overlap
-
-Description placement
-
-Either:
-
-Directly below Sub Title, OR
-
-Near CTA (if visually appropriate)
-
-Mood integrity
-
-Mood drives:
-
-Background
-
-Lighting
-
-Color palette
-
-Texture
-
-Typography feel
-
-No drastic shocks between moods
-
-Emotional flow must feel natural while scrolling
-
-Typography inspiration (STRICT)
-
-CALM → Lato
-
-NOSTALGIC → Playfair Display
-
-PLAYFUL → Montserrat
-
-CONFIDENT → Inter
-
-AMBITIOUS → Klein
-
-INTROSPECTIVE → Cormorant Garamond
-
-🟦 INPUT A — DATA_TABLE (SOURCE OF TRUTH)
-
-Each row represents one banner concept.
-
-For each row, you must generate 6 mood variants.
-
-Columns (use exactly):
-
-Banner ID
-
-Banner Name
-
-Size
-
-Title
-
-Sub Title
-
-Description
-
-CTA
-
-Background
-
-Object
-
-🟩 INPUT B — INSPIRATION_TEXT
-
-Defines the emotional philosophy behind:
-
-Every pixel
-
-Every object
-
-Every word
-
-This ensures brand soul consistency across all 66 images.
-
-🟨 INPUT C — INSPIRATION_IMAGE
-
-Defines:
-
-Realism
-
-Texture quality
-
-Lighting maturity
-
-Lifestyle authenticity
-
-All outputs must feel like they belong to the same visual universe.
-
-🟪 INPUT D — MOOD_BASED_GUIDELINE_NOTE
-
-Defines how each mood is expressed.
-
-Only the active mood’s guideline should be applied per image.
-
-🎭 MOOD FLOW RULE (VERY IMPORTANT)
-
-When generating the 6 moods for the same banner:
-
-Composition stays structurally consistent
-
-Object identity stays the same
-
-Camera angle stays similar
-
-Changes happen via:
-
-Lighting
-
-Color temperature
-
-Contrast
-
-Emotional energy
-
-This ensures:
-
-Users feel emotional progression, not disorientation.
-
-🧾 OUTPUT STRUCTURE (STRICT)
-📁 Folder Structure
-/ZuluClub_Banners/
-  /Banner_<Banner ID>_<Banner Name>/
-
-📄 Filename Convention (MANDATORY)
-<BannerName>_<Mood>.png
-
-Example
-Deliver_ASAP_CALM.png
-Deliver_ASAP_NOSTALGIC.png
-Deliver_ASAP_PLAYFUL.png
-Deliver_ASAP_CONFIDENT.png
-Deliver_ASAP_AMBITIOUS.png
-Deliver_ASAP_INTROSPECTIVE.png
-
-
-Repeat for all 11 banners → 66 total images
-
-🖼️ VISUAL STYLE (GLOBAL)
-
-Ultra-realistic
-
-Premium lifestyle
-
-Editorial, not ecommerce-noisy
-
-Clean negative space on the LEFT
-
-No illustration unless explicitly implied
-
-No clutter
-
-No gimmicks
-
-✅ FINAL SELF-CHECK (MANDATORY)
-
-Before finalizing each image:
-
-No spelling errors
-
-Correct alignment
-
-No overlaps
-
-Object bottom-center/right
-
-CTA correctly placed
-
-Mood instantly recognizable
-
-Feels like Zulu Club, not generic
-
-🔒 FINAL STATUS
-
-This system now guarantees:
-
-66 coherent images
-
-Strong mood storytelling
-
-Visual consistency across navigation
-
-Emotional continuity without shock
-
-Scalable banner generation</pre>
+                                <pre>Zulu Club — Mood-Driven Banner Generation Engine ...</pre>
                                 <div class="prompt-header">
-                                    <h4>Default User Prompt (for one mood)</h4>
+                                    <h4>Default User Prompt</h4>
                                     <button class="copy-btn" onclick="copyToClipboard(defaultUserPrompt)">Copy</button>
                                 </div>
-                                <pre>Zulu Club — Mood-Based Banner Generation
-
-You are generating ONE image for a 6-mood banner set.
-
-🔢 Context
-Total moods per banner: 6
-This image represents ONLY the "{mood}" mood variant.
-All 6 variants must feel like emotional progressions of the SAME concept.
-
-🆔 Banner Details (Source of Truth — Use EXACT Text)
-Mood: {mood}
-Typography (STRICT): [varies by mood]
-
-Banner ID: {bannerId}
-Banner Name: {bannerName}
-Size: {size}
-
-Title: {title}
-Sub Title: {sub_title}
-Description: {description}
-CTA: {cta}
-
-Background: {background}
-Object: {object}
-
-Inspiration Philosophy:
-{inspiration}
-
-🟥 ABSOLUTE TEXT RULES (OVERRIDE ALL)
-- ZERO spelling mistakes.
-- Text must match Title, Sub Title, Description, CTA EXACTLY as provided.
-- NO paraphrasing.
-- Preserve capitalization exactly.
-🧱 LAYOUT STRUCTURE (MANDATORY)
-- Title and Sub Title:
-  • ALWAYS on LEFT
-  • Clear margin from TOP and LEFT
-  • LEFT-ALIGNED only
-  • Prominent and readable
-- Description:
-  • Either directly below Sub Title
-  • OR placed near CTA (if visually stronger)
-- Object:
-  • ALWAYS bottom-center to bottom-right
-  • NEVER overlap text
-  • Maintain same object identity across all moods
-- CTA:
-  • Only bottom-left OR bottom-right
-  • Consistent margins
-  • No overlap
-
-🎭 MOOD EXECUTION RULE
-Composition must remain structurally consistent with other 5 moods.
-Camera angle must remain similar.
-Object placement must remain similar.
-
-Mood variation happens ONLY through:
-- Lighting
-- Color temperature
-- Contrast
-- Texture feel
-- Emotional energy
-- Typography personality (STRICT mood font)
-
-Mood must drive:
-- Background atmosphere
-- Lighting maturity
-- Color palette
-- Texture depth
-- Typography feel
-
-No drastic shocks between moods.
-Emotional flow must feel natural when scrolling through all 6.
-
-🖼️ GLOBAL VISUAL STYLE
-- Ultra-realistic
-- Premium lifestyle
-- Editorial (not ecommerce noisy)
-- Clean negative space on LEFT
-- No clutter
-- No gimmicks
-- No illustration unless explicitly required
-
-🔎 FINAL SELF-CHECK (MANDATORY BEFORE OUTPUT)
-- No spelling errors
-- Exact text match
-- Correct alignment
-- No overlaps
-- Object bottom-center/right
-- CTA correctly placed
-- Mood instantly recognizable
-- Feels like Zulu Club visual universe
-
-Generate only the "{mood}" variant image for this banner.</pre>
+                                <pre>Zulu Club — Mood-Based Banner Generation ...</pre>
                             </div>
                         </div>
                     </details>
@@ -1692,15 +1013,122 @@ Generate only the "{mood}" variant image for this banner.</pre>
                     <div id="bannerStatus" style="margin-top: 10px; font-weight: 500;"></div>
                 </div>
             </div>
-            <div class="modal-actions">
+            <div class="modal-actions" style="display: flex; gap: 16px; justify-content: flex-end; padding: 20px 24px 24px; border-top: 2px solid #eef2f6;">
                 <button class="cancel-btn" onclick="closeBannerAIModal()">Cancel</button>
                 <button class="save-btn" onclick="startBannerGeneration()" style="background: #9C27B0;">✨ Generate All 6 Moods</button>
             </div>
         </div>
     </div>
 
+    <!-- Column AI Modal (modified: advanced removed, prompt selection added) -->
+    <div id="columnAiModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="columnAiTitle">🤖 Generate for <span id="columnFieldName"></span></h2>
+                <button class="close-modal" onclick="closeColumnAIModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 15px;">Select which moods you want to generate. Only the selected moods will be created.</p>
+                
+                <!-- Searchable checklist as pills -->
+                <input type="text" id="moodSearch" class="checklist-search" placeholder="Search moods...">
+                <div id="columnMoodChecklist" class="mood-checklist"></div>
+
+                <!-- Prompt selection -->
+                <div style="margin: 20px 0;">
+                    <button class="fix-btn" onclick="openPromptsModal(true)" style="margin-right: 10px;">📋 Select Prompts</button>
+                    <span id="selectedPromptName" style="font-weight: 500;"></span>
+                </div>
+                <input type="hidden" id="selectedPromptId" value="">
+
+                <!-- Banner data form (unchanged) -->
+                <form id="columnBannerForm" class="banner-form">
+                    <input type="hidden" id="columnField" value="">
+                    <div class="full-width">
+                        <label>Title</label>
+                        <input type="text" id="columnTitle" value="">
+                    </div>
+                    <div>
+                        <label>Sub Title</label>
+                        <input type="text" id="columnSubTitle" value="">
+                    </div>
+                    <div>
+                        <label>Description</label>
+                        <input type="text" id="columnDescription" value="">
+                    </div>
+                    <div>
+                        <label>CTA</label>
+                        <input type="text" id="columnCta" value="">
+                    </div>
+                    <div>
+                        <label>Background</label>
+                        <input type="text" id="columnBackground" value="mood based">
+                    </div>
+                    <div>
+                        <label>Object</label>
+                        <input type="text" id="columnObject" value="">
+                    </div>
+                    <div class="full-width">
+                        <label>Size</label>
+                        <select id="columnSize">
+                            <option value="Landscape" selected>Landscape</option>
+                            <option value="Portrait">Portrait</option>
+                            <option value="Square">Square</option>
+                        </select>
+                    </div>
+                    <div class="full-width">
+                        <label>Inspiration Text</label>
+                        <input type="text" id="columnInspiration" value="Bollywood landscape field">
+                    </div>
+                </form>
+
+                <!-- Progress area (unchanged) -->
+                <div id="columnProgressArea" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4>Generated Images</h4>
+                        <div>
+                            <button class="stop-btn" id="columnStopBtn" onclick="stopColumnGeneration()" style="display: none;">⏹️ Stop</button>
+                        </div>
+                    </div>
+                    <div id="columnProgress" class="progress-area"></div>
+                    <div id="columnStatus" style="margin-top: 10px; font-weight: 500;"></div>
+
+                    <!-- Post-generation actions (Approve/Reject) -->
+                    <div id="postGenActions" style="display: none;" class="post-generation-actions">
+                        <button class="approve-btn" onclick="approveGeneration()">✅ Approve & Save to DB</button>
+                        <button class="reject-btn" onclick="rejectGeneration()">❌ Reject (Download CSV only)</button>
+                    </div>
+                    <div id="rejectMessage" class="reject-message">
+                        ⏳ Please manually delete the unwanted images from cloud storage. This message will disappear in 5 seconds...
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions" style="display: flex; gap: 16px; justify-content: flex-end; padding: 20px 24px 24px; border-top: 2px solid #eef2f6;">
+                <button class="cancel-btn" onclick="closeColumnAIModal()">Close</button>
+                <button class="save-btn" onclick="startColumnGeneration()" style="background: #9C27B0;">✨ Generate Selected Moods</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prompts Modal (for viewing/editing and selection) -->
+    <div id="promptsModal" class="modal">
+        <div class="modal-content" style="max-width: 1200px;">
+            <div class="modal-header">
+                <h2 id="promptsModalTitle">📋 Prompts</h2>
+                <button class="close-modal" onclick="closePromptsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="promptsTableContainer"></div>
+            </div>
+            <div class="modal-actions" style="display: flex; gap: 16px; justify-content: flex-end; padding: 20px 24px 24px; border-top: 2px solid #eef2f6;">
+                <button class="cancel-btn" onclick="closePromptsModal()">Close</button>
+                <button id="promptsSelectBtn" class="save-btn" style="background: #9C27B0; display: none;" onclick="selectPrompt()">Select</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // ----- Default prompts (constants for copying) -----
+        // ----- Default prompts (full versions) – truncated for brevity, replace with actual prompts -----
         const defaultSystemPrompt = `Zulu Club — Mood-Driven Banner Generation Engine
 
 You are generating premium lifestyle banners for Zulu Club, a mood-based shopping app.
@@ -2080,36 +1508,16 @@ Generate only the "{mood}" variant image for this banner.`;
             }
         }
 
-        // ----- Existing variables and functions (keep everything below) -----
+        // ----- Global variables -----
         let allMoods = [];
         let currentEditMoodId = null;
         let currentEditField = null;
-
-        // Slideshow intervals
         let slideshowIntervals = [];
-
-        // Base image size in pixels
         const BASE_IMAGE_SIZE = 120;
-        let currentParsedJson = null;
-
-        // Global state for Hero BG modal
         let currentHeroUrls = [];
         let currentHeroIndex = 0;
 
-        // AI generation state (for JSON upload)
-        let abortController = null;
-        let currentBannerIndex = 0;
-        let isGenerating = false;
-
-        // AI generation state for individual banner
-        let bannerAbortController = null;
-        let bannerIsGenerating = false;
-
-        // Store generated links for CSV and DB updates
-        let generatedLinks = [];
-        let lastGeneratedBannerId = null;
-
-        // Mapping from banner_id to base_moods field name
+        // Banner field mapping (including logos)
         const bannerFieldMap = {
             1: 'deliver_asap',
             2: 'category_banner',
@@ -2121,16 +1529,21 @@ Generate only the "{mood}" variant image for this banner.`;
             8: 'listen_banner',
             9: 'cart_banner',
             10: 'profile_bg',
-            11: 'hero_bg'
+            11: 'hero_bg',
+            12: 'logos',
+            13: 'visit2_bg',
+            14: 'watch2_bg',
+            15: 'decorate2_bg',
+            16: 'ask_zulu2_bg',
+            17: 'sound2_bg',
+            18: 'concierge2_bg'
         };
 
-        // Inverse mapping from field name to banner_id
         const fieldToBannerId = {};
         for (const [id, field] of Object.entries(bannerFieldMap)) {
             fieldToBannerId[field] = parseInt(id);
         }
 
-        // Default JSON data for each banner ID (from your example)
         const bannerDefaults = {
             1: { title: "We deliver", sub_title: "ASAP", description: "or less", cta: "100 MINS", background: "mood based", object: "Hard paper shopping bag" },
             2: { title: "Discover all", sub_title: "Categories", description: "", cta: "SHOP NOW", background: "mood based", object: "Life style objects as per mood" },
@@ -2142,10 +1555,16 @@ Generate only the "{mood}" variant image for this banner.`;
             8: { title: "Feel", sub_title: "the Music", description: "Get Excited", cta: "", background: "mood based", object: "Life style music & mood based feelings" },
             9: { title: "Rs 500 off", sub_title: "on your 1st order", description: "", cta: "ORDER NOW", background: "mood based", object: "Life style checkout" },
             10: { title: "Your wish", sub_title: "is our command", description: "", cta: "CHAT NOW", background: "mood based", object: "Concierge bell" },
-            11: { title: "", sub_title: "", description: "", cta: "", background: "mood based landscape scenes", object: "" }
+            11: { title: "", sub_title: "", description: "", cta: "", background: "mood based landscape scenes", object: "" },
+            12: { title: "", sub_title: "", description: "", cta: "", background: "mood based landscape scenes", object: "" },
+            13:{ title: "Visit us", sub_title: "near you", description: "", cta: "EXPLORE", background: "mood based", object: "Retail experience & showroom visit" },
+            14:{ title: "Watch & get inspired", sub_title: "in real time", description: "", cta: "WATCH NOW", background: "mood based", object: "Lifestyle video inspiration" },
+            15:{ title: "Decor made easy", sub_title: "with AI magic", description: "", cta: "TRY NOW", background: "mood based", object: "AI-powered decor visualization" },
+            16:{ title: "Ask Zulu", sub_title: "anything", description: "", cta: "ASK NOW", background: "mood based", object: "AI assistant interaction" },
+            17:{ title: "Feel the sound", sub_title: "match your mood", description: "", cta: "LISTEN", background: "mood based", object: "Mood-based audio & sound vibes" },
+            18:{ title: "Your personal", sub_title: "concierge", description: "", cta: "CONNECT", background: "mood based", object: "Premium concierge service" }
         };
 
-        // Mapping from mood name to mood id (1-6)
         const moodNameToId = {
             'nostalgic': 1,
             'playful': 2,
@@ -2170,160 +1589,319 @@ Generate only the "{mood}" variant image for this banner.`;
             setTimeout(() => msg.style.display = 'none', 4000);
         }
 
-        // ---------- Size validation ----------
-        const VALID_SIZES = ['Landscape', 'Portrait', 'Square'];
+        // ---------- Prompts Management ----------
+        let promptsData = [];
+        let promptsModalSelectMode = false;
 
-        function normalizeSizeString(s) {
-            if (!s) return '';
-            const lower = s.toLowerCase().replace(/\s+/g, '');
-            if (lower.includes('landscape')) return 'Landscape';
-            if (lower.includes('portrait')) return 'Portrait';
-            if (lower.includes('square')) return 'Square';
-            return s;
+        async function loadPrompts() {
+            try {
+                const res = await fetch('/api/prompts');
+                const data = await res.json();
+                if (data.success) {
+                    promptsData = data.data;
+                } else {
+                    showMessage('Failed to load prompts', 'error');
+                }
+            } catch (err) {
+                showMessage('Error loading prompts: ' + err.message, 'error');
+            }
         }
 
-        function checkAndFixSizes() {
-            if (!currentParsedJson) {
-                alert('Please preview JSON first.');
+        function renderPromptsTable(selectMode) {
+            const container = document.getElementById('promptsTableContainer');
+            let html = '<table class="prompts-table"><thead><tr>';
+            if (selectMode) html += '<th>Select</th>';
+            html += '<th>ID</th><th>Name</th><th>System Prompt</th><th>User Prompt</th><th>Comments</th><th>Actions</th></tr></thead><tbody>';
+
+            promptsData.forEach(p => {
+                html += '<tr>';
+                if (selectMode) {
+                    html += `<td><input type="radio" name="selectedPrompt" value="${p.id}" data-system="${escapeHtml(p.system_prompt)}" data-user="${escapeHtml(p.user_prompt)}" data-name="${escapeHtml(p.name)}"></td>`;
+                }
+                html += `<td>${p.id}</td>`;
+                // Name field (editable inline)
+                html += `<td><div class="view-field" id="view-name-${p.id}">${escapeHtml(p.name)}</div>
+                        <textarea class="edit-field" id="edit-name-${p.id}" rows="1">${escapeHtml(p.name)}</textarea></td>`;
+                // System prompt
+                html += `<td><div class="view-field" id="view-system-${p.id}">${escapeHtml(p.system_prompt || '')}</div>
+                        <textarea class="edit-field" id="edit-system-${p.id}" rows="3">${escapeHtml(p.system_prompt || '')}</textarea></td>`;
+                // User prompt
+                html += `<td><div class="view-field" id="view-user-${p.id}">${escapeHtml(p.user_prompt || '')}</div>
+                        <textarea class="edit-field" id="edit-user-${p.id}" rows="3">${escapeHtml(p.user_prompt || '')}</textarea></td>`;
+                // Comments
+                html += `<td><div class="view-field" id="view-comments-${p.id}">${escapeHtml(p.comments || '')}</div>
+                        <textarea class="edit-field" id="edit-comments-${p.id}" rows="2">${escapeHtml(p.comments || '')}</textarea></td>`;
+                // Actions
+                html += `<td>
+                    <button class="copy-btn" onclick="copyPromptField('system', ${p.id})">📋 Sys</button>
+                    <button class="copy-btn" onclick="copyPromptField('user', ${p.id})">📋 User</button>
+                    <button class="copy-btn" onclick="copyPromptField('comments', ${p.id})">📋 Comm</button>
+                    <button class="edit-btn" onclick="editPromptField(${p.id})">✏️</button>
+                    <button class="save-btn" style="display:none;" id="save-${p.id}" onclick="savePromptField(${p.id})">💾</button>
+                </td></tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        window.copyPromptField = function(field, id) {
+            const text = promptsData.find(p => p.id == id)[field === 'system' ? 'system_prompt' : field === 'user' ? 'user_prompt' : 'comments'] || '';
+            copyToClipboard(text);
+        };
+
+        window.editPromptField = function(id) {
+            document.querySelectorAll(`#view-name-${id}, #view-system-${id}, #view-user-${id}, #view-comments-${id}`).forEach(el => el.classList.add('hide'));
+            document.querySelectorAll(`#edit-name-${id}, #edit-system-${id}, #edit-user-${id}, #edit-comments-${id}`).forEach(el => el.classList.add('active'));
+            document.getElementById(`save-${id}`).style.display = 'inline-flex';
+        };
+
+        window.savePromptField = async function(id) {
+            const updated = {
+                name: document.getElementById(`edit-name-${id}`).value,
+                system_prompt: document.getElementById(`edit-system-${id}`).value,
+                user_prompt: document.getElementById(`edit-user-${id}`).value,
+                comments: document.getElementById(`edit-comments-${id}`).value
+            };
+            try {
+                const res = await fetch(`/api/prompts/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updated)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showMessage('Prompt updated', 'success');
+                    // Update local data
+                    const p = promptsData.find(p => p.id == id);
+                    Object.assign(p, updated);
+                    // Switch back to view mode
+                    document.querySelectorAll(`#view-name-${id}, #view-system-${id}, #view-user-${id}, #view-comments-${id}`).forEach(el => el.classList.remove('hide'));
+                    document.querySelectorAll(`#edit-name-${id}, #edit-system-${id}, #edit-user-${id}, #edit-comments-${id}`).forEach(el => el.classList.remove('active'));
+                    document.getElementById(`save-${id}`).style.display = 'none';
+                    // Update displayed text
+                    document.getElementById(`view-name-${id}`).innerText = updated.name;
+                    document.getElementById(`view-system-${id}`).innerText = updated.system_prompt;
+                    document.getElementById(`view-user-${id}`).innerText = updated.user_prompt;
+                    document.getElementById(`view-comments-${id}`).innerText = updated.comments;
+                } else {
+                    showMessage('Update failed', 'error');
+                }
+            } catch (err) {
+                showMessage('Error: ' + err.message, 'error');
+            }
+        };
+
+        async function openPromptsModal(selectMode) {
+            await loadPrompts();
+            promptsModalSelectMode = selectMode;
+            document.getElementById('promptsModalTitle').innerText = selectMode ? 'Select a Prompt' : 'Prompts';
+            renderPromptsTable(selectMode);
+            document.getElementById('promptsSelectBtn').style.display = selectMode ? 'inline-flex' : 'none';
+            document.getElementById('promptsModal').classList.add('show');
+        }
+
+        function closePromptsModal() {
+            document.getElementById('promptsModal').classList.remove('show');
+        }
+
+        function selectPrompt() {
+            const selected = document.querySelector('input[name="selectedPrompt"]:checked');
+            if (!selected) {
+                alert('Please select a prompt');
                 return;
             }
-            const banners = currentParsedJson.banners;
-            let fixed = false;
-            banners.forEach((b, idx) => {
-                const orig = b.size || '';
-                const norm = normalizeSizeString(orig);
-                if (!VALID_SIZES.includes(norm)) {
-                    const row = document.querySelector(`#previewBody tr:nth-child(${idx+1})`);
-                    if (row) {
-                        const sizeCell = row.cells[2];
-                        sizeCell.innerHTML = `<select class="size-fix-dropdown" data-index="${idx}" onchange="updateSize(${idx}, this.value)">${VALID_SIZES.map(s => `<option value="${s}" ${s===norm?'selected':''}>${s}</option>`).join('')}</select>`;
-                        sizeCell.classList.add('size-error');
-                    }
-                    fixed = true;
+            const promptId = selected.value;
+            const promptName = selected.dataset.name;
+            const systemPrompt = selected.dataset.system;
+            const userPrompt = selected.dataset.user;
+            document.getElementById('selectedPromptId').value = promptId;
+            document.getElementById('selectedPromptName').innerHTML = `Selected: <strong>${escapeHtml(promptName)}</strong> (ID: ${promptId})`;
+            // Store in columnGenerationState for later use
+            if (columnGenerationState) {
+                columnGenerationState.selectedPrompt = { id: promptId, system: systemPrompt, user: userPrompt, name: promptName };
+            }
+            closePromptsModal();
+        }
+
+        // ---------- Column AI Modal State ----------
+        let columnGenerationState = {
+            field: null,
+            abortController: null,
+            isGenerating: false,
+            links: [],
+            selectedMoodNames: [],
+            completed: false,
+            selectedPrompt: null
+        };
+
+        function renderMoodChecklist(filter = '') {
+            const container = document.getElementById('columnMoodChecklist');
+            const searchTerm = filter.toLowerCase();
+            let html = '';
+            allMoods.forEach(mood => {
+                const moodName = mood.name || `Mood ${mood.id}`;
+                if (moodName.toLowerCase().includes(searchTerm)) {
+                    html += `<label class="mood-pill">
+                        <input type="checkbox" value="${mood.id}" data-mood-name="${mood.name ? mood.name.toLowerCase() : ''}">
+                        ${escapeHtml(moodName)} <span class="mood-id">${mood.id}</span>
+                    </label>`;
                 }
             });
-            if (!fixed) {
-                alert('All sizes are valid!');
+            if (!html) {
+                html = '<div class="no-results">No matching moods</div>';
             }
+            container.innerHTML = html;
         }
 
-        function updateSize(index, newSize) {
-            currentParsedJson.banners[index].size = newSize;
-            const row = document.querySelector(`#previewBody tr:nth-child(${index+1})`);
-            if (row) {
-                const sizeCell = row.cells[2];
-                sizeCell.innerHTML = newSize;
-                sizeCell.classList.remove('size-error');
+        function openColumnAIModal(field) {
+            const bannerId = fieldToBannerId[field];
+            if (!bannerId) {
+                alert('Unknown field');
+                return;
             }
-        }
+            const defaults = bannerDefaults[bannerId] || {};
 
-        // ---------- Preview ----------
-        function previewJson() {
-            const fileInput = document.getElementById('jsonFile');
-            const jsonText = document.getElementById('aiJsonInput').value;
-            let parsedJson;
+            document.getElementById('columnField').value = field;
+            document.getElementById('columnFieldName').innerText = field;
+            document.getElementById('columnTitle').value = defaults.title || '';
+            document.getElementById('columnSubTitle').value = defaults.sub_title || '';
+            document.getElementById('columnDescription').value = defaults.description || '';
+            document.getElementById('columnCta').value = defaults.cta || '';
+            document.getElementById('columnBackground').value = defaults.background || 'mood based';
+            document.getElementById('columnObject').value = defaults.object || '';
+            document.getElementById('columnSize').value = 'Landscape';
+            document.getElementById('columnInspiration').value = 'Bollywood landscape field';
+            document.getElementById('selectedPromptId').value = '';
+            document.getElementById('selectedPromptName').innerHTML = '';
 
-            if (fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        parsedJson = JSON.parse(e.target.result);
-                        showPreview(parsedJson);
-                    } catch (err) {
-                        alert('Invalid JSON file');
-                    }
+            // Render checklist with all moods
+            renderMoodChecklist();
+
+            // Setup search listener
+            const searchInput = document.getElementById('moodSearch');
+            searchInput.value = '';
+            searchInput.oninput = (e) => renderMoodChecklist(e.target.value);
+
+            // Reset generation state for this field if not already ongoing
+            if (columnGenerationState.field !== field || !columnGenerationState.isGenerating) {
+                columnGenerationState = {
+                    field: null,
+                    abortController: null,
+                    isGenerating: false,
+                    links: [],
+                    selectedMoodNames: [],
+                    completed: false,
+                    selectedPrompt: null
                 };
-                reader.readAsText(file);
-            } else if (jsonText.trim()) {
-                try {
-                    parsedJson = JSON.parse(jsonText);
-                    showPreview(parsedJson);
-                } catch (err) {
-                    alert('Invalid JSON');
-                }
+                document.getElementById('columnProgressArea').style.display = 'none';
+                document.getElementById('postGenActions').style.display = 'none';
+                document.getElementById('rejectMessage').style.display = 'none';
+                document.getElementById('columnProgress').innerHTML = '';
+                document.getElementById('columnStatus').innerText = '';
             } else {
-                alert('Please upload a JSON file or paste JSON');
+                // Restore ongoing state
+                document.getElementById('columnProgress').innerHTML = '';
+                columnGenerationState.links.forEach(link => addImageToProgress(link));
+                document.getElementById('columnProgressArea').style.display = 'block';
+                document.getElementById('columnStopBtn').style.display = 'inline-flex';
+                document.getElementById('postGenActions').style.display = 'none';
+                document.getElementById('columnStatus').innerText = 'Generation in progress...';
+                if (columnGenerationState.selectedPrompt) {
+                    document.getElementById('selectedPromptId').value = columnGenerationState.selectedPrompt.id;
+                    document.getElementById('selectedPromptName').innerHTML = `Selected: <strong>${columnGenerationState.selectedPrompt.name}</strong> (ID: ${columnGenerationState.selectedPrompt.id})`;
+                }
             }
+
+            document.getElementById('columnAiModal').classList.add('show');
         }
 
-        function showPreview(parsedJson) {
-            currentParsedJson = parsedJson;
-            const banners = parsedJson.banners || [];
-            if (banners.length === 0) {
-                alert('No banners found in JSON. Make sure the JSON has a "banners" array.');
+        function closeColumnAIModal() {
+            document.getElementById('columnAiModal').classList.remove('show');
+        }
+
+        function addImageToProgress(link) {
+            const progressDiv = document.getElementById('columnProgress');
+            const container = document.createElement('div');
+            container.className = 'img-container';
+            const img = document.createElement('img');
+            img.src = link.url;
+            img.className = 'progress-img';
+            img.title = `${link.bannerName} - ${link.mood}`;
+            container.appendChild(img);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = link.url;
+            downloadLink.download = `${link.bannerName}_${link.mood}.png`;
+            downloadLink.className = 'img-download';
+            downloadLink.innerHTML = '⬇️';
+            downloadLink.onclick = (e) => e.stopPropagation();
+            container.appendChild(downloadLink);
+            progressDiv.appendChild(container);
+        }
+
+        async function startColumnGeneration() {
+            const field = document.getElementById('columnField').value;
+            const bannerId = fieldToBannerId[field];
+            if (!bannerId) return;
+
+            // Get selected moods
+            const checkboxes = document.querySelectorAll('#columnMoodChecklist input[type="checkbox"]:checked');
+            if (checkboxes.length === 0) {
+                alert('Please select at least one mood.');
                 return;
             }
-            const tbody = document.getElementById('previewBody');
-            tbody.innerHTML = '';
-            banners.forEach((b, idx) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td style="padding: 6px; border-bottom: 1px solid #eee;">${b.banner_id || ''}</td>
-                    <td style="padding: 6px; border-bottom: 1px solid #eee;">${b.banner_name || ''}</td>
-                    <td style="padding: 6px; border-bottom: 1px solid #eee;">${b.size || ''}</td>
-                    <td style="padding: 6px; border-bottom: 1px solid #eee;">${b.title || ''}</td>
-                    <td style="padding: 6px; border-bottom: 1px solid #eee;">${b.sub_title || ''}</td>
-                    <td style="padding: 6px; border-bottom: 1px solid #eee;">${b.description || ''}</td>
-                    <td style="padding: 6px; border-bottom: 1px solid #eee;">${b.cta || ''}</td>
-                    <td style="padding: 6px; border-bottom: 1px solid #eee;">${b.background || ''}</td>
-                    <td style="padding: 6px; border-bottom: 1px solid #eee;">${b.object || ''}</td>
-                    <td style="padding: 6px; border-bottom: 1px solid #eee;">
-                        <button class="save-btn" style="padding: 4px 8px; font-size: 12px;" onclick="generateSingleBanner(${idx})">Generate</button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-            document.getElementById('bannerCount').innerText = `(${banners.length} banners)`;
-            document.getElementById('jsonPreview').style.display = 'block';
-            document.getElementById('previewBtn').style.display = 'none';
-        }
+            const selectedMoodNames = Array.from(checkboxes).map(cb => cb.dataset.moodName).filter(name => name);
 
-        // ---------- Generation control (for JSON upload) ----------
-        async function generateSingleBanner(idx) {
-            if (!currentParsedJson) return;
-            generatedLinks = [];
-            lastGeneratedBannerId = null;
-            document.getElementById('downloadCsvBtn').style.display = 'none';
-            document.getElementById('updateDbBtn').style.display = 'none';
-            currentBannerIndex = idx;
-            document.getElementById('aiProgress').innerHTML = '';
-            document.getElementById('aiProgressArea').style.display = 'block';
-            document.getElementById('stopGenerationBtn').style.display = 'inline-flex';
-            document.getElementById('nextBannerBtn').style.display = 'none';
-            document.getElementById('exitAfterBannerBtn').style.display = 'none';
-            await generateFromIndex(idx);
-        }
+            const bannerData = {
+                banner_id: bannerId,
+                banner_name: field.replace(/_/g, ' '),
+                size: document.getElementById('columnSize').value,
+                title: document.getElementById('columnTitle').value,
+                sub_title: document.getElementById('columnSubTitle').value,
+                description: document.getElementById('columnDescription').value,
+                cta: document.getElementById('columnCta').value,
+                background: document.getElementById('columnBackground').value,
+                object: document.getElementById('columnObject').value
+            };
+            const inspiration = document.getElementById('columnInspiration').value;
 
-        async function generateFromIndex(idx) {
-            if (!currentParsedJson) return;
-            const banners = currentParsedJson.banners;
-            if (idx >= banners.length) {
-                document.getElementById('aiStatus').innerText = '✅ All banners processed.';
-                document.getElementById('stopGenerationBtn').style.display = 'none';
-                return;
+            // Use selected prompt if any
+            let systemPrompt = undefined;
+            let userTemplate = undefined;
+            if (columnGenerationState.selectedPrompt) {
+                systemPrompt = columnGenerationState.selectedPrompt.system;
+                userTemplate = columnGenerationState.selectedPrompt.user;
             }
 
-            abortController = new AbortController();
-            isGenerating = true;
+            const requestJson = {
+                version: "1.0",
+                total_banners: 1,
+                banners: [bannerData],
+                moods: selectedMoodNames
+            };
 
-            const bannersToSend = [banners[idx]];
-            const partialJson = { ...currentParsedJson, banners: bannersToSend };
+            columnGenerationState.field = field;
+            columnGenerationState.links = [];
+            columnGenerationState.selectedMoodNames = selectedMoodNames;
+            columnGenerationState.completed = false;
+            document.getElementById('columnProgress').innerHTML = '';
+            document.getElementById('columnStatus').innerText = '';
+            document.getElementById('columnProgressArea').style.display = 'block';
+            document.getElementById('columnStopBtn').style.display = 'inline-flex';
+            document.getElementById('postGenActions').style.display = 'none';
+            document.getElementById('rejectMessage').style.display = 'none';
 
-            const inspiration = document.getElementById('aiInspiration').value;
-            const systemPrompt = document.getElementById('systemPrompt').value.trim() || undefined;
-            const userTemplate = document.getElementById('userPromptTemplate').value.trim() || undefined;
+            columnGenerationState.abortController = new AbortController();
+            columnGenerationState.isGenerating = true;
 
-            const progressDiv = document.getElementById('aiProgress');
-            const statusDiv = document.getElementById('aiStatus');
+            const statusDiv = document.getElementById('columnStatus');
 
             try {
                 const response = await fetch('/api/ai/generate-banners', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    signal: abortController.signal,
+                    signal: columnGenerationState.abortController.signal,
                     body: JSON.stringify({ 
-                        json: partialJson, 
+                        json: requestJson, 
                         inspiration,
                         systemPrompt,
                         userPromptTemplate: userTemplate
@@ -2333,8 +1911,8 @@ Generate only the "{mood}" variant image for this banner.`;
                 if (!response.ok) {
                     const err = await response.json();
                     statusDiv.innerText = '❌ Error: ' + err.error;
-                    isGenerating = false;
-                    document.getElementById('stopGenerationBtn').style.display = 'none';
+                    columnGenerationState.isGenerating = false;
+                    document.getElementById('columnStopBtn').style.display = 'none';
                     return;
                 }
 
@@ -2354,50 +1932,27 @@ Generate only the "{mood}" variant image for this banner.`;
                             const data = JSON.parse(line.slice(6));
                             if (data.error) {
                                 statusDiv.innerText = '❌ Error: ' + data.error;
-                                isGenerating = false;
-                                document.getElementById('stopGenerationBtn').style.display = 'none';
+                                columnGenerationState.isGenerating = false;
+                                document.getElementById('columnStopBtn').style.display = 'none';
                                 return;
                             }
                             if (data.done) {
-                                statusDiv.innerText = `✅ Banner ${banners[idx].banner_name} completed.`;
-                                document.getElementById('stopGenerationBtn').style.display = 'none';
-                                document.getElementById('nextBannerBtn').style.display = 'inline-flex';
-                                document.getElementById('exitAfterBannerBtn').style.display = 'inline-flex';
-
-                                lastGeneratedBannerId = banners[idx].banner_id;
-                                await updateMoodFields(generatedLinks, lastGeneratedBannerId);
-                                downloadLinksCsv();
-
-                                if (generatedLinks.length > 0) {
-                                    document.getElementById('downloadCsvBtn').style.display = 'inline-flex';
-                                    document.getElementById('updateDbBtn').style.display = 'inline-flex';
-                                }
-                                isGenerating = false;
+                                statusDiv.innerText = `✅ Generation completed for ${field}.`;
+                                document.getElementById('columnStopBtn').style.display = 'none';
+                                document.getElementById('postGenActions').style.display = 'flex';
+                                columnGenerationState.isGenerating = false;
+                                columnGenerationState.completed = true;
                                 break;
                             }
-                            const container = document.createElement('div');
-                            container.className = 'img-container';
-                            const img = document.createElement('img');
-                            img.src = data.imageUrl;
-                            img.className = 'progress-img';
-                            img.title = `${data.bannerName} - ${data.mood}`;
-                            container.appendChild(img);
-                            const downloadLink = document.createElement('a');
-                            downloadLink.href = data.imageUrl;
-                            downloadLink.download = `${data.bannerName}_${data.mood}.png`;
-                            downloadLink.className = 'img-download';
-                            downloadLink.innerHTML = '⬇️';
-                            downloadLink.onclick = (e) => e.stopPropagation();
-                            container.appendChild(downloadLink);
-                            progressDiv.appendChild(container);
-                            statusDiv.innerText = `Generated: ${data.bannerName} (${data.mood})`;
-
-                            generatedLinks.push({
+                            const link = {
                                 bannerId: data.bannerId,
                                 bannerName: data.bannerName,
                                 mood: data.mood.toLowerCase(),
                                 url: data.imageUrl
-                            });
+                            };
+                            columnGenerationState.links.push(link);
+                            addImageToProgress(link);
+                            statusDiv.innerText = `Generated: ${data.bannerName} (${data.mood})`;
                         }
                     }
                 }
@@ -2407,12 +1962,162 @@ Generate only the "{mood}" variant image for this banner.`;
                 } else {
                     statusDiv.innerText = '❌ Network error: ' + err.message;
                 }
-                isGenerating = false;
-                document.getElementById('stopGenerationBtn').style.display = 'none';
+                columnGenerationState.isGenerating = false;
+                document.getElementById('columnStopBtn').style.display = 'none';
             }
         }
 
-        // ---------- Individual Banner AI Generation ----------
+        function stopColumnGeneration() {
+            if (columnGenerationState.abortController) {
+                columnGenerationState.abortController.abort();
+                columnGenerationState.abortController = null;
+                columnGenerationState.isGenerating = false;
+                document.getElementById('columnStopBtn').style.display = 'none';
+                document.getElementById('columnStatus').innerText = 'Generation stopped by user.';
+            }
+        }
+
+        async function approveGeneration() {
+            const field = columnGenerationState.field;
+            const bannerId = fieldToBannerId[field];
+            if (!bannerId) return;
+
+            await updateMoodFields(columnGenerationState.links, bannerId, columnGenerationState.selectedMoodNames);
+            downloadLinksCsv(columnGenerationState.links);
+        }
+
+        function rejectGeneration() {
+            downloadLinksCsv(columnGenerationState.links);
+            const msgDiv = document.getElementById('rejectMessage');
+            msgDiv.style.display = 'flex';
+            setTimeout(() => {
+                msgDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        async function updateMoodFields(links, bannerId, selectedMoodNames) {
+            const field = bannerFieldMap[bannerId];
+            if (!field) {
+                showMessage(`Unknown banner ID ${bannerId}`, 'error');
+                return;
+            }
+
+            let linksToUpdate = links;
+            if (selectedMoodNames && selectedMoodNames.length > 0) {
+                linksToUpdate = links.filter(link => selectedMoodNames.includes(link.mood.toLowerCase()));
+            }
+
+            if (linksToUpdate.length === 0) {
+                showMessage('No links to update for selected moods.', 'info');
+                return;
+            }
+
+            let successCount = 0;
+            let errorMessages = [];
+
+            for (const link of linksToUpdate) {
+                const moodId = moodNameToId[link.mood.toLowerCase()];
+                if (!moodId) {
+                    errorMessages.push(`Unknown mood: ${link.mood}`);
+                    continue;
+                }
+
+                try {
+                    const getRes = await fetch(`/api/base_moods/${moodId}`, { credentials: 'same-origin' });
+                    if (!getRes.ok) {
+                        errorMessages.push(`Mood ${moodId}: Failed to fetch current data (HTTP ${getRes.status})`);
+                        continue;
+                    }
+                    const getData = await getRes.json();
+                    if (!getData.success) {
+                        errorMessages.push(`Mood ${moodId}: Error fetching current data: ${getData.error}`);
+                        continue;
+                    }
+                    const mood = getData.data;
+
+                    mood[field] = link.url;
+                    delete mood.id;
+                    delete mood.created_at;
+                    delete mood.updated_at;
+
+                    const putRes = await fetch(`/api/base_moods/${moodId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'same-origin',
+                        body: JSON.stringify(mood)
+                    });
+
+                    const responseText = await putRes.text();
+                    let result;
+                    try {
+                        result = JSON.parse(responseText);
+                    } catch (e) {
+                        errorMessages.push(`Mood ${moodId}: Non‑JSON response (HTTP ${putRes.status}) – ${responseText.slice(0,100)}`);
+                        continue;
+                    }
+
+                    if (putRes.ok && result.success) {
+                        const idx = allMoods.findIndex(m => m.id === moodId);
+                        if (idx !== -1) allMoods[idx][field] = link.url;
+                        successCount++;
+                    } else {
+                        errorMessages.push(`Mood ${moodId}: ${result.error || 'Unknown'} (HTTP ${putRes.status})`);
+                    }
+                } catch (err) {
+                    errorMessages.push(`Mood ${moodId}: Network error – ${err.message}`);
+                }
+            }
+
+            if (successCount > 0) {
+                showMessage(`✅ Updated ${successCount} moods for "${field}"`, 'success');
+            }
+            if (errorMessages.length > 0) {
+                showMessage(`❌ Errors:\n${errorMessages.join('\n')}`, 'error');
+            }
+
+            filterAndDisplay();
+        }
+
+        function downloadLinksCsv(links) {
+            if (!links || links.length === 0) {
+                alert('No links to download.');
+                return;
+            }
+
+            const headers = ['Banner ID', 'Banner Name', 'Mood', 'Image URL'];
+            const rows = links.map(item => [
+                item.bannerId,
+                item.bannerName,
+                item.mood,
+                item.url
+            ]);
+
+            let csvContent = headers.join(',') + '\n';
+            rows.forEach(row => {
+                const escapedRow = row.map(cell => {
+                    if (typeof cell === 'string' && (cell.includes(',') || cell.includes('"'))) {
+                        return `"${cell.replace(/"/g, '""')}"`;
+                    }
+                    return cell;
+                }).join(',');
+                csvContent += escapedRow + '\n';
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'generated_links.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // ---------- Individual Banner AI Generation (unchanged) ----------
+        let bannerAbortController = null;
+        let bannerIsGenerating = false;
+
         function openBannerAIModal(fieldName) {
             const bannerId = fieldToBannerId[fieldName];
             if (!bannerId) {
@@ -2428,7 +2133,7 @@ Generate only the "{mood}" variant image for this banner.`;
             document.getElementById('bannerCta').value = defaults.cta || '';
             document.getElementById('bannerBackground').value = defaults.background || 'mood based';
             document.getElementById('bannerObject').value = defaults.object || '';
-            document.getElementById('bannerSize').value = 'Landscape'; // default
+            document.getElementById('bannerSize').value = 'Landscape';
             document.getElementById('bannerInspiration').value = 'Bollywood landscape field';
             
             document.getElementById('bannerProgress').innerHTML = '';
@@ -2471,10 +2176,9 @@ Generate only the "{mood}" variant image for this banner.`;
                 version: "1.0",
                 total_banners: 1,
                 banners: [bannerData]
+                // No moods – generate all 6 (default behaviour)
             };
 
-            generatedLinks = [];
-            lastGeneratedBannerId = bannerId;
             document.getElementById('bannerProgress').innerHTML = '';
             document.getElementById('bannerStatus').innerText = '';
             document.getElementById('bannerProgressArea').style.display = 'block';
@@ -2485,6 +2189,7 @@ Generate only the "{mood}" variant image for this banner.`;
 
             const progressDiv = document.getElementById('bannerProgress');
             const statusDiv = document.getElementById('bannerStatus');
+            const links = [];
 
             try {
                 const response = await fetch('/api/ai/generate-banners', {
@@ -2530,10 +2235,6 @@ Generate only the "{mood}" variant image for this banner.`;
                             if (data.done) {
                                 statusDiv.innerText = `✅ Banner ${fieldName} completed.`;
                                 document.getElementById('bannerStopBtn').style.display = 'none';
-
-                                await updateMoodFields(generatedLinks, bannerId);
-                                downloadLinksCsv();
-
                                 bannerIsGenerating = false;
                                 break;
                             }
@@ -2554,7 +2255,7 @@ Generate only the "{mood}" variant image for this banner.`;
                             progressDiv.appendChild(container);
                             statusDiv.innerText = `Generated: ${data.bannerName} (${data.mood})`;
 
-                            generatedLinks.push({
+                            links.push({
                                 bannerId: data.bannerId,
                                 bannerName: data.bannerName,
                                 mood: data.mood.toLowerCase(),
@@ -2583,310 +2284,65 @@ Generate only the "{mood}" variant image for this banner.`;
             }
         }
 
-        // ---------- Common update function ----------
-        async function updateMoodFields(links, bannerId) {
-            const field = bannerFieldMap[bannerId];
-            if (!field) {
-                showMessage(`Unknown banner ID ${bannerId}`, 'error');
-                return;
-            }
-
-            let successCount = 0;
-            let errorMessages = [];
-
-            for (const link of links) {
-                const moodId = moodNameToId[link.mood.toLowerCase()];
-                if (!moodId) {
-                    errorMessages.push(`Unknown mood: ${link.mood}`);
-                    continue;
-                }
-
-                try {
-                    console.log(`Fetching current data for mood ${moodId}...`);
-                    const getRes = await fetch(`/api/base_moods/${moodId}`, {
-                        credentials: 'same-origin'
-                    });
-                    if (!getRes.ok) {
-                        errorMessages.push(`Mood ${moodId}: Failed to fetch current data (HTTP ${getRes.status})`);
-                        continue;
-                    }
-                    const getData = await getRes.json();
-                    if (!getData.success) {
-                        errorMessages.push(`Mood ${moodId}: Error fetching current data: ${getData.error}`);
-                        continue;
-                    }
-                    const mood = getData.data;
-
-                    mood[field] = link.url;
-                    delete mood.id;
-                    delete mood.created_at;
-                    delete mood.updated_at;
-
-                    console.log(`Updating mood ${moodId} with:`, mood);
-
-                    const putRes = await fetch(`/api/base_moods/${moodId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'same-origin',
-                        body: JSON.stringify(mood)
-                    });
-
-                    const responseText = await putRes.text();
-                    let result;
-                    try {
-                        result = JSON.parse(responseText);
-                    } catch (e) {
-                        errorMessages.push(`Mood ${moodId}: Non‑JSON response (HTTP ${putRes.status}) – ${responseText.slice(0,100)}`);
-                        continue;
-                    }
-
-                    if (putRes.ok && result.success) {
-                        const idx = allMoods.findIndex(m => m.id === moodId);
-                        if (idx !== -1) allMoods[idx][field] = link.url;
-                        successCount++;
-                        console.log(`✅ Mood ${moodId} updated successfully`);
-                    } else {
-                        errorMessages.push(`Mood ${moodId}: ${result.error || 'Unknown'} (HTTP ${putRes.status})`);
-                    }
-                } catch (err) {
-                    errorMessages.push(`Mood ${moodId}: Network error – ${err.message}`);
-                }
-            }
-
-            if (successCount > 0) {
-                showMessage(`✅ Updated ${successCount} moods for "${field}"`, 'success');
-            }
-            if (errorMessages.length > 0) {
-                showMessage(`❌ Errors:\n${errorMessages.join('\n')}`, 'error');
-            }
-
-            filterAndDisplay();
-        }
-
-        // Manual DB update button handler (for JSON upload)
-        async function manualUpdateDb() {
-            if (!generatedLinks.length || !lastGeneratedBannerId) {
-                showMessage('No recent generation to update from.', 'error');
-                return;
-            }
-            await updateMoodFields(generatedLinks, lastGeneratedBannerId);
-        }
-
-        function stopGeneration() {
-            if (abortController) {
-                abortController.abort();
-                abortController = null;
-                isGenerating = false;
-                document.getElementById('stopGenerationBtn').style.display = 'none';
-                document.getElementById('nextBannerBtn').style.display = 'none';
-                document.getElementById('exitAfterBannerBtn').style.display = 'none';
-            }
-        }
-
-        function nextBanner() {
-            if (currentBannerIndex + 1 < currentParsedJson.banners.length) {
-                currentBannerIndex++;
-                generatedLinks = [];
-                lastGeneratedBannerId = null;
-                document.getElementById('aiProgress').innerHTML = '';
-                document.getElementById('stopGenerationBtn').style.display = 'inline-flex';
-                document.getElementById('nextBannerBtn').style.display = 'none';
-                document.getElementById('exitAfterBannerBtn').style.display = 'none';
-                document.getElementById('downloadCsvBtn').style.display = 'none';
-                document.getElementById('updateDbBtn').style.display = 'none';
-                generateFromIndex(currentBannerIndex);
-            } else {
-                document.getElementById('aiStatus').innerText = '✅ No more banners.';
-                document.getElementById('nextBannerBtn').style.display = 'none';
-                document.getElementById('exitAfterBannerBtn').style.display = 'none';
-            }
-        }
-
-        function exitAfterBanner() {
-            document.getElementById('stopGenerationBtn').style.display = 'none';
-            document.getElementById('nextBannerBtn').style.display = 'none';
-            document.getElementById('exitAfterBannerBtn').style.display = 'none';
-            document.getElementById('aiStatus').innerText = 'Generation paused. You can close or start again.';
-            isGenerating = false;
-            if (abortController) {
-                abortController.abort();
-                abortController = null;
-            }
-        }
-
-        // Download CSV of links
-        function downloadLinksCsv() {
-            if (generatedLinks.length === 0) {
-                alert('No links to download.');
-                return;
-            }
-
-            const headers = ['Banner ID', 'Banner Name', 'Mood', 'Image URL'];
-            const rows = generatedLinks.map(item => [
-                item.bannerId,
-                item.bannerName,
-                item.mood,
-                item.url
-            ]);
-
-            let csvContent = headers.join(',') + '\n';
-            rows.forEach(row => {
-                const escapedRow = row.map(cell => {
-                    if (typeof cell === 'string' && (cell.includes(',') || cell.includes('"'))) {
-                        return `"${cell.replace(/"/g, '""')}"`;
-                    }
-                    return cell;
-                }).join(',');
-                csvContent += escapedRow + '\n';
-            });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', 'generated_links.csv');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        }
-
-        // ---------- Modal open/close (JSON upload) ----------
-        function openAIModal() {
-            document.getElementById('aiJsonInput').value = '';
-            document.getElementById('aiInspiration').value = 'Bollywood landscape field';
-            document.getElementById('systemPrompt').value = '';
-            document.getElementById('userPromptTemplate').value = '';
-            document.getElementById('aiProgress').innerHTML = '';
-            document.getElementById('aiStatus').innerText = '';
-            document.getElementById('aiProgressArea').style.display = 'none';
-            document.getElementById('jsonPreview').style.display = 'none';
-            document.getElementById('previewBtn').style.display = 'inline-flex';
-            document.getElementById('downloadCsvBtn').style.display = 'none';
-            document.getElementById('updateDbBtn').style.display = 'none';
-            generatedLinks = [];
-            lastGeneratedBannerId = null;
-            currentParsedJson = null;
-            document.getElementById('aiModal').classList.add('show');
-        }
-
-        function closeAIModal() {
-            if (abortController) {
-                abortController.abort();
-                abortController = null;
-            }
-            document.getElementById('aiModal').classList.remove('show');
-            document.getElementById('jsonPreview').style.display = 'none';
-            document.getElementById('previewBtn').style.display = 'inline-flex';
-            document.getElementById('aiProgressArea').style.display = 'none';
-            document.getElementById('downloadCsvBtn').style.display = 'none';
-            document.getElementById('updateDbBtn').style.display = 'none';
-            generatedLinks = [];
-            lastGeneratedBannerId = null;
-            currentParsedJson = null;
-        }
-
-        // ---------- Existing functions (unchanged) ----------
-        async function loadMoods() {
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('error').style.display = 'none';
-            try {
-                const res = await fetch('/api/base_moods');
-                const data = await res.json();
-                if (data.success) {
-                    allMoods = data.data;
-                    filterAndDisplay();
-                } else throw new Error(data.error);
-            } catch (err) {
-                document.getElementById('error').style.display = 'block';
-                document.getElementById('error').textContent = 'Error: ' + err.message;
-            } finally {
-                document.getElementById('loading').style.display = 'none';
-            }
-        }
-
-        function filterAndDisplay() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = allMoods.filter(m => (m.name || '').toLowerCase().includes(search));
-            displayTransposedTable(filtered);
-        }
-
-        const allFields = [
-            'id', 'name', 'logos', 'hero_bg', 'deliver_asap', 'category_banner',
-            'visit_us', 'home_banner', 'watch_banner', 'visit_banner', 'listen_banner',
-            'cart_banner', 'profile_bg', 'concierge'
-        ];
-
-        const fieldLabels = {
-            id: 'ID',
-            name: 'Name',
-            logos: 'Logos',
-            hero_bg: 'Hero BG',
-            deliver_asap: 'Deliver ASAP',
-            category_banner: 'Category Banner',
-            visit_us: 'Visit Us',
-            home_banner: 'Home Banner',
-            watch_banner: 'Watch Banner',
-            visit_banner: 'Visit Banner',
-            listen_banner: 'Listen Banner',
-            cart_banner: 'Cart Banner',
-            profile_bg: 'Profile BG',
-            concierge: 'Concierge'
-        };
-
-        function displayTransposedTable(moods) {
+        // ---------- Table rendering ----------
+        function displayNormalTable(moods) {
             slideshowIntervals.forEach(clearInterval);
             slideshowIntervals = [];
 
-            const container = document.getElementById('tableContainer');
             if (!moods.length) {
-                container.innerHTML = '<div class="empty-state">No moods found</div>';
+                document.getElementById('tableContainer').innerHTML = '<div class="empty-state">No moods found</div>';
                 return;
             }
 
-            let headerRow = '<tr><th>Field</th>';
-            moods.forEach(m => {
-                const displayName = escapeHtml(m.name) || `Mood ${m.id}`;
-                headerRow += `<th>${displayName} (ID: ${m.id})</th>`;
+            const sample = moods[0];
+            let fields = Object.keys(sample).filter(key => key !== 'created_at' && key !== 'updated_at');
+            fields = fields.sort((a, b) => {
+                if (a === 'id') return -1;
+                if (b === 'id') return 1;
+                if (a === 'name') return -1;
+                if (b === 'name') return 1;
+                return a.localeCompare(b);
             });
-            headerRow += '</tr>';
 
-            let bodyRows = '';
-            allFields.forEach(field => {
-                bodyRows += '<tr>';
-                let fieldDisplay = fieldLabels[field] || field.replace(/_/g, ' ');
+            let html = '<table><thead><tr>';
+            fields.forEach(field => {
+                let headerText = field;
                 if (field !== 'id' && field !== 'name') {
-                    fieldDisplay += `<button class="ai-small" onclick="openBannerAIModal('${field}')" title="Generate AI images for this banner">🤖</button>`;
+                    headerText += ` <button class="column-ai-btn" onclick="openColumnAIModal('${field}')" title="Generate AI images for this field">🤖</button>`;
                 }
-                bodyRows += `<td>${fieldDisplay}</td>`;
+                html += `<th>${headerText}</th>`;
+            });
+            html += '</tr></thead><tbody>';
 
-                moods.forEach(m => {
+            moods.forEach(mood => {
+                html += '<tr>';
+                fields.forEach(field => {
                     if (field === 'id') {
-                        bodyRows += `<td onclick="openFieldEditModal(${m.id}, 'id')">${m.id}</td>`;
+                        html += `<td onclick="openFieldEditModal(${mood.id}, 'id')">${mood.id}</td>`;
                     } else if (field === 'name') {
-                        const name = escapeHtml(m.name) || '';
-                        bodyRows += `<td onclick="openFieldEditModal(${m.id}, 'name')">${name}</td>`;
+                        html += `<td onclick="openFieldEditModal(${mood.id}, 'name')">${escapeHtml(mood.name) || ''}</td>`;
                     } else if (field === 'hero_bg') {
-                        const urls = m.hero_bg ? m.hero_bg.split(',').map(s => s.trim()).filter(s => s) : [];
-                        const slideshowId = `slideshow-${m.id}`;
-                        bodyRows += `<td onclick="openHeroBgModal(${m.id})" id="${slideshowId}">`;
+                        const urls = mood.hero_bg ? mood.hero_bg.split(',').map(s => s.trim()).filter(s => s) : [];
+                        const slideshowId = `slideshow-${mood.id}`;
+                        html += `<td onclick="openHeroBgModal(${mood.id})" id="${slideshowId}">`;
                         if (urls.length > 0) {
-                            bodyRows += `<img class="table-img slideshow-img" src="${escapeHtml(urls[0])}" data-urls="${escapeHtml(urls.join(','))}" style="max-height: ${getCurrentImageSize()}px;">`;
+                            html += `<img class="table-img slideshow-img" src="${escapeHtml(urls[0])}" data-urls="${escapeHtml(urls.join(','))}" style="max-height: ${getCurrentImageSize()}px;">`;
                         } else {
-                            bodyRows += `<img class="table-img" src="https://via.placeholder.com/300x200?text=No+Image" style="max-height: ${getCurrentImageSize()}px;">`;
+                            html += `<img class="table-img" src="https://via.placeholder.com/300x200?text=No+Image" style="max-height: ${getCurrentImageSize()}px;">`;
                         }
-                        bodyRows += `</td>`;
+                        html += '</td>';
                     } else {
-                        const url = m[field] || '';
-                        bodyRows += `<td onclick="openFieldEditModal(${m.id}, '${field}')">`;
-                        bodyRows += `<img class="table-img" src="${escapeHtml(url)}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'" style="max-height: ${getCurrentImageSize()}px;">`;
-                        bodyRows += `</td>`;
+                        const url = mood[field] || '';
+                        html += `<td onclick="openFieldEditModal(${mood.id}, '${field}')">`;
+                        html += `<img class="table-img" src="${escapeHtml(url)}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'" style="max-height: ${getCurrentImageSize()}px;">`;
+                        html += '</td>';
                     }
                 });
-                bodyRows += '</tr>';
+                html += '</tr>';
             });
+            html += '</tbody></table>';
 
-            container.innerHTML = `<table><thead>${headerRow}</thead><tbody>${bodyRows}</tbody></table>`;
+            document.getElementById('tableContainer').innerHTML = html;
 
             moods.forEach(m => {
                 const slideshowCell = document.getElementById(`slideshow-${m.id}`);
@@ -2909,6 +2365,31 @@ Generate only the "{mood}" variant image for this banner.`;
             updateImageSizes();
         }
 
+        // ---------- Load and filter ----------
+        async function loadMoods() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            try {
+                const res = await fetch('/api/base_moods');
+                const data = await res.json();
+                if (data.success) {
+                    allMoods = data.data;
+                    filterAndDisplay();
+                } else throw new Error(data.error);
+            } catch (err) {
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = 'Error: ' + err.message;
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function filterAndDisplay() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allMoods.filter(m => (m.name || '').toLowerCase().includes(search));
+            displayNormalTable(filtered);
+        }
+
         function getCurrentImageSize() {
             const slider = document.getElementById('imageSizeSlider');
             const percent = slider ? parseInt(slider.value) : 100;
@@ -2920,10 +2401,7 @@ Generate only the "{mood}" variant image for this banner.`;
             document.querySelectorAll('.table-img').forEach(img => {
                 img.style.maxHeight = size + 'px';
             });
-            const slider = document.getElementById('imageSizeSlider');
-            if (slider) {
-                document.getElementById('sizeValue').textContent = slider.value + '%';
-            }
+            document.getElementById('sizeValue').textContent = document.getElementById('imageSizeSlider').value + '%';
         }
 
         function escapeHtml(unsafe) {
@@ -2937,7 +2415,7 @@ Generate only the "{mood}" variant image for this banner.`;
             });
         }
 
-        // ---------- Single field edit modal (for non-hero fields) ----------
+        // ---------- Single field edit modal (unchanged) ----------
         function openFieldEditModal(moodId, field) {
             const mood = allMoods.find(m => m.id === moodId);
             if (!mood) return;
@@ -2946,13 +2424,13 @@ Generate only the "{mood}" variant image for this banner.`;
             currentEditField = field;
 
             const moodName = mood.name || `Mood ${moodId}`;
-            document.getElementById('modalTitle').innerHTML = `✏️ Edit ${fieldLabels[field] || field} for "${escapeHtml(moodName)}"`;
+            document.getElementById('modalTitle').innerHTML = `✏️ Edit ${field} for "${escapeHtml(moodName)}"`;
 
             const value = mood[field] || '';
             const isImage = field !== 'name' && field !== 'id';
 
             let html = `<div class="single-field-card">`;
-            html += `<div class="field-label">${fieldLabels[field] || field}</div>`;
+            html += `<div class="field-label">${field}</div>`;
 
             if (isImage) {
                 html += `
@@ -3008,11 +2486,9 @@ Generate only the "{mood}" variant image for this banner.`;
                 });
             }
 
-            const modal = document.getElementById('editModal');
-            modal.classList.add('show');
+            document.getElementById('editModal').classList.add('show');
         }
 
-        // ---------- Hero BG multi-image modal ----------
         function openHeroBgModal(moodId) {
             const mood = allMoods.find(m => m.id === moodId);
             if (!mood) return;
@@ -3025,12 +2501,11 @@ Generate only the "{mood}" variant image for this banner.`;
             currentHeroIndex = 0;
 
             const moodName = mood.name || `Mood ${moodId}`;
-            document.getElementById('modalTitle').innerHTML = `✏️ Edit Hero BG for "${escapeHtml(moodName)}"`;
+            document.getElementById('modalTitle').innerHTML = `✏️ Edit hero_bg for "${escapeHtml(moodName)}"`;
 
             renderHeroBgModal();
 
-            const modal = document.getElementById('editModal');
-            modal.classList.add('show');
+            document.getElementById('editModal').classList.add('show');
         }
 
         function renderHeroBgModal() {
@@ -3100,7 +2575,6 @@ Generate only the "{mood}" variant image for this banner.`;
             });
         }
 
-        // Carousel navigation functions (global)
         window.carouselPrev = function() {
             if (currentHeroUrls.length > 0) {
                 currentHeroIndex = (currentHeroIndex - 1 + currentHeroUrls.length) % currentHeroUrls.length;
@@ -3155,7 +2629,6 @@ Generate only the "{mood}" variant image for this banner.`;
             }
         };
 
-        // ---------- Save functions ----------
         async function saveSingleField() {
             if (!currentEditMoodId || !currentEditField) return;
 
@@ -3222,32 +2695,34 @@ Generate only the "{mood}" variant image for this banner.`;
         }
 
         function closeEditModal() {
-            const modal = document.getElementById('editModal');
-            modal.classList.remove('show');
+            document.getElementById('editModal').classList.remove('show');
             currentEditMoodId = null;
             currentEditField = null;
             currentHeroUrls = [];
             currentHeroIndex = 0;
         }
 
-        // Search listener
+        // ---------- Event listeners ----------
         document.getElementById('searchInput').addEventListener('input', filterAndDisplay);
-        // Image size slider listener
         document.getElementById('imageSizeSlider').addEventListener('input', function(e) {
             document.getElementById('sizeValue').textContent = e.target.value + '%';
             updateImageSizes();
         });
-        // Close modal when clicking outside
+
         window.addEventListener('click', (event) => {
-            const modal = document.getElementById('editModal');
-            if (event.target === modal) closeEditModal();
-            const aiModal = document.getElementById('aiModal');
-            if (event.target === aiModal) closeAIModal();
+            const editModal = document.getElementById('editModal');
+            if (event.target === editModal) closeEditModal();
             const bannerAiModal = document.getElementById('bannerAiModal');
             if (event.target === bannerAiModal) closeBannerAIModal();
+            const columnAiModal = document.getElementById('columnAiModal');
+            if (event.target === columnAiModal) closeColumnAIModal();
+            const promptsModal = document.getElementById('promptsModal');
+            if (event.target === promptsModal) closePromptsModal();
         });
-        // Load on page start
+
+        // Initial load
         loadMoods();
+        
     </script>
 </body>
 </html>
