@@ -20,6 +20,12 @@ const cookieParser = require('cookie-parser');
 const { createCanvas } = require('canvas');
 const conversationDb = require('./requestData2');
 const upload = multer({ storage: multer.memoryStorage() });
+const sharp = require('sharp');
+
+let productHashes = new Map();           // productId -> { hash: BigInt, product }
+let hashesComputed = false;
+let hashesComputing = false;
+
 
 
 // Import database functions
@@ -2304,6 +2310,90 @@ const SIZE_MAP = {
     Portrait:  { width: 1024, height: 1536 },  // portrait: taller than wide
     Square:    { width: 1024, height: 1024 }
 };
+
+// ===================== HELPER FUNCTIONS =====================
+// Map field names to size and mood
+function getSizeFromField(field) {
+    if (field.startsWith('Image1')) return 'Square';
+    if (field.startsWith('Image2')) return 'Portrait';
+    if (field.startsWith('Image3')) return 'Landscape';
+    return 'Landscape'; // fallback
+}
+
+function getMoodFromField(field) {
+    const moods = ['Calm', 'Nostalgic', 'Playful', 'Confident', 'Ambitious', 'Introspective'];
+    for (let m of moods) {
+        if (field.endsWith(m)) return m.toUpperCase();
+    }
+    return 'CALM';
+}
+
+
+// System prompt for galleries (no text, pure mood-based lifestyle images)
+const GALLERY_SYSTEM_PROMPT = `Zulu Club — Mood-Driven Gallery Image Generation Engine
+
+You are generating premium lifestyle images for Zulu Club galleries. Each image must evoke a specific mood and adhere to the requested size (Square, Portrait, or Landscape). Galleries are collections of images that help users explore products and aesthetics through emotional resonance.
+
+🔢 CONTEXT
+- Each gallery has multiple images, one per mood and size combination.
+- For a given gallery, all images must feel like coherent variations of the same theme, differing only through emotional expression.
+- The 6 moods are: CALM, NOSTALGIC, PLAYFUL, CONFIDENT, AMBITIOUS, INTROSPECTIVE.
+
+🟥 ABSOLUTE RULES (OVERRIDE ALL)
+- NO text, logos, or typography in the image – these are pure visuals.
+- Composition must remain structurally consistent across all moods for the same gallery and size:
+  - Main subject(s) should be in similar positions.
+  - Camera angle and framing should be roughly the same.
+  - The identity of objects/scenes should stay recognisable.
+- Mood variation is achieved ONLY through:
+  - Lighting (soft/harsh, warm/cool)
+  - Color palette (saturated/desaturated, dominant hues)
+  - Contrast and brightness
+  - Texture feel (smooth/grainy)
+  - Emotional energy (dynamic/still, joyful/somber)
+  - Background atmosphere
+- Each image must be ultra‑realistic and look like a premium lifestyle photograph.
+- No clutter, no gimmicks, no illustration unless explicitly implied.
+- The final output must feel like it belongs to the Zulu Club visual universe: aspirational, elegant, and emotionally resonant.
+
+🎯 PER‑IMAGE SPECIFICATIONS (provided per request):
+- Gallery name (for context)
+- Mood (which drives the emotional treatment)
+- Size (Square 1024x1024, Portrait 768x1024, Landscape 1024x768)
+
+📁 OUTPUT REQUIREMENTS
+- Filename: will be handled by the system.
+- Format: PNG, high quality.
+
+🔎 SELF‑CHECK (BEFORE FINALISING)
+- Is the mood instantly recognisable?
+- Does the image feel like a natural progression from other moods of the same gallery?
+- Is it free of text?
+- Is the composition consistent with other variants?
+- Is the quality premium and photorealistic?`;
+
+// User prompt template (placeholders will be replaced)
+const GALLERY_USER_TEMPLATE = `Generate a {mood} mood image for gallery "{galleryName}" in {size} size.
+
+Title: {title}
+Sub Title: {sub_title}
+Description: {description}
+CTA: {cta}
+Background: {background}
+Object: {object}
+
+The image should be a high‑quality, photorealistic lifestyle shot that reflects the {mood} mood. Maintain the core subject/composition consistent with other images in this gallery, but vary lighting, color, and atmosphere according to the mood.
+
+Inspiration: {inspiration}`;
+
+
+function getMoodFromField(field) {
+    const moods = ['Calm', 'Nostalgic', 'Playful', 'Confident', 'Ambitious', 'Introspective'];
+    for (let m of moods) {
+        if (field.endsWith(m)) return m.toUpperCase();
+    }
+    return 'CALM'; // fallback
+}
 
 /**
  * GPT-powered seller matching
@@ -5579,6 +5669,7 @@ app.get('/moods', (req, res) => res.sendFile(__dirname + '/public/moods.html'));
 app.get('/tracks', (req, res) => res.sendFile(__dirname + '/public/tracks.html'));
 app.get('/business', (req, res) => res.sendFile(__dirname + '/public/business.html'));
 
+app.get('/image-search', (req, res) => res.sendFile(__dirname + '/public/image-search.html'));
 
 // -------------------------
 // Moods Endpoints
@@ -6038,6 +6129,236 @@ Premium lighting, white background.
         });
     }
 });
+
+
+/**
+ * Compute 64‑bit difference hash (dHash) from an image buffer
+ */
+async function computeImageHash(imageBuffer) {
+  try {
+    // Resize to 9x8, grayscale, get raw pixel values
+    const { data, info } = await sharp(imageBuffer)
+      .resize(9, 8, { fit: 'fill' })
+      .grayscale()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    const pixels = new Uint8Array(data);
+    let hash = 0n;               // BigInt to hold 64 bits
+    let bit = 0n;
+    for (let row = 0; row < 8; row++) {
+      for (let col = 0; col < 8; col++) {
+        const left = pixels[row * 9 + col];
+        const right = pixels[row * 9 + col + 1];
+        if (left > right) {
+          hash |= (1n << bit);
+        }
+        bit++;
+      }
+    }
+    return hash;
+  } catch (error) {
+    console.error('Error computing image hash:', error);
+    return null;
+  }
+}
+
+/**
+ * Hamming distance between two BigInt hashes
+ */
+function hammingDistance(hash1, hash2) {
+  let xor = hash1 ^ hash2;
+  let distance = 0;
+  while (xor) {
+    distance += Number(xor & 1n);
+    xor >>= 1n;
+  }
+  return distance;
+}
+
+/**
+ * Download image from URL and return Buffer
+ */
+async function downloadImage(url) {
+  try {
+    const response = await axios({
+      method: 'get',
+      url: url,
+      responseType: 'arraybuffer',
+      timeout: 10000
+    });
+    return Buffer.from(response.data);
+  } catch (error) {
+    console.error(`Failed to download image from ${url}:`, error.message);
+    return null;
+  }
+}
+
+/**
+ * Compute hashes for all products in productsData
+ */
+
+/**
+ * Fetch all products from database (id, name, image) and compute hashes.
+ */
+async function computeAllProductHashes() {
+  if (hashesComputing) return;
+  hashesComputing = true;
+
+  try {
+    console.log('🔄 Fetching products from database for image hashing...');
+    // Use the database module to get products (only needed fields)
+    const allProducts = await db.getCachedData('products');
+    console.log(`✅ Fetched ${allProducts.length} products from DB.`);
+
+    let successCount = 0;
+    let failCount = 0;
+    let skippedCount = 0;
+    const concurrency = 5;
+    const queue = [...allProducts];
+
+    const workers = Array(concurrency).fill().map(async () => {
+      while (queue.length) {
+        const product = queue.shift();
+        if (!product.image) {
+          skippedCount++;
+          continue;
+        }
+
+        // Construct full image URL (adjust base URL as needed)
+        let imageUrl = product.image;
+        if (imageUrl.startsWith('/')) {
+          imageUrl = `https://zulushop.in${imageUrl}`;
+        } else if (!imageUrl.startsWith('http')) {
+          imageUrl = `https://zulushop.in/${imageUrl}`;
+        }
+
+        const buffer = await downloadImage(imageUrl);
+        if (!buffer) {
+          failCount++;
+          console.log(`❌ Failed to download: ${imageUrl} (total fails: ${failCount})`);
+          continue;
+        }
+
+        const hash = await computeImageHash(buffer);
+        if (hash !== null) {
+          productHashes.set(product.id, { hash, product: { id: product.id, name: product.name, image: product.image } });
+          successCount++;
+        } else {
+          failCount++;
+          console.log(`⚠️ Failed to compute hash for: ${imageUrl}`);
+        }
+
+        // Log every 100 processed
+        const processed = successCount + failCount + skippedCount;
+        if (processed % 100 === 0) {
+          console.log(`⏳ Processed ${processed}/${allProducts.length} (success: ${successCount}, fail: ${failCount}, skipped: ${skippedCount})`);
+        }
+      }
+    });
+
+    await Promise.all(workers);
+    hashesComputed = true;
+    console.log(`✅ Image hashing complete: ${successCount} succeeded, ${failCount} failed, ${skippedCount} skipped (no image)`);
+  } catch (err) {
+    console.error('❌ Error during product hash computation:', err);
+  } finally {
+    hashesComputing = false;
+  }
+}
+
+// GET /api/products/simple
+app.get('/api/products/simple', async (req, res) => {
+  try {
+    const products = await db.getCachedData('products');
+    const simple = products.map(p => ({
+      id: p.id,
+      name: p.name,
+      image: p.image
+    }));
+    res.json({
+      success: true,
+      data: simple,
+      count: simple.length
+    });
+  } catch (error) {
+    console.error('Error fetching simple products:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+// ===================== NEW ROUTE: /api/product/image-search =====================
+app.post('/api/product/image-search', async (req, res) => {
+  try {
+    const { imageUrl } = req.body;
+    if (!imageUrl) {
+      return res.status(400).json({ success: false, error: 'imageUrl is required' });
+    }
+
+    // If hashes not yet computed, start background computation and ask to retry
+    if (!hashesComputed && !hashesComputing) {
+      computeAllProductHashes().catch(err => console.error('Background hash error:', err));
+      return res.status(202).json({
+        success: false,
+        message: 'Image search is initializing. Please try again in a few moments.',
+        status: 'initializing'
+      });
+    }
+    if (!hashesComputed) {
+      return res.status(202).json({
+        success: false,
+        message: 'Image search is still initializing. Please wait.',
+        status: 'initializing'
+      });
+    }
+
+    // Download query image
+    const queryBuffer = await downloadImage(imageUrl);
+    if (!queryBuffer) {
+      return res.status(400).json({ success: false, error: 'Failed to download query image' });
+    }
+
+    const queryHash = await computeImageHash(queryBuffer);
+    if (queryHash === null) {
+      return res.status(400).json({ success: false, error: 'Failed to process query image' });
+    }
+
+    // Compare with all product hashes
+    const matches = [];
+    for (const [productId, { hash, product }] of productHashes.entries()) {
+      const distance = hammingDistance(queryHash, hash);
+      matches.push({
+        id: productId,
+        name: product.name,
+        image: product.image,
+        distance,
+        score: Math.max(0, 1 - distance / 64)   // similarity 0..1
+      });
+    }
+
+    // Sort by distance (lower is better)
+    matches.sort((a, b) => a.distance - b.distance);
+
+    // Return top 20 matches
+    const topMatches = matches.slice(0, 20).map(m => ({
+      id: m.id,
+      name: m.name,
+      image: m.image.startsWith('http') ? m.image : `https://zulushop.in${m.image}`,
+      similarity: m.score
+    }));
+
+    res.json({
+      success: true,
+      matches: topMatches,
+      count: topMatches.length,
+      totalCompared: matches.length
+    });
+
+  } catch (error) {
+    console.error('Image search error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 app.post('/api/ai/analyze-categories', async (req, res) => {
     try {
         const { productName, currentCategory, currentCat1, imageUrl, description } = req.body;
@@ -6524,6 +6845,156 @@ Generate ONLY the lyrics, no explanations or additional text.
         });
     }
 });
+
+// ----- The updated endpoint -----
+app.post('/api/ai/generate-galleries', async (req, res) => {
+    try {
+        const { 
+            galleries, 
+            fields, 
+            title, subTitle, description, cta, background, object, size,
+            inspiration, 
+            systemPrompt, 
+            userPromptTemplate 
+        } = req.body;
+
+        // Validate
+        if (!galleries || !Array.isArray(galleries) || galleries.length === 0) {
+            return res.status(400).json({ success: false, error: 'Missing galleries array' });
+        }
+        if (!fields || !Array.isArray(fields) || fields.length === 0) {
+            return res.status(400).json({ success: false, error: 'Missing fields array' });
+        }
+
+        // Set SSE headers
+        res.writeHead(200, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive'
+        });
+
+        const sendEvent = (data) => {
+            res.write(`data: ${JSON.stringify(data)}\n\n`);
+        };
+
+        const finalSystemPrompt = systemPrompt || GALLERY_SYSTEM_PROMPT;
+        const finalUserTemplate = userPromptTemplate || GALLERY_USER_TEMPLATE;
+
+        // Loop through each gallery and each field
+        for (const gallery of galleries) {
+            for (const field of fields) {
+                if (res.closed) break;
+
+                // Determine size and mood from the field name
+                const derivedSize = getSizeFromField(field);
+                const mood = getMoodFromField(field);
+                const dimensions = SIZE_MAP[derivedSize] || SIZE_MAP.Landscape;
+
+                // Build user prompt with all placeholders – use the size from form if provided, else derived
+                const userPrompt = finalUserTemplate
+                    .replace(/{galleryName}/g, gallery.name || 'Gallery')
+                    .replace(/{mood}/g, mood)
+                    .replace(/{size}/g, size || derivedSize)          // allow override
+                    .replace(/{title}/g, title || '')
+                    .replace(/{sub_title}/g, subTitle || '')
+                    .replace(/{description}/g, description || '')
+                    .replace(/{cta}/g, cta || '')
+                    .replace(/{background}/g, background || 'mood based')
+                    .replace(/{object}/g, object || 'lifestyle object')
+                    .replace(/{inspiration}/g, inspiration || '');
+
+                try {
+                    // Create blank base64 image (reuse your existing function)
+                    const blankBase64 = createBlankBase64(dimensions.width, dimensions.height, '#ffffff');
+
+                    // Call OpenAI (adjust to your actual client)
+                    const response = await openai.responses.create({
+                        model: "gpt-4.1", // or your actual model
+                        tools: [{
+                            type: "image_generation",
+                            size: `${dimensions.width}x${dimensions.height}`,
+                            quality: "medium"
+                        }],
+                        input: [{
+                            role: "user",
+                            content: [
+                                { type: "input_text", text: finalSystemPrompt + "\n\n" + userPrompt },
+                                { type: "input_image", image_url: `data:image/jpeg;base64,${blankBase64}` }
+                            ]
+                        }]
+                    });
+
+                    const outputs = response.output.filter(o => o.type === "image_generation_call");
+                    if (!outputs.length) throw new Error("No image generation output");
+
+                    const imageBase64 = outputs[0].result;
+                    const imageBuffer = Buffer.from(imageBase64, 'base64');
+
+                    // Upload to your storage (use your upload function)
+                    const formData = new FormData();
+                    formData.append('image', imageBuffer, {
+                        filename: `${gallery.name}_${field}.png`,
+                        contentType: 'image/png',
+                    });
+
+                    const uploadResponse = await axios.post(
+                        'https://api.zulushop.in/api/v1/user/upload',
+                        formData,
+                        { headers: formData.getHeaders() }
+                    );
+
+                    let imageUrl = uploadResponse.data.url ||
+                                   uploadResponse.data.image_url ||
+                                   (uploadResponse.data.data && 
+                                   (typeof uploadResponse.data.data === 'string'
+                                    ? uploadResponse.data.data
+                                    : uploadResponse.data.data.url || uploadResponse.data.data.image_url));
+
+                    if (!imageUrl) throw new Error('Could not extract image URL');
+
+                    // Send event to client
+                    sendEvent({
+                        galleryId: gallery.id,
+                        galleryName: gallery.name,
+                        field,
+                        imageUrl,
+                    });
+
+                } catch (err) {
+                    console.error(`Error generating ${gallery.name} ${field}:`, err.message);
+                    sendEvent({ error: `Failed on ${gallery.name} ${field}: ${err.message}` });
+                }
+
+                // Small delay to avoid rate limits
+                await new Promise(r => setTimeout(r, 500));
+            }
+        }
+
+        // All done
+        sendEvent({ done: true });
+        res.end();
+
+    } catch (error) {
+        console.error('Fatal error:', error);
+        if (!res.headersSent) {
+            res.status(500).json({ success: false, error: error.message });
+        } else {
+            res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+            res.end();
+        }
+    }
+});
+
+// Helper to create blank base64 image (you probably already have this)
+function createBlankBase64(width, height, color) {
+    const { createCanvas } = require('canvas'); // or use any image library
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, width, height);
+    return canvas.toBuffer('image/jpeg').toString('base64');
+}
+
 app.post('/api/ai/generate-style', async (req, res) => {
     try {
         const { productName, description, category, cat1, price, specialPrice, prompt } = req.body;

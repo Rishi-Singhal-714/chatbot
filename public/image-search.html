@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zulu Club – Product Image Search</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f8f9fa;
+            color: #1e293b;
+            line-height: 1.5;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #334155;
+        }
+
+        input[type="url"] {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        input[type="url"]:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+
+        .preview {
+            margin: 1rem 0;
+            max-width: 300px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            background: #f1f5f9;
+        }
+
+        .preview img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .button:hover {
+            background: #1d4ed8;
+        }
+
+        .button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #b91c1c;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .loading {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .stats {
+            margin: 1rem 0;
+            color: #475569;
+            font-size: 0.95rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #e2e8f0;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+        }
+
+        .product-image {
+            width: 100%;
+            aspect-ratio: 3/4;
+            object-fit: cover;
+            background: #f1f5f9;
+        }
+
+        .product-info {
+            padding: 1rem;
+        }
+
+        .product-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            font-size: 1rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-id {
+            color: #64748b;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .similarity {
+            display: inline-block;
+            background: #e6f0ff;
+            color: #1e40af;
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Product Image Search</h1>
+        <p class="description">Upload or enter an image URL to find visually similar products from our catalog.</p>
+
+        <div class="card">
+            <form id="searchForm">
+                <div class="form-group">
+                    <label for="imageUrl">Image URL</label>
+                    <input type="url" id="imageUrl" placeholder="https://example.com/product.jpg" required>
+                </div>
+
+                <div id="previewContainer" class="preview hidden">
+                    <img id="previewImage" src="" alt="Preview">
+                </div>
+
+                <button type="submit" class="button" id="submitBtn">
+                    <span id="btnText">Search Similar Products</span>
+                    <span id="loadingSpinner" class="spinner hidden"></span>
+                </button>
+            </form>
+
+            <div id="errorMessage" class="error hidden"></div>
+
+            <div id="stats" class="stats hidden"></div>
+
+            <div id="resultsGrid" class="grid"></div>
+        </div>
+
+        <div class="footer">
+            Powered by Zulu Club · Visual similarity using dHash
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('searchForm');
+        const imageUrlInput = document.getElementById('imageUrl');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImage = document.getElementById('previewImage');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const errorDiv = document.getElementById('errorMessage');
+        const statsDiv = document.getElementById('stats');
+        const resultsGrid = document.getElementById('resultsGrid');
+
+        // Show preview when URL changes
+        imageUrlInput.addEventListener('input', () => {
+            const url = imageUrlInput.value.trim();
+            if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+                previewImage.src = url;
+                previewContainer.classList.remove('hidden');
+            } else {
+                previewContainer.classList.add('hidden');
+            }
+        });
+
+        // Handle form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const imageUrl = imageUrlInput.value.trim();
+            if (!imageUrl) return;
+
+            // Clear previous results and errors
+            errorDiv.classList.add('hidden');
+            statsDiv.classList.add('hidden');
+            resultsGrid.innerHTML = '';
+
+            // Show loading state
+            btnText.textContent = 'Searching...';
+            loadingSpinner.classList.remove('hidden');
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/product/image-search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imageUrl })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || `HTTP ${response.status}`);
+                }
+
+                // Handle 202 (initializing) response
+                if (response.status === 202) {
+                    errorDiv.textContent = data.message || 'Image search is initializing. Please try again in a moment.';
+                    errorDiv.classList.remove('hidden');
+                    return;
+                }
+
+                if (data.success) {
+                    displayResults(data);
+                } else {
+                    errorDiv.textContent = data.error || 'Unknown error';
+                    errorDiv.classList.remove('hidden');
+                }
+
+            } catch (err) {
+                errorDiv.textContent = err.message;
+                errorDiv.classList.remove('hidden');
+            } finally {
+                // Reset button
+                btnText.textContent = 'Search Similar Products';
+                loadingSpinner.classList.add('hidden');
+                submitBtn.disabled = false;
+            }
+        });
+
+        function displayResults(data) {
+            const { matches, count, totalCompared } = data;
+
+            if (count === 0) {
+                statsDiv.textContent = `No similar products found. Searched through ${totalCompared} products.`;
+                statsDiv.classList.remove('hidden');
+                return;
+            }
+
+            // Show stats
+            statsDiv.textContent = `Found ${count} similar products (out of ${totalCompared} compared)`;
+            statsDiv.classList.remove('hidden');
+
+            // Clear grid and populate
+            resultsGrid.innerHTML = '';
+
+            matches.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+
+                // Build image URL
+                let imageSrc = product.image;
+                if (imageSrc && !imageSrc.startsWith('http')) {
+                    imageSrc = `https://zulushop.in${imageSrc}`;
+                }
+
+                const similarityPercent = Math.round(product.similarity * 100);
+
+                card.innerHTML = `
+                    <img class="product-image" src="${imageSrc}" alt="${product.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x400?text=No+Image'">
+                    <div class="product-info">
+                        <div class="product-name">${product.name || 'Unnamed'}</div>
+                        <div class="product-id">ID: ${product.id}</div>
+                        <span class="similarity">${similarityPercent}% match</span>
+                    </div>
+                `;
+                resultsGrid.appendChild(card);
+            });
+        }
+
+        // Handle image load errors in preview
+        previewImage.addEventListener('error', () => {
+            previewContainer.classList.add('hidden');
+        });
+    </script>
+</body>
+</html>

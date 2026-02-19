@@ -3,8 +3,7 @@
 <head>
     <title>Base Moods - Admin</title>
     <style>
-        /* All existing styles remain exactly the same – only additions are at the end */
-
+        /* All existing styles – only minor additions at the end for the new config panel */
         * {
             margin: 0;
             padding: 0;
@@ -17,15 +16,14 @@
             min-height: 100vh;
             padding: 30px;
         }
-/* Top horizontal scrollbar hack */
-.table-container {
-    transform: rotateX(180deg);
-    -webkit-transform: rotateX(180deg); /* Safari */
-}
-.table-container > * {
-    transform: rotateX(180deg);
-    -webkit-transform: rotateX(180deg);
-}
+        .table-container {
+            transform: rotateX(180deg);
+            -webkit-transform: rotateX(180deg);
+        }
+        .table-container > * {
+            transform: rotateX(180deg);
+            -webkit-transform: rotateX(180deg);
+        }
         h1 {
             color: #1e2b3a;
             border-bottom: 4px solid #9C27B0;
@@ -168,7 +166,6 @@
             font-size: 18px;
         }
 
-        /* Image size slider */
         .size-control {
             display: flex;
             align-items: center;
@@ -231,7 +228,6 @@
             font-weight: 500;
         }
 
-        /* ----- Normal table (rows = moods, columns = fields) ----- */
         .table-container {
             background: white;
             border-radius: 24px;
@@ -263,7 +259,6 @@
             vertical-align: middle;
         }
 
-        /* Images inside table */
         .table-img {
             max-width: 100%;
             height: auto;
@@ -295,7 +290,6 @@
             opacity: 0.5;
         }
 
-        /* AI button in column header */
         .column-ai-btn {
             background: none;
             border: none;
@@ -312,7 +306,7 @@
             box-shadow: none;
         }
 
-        /* ---------- MODALS ---------- */
+        /* Modals */
         .modal {
             display: none;
             position: fixed;
@@ -390,7 +384,6 @@
             padding: 24px;
         }
 
-        /* Banner form styling */
         .banner-form {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -429,7 +422,6 @@
             box-shadow: 0 0 0 3px rgba(156,39,176,0.1);
         }
 
-        /* Searchable checklist - now pills */
         .checklist-search {
             width: 100%;
             padding: 12px 16px;
@@ -486,7 +478,6 @@
             font-weight: 600;
         }
 
-        /* Progress area */
         .progress-area {
             max-height: 300px;
             overflow-y: auto;
@@ -531,7 +522,6 @@
             background: black;
         }
 
-        /* Action buttons after generation */
         .post-generation-actions {
             display: flex;
             gap: 12px;
@@ -547,7 +537,6 @@
             color: white;
         }
 
-        /* Rejection message */
         .reject-message {
             background: #fff3cd;
             border: 2px solid #ffc107;
@@ -561,7 +550,6 @@
             gap: 10px;
         }
 
-        /* Default prompts display */
         .default-prompts {
             background: #f5f5f5;
             border: 1px solid #ddd;
@@ -585,7 +573,6 @@
             justify-content: space-between;
         }
 
-        /* Single field card (for edit modal) */
         .single-field-card {
             background: #f9fafc;
             border: 2px solid #e9ecf0;
@@ -662,7 +649,6 @@
             outline: none;
         }
 
-        /* Hero BG specific */
         .hero-bg-editor {
             display: flex;
             flex-direction: column;
@@ -785,7 +771,6 @@
             font-size: 14px;
         }
 
-        /* ----- Prompts Table Modal ----- */
         .prompts-table {
             width: 100%;
             border-collapse: collapse;
@@ -857,6 +842,56 @@
             align-items: center;
             gap: 10px;
         }
+
+        /* New styles for row config panel */
+        .config-field-group {
+            background: #f9fafc;
+            border: 2px solid #e9ecf0;
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .config-field-group h5 {
+            margin-bottom: 10px;
+            color: #9C27B0;
+        }
+        .config-field-group .field-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 10px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        .config-field-group .field-row label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .config-field-group input,
+        .config-field-group select {
+            padding: 8px 12px;
+            border: 2px solid #dde3e9;
+            border-radius: 40px;
+            font-size: 13px;
+            background: white;
+        }
+        .global-inspiration {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f0e6f5;
+            border-radius: 16px;
+        }
+        .global-inspiration label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .global-inspiration input {
+            width: 100%;
+            padding: 10px 16px;
+            border: 2px solid #9C27B0;
+            border-radius: 40px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -881,7 +916,7 @@
     <div id="error"></div>
     <div id="tableContainer" class="table-container"></div>
 
-    <!-- Single Field Edit Modal (unchanged) -->
+    <!-- Single Field Edit Modal -->
     <div id="editModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -896,7 +931,7 @@
         </div>
     </div>
 
-    <!-- Individual Banner AI Generation Modal (unchanged) -->
+    <!-- Individual Banner AI Generation Modal -->
     <div id="bannerAiModal" class="modal">
         <div class="modal-content" style="max-width: 800px;">
             <div class="modal-header">
@@ -944,15 +979,14 @@
                     </div>
                 </form>
 
-                <!-- Advanced Prompt Settings (with placeholders) -->
+                <!-- Advanced Prompt Settings -->
                 <div style="margin: 20px 0; border-top: 2px solid #e0e0e0; padding-top: 20px;">
                     <details>
                         <summary style="font-weight: 600; cursor: pointer; color: #9C27B0;">⚙️ Advanced Prompt Settings (optional)</summary>
                         <div style="margin-top: 15px;">
-                            <!-- System Prompt -->
                             <label style="font-weight: 600;">System Prompt (overrides default)</label>
                             <div style="margin-bottom: 10px;">
-                                <span style="font-size: 12px; color: #666;">Placeholders (click to insert):</span>
+                                <span style="font-size: 12px; color: #666;">Placeholders:</span>
                                 <button class="placeholder-btn" onclick="insertPlaceholder('bannerSystemPrompt', '{mood}')">{mood}</button>
                                 <button class="placeholder-btn" onclick="insertPlaceholder('bannerSystemPrompt', '{bannerId}')">{bannerId}</button>
                                 <button class="placeholder-btn" onclick="insertPlaceholder('bannerSystemPrompt', '{bannerName}')">{bannerName}</button>
@@ -967,10 +1001,9 @@
                             </div>
                             <textarea id="bannerSystemPrompt" rows="4" style="width: 100%; padding: 12px; border-radius: 16px; border: 2px solid #dde3e9; font-family: monospace; font-size: 13px; margin-bottom: 15px;" placeholder="Leave empty to use default system prompt"></textarea>
 
-                            <!-- User Prompt Template -->
                             <label style="font-weight: 600;">User Prompt Template</label>
                             <div style="margin-bottom: 10px;">
-                                <span style="font-size: 12px; color: #666;">Placeholders (click to insert):</span>
+                                <span style="font-size: 12px; color: #666;">Placeholders:</span>
                                 <button class="placeholder-btn" onclick="insertPlaceholder('bannerUserPromptTemplate', '{mood}')">{mood}</button>
                                 <button class="placeholder-btn" onclick="insertPlaceholder('bannerUserPromptTemplate', '{bannerId}')">{bannerId}</button>
                                 <button class="placeholder-btn" onclick="insertPlaceholder('bannerUserPromptTemplate', '{bannerName}')">{bannerName}</button>
@@ -1020,7 +1053,7 @@
         </div>
     </div>
 
-    <!-- Column AI Modal (modified: advanced removed, prompt selection added) -->
+    <!-- Column AI Modal -->
     <div id="columnAiModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1028,20 +1061,17 @@
                 <button class="close-modal" onclick="closeColumnAIModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <p style="margin-bottom: 15px;">Select which moods you want to generate. Only the selected moods will be created.</p>
+                <p style="margin-bottom: 15px;">Select which moods you want to generate.</p>
                 
-                <!-- Searchable checklist as pills -->
                 <input type="text" id="moodSearch" class="checklist-search" placeholder="Search moods...">
                 <div id="columnMoodChecklist" class="mood-checklist"></div>
 
-                <!-- Prompt selection -->
                 <div style="margin: 20px 0;">
                     <button class="fix-btn" onclick="openPromptsModal(true)" style="margin-right: 10px;">📋 Select Prompts</button>
                     <span id="selectedPromptName" style="font-weight: 500;"></span>
                 </div>
                 <input type="hidden" id="selectedPromptId" value="">
 
-                <!-- Banner data form (unchanged) -->
                 <form id="columnBannerForm" class="banner-form">
                     <input type="hidden" id="columnField" value="">
                     <div class="full-width">
@@ -1082,7 +1112,6 @@
                     </div>
                 </form>
 
-                <!-- Progress area (unchanged) -->
                 <div id="columnProgressArea" style="display: none;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <h4>Generated Images</h4>
@@ -1093,7 +1122,6 @@
                     <div id="columnProgress" class="progress-area"></div>
                     <div id="columnStatus" style="margin-top: 10px; font-weight: 500;"></div>
 
-                    <!-- Post-generation actions (Approve/Reject) -->
                     <div id="postGenActions" style="display: none;" class="post-generation-actions">
                         <button class="approve-btn" onclick="approveGeneration()">✅ Approve & Save to DB</button>
                         <button class="reject-btn" onclick="rejectGeneration()">❌ Reject (Download CSV only)</button>
@@ -1110,7 +1138,69 @@
         </div>
     </div>
 
-    <!-- Prompts Modal (for viewing/editing and selection) -->
+    <!-- ========== Row AI Modal (with configuration panel) ========== -->
+    <div id="rowAiModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="rowAiTitle">🤖 Generate for <span id="rowMoodName"></span></h2>
+                <button class="close-modal" onclick="closeRowAIModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 15px;">Select which banner fields you want to generate for this mood.</p>
+                
+                <input type="text" id="fieldSearch" class="checklist-search" placeholder="Search fields...">
+                <div id="fieldChecklist" class="mood-checklist"></div>
+
+                <!-- Button to open configuration panel -->
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button class="fix-btn" onclick="showRowConfigPanel()">⚙️ Configure Selected</button>
+                </div>
+
+                <!-- Configuration panel (hidden by default) -->
+                <div id="rowConfigPanel" style="display: none; margin-top: 20px; border-top: 2px solid #e0e0e0; padding-top: 20px;">
+                    <h4 style="margin-bottom: 15px;">Customise banner texts for each selected field</h4>
+                    
+                    <!-- Global Inspiration Text -->
+                    <div class="global-inspiration">
+                        <label for="globalInspirationInput">🌍 Global Inspiration Text (applies to all selected fields)</label>
+                        <input type="text" id="globalInspirationInput" value="Bollywood landscape field" placeholder="e.g. Bollywood landscape field">
+                    </div>
+
+                    <div id="rowConfigList"></div>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="save-btn" onclick="saveRowConfigs()">💾 Save Configurations</button>
+                        <button class="cancel-btn" onclick="hideRowConfigPanel()">Cancel</button>
+                    </div>
+                </div>
+
+                <!-- Progress area -->
+                <div id="rowProgressArea" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4>Generated Images</h4>
+                        <div>
+                            <button class="stop-btn" id="rowStopBtn" onclick="stopRowGeneration()" style="display: none;">⏹️ Stop</button>
+                        </div>
+                    </div>
+                    <div id="rowProgress" class="progress-area"></div>
+                    <div id="rowStatus" style="margin-top: 10px; font-weight: 500;"></div>
+
+                    <div id="rowPostGenActions" style="display: none;" class="post-generation-actions">
+                        <button class="approve-btn" onclick="approveRowGeneration()">✅ Approve & Save to DB</button>
+                        <button class="reject-btn" onclick="rejectRowGeneration()">❌ Reject (Download CSV only)</button>
+                    </div>
+                    <div id="rowRejectMessage" class="reject-message">
+                        ⏳ Please manually delete the unwanted images from cloud storage. This message will disappear in 5 seconds...
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions" style="display: flex; gap: 16px; justify-content: flex-end; padding: 20px 24px 24px; border-top: 2px solid #eef2f6;">
+                <button class="cancel-btn" onclick="closeRowAIModal()">Close</button>
+                <button class="save-btn" onclick="startRowGeneration()" style="background: #9C27B0;">✨ Generate Selected Fields</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prompts Modal -->
     <div id="promptsModal" class="modal">
         <div class="modal-content" style="max-width: 1200px;">
             <div class="modal-header">
@@ -1517,7 +1607,6 @@ Generate only the "{mood}" variant image for this banner.`;
         let currentHeroUrls = [];
         let currentHeroIndex = 0;
 
-        // Banner field mapping (including logos)
         const bannerFieldMap = {
             1: 'deliver_asap',
             2: 'category_banner',
@@ -1704,6 +1793,7 @@ Generate only the "{mood}" variant image for this banner.`;
             document.getElementById('promptsModal').classList.remove('show');
         }
 
+        // Updated selectPrompt to handle field-specific selection
         function selectPrompt() {
             const selected = document.querySelector('input[name="selectedPrompt"]:checked');
             if (!selected) {
@@ -1714,16 +1804,37 @@ Generate only the "{mood}" variant image for this banner.`;
             const promptName = selected.dataset.name;
             const systemPrompt = selected.dataset.system;
             const userPrompt = selected.dataset.user;
+
+            // If we are in row config mode (field set)
+            if (window._currentPromptField) {
+                const field = window._currentPromptField;
+                if (!rowGenerationState.fieldConfigs[field]) {
+                    rowGenerationState.fieldConfigs[field] = {};
+                }
+                rowGenerationState.fieldConfigs[field].prompt = {
+                    id: promptId,
+                    name: promptName,
+                    system: systemPrompt,
+                    user: userPrompt
+                };
+                // Update the display in config panel
+                const span = document.getElementById(`prompt-name-${field}`);
+                if (span) span.innerText = escapeHtml(promptName);
+                window._currentPromptField = null;
+                closePromptsModal();
+                return;
+            }
+
+            // Otherwise, handle column AI selection (existing)
             document.getElementById('selectedPromptId').value = promptId;
             document.getElementById('selectedPromptName').innerHTML = `Selected: <strong>${escapeHtml(promptName)}</strong> (ID: ${promptId})`;
-            // Store in columnGenerationState for later use
             if (columnGenerationState) {
                 columnGenerationState.selectedPrompt = { id: promptId, system: systemPrompt, user: userPrompt, name: promptName };
             }
             closePromptsModal();
         }
 
-        // ---------- Column AI Modal State ----------
+        // ---------- Column AI Modal State (unchanged) ----------
         let columnGenerationState = {
             field: null,
             abortController: null,
@@ -1774,15 +1885,12 @@ Generate only the "{mood}" variant image for this banner.`;
             document.getElementById('selectedPromptId').value = '';
             document.getElementById('selectedPromptName').innerHTML = '';
 
-            // Render checklist with all moods
             renderMoodChecklist();
 
-            // Setup search listener
             const searchInput = document.getElementById('moodSearch');
             searchInput.value = '';
             searchInput.oninput = (e) => renderMoodChecklist(e.target.value);
 
-            // Reset generation state for this field if not already ongoing
             if (columnGenerationState.field !== field || !columnGenerationState.isGenerating) {
                 columnGenerationState = {
                     field: null,
@@ -1799,7 +1907,6 @@ Generate only the "{mood}" variant image for this banner.`;
                 document.getElementById('columnProgress').innerHTML = '';
                 document.getElementById('columnStatus').innerText = '';
             } else {
-                // Restore ongoing state
                 document.getElementById('columnProgress').innerHTML = '';
                 columnGenerationState.links.forEach(link => addImageToProgress(link));
                 document.getElementById('columnProgressArea').style.display = 'block';
@@ -1843,7 +1950,6 @@ Generate only the "{mood}" variant image for this banner.`;
             const bannerId = fieldToBannerId[field];
             if (!bannerId) return;
 
-            // Get selected moods
             const checkboxes = document.querySelectorAll('#columnMoodChecklist input[type="checkbox"]:checked');
             if (checkboxes.length === 0) {
                 alert('Please select at least one mood.');
@@ -1864,7 +1970,6 @@ Generate only the "{mood}" variant image for this banner.`;
             };
             const inspiration = document.getElementById('columnInspiration').value;
 
-            // Use selected prompt if any
             let systemPrompt = undefined;
             let userTemplate = undefined;
             if (columnGenerationState.selectedPrompt) {
@@ -2114,7 +2219,7 @@ Generate only the "{mood}" variant image for this banner.`;
             URL.revokeObjectURL(url);
         }
 
-        // ---------- Individual Banner AI Generation (unchanged) ----------
+        // ---------- Individual Banner AI Generation ----------
         let bannerAbortController = null;
         let bannerIsGenerating = false;
 
@@ -2176,7 +2281,6 @@ Generate only the "{mood}" variant image for this banner.`;
                 version: "1.0",
                 total_banners: 1,
                 banners: [bannerData]
-                // No moods – generate all 6 (default behaviour)
             };
 
             document.getElementById('bannerProgress').innerHTML = '';
@@ -2284,7 +2388,425 @@ Generate only the "{mood}" variant image for this banner.`;
             }
         }
 
-        // ---------- Table rendering ----------
+        // ========== Row AI functions (with config, size per field, global inspiration, per-field prompts) ==========
+        let rowGenerationState = {
+            moodId: null,
+            moodName: null,
+            abortController: null,
+            isGenerating: false,
+            links: [],
+            selectedFields: [],
+            completed: false,
+            fieldConfigs: {},        // key: field name, value: { title, sub_title, description, cta, background, object, size, prompt }
+            globalInspiration: 'Bollywood landscape field'
+        };
+
+        function renderFieldChecklist(filter = '') {
+            const container = document.getElementById('fieldChecklist');
+            const searchTerm = filter.toLowerCase();
+            const allFields = Object.values(bannerFieldMap);
+            let html = '';
+            allFields.forEach(field => {
+                if (field.toLowerCase().includes(searchTerm)) {
+                    const displayName = field.replace(/_/g, ' ');
+                    html += `<label class="mood-pill">
+                        <input type="checkbox" value="${field}">
+                        ${escapeHtml(displayName)}
+                    </label>`;
+                }
+            });
+            if (!html) html = '<div class="no-results">No matching fields</div>';
+            container.innerHTML = html;
+        }
+
+        function openRowAIModal(moodId) {
+            const mood = allMoods.find(m => m.id === moodId);
+            if (!mood) return;
+
+            rowGenerationState = {
+                moodId: moodId,
+                moodName: mood.name || `Mood ${moodId}`,
+                abortController: null,
+                isGenerating: false,
+                links: [],
+                selectedFields: [],
+                completed: false,
+                fieldConfigs: {},
+                globalInspiration: 'Bollywood landscape field'
+            };
+
+            document.getElementById('rowMoodName').innerText = rowGenerationState.moodName;
+            renderFieldChecklist();
+
+            const searchInput = document.getElementById('fieldSearch');
+            searchInput.value = '';
+            searchInput.oninput = (e) => renderFieldChecklist(e.target.value);
+
+            // Hide config panel and progress area
+            document.getElementById('rowConfigPanel').style.display = 'none';
+            document.getElementById('rowProgressArea').style.display = 'none';
+            document.getElementById('rowPostGenActions').style.display = 'none';
+            document.getElementById('rowRejectMessage').style.display = 'none';
+            document.getElementById('rowProgress').innerHTML = '';
+            document.getElementById('rowStatus').innerText = '';
+
+            // Set global inspiration input to default
+            document.getElementById('globalInspirationInput').value = rowGenerationState.globalInspiration;
+
+            document.getElementById('rowAiModal').classList.add('show');
+        }
+
+        function closeRowAIModal() {
+            if (rowGenerationState.abortController) {
+                rowGenerationState.abortController.abort();
+                rowGenerationState.abortController = null;
+                rowGenerationState.isGenerating = false;
+            }
+            document.getElementById('rowAiModal').classList.remove('show');
+        }
+
+        function showRowConfigPanel() {
+            const checkboxes = document.querySelectorAll('#fieldChecklist input[type="checkbox"]:checked');
+            if (checkboxes.length === 0) {
+                alert('Please select at least one field first.');
+                return;
+            }
+
+            const selectedFields = Array.from(checkboxes).map(cb => cb.value);
+            rowGenerationState.selectedFields = selectedFields;
+
+            // Build config panel HTML with prompt selection
+            let html = '';
+            selectedFields.forEach(field => {
+                const bannerId = fieldToBannerId[field];
+                const defaults = bannerDefaults[bannerId] || {};
+                // Use existing config if available, otherwise defaults
+                const config = rowGenerationState.fieldConfigs[field] || { 
+                    ...defaults, 
+                    size: 'Landscape',
+                    prompt: null
+                };
+                // Store back to state
+                rowGenerationState.fieldConfigs[field] = config;
+
+                const promptName = config.prompt ? config.prompt.name : 'None';
+
+                html += `<div class="config-field-group" data-field="${field}">`;
+                html += `<h5>${field.replace(/_/g, ' ')}</h5>`;
+
+                // Prompt selection row
+                html += `<div class="field-row" style="grid-template-columns: 1fr 1fr 1fr;">`;
+                html += `<label>Prompt</label>`;
+                html += `<span id="prompt-name-${field}" style="padding: 8px; background: #f0e6f5; border-radius: 40px; text-align: center;">${escapeHtml(promptName)}</span>`;
+                html += `<button class="fix-btn" onclick="selectPromptForField('${field}')" style="padding: 6px 12px;">📋 Select</button>`;
+                html += `</div>`;
+
+                // Existing fields
+                html += `<div class="field-row"><label>Title</label><input type="text" id="config-${field}-title" value="${escapeHtml(config.title || '')}"></div>`;
+                html += `<div class="field-row"><label>Sub Title</label><input type="text" id="config-${field}-sub_title" value="${escapeHtml(config.sub_title || '')}"></div>`;
+                html += `<div class="field-row"><label>Description</label><input type="text" id="config-${field}-description" value="${escapeHtml(config.description || '')}"></div>`;
+                html += `<div class="field-row"><label>CTA</label><input type="text" id="config-${field}-cta" value="${escapeHtml(config.cta || '')}"></div>`;
+                html += `<div class="field-row"><label>Background</label><input type="text" id="config-${field}-background" value="${escapeHtml(config.background || 'mood based')}"></div>`;
+                html += `<div class="field-row"><label>Object</label><input type="text" id="config-${field}-object" value="${escapeHtml(config.object || '')}"></div>`;
+                html += `<div class="field-row"><label>Size</label>
+                        <select id="config-${field}-size">
+                            <option value="Landscape" ${config.size === 'Landscape' ? 'selected' : ''}>Landscape</option>
+                            <option value="Portrait" ${config.size === 'Portrait' ? 'selected' : ''}>Portrait</option>
+                            <option value="Square" ${config.size === 'Square' ? 'selected' : ''}>Square</option>
+                        </select>
+                        </div>`;
+                html += `</div>`;
+            });
+
+            document.getElementById('rowConfigList').innerHTML = html;
+            document.getElementById('rowConfigPanel').style.display = 'block';
+        }
+
+        function selectPromptForField(field) {
+            window._currentPromptField = field;
+            openPromptsModal(true);
+        }
+
+        function hideRowConfigPanel() {
+            document.getElementById('rowConfigPanel').style.display = 'none';
+        }
+
+        function saveRowConfigs() {
+            // Read global inspiration
+            rowGenerationState.globalInspiration = document.getElementById('globalInspirationInput').value;
+
+            // Read values from inputs and update fieldConfigs (preserve prompt)
+            for (const field of rowGenerationState.selectedFields) {
+                const config = {
+                    title: document.getElementById(`config-${field}-title`).value,
+                    sub_title: document.getElementById(`config-${field}-sub_title`).value,
+                    description: document.getElementById(`config-${field}-description`).value,
+                    cta: document.getElementById(`config-${field}-cta`).value,
+                    background: document.getElementById(`config-${field}-background`).value,
+                    object: document.getElementById(`config-${field}-object`).value,
+                    size: document.getElementById(`config-${field}-size`).value,
+                    prompt: rowGenerationState.fieldConfigs[field].prompt // keep existing prompt
+                };
+                rowGenerationState.fieldConfigs[field] = config;
+            }
+            showMessage('Configurations saved.', 'success');
+            hideRowConfigPanel();
+        }
+
+        function addRowImageToProgress(link) {
+            const progressDiv = document.getElementById('rowProgress');
+            const container = document.createElement('div');
+            container.className = 'img-container';
+            const img = document.createElement('img');
+            img.src = link.url;
+            img.className = 'progress-img';
+            img.title = `${link.bannerName} - ${link.mood}`;
+            container.appendChild(img);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = link.url;
+            downloadLink.download = `${link.bannerName}_${link.mood}.png`;
+            downloadLink.className = 'img-download';
+            downloadLink.innerHTML = '⬇️';
+            downloadLink.onclick = (e) => e.stopPropagation();
+            container.appendChild(downloadLink);
+            progressDiv.appendChild(container);
+        }
+
+        async function startRowGeneration() {
+            // Ensure we have selected fields
+            if (rowGenerationState.selectedFields.length === 0) {
+                // If they didn't click Configure, get selected from checkboxes
+                const checkboxes = document.querySelectorAll('#fieldChecklist input[type="checkbox"]:checked');
+                if (checkboxes.length === 0) {
+                    alert('Please select at least one field.');
+                    return;
+                }
+                rowGenerationState.selectedFields = Array.from(checkboxes).map(cb => cb.value);
+            }
+
+            // Prepare UI
+            document.getElementById('rowProgress').innerHTML = '';
+            document.getElementById('rowStatus').innerText = '';
+            document.getElementById('rowProgressArea').style.display = 'block';
+            document.getElementById('rowStopBtn').style.display = 'inline-flex';
+            document.getElementById('rowPostGenActions').style.display = 'none';
+            document.getElementById('rowRejectMessage').style.display = 'none';
+
+            rowGenerationState.abortController = new AbortController();
+            rowGenerationState.isGenerating = true;
+            rowGenerationState.links = [];
+            rowGenerationState.completed = false;
+
+            const statusDiv = document.getElementById('rowStatus');
+            const moodNameLower = rowGenerationState.moodName.toLowerCase();
+
+            try {
+                // Loop through each selected field sequentially
+                for (const field of rowGenerationState.selectedFields) {
+                    if (rowGenerationState.abortController.signal.aborted) {
+                        statusDiv.innerText = '⏹️ Generation aborted.';
+                        break;
+                    }
+
+                    const bannerId = fieldToBannerId[field];
+                    if (!bannerId) continue;
+
+                    const config = rowGenerationState.fieldConfigs[field] || bannerDefaults[bannerId] || {};
+
+                    const banner = {
+                        banner_id: bannerId,
+                        banner_name: field.replace(/_/g, ' '),
+                        size: config.size || 'Landscape',
+                        title: config.title || '',
+                        sub_title: config.sub_title || '',
+                        description: config.description || '',
+                        cta: config.cta || '',
+                        background: config.background || 'mood based',
+                        object: config.object || ''
+                    };
+
+                    const requestJson = {
+                        version: "1.0",
+                        total_banners: 1,
+                        banners: [banner],
+                        moods: [moodNameLower]   // only this mood
+                    };
+
+                    const body = {
+                        json: requestJson,
+                        inspiration: rowGenerationState.globalInspiration
+                    };
+
+                    // Add prompt if configured for this field
+                    if (config.prompt) {
+                        body.systemPrompt = config.prompt.system;
+                        body.userPromptTemplate = config.prompt.user;
+                    }
+
+                    statusDiv.innerText = `Generating for field: ${field}...`;
+
+                    const response = await fetch('/api/ai/generate-banners', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        signal: rowGenerationState.abortController.signal,
+                        body: JSON.stringify(body)
+                    });
+
+                    if (!response.ok) {
+                        const err = await response.json();
+                        statusDiv.innerText = `❌ Error on ${field}: ` + err.error;
+                        // Continue with next field? We'll stop on error for now.
+                        break;
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = '';
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n\n');
+                        buffer = lines.pop();
+
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                const data = JSON.parse(line.slice(6));
+                                if (data.error) {
+                                    statusDiv.innerText = `❌ Error on ${field}: ` + data.error;
+                                    // Optionally abort further fields
+                                    rowGenerationState.abortController.abort();
+                                    break;
+                                }
+                                if (data.done) {
+                                    statusDiv.innerText = `✅ Completed ${field}.`;
+                                    break;
+                                }
+                                const link = {
+                                    bannerId: data.bannerId,
+                                    bannerName: data.bannerName,
+                                    mood: data.mood.toLowerCase(),
+                                    url: data.imageUrl
+                                };
+                                rowGenerationState.links.push(link);
+                                addRowImageToProgress(link);
+                                statusDiv.innerText = `Generated: ${data.bannerName} (${data.mood})`;
+                            }
+                        }
+                    }
+
+                    // Small delay between fields
+                    await new Promise(r => setTimeout(r, 500));
+                }
+
+                // All fields processed
+                if (!rowGenerationState.abortController.signal.aborted) {
+                    statusDiv.innerText = `✅ All generations completed for mood "${rowGenerationState.moodName}".`;
+                    document.getElementById('rowStopBtn').style.display = 'none';
+                    document.getElementById('rowPostGenActions').style.display = 'flex';
+                    rowGenerationState.isGenerating = false;
+                    rowGenerationState.completed = true;
+                }
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    statusDiv.innerText = '⏹️ Generation stopped.';
+                } else {
+                    statusDiv.innerText = '❌ Network error: ' + err.message;
+                }
+                rowGenerationState.isGenerating = false;
+                document.getElementById('rowStopBtn').style.display = 'none';
+            }
+        }
+
+        function stopRowGeneration() {
+            if (rowGenerationState.abortController) {
+                rowGenerationState.abortController.abort();
+                rowGenerationState.abortController = null;
+                rowGenerationState.isGenerating = false;
+                document.getElementById('rowStopBtn').style.display = 'none';
+                document.getElementById('rowStatus').innerText = 'Generation stopped by user.';
+            }
+        }
+
+        async function approveRowGeneration() {
+            const moodId = rowGenerationState.moodId;
+            const links = rowGenerationState.links;
+
+            if (!moodId || links.length === 0) {
+                showMessage('No images to save.', 'info');
+                return;
+            }
+
+            let successCount = 0;
+            let errorMessages = [];
+
+            for (const link of links) {
+                const field = bannerFieldMap[link.bannerId];
+                if (!field) {
+                    errorMessages.push(`Unknown banner ID ${link.bannerId}`);
+                    continue;
+                }
+
+                try {
+                    const getRes = await fetch(`/api/base_moods/${moodId}`, { credentials: 'same-origin' });
+                    if (!getRes.ok) {
+                        errorMessages.push(`Mood ${moodId}: Failed to fetch (HTTP ${getRes.status})`);
+                        continue;
+                    }
+                    const getData = await getRes.json();
+                    if (!getData.success) {
+                        errorMessages.push(`Mood ${moodId}: ${getData.error}`);
+                        continue;
+                    }
+                    const mood = getData.data;
+
+                    mood[field] = link.url;
+                    delete mood.id;
+                    delete mood.created_at;
+                    delete mood.updated_at;
+
+                    const putRes = await fetch(`/api/base_moods/${moodId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'same-origin',
+                        body: JSON.stringify(mood)
+                    });
+                    const putData = await putRes.json();
+                    if (putRes.ok && putData.success) {
+                        const idx = allMoods.findIndex(m => m.id === moodId);
+                        if (idx !== -1) allMoods[idx][field] = link.url;
+                        successCount++;
+                    } else {
+                        errorMessages.push(`Mood ${moodId}, field ${field}: ${putData.error || 'Unknown'}`);
+                    }
+                } catch (err) {
+                    errorMessages.push(`Mood ${moodId}, field ${field}: ${err.message}`);
+                }
+            }
+
+            if (successCount > 0) {
+                showMessage(`✅ Updated ${successCount} fields for mood "${rowGenerationState.moodName}"`, 'success');
+                filterAndDisplay();
+            }
+            if (errorMessages.length > 0) {
+                showMessage(`❌ Errors:\n${errorMessages.join('\n')}`, 'error');
+            }
+
+            downloadLinksCsv(links);
+            closeRowAIModal();
+        }
+
+        function rejectRowGeneration() {
+            downloadLinksCsv(rowGenerationState.links);
+            const msgDiv = document.getElementById('rowRejectMessage');
+            msgDiv.style.display = 'flex';
+            setTimeout(() => {
+                msgDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // ---------- Table rendering (with Row AI button as first column) ----------
         function displayNormalTable(moods) {
             slideshowIntervals.forEach(clearInterval);
             slideshowIntervals = [];
@@ -2305,6 +2827,8 @@ Generate only the "{mood}" variant image for this banner.`;
             });
 
             let html = '<table><thead><tr>';
+            // Add an extra header for Row AI as the first column
+            html += '<th>Row AI</th>';
             fields.forEach(field => {
                 let headerText = field;
                 if (field !== 'id' && field !== 'name') {
@@ -2316,6 +2840,8 @@ Generate only the "{mood}" variant image for this banner.`;
 
             moods.forEach(mood => {
                 html += '<tr>';
+                // Row AI button as first column
+                html += `<td><button class="ai-small" onclick="openRowAIModal(${mood.id})" title="Generate images for this mood across multiple fields">🤖</button></td>`;
                 fields.forEach(field => {
                     if (field === 'id') {
                         html += `<td onclick="openFieldEditModal(${mood.id}, 'id')">${mood.id}</td>`;
@@ -2716,13 +3242,14 @@ Generate only the "{mood}" variant image for this banner.`;
             if (event.target === bannerAiModal) closeBannerAIModal();
             const columnAiModal = document.getElementById('columnAiModal');
             if (event.target === columnAiModal) closeColumnAIModal();
+            const rowAiModal = document.getElementById('rowAiModal');
+            if (event.target === rowAiModal) closeRowAIModal();
             const promptsModal = document.getElementById('promptsModal');
             if (event.target === promptsModal) closePromptsModal();
         });
 
         // Initial load
         loadMoods();
-        
     </script>
 </body>
 </html>
