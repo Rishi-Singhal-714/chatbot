@@ -19,6 +19,8 @@ const { File } = require("undici");
 const cookieParser = require('cookie-parser');
 const { createCanvas } = require('canvas');
 const conversationDb = require('./requestData2');
+const {getComboData} = require('./requestData');
+
 const upload = multer({ storage: multer.memoryStorage() });
 const sharp = require('sharp');
 
@@ -5671,6 +5673,8 @@ app.get('/business', (req, res) => res.sendFile(__dirname + '/public/business.ht
 
 app.get('/image-search', (req, res) => res.sendFile(__dirname + '/public/image-search.html'));
 
+app.get('/curate-galleries', (req, res) => res.sendFile(__dirname + '/public/curate-galleries.html'));
+
 // -------------------------
 // Moods Endpoints
 // -------------------------
@@ -6653,6 +6657,497 @@ app.post('/api/ai/generate-tags', async (req, res) => {
         });
     }
 });
+
+
+
+// --------------------- Helper: generate gallery definitions with combo summary ---------------------
+async function generateGalleryDefinitions(userPrompt, numGalleries, sampleProducts, comboSummary = null) {
+  const sampleLines = sampleProducts.map(p => 
+    `- ${p.name} (${p.category_name || 'Unknown'})`
+  ).join('\n');
+
+  let comboLines = '';
+  if (comboSummary && comboSummary.length > 0) {
+    comboLines = '\n\nHere are all product groups from your catalog (combinations of store, category, and subcategory):\n' +
+      comboSummary.map(c => 
+        `- Group: ${c.store_name} / ${c.category_name} / ${c.subcategory_name} (${c.product_count} products, price range ₹${c.min_price}–${c.max_price}, tags: ${c.tags2})`
+      ).join('\n');
+  }
+
+  const systemPrompt = `You are a creative director for a lifestyle shopping platform.
+Create exactly ${numGalleries} distinct gallery themes based on the user's request.
+Each gallery must have:
+- name (max 60 chars, catchy)
+- description (max 150 chars, enticing)
+- tags (array of 3-5 keywords, e.g., ["summer", "casual", "affordable"])
+
+Use the sample product list below for inspiration. The product group information shows real clusters in your catalog – use them to suggest themes that align with actual product groupings (e.g., by store, category, or subcategory).
+
+Return ONLY valid JSON in this format:
+{
+  "galleries": [
+    { "name": "...", "description": "...", "tags": ["tag1", "tag2"] },
+    ...
+  ]
+}`;
+
+  const userMessage = `User request: ${userPrompt}\n\nSample products:\n${sampleLines}${comboLines}`;
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4.1",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage }
+      ],
+      temperature: 0.7,
+      max_tokens: 1500,
+      response_format: { type: "json_object" }
+    });
+    const content = completion.choices[0].message.content;
+    const parsed = JSON.parse(content);
+    return parsed.galleries || [];
+  } catch (err) {
+    console.error('Error generating gallery definitions:', err);
+    return [];
+  }
+}
+
+// --------------------- Helper: assign products to galleries (with combo fields) ---------------------
+async function assignBatchToGalleries(products, galleries, threshold, isUnderfillPass = false, comboSummary = null) {
+  // Escape double quotes in product fields to avoid JSON corruption
+  const productLines = products.map(p => {
+    const desc = p.description ? p.description.substring(0, 100).replace(/"/g, '\\"') : '';
+    const tags = p.tags ? p.tags.split(',').map(t => t.trim()).join(', ').replace(/"/g, '\\"') : '';
+    const category = p.category_name || 'Unknown';
+    const price = p.price || 0;
+    
+    // Add combo fields if they exist
+    const comboStore = p.combo_store ? ` | Store: ${p.combo_store.replace(/"/g, '\\"')}` : '';
+    const comboCat = p.combo_category ? ` | Combo Category: ${p.combo_category.replace(/"/g, '\\"')}` : '';
+    const comboSubcat = p.combo_subcategory ? ` | Combo Subcategory: ${p.combo_subcategory.replace(/"/g, '\\"')}` : '';
+    const comboTags = p.combo_tags ? ` | Combo Tags: ${p.combo_tags.replace(/"/g, '\\"').substring(0, 100)}` : '';
+
+    return `ID: ${p.id} | Name: ${p.name.replace(/"/g, '\\"')} | Price: ₹${price} | Category: ${category} | Tags: ${tags} | Description: ${desc}${comboStore}${comboCat}${comboSubcat}${comboTags}`;
+  }).join('\n');
+
+  const galleryDescriptions = galleries.map((g, i) => 
+    `Gallery ${i}: "${g.name.replace(/"/g, '\\"')}"\nDescription: ${g.description.replace(/"/g, '\\"')}\nTags: ${g.tags.join(', ')}`
+  ).join('\n\n');
+
+  // Format combo summary if provided
+  let comboLines = '';
+  if (comboSummary && comboSummary.length > 0) {
+    comboLines = '\n\nCombo Groups (catalog clusters):\n' +
+      comboSummary.map(c => 
+        `- Group: ${c.store_name} / ${c.category_name} / ${c.subcategory_name} (${c.product_count} products, price range ₹${c.min_price}–${c.max_price}, tags: ${c.tags2})`
+      ).join('\n');
+  }
+
+  const systemPrompt = isUnderfillPass
+    ? `You are helping to fill under‑stocked galleries with additional products.
+       For each product, determine the most appropriate gallery from the list below.
+       Provide a relevance score between 0 and 1 (higher = better fit).
+       Even if the fit is weak, assign it to the best possible gallery with a low score (e.g., 0.2, 0.3).
+       Use the provided "Combo Groups" to understand the natural clusters in the catalog – products often belong to one of these groups.
+       Return a JSON object with a key "assignments" containing an array of assignments, one per product. Example:
+       {"assignments": [{"productId": 123, "galleryIndex": 0, "score": 0.7, "reason": "..."}]}
+       Do not include any other text.`
+    : `You are a product curator. For each product below, choose the most suitable gallery from the list.
+       Assign a relevance score from 0 to 1 (higher = better match). Every product must be assigned to exactly one gallery, even if the match is weak – use a low score (e.g., 0.2, 0.3) in that case.
+       The "Combo Groups" section shows real product clusters (by store, category, subcategory) from the catalog – use this information to make more informed assignments.
+       Return a JSON object with a key "assignments" containing an array of assignments, one per product. Example:
+       {"assignments": [{"productId": 123, "galleryIndex": 0, "score": 0.9, "reason": "..."}]}
+       Do not include any other text.`;
+
+  const userMessage = `Galleries:\n${galleryDescriptions}\n\nProducts:\n${productLines}${comboLines}`;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4.1",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage }
+      ],
+      temperature: 0.6,
+      max_tokens: 10000,  // Increased from 4000 to handle larger responses
+      response_format: { type: "json_object" }
+    });
+
+    const content = completion.choices[0].message.content;
+    let assignments = [];
+
+    // Attempt to extract JSON
+    try {
+      const parsed = JSON.parse(content);
+      assignments = parsed.assignments || [];
+    } catch (parseErr) {
+      console.warn('⚠️ Initial JSON parse failed, attempting regex extraction...');
+      console.warn('Response snippet (first 1000 chars):', content.substring(0, 1000));
+      
+      // Try to extract an object with "assignments" key
+      const objectMatch = content.match(/\{(?:[^{}]|(\{[^{}]*\}))*\}/s); // naive object match
+      if (objectMatch) {
+        try {
+          const obj = JSON.parse(objectMatch[0]);
+          assignments = obj.assignments || [];
+        } catch (e) {
+          console.error('❌ Regex object extraction failed:', e);
+        }
+      }
+      if (assignments.length === 0) {
+        console.error('❌ Could not extract valid JSON from response');
+        return [];
+      }
+    }
+
+    // Attach product names
+    const productMap = new Map(products.map(p => [p.id, p.name]));
+
+    // Filter by threshold AFTER getting all assignments
+    const filtered = assignments
+      .filter(a => a.productId && a.galleryIndex !== undefined && a.score >= threshold)
+      .map(a => ({
+        productId: a.productId,
+        productName: productMap.get(a.productId) || 'Unknown',
+        galleryIndex: a.galleryIndex,
+        score: a.score,
+        reason: a.reason || ''
+      }));
+
+    if (filtered.length === 0) {
+      console.log(`   ℹ️ No assignments met threshold ${threshold} in this batch (but all products were scored)`);
+    } else {
+      console.log(`   ✅ ${filtered.length} assignments passed threshold ${threshold}`);
+    }
+
+    return filtered;
+  } catch (err) {
+    console.error('❌ Error in batch assignment:', err);
+    return [];
+  }
+}
+
+// --------------------- Route: Download Combo CSV ---------------------
+app.get('/api/download-combo-csv', async (req, res) => {
+  try {
+    const rows = await db.getComboData();
+
+    // Set CSV headers
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="combo_data.csv"');
+
+    // If no data, send empty CSV with headers
+    if (!rows || rows.length === 0) {
+      res.write('No data\n');
+      return res.end();
+    }
+
+    // Write CSV header (column names)
+    const headers = Object.keys(rows[0]);
+    res.write(headers.join(',') + '\n');
+
+    // Write each row
+    rows.forEach(row => {
+      const values = headers.map(header => {
+        const val = row[header];
+        if (val === null || val === undefined) return '';
+        const str = String(val);
+        // Escape commas, quotes, and newlines
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      });
+      res.write(values.join(',') + '\n');
+    });
+
+    res.end();
+  } catch (err) {
+    console.error('CSV download error:', err);
+    res.status(500).send('Error generating CSV');
+  }
+});
+
+// --------------------- Route: Generate Gallery Themes (Step 1) ---------------------
+app.post('/api/ai/generate-galleries2', async (req, res) => {
+  try {
+    const { userPrompt, numGalleries, sampleProductIds } = req.body;
+
+    if (!userPrompt || !numGalleries || !sampleProductIds) {
+      return res.status(400).json({ success: false, error: 'Missing required fields' });
+    }
+
+    // Fetch sample products
+    const sampleProducts = await db.getProductsByIds(sampleProductIds);
+
+    // Fetch ALL combo data (no slicing)
+    const comboRows = await db.getComboData();
+    const allCombos = comboRows.map(row => ({
+      store_name: row['Store Name'] || 'Unknown Store',
+      category_name: row['Category Name'] || 'Unknown Category',
+      subcategory_name: row['Subcategory Name'] || 'Unknown Subcategory',
+      product_count: row['Number of products'],
+      min_price: row['Min price'],
+      max_price: row['Max price'],
+      tags2: row['Tags2'] ? row['Tags2'].substring(0, 100) : ''   // truncate to avoid huge strings
+    }));
+
+    const galleries = await generateGalleryDefinitions(userPrompt, numGalleries, sampleProducts, allCombos);
+    res.json({ success: true, data: { galleries } });
+  } catch (error) {
+    console.error('❌ Gallery generation error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// --------------------- Route: Curate Galleries (Step 2) ---------------------
+app.post('/api/ai/curate-galleries', async (req, res) => {
+  try {
+    const {
+      productIds,
+      galleries: inputGalleries,          // array of { name, description, tags }
+      minProductsPerGallery = 3,
+      maxProductsPerGallery = 20,
+      threshold = 0.6,
+      batchSize = 50
+    } = req.body;
+
+    // Validation
+    if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+      return res.status(400).json({ success: false, error: 'productIds must be a non‑empty array' });
+    }
+    if (!inputGalleries || !Array.isArray(inputGalleries) || inputGalleries.length === 0) {
+      return res.status(400).json({ success: false, error: 'galleries array is required' });
+    }
+    if (productIds.length > 5000) {
+      return res.status(400).json({ success: false, error: 'Maximum 5000 product IDs allowed' });
+    }
+    if (maxProductsPerGallery === 0) {
+      return res.status(400).json({ success: false, error: 'maxProductsPerGallery must be > 0' });
+    }
+
+    console.log(`🎨 Curating galleries from ${productIds.length} products`);
+    console.log(`   Galleries: ${inputGalleries.map(g => g.name).join(', ')}`);
+    console.log(`   min: ${minProductsPerGallery}, max: ${maxProductsPerGallery}, threshold: ${threshold}`);
+
+    // 1. Fetch products
+    const products = await db.getProductsByIds(productIds);
+    if (products.length === 0) {
+      return res.status(404).json({ success: false, error: 'No products found for the given IDs' });
+    }
+
+    // 2. Fetch combo data and build product-to-combo map
+    const comboRows = await db.getComboData();
+    const productToCombo = new Map();   // key: productId, value: combo object
+    const allCombos = [];  
+for (const row of comboRows) {
+  const productIdStr = row['Product IDs'];
+  if (productIdStr) {
+    const ids = productIdStr.split(',').map(s => parseInt(s.trim(), 10)).filter(id => !isNaN(id));
+    const comboInfo = {
+      store_name: row['Store Name'] || '',
+      category_name: row['Category Name'] || '',
+      subcategory_name: row['Subcategory Name'] || '',
+      tags2: row['Tags2'] || '',
+      min_price: row['Min price'],
+      max_price: row['Max price'],
+      combo_product_count: row['Number of products']
+    };
+    for (const id of ids) {
+      if (!productToCombo.has(id)) {
+        productToCombo.set(id, comboInfo);
+      }
+    }
+  }
+
+  // Add to allCombos for AI context (truncate tags2 to avoid huge strings)
+  allCombos.push({
+    store_name: row['Store Name'] || 'Unknown Store',
+    category_name: row['Category Name'] || 'Unknown Category',
+    subcategory_name: row['Subcategory Name'] || 'Unknown Subcategory',
+    product_count: row['Number of products'],
+    min_price: row['Min price'],
+    max_price: row['Max price'],
+    tags2: row['Tags2'] ? row['Tags2'].substring(0, 100) : ''
+  });
+}
+
+    // 3. Enrich each product with its combo data (if any)
+    const enrichedProducts = products.map(p => {
+      const combo = productToCombo.get(p.id) || {};
+      return {
+        ...p,
+        combo_store: combo.store_name,
+        combo_category: combo.category_name,
+        combo_subcategory: combo.subcategory_name,
+        combo_tags: combo.tags2,
+        combo_min_price: combo.min_price,
+        combo_max_price: combo.max_price,
+        combo_product_count: combo.combo_product_count
+      };
+    });
+
+    // 4. Use provided galleries (no generation step)
+    const galleryDefs = inputGalleries;
+
+    // 5. Split into batches
+    const batches = [];
+    for (let i = 0; i < enrichedProducts.length; i += batchSize) {
+      batches.push(enrichedProducts.slice(i, i + batchSize));
+    }
+    console.log(`📦 Split into ${batches.length} batches`);
+
+    // 6. Collect all candidate assignments
+    const allAssignments = [];
+
+    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+      const batch = batches[batchIndex];
+      console.log(`🔄 Processing batch ${batchIndex+1}/${batches.length} (${batch.length} products)`);
+
+      const assignments = await assignBatchToGalleries(batch, galleryDefs, threshold, false, allCombos);
+      if (assignments && assignments.length) {
+        allAssignments.push(...assignments);
+      }
+    }
+
+    // 7. Deduplicate assignments per product (keep highest score)
+    const bestAssignmentPerProduct = new Map();
+    for (const a of allAssignments) {
+      const existing = bestAssignmentPerProduct.get(a.productId);
+      if (!existing || a.score > existing.score) {
+        bestAssignmentPerProduct.set(a.productId, a);
+      }
+    }
+    console.log(`📊 After deduplication: ${bestAssignmentPerProduct.size} unique assignments`);
+
+    // 8. Build galleries with their assigned products
+    let galleries = galleryDefs.map((g, idx) => ({
+      ...g,
+      products: []
+    }));
+
+    for (const [productId, assignment] of bestAssignmentPerProduct.entries()) {
+      const gallery = galleries[assignment.galleryIndex];
+      if (gallery) {
+        gallery.products.push({
+          id: productId,
+          name: assignment.productName,
+          reason: assignment.reason,
+          score: assignment.score
+        });
+      }
+    }
+
+    // 9. Enforce maximum per gallery (keep high-score, random low-score)
+    for (const gallery of galleries) {
+      if (gallery.products.length > maxProductsPerGallery) {
+        const products = gallery.products;
+        const highScore = products.filter(p => p.score >= 0.8);
+        const lowScore = products.filter(p => p.score < 0.8);
+
+        if (highScore.length >= maxProductsPerGallery) {
+          gallery.products = shuffleArray(highScore).slice(0, maxProductsPerGallery);
+        } else {
+          const needed = maxProductsPerGallery - highScore.length;
+          const selectedLow = shuffleArray(lowScore).slice(0, needed);
+          gallery.products = [...highScore, ...selectedLow];
+        }
+      }
+    }
+
+    // 10. Identify unassigned products (use enrichedProducts for later)
+    const assignedProductIds = new Set();
+    for (const g of galleries) {
+      for (const p of g.products) {
+        assignedProductIds.add(p.id);
+      }
+    }
+    const unassignedProducts = enrichedProducts.filter(p => !assignedProductIds.has(p.id));
+    console.log(`📦 Unassigned products after first pass: ${unassignedProducts.length}`);
+
+    // 11. Handle under‑filled galleries (second pass)
+    const UNDERFILL_THRESHOLD = 0.4;
+    const underFilledGalleries = galleries
+      .map((g, idx) => ({ idx, gallery: g, needed: minProductsPerGallery - g.products.length }))
+      .filter(item => item.needed > 0);
+
+    if (underFilledGalleries.length > 0 && unassignedProducts.length > 0) {
+      console.log(`🔁 Second pass for ${underFilledGalleries.length} under‑filled galleries, using threshold ${UNDERFILL_THRESHOLD}`);
+
+      const targetGalleries = underFilledGalleries.map(item => galleries[item.idx]);
+
+const newAssignments = await assignBatchToGalleries(
+  unassignedProducts,
+  targetGalleries,
+  UNDERFILL_THRESHOLD,
+  true,
+  allCombos   // pass combo data to second pass as well
+);
+
+      if (newAssignments && newAssignments.length) {
+        console.log(`   ✅ Got ${newAssignments.length} assignments from second pass`);
+
+        const newByGallery = new Map();
+        for (const a of newAssignments) {
+          const originalIdx = underFilledGalleries[a.galleryIndex].idx;
+          if (!newByGallery.has(originalIdx)) newByGallery.set(originalIdx, []);
+          newByGallery.get(originalIdx).push(a);
+        }
+
+        for (const [origIdx, assigns] of newByGallery.entries()) {
+          const gallery = galleries[origIdx];
+          const needed = underFilledGalleries.find(u => u.idx === origIdx).needed;
+          assigns.sort((a, b) => b.score - a.score);
+          const toAdd = assigns.slice(0, needed);
+          for (const a of toAdd) {
+            gallery.products.push({
+              id: a.productId,
+              name: a.productName,
+              reason: a.reason,
+              score: a.score
+            });
+          }
+        }
+      } else {
+        console.log(`   ❌ No assignments from second pass`);
+      }
+    }
+
+    // 12. Final statistics
+    const totalProductsProvided = products.length;
+    const productsAssigned = galleries.reduce((sum, g) => sum + g.products.length, 0);
+    const unassigned = totalProductsProvided - productsAssigned;
+
+    console.log(`✅ Final: ${galleries.length} galleries, ${productsAssigned} products assigned, ${unassigned} unassigned`);
+
+    res.json({
+      success: true,
+      data: { galleries },
+      stats: {
+        totalProductsProvided,
+        productsAssigned,
+        unassigned
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Gallery curation error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Helper: Random shuffle (Fisher–Yates)
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+
+
+
 app.post('/api/ai/generate-descriptions', async (req, res) => {
     try {
         const { productName, category, cat1, tags, price, currentDescription } = req.body;
@@ -6845,6 +7340,8 @@ Generate ONLY the lyrics, no explanations or additional text.
         });
     }
 });
+
+
 
 // ----- The updated endpoint -----
 app.post('/api/ai/generate-galleries', async (req, res) => {

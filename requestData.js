@@ -104,7 +104,8 @@ const columnMapping = {
   'id', 'name', 'logos', 'hero_bg', 'deliver_asap', 'category_banner',
   'visit_us', 'home_banner', 'watch_banner', 'visit_banner', 'listen_banner',
   'cart_banner', 'profile_bg', 'concierge', 'created_at', 'updated_at','visit2_bg',
-  'watch2_bg','decorate2_bg','ask_zulu2_bg','sound2_bg','concierge2_bg'
+  'watch2_bg','decorate2_bg','ask_zulu2_bg','sound2_bg','concierge2_bg','shop_bg',
+  'watch_bg','visit_bg','chat_bg','decorate_bg','feel_bg'
 ],  
 'moods': [
     'mood_id', 'user_mood', 'parent_mood', 'description',
@@ -609,6 +610,109 @@ function executeUpdate(table, id, updateData) {
   });
 }
 
+async function getProductsByIds(ids) {
+  if (!ids || ids.length === 0) return [];
+  
+  ensureConnection();
+  if (!pool) throw new Error('Database connection not available');
+
+  const placeholders = ids.map(() => '?').join(',');
+  
+  const query = `
+    SELECT 
+      p.id,
+      p.name,
+      p.retail_simple_special_price AS price,
+      p.tags2 AS tags,
+      p.description,
+      p.category_id,
+      c.name AS category_name
+    FROM u130660877_zulu.products p
+    LEFT JOIN u130660877_zulu.categories c ON p.category_id = c.id
+    WHERE p.id IN (${placeholders})
+  `;
+  
+  console.log(`📦 Fetching ${ids.length} products by IDs with category names...`);
+  lastQueryTime = Date.now();
+
+  return new Promise((resolve, reject) => {
+    pool.getConnection((err, connection) => {
+      if (err) return reject(err);
+      connection.query(query, ids, (error, results) => {
+        connection.release();
+        if (error) return reject(error);
+        console.log(`✅ Retrieved ${results.length} products (with categories)`);
+        setTimeout(() => {
+          console.log('🔌 Closing connection after product fetch');
+          closeConnectionPool();
+        }, 3000);
+        resolve(results);
+      });
+    });
+  });
+}
+
+async function getComboData() {
+  return new Promise((resolve, reject) => {
+    ensureConnection();
+    if (!pool) {
+      reject(new Error('Database connection not available'));
+      return;
+    }
+
+    const query = `
+      SELECT 
+        ROW_NUMBER() OVER (ORDER BY p.category_id, p.seller_id, p.cat1) AS \`Combo id\`,
+        p.category_id AS \`Category id\`,
+        cat.name AS \`Category Name\`,
+        p.seller_id AS \`Seller id\`,
+        s.store_name AS \`Store Name\`,
+        p.cat1 AS \`Subcategory id\`,
+        subcat.name AS \`Subcategory Name\`,
+        MIN(p.retail_simple_special_price) AS \`Min price\`,
+        MAX(p.retail_simple_special_price) AS \`Max price\`,
+        COUNT(*) AS \`Number of products\`,
+        GROUP_CONCAT(DISTINCT p.id ORDER BY p.id SEPARATOR ', ') AS \`Product IDs\`,
+        GROUP_CONCAT(DISTINCT p.tags2 ORDER BY p.id SEPARATOR ' | ') AS \`Tags2\`
+      FROM u130660877_zulu.products p
+      LEFT JOIN u130660877_zulu.categories cat ON p.category_id = cat.id
+      LEFT JOIN u130660877_zulu.categories subcat ON p.cat1 = subcat.id
+      LEFT JOIN u130660877_zulu.seller_data s ON p.seller_id = s.user_id
+      GROUP BY p.category_id, p.seller_id, p.cat1, cat.name, subcat.name, s.store_name
+      ORDER BY p.category_id, p.seller_id, p.cat1
+    `;
+
+    console.log('📊 Executing combo query...');
+    lastQueryTime = Date.now();
+
+    pool.getConnection((err, connection) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      connection.query(query, (error, results) => {
+        connection.release();
+        if (error) {
+          console.error('❌ Combo query error:', error);
+          reject(error);
+          return;
+        }
+
+        console.log(`✅ Combo query returned ${results.length} rows`);
+
+        setTimeout(() => {
+          console.log('🔌 Closing connection after combo query');
+          closeConnectionPool();
+        }, 3000);
+
+        resolve(results);
+      });
+    });
+  });
+}
+
+
 // Helper function to check all variants for a product
 async function getProductVariants(productId) {
   return new Promise((resolve, reject) => {
@@ -930,8 +1034,10 @@ module.exports = {
   getRecordById,
   clearCache,
   clearAllCaches,
+getComboData,
   getAllCacheStatus,
   getTableColumns,
+  getProductsByIds,
   // Connection management
   createConnectionPool: () => createConnectionPool(),
   closeConnectionPool: () => closeConnectionPool(),

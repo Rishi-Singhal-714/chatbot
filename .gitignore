@@ -9,4 +9,5 @@ node_modules/
 server copy.js
 package-lock.json
 public/base_moods copy.html
+public/galleries copy.html
 README.md
