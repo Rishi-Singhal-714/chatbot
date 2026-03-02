@@ -262,7 +262,7 @@ const cache = {
       SELECT
         ${columnMapping.prompts.join(',\n        ')}
       FROM u130660877_zulu.prompts
-      ORDER BY id DESC
+  
     `
   }
 };

@@ -5099,7 +5099,7 @@ app.put('/api/prompts/:id', async (req, res) => {
     }
 });
 
-// SSE endpoint for AI generation – updated to accept selected moods
+// SSE endpoint for AI generation – updated to accept selected moods and aspect ratio
 app.post('/api/ai/generate-banners', async (req, res) => {
     try {
         const { json: bannerJson, inspiration, systemPrompt, userPromptTemplate } = req.body;
@@ -5126,13 +5126,11 @@ app.post('/api/ai/generate-banners', async (req, res) => {
         let moodsToGenerate = allMoods;
 
         if (bannerJson.moods && Array.isArray(bannerJson.moods) && bannerJson.moods.length > 0) {
-            // Convert incoming mood names to uppercase and filter to valid ones
             moodsToGenerate = bannerJson.moods
                 .map(m => m.toUpperCase())
                 .filter(m => allMoods.includes(m));
 
             if (moodsToGenerate.length === 0) {
-                // If all provided moods are invalid, fallback to all moods
                 moodsToGenerate = allMoods;
             }
         }
@@ -5143,6 +5141,9 @@ app.post('/api/ai/generate-banners', async (req, res) => {
             const bannerName = banner.banner_name;
             const safeName = bannerName.replace(/[^a-zA-Z0-9]/g, '_');
             
+            // NEW: extract aspect_ratio (default to empty string)
+            const aspectRatio = banner.aspect_ratio || '';
+
             // Normalize the size field
             const rawSize = banner.size || 'Landscape';
             const normalizedSize = normalizeSize(rawSize);
@@ -5150,9 +5151,9 @@ app.post('/api/ai/generate-banners', async (req, res) => {
             const { width, height } = dimensions;
 
             for (const mood of moodsToGenerate) {
-                // Build the user prompt (same as before)
                 let finalUserPrompt;
                 if (userPromptTemplate) {
+                    // Replace placeholders including {aspect_ratio}
                     finalUserPrompt = userPromptTemplate
                         .replace(/{mood}/g, mood)
                         .replace(/{bannerId}/g, bannerId)
@@ -5164,9 +5165,10 @@ app.post('/api/ai/generate-banners', async (req, res) => {
                         .replace(/{background}/g, banner.background || 'mood based')
                         .replace(/{object}/g, banner.object || 'lifestyle object')
                         .replace(/{size}/g, banner.size || 'Landscape')
+                        .replace(/{aspect_ratio}/g, aspectRatio)   // NEW: aspect ratio placeholder
                         .replace(/{inspiration}/g, inspiration || 'Bollywood landscape');
                 } else {
-                    // Fallback to default detailed prompt (unchanged)
+                    // Fallback to default detailed prompt (optionally include aspect ratio)
                     finalUserPrompt = `
 Zulu Club — Mood-Based Banner Generation
 
@@ -5184,6 +5186,7 @@ Typography (STRICT): ${getTypographyForMood(mood)}
 Banner ID: ${bannerId}
 Banner Name: ${bannerName}
 Size: ${banner.size || ''}
+Aspect Ratio: ${aspectRatio || 'Not specified'}   <!-- NEW: include aspect ratio -->
 
 Title: ${banner.title || ''}
 Sub Title: ${banner.sub_title || ''}
@@ -5274,7 +5277,7 @@ Generate only the "${mood}" variant image for this banner.
                         tools: [{
                             type: "image_generation",
                             size: `${width}x${height}`,
-                            quality: "medium"
+                            quality: "medium",
                         }],
                         input: [{
                             role: "user",
@@ -5314,7 +5317,6 @@ Generate only the "${mood}" variant image for this banner.
                     );
 
                     let imageUrl = null;
-                    // Parse the response to extract the URL (adjust according to actual response structure)
                     if (uploadResponse.data) {
                         imageUrl = uploadResponse.data.url || 
                                   uploadResponse.data.image_url || 
@@ -5328,12 +5330,11 @@ Generate only the "${mood}" variant image for this banner.
                         throw new Error('Could not extract image URL from upload response');
                     }
 
-                    // Send the public URL to the client
                     sendEvent({
                         bannerId,
                         bannerName,
                         mood,
-                        imageUrl,           // public URL from your API
+                        imageUrl,
                     });
 
                 } catch (err) {
