@@ -108,7 +108,7 @@ const columnMapping = {
   'watch_bg','visit_bg','chat_bg','decorate_bg','feel_bg'
 ],  
 'moods': [
-    'mood_id', 'user_mood', 'parent_mood', 'description',
+    'id', 'user_mood', 'parent_mood', 'description',
     'inspiration', 'advice', 'logo','for_you','home','men','women','kids','track_ids', 'created_at', 'updated_at'
   ],
   'tracks': [

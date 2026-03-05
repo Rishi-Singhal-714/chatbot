@@ -457,7 +457,7 @@
 
         const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/300x200?text=No+Image';
         const API_BASE = '/api/moods';
-        const TABLE_ID_FIELD = 'mood_id';  // primary key field name
+        const TABLE_ID_FIELD = 'id';  // primary key field name
 
         // All fields in order (excluding primary key)
         const fieldNames = [
@@ -518,13 +518,13 @@
             items.forEach(item => {
                 const previewUrl = item.logo || PLACEHOLDER_IMAGE;
                 html += `
-                    <div class="mood-card" onclick="openEditModal(${item.mood_id})">
+                    <div class="mood-card" onclick="openEditModal(${item.id})">
                         <div class="card-preview">
                             <img src="${escapeHtml(previewUrl)}" loading="lazy" onerror="this.src='${PLACEHOLDER_IMAGE}'">
                         </div>
                         <div class="card-content">
                             <div class="card-title">${escapeHtml(item.user_mood) || 'Unnamed'}</div>
-                            <div class="card-meta">ID: ${item.mood_id}</div>
+                            <div class="card-meta">ID: ${item.id}</div>
                         </div>
                     </div>
                 `;
@@ -544,7 +544,7 @@
         }
 
         function openEditModal(id) {
-            const item = allItems.find(i => i.mood_id === id);
+            const item = allItems.find(i => i.id === id);
             if (!item) return;
             currentEditId = id;
 
@@ -644,7 +644,7 @@
                 });
                 const result = await res.json();
                 if (result.success) {
-                    const idx = allItems.findIndex(i => i.mood_id === currentEditId);
+                    const idx = allItems.findIndex(i => i.id === currentEditId);
                     if (idx !== -1) allItems[idx] = { ...allItems[idx], ...updateData };
                     filterAndDisplay();
                     closeEditModal();
