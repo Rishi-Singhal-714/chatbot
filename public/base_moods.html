@@ -3,7 +3,7 @@
 <head>
     <title>Base Moods - Admin</title>
     <style>
-        /* ... all your existing styles (kept identical) ... */
+        /* ... all your existing styles (unchanged) ... */
         * {
             margin: 0;
             padding: 0;
@@ -893,7 +893,7 @@
             font-size: 14px;
         }
 
-        /* New global JSON import section */
+        /* Global JSON import section (removed from Column AI modal but kept for Row AI) */
         .global-json-import {
             background: #f0f4fa;
             border: 2px dashed #9C27B0;
@@ -1085,7 +1085,7 @@
         </div>
     </div>
 
-    <!-- ========== Column AI Modal (with per‑mood config) ========== -->
+    <!-- ========== Column AI Modal (with per‑mood config, but without global JSON import) ========== -->
     <div id="columnAiModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1097,7 +1097,12 @@
 
                 <p style="margin-bottom: 15px;">Select which moods you want to generate.</p>
                 
-                <input type="text" id="moodSearch" class="checklist-search" placeholder="Search moods...">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
+                    <label>
+                        <input type="checkbox" id="selectAllMoods" onchange="toggleAllMoods(this.checked)"> Select All
+                    </label>
+                    <input type="text" id="moodSearch" class="checklist-search" placeholder="Search moods..." style="flex: 1;">
+                </div>
                 <div id="columnMoodChecklist" class="mood-checklist"></div>
 
                 <!-- Button to open configuration panel -->
@@ -1105,16 +1110,9 @@
                     <button class="fix-btn" onclick="showColumnConfigPanel()">⚙️ Configure Selected</button>
                 </div>
 
-                <!-- NEW: Configuration panel (single form for all selected moods) -->
+                <!-- Configuration panel (without global JSON import) -->
                 <div id="columnConfigPanel" style="display: none; margin-top: 20px; border-top: 2px solid #e0e0e0; padding-top: 20px;">
                     <h4 style="margin-bottom: 15px;">Banner settings for all selected moods</h4>
-
-                    <!-- Global JSON Import (fills the single form) -->
-                    <div class="global-json-import">
-                        <label for="columnGlobalJson">📥 Global JSON (single object)</label>
-                        <textarea id="columnGlobalJson" rows="4" placeholder='e.g. { "title": "My Title", "sub_title": "...", "aspect_ratio": "16:9" }'></textarea>
-                        <button class="save-btn" onclick="applyColumnGlobalJson()">Apply to Form</button>
-                    </div>
 
                     <!-- Prompt selection (global) -->
                     <div class="config-field-group">
@@ -1141,8 +1139,17 @@
                                 <option value="Square">Square</option>
                             </select>
                         </div>
-                        <!-- NEW ASPECT RATIO FIELD -->
-                        <div class="field-row"><label>Aspect Ratio</label><input type="text" id="column-global-aspect_ratio" value="" placeholder="e.g. 16:9, 4:3"></div>
+                        <!-- NEW ASPECT RATIO DROPDOWN -->
+                        <div class="field-row"><label>Aspect Ratio</label>
+                            <select id="column-global-aspect_ratio">
+                                <option value="">Select aspect ratio</option>
+                                <option value="1536x1024">3:2 (1536x1024)</option>
+                                <option value="1536x864">16:9 (1536x864)</option>
+                                <option value="1536x768">2:1 (1536x768)</option>
+                                <option value="1536x640">2.4:1 (1536x640)</option>
+                                <option value="1536x512">3:1 (1536x512)</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div style="display: flex; gap: 10px; justify-content: flex-end;">
@@ -1209,7 +1216,7 @@
                     <!-- Global JSON Import for all fields -->
                     <div class="global-json-import">
                         <label for="rowGlobalJson">📥 Global JSON (field name or banner ID as key)</label>
-                        <textarea id="rowGlobalJson" rows="4" placeholder='e.g. { "deliver_asap": { "title": "...", "sub_title": "...", ... }, "category_banner": { ... } } or { "1": { ... }, "2": { ... } }'></textarea>
+                        <textarea id="rowGlobalJson" rows="4" placeholder='e.g. { "deliver_asap": { "title": "...", "sub_title": "...", "aspect_ratio": "1536x1024" }, "category_banner": { ... } } or { "1": { ... }, "2": { ... } }'></textarea>
                         <button class="save-btn" onclick="applyRowGlobalJson()">Apply to Selected Fields</button>
                     </div>
 
@@ -1551,7 +1558,7 @@
                 return;
             }
 
-            // If we are in column config mode (mood set) – per‑mood (legacy, kept for compatibility)
+            // If we are in column config mode (mood set) – kept for compatibility
             if (window._currentPromptMood) {
                 const mood = window._currentPromptMood;
                 if (!columnGenerationState.moodConfigs[mood]) {
@@ -1579,7 +1586,134 @@
             closePromptsModal();
         }
 
-        // ---------- Column AI Modal with per‑mood config ----------
+        // ---------- Helper: check and auto-add aspect ratio to prompt ----------
+        function checkAndAddAspectRatioToPrompt(userTemplate, aspectRatio) {
+            if (!userTemplate) return { modifiedTemplate: userTemplate, warning: false };
+            // If the placeholder is already present, no action
+            if (userTemplate.includes('{aspect_ratio}')) {
+                return { modifiedTemplate: userTemplate, warning: false };
+            }
+            // If aspect ratio is selected but missing from template, warn and offer to add
+            if (aspectRatio && aspectRatio.trim() !== '') {
+                const shouldAdd = confirm(`The aspect ratio "${aspectRatio}" is set but the user prompt template does not contain the {aspect_ratio} placeholder.\n\nClick OK to automatically append a line "Aspect ratio: {aspect_ratio}" to the prompt, or Cancel to continue without it (the aspect ratio may be ignored).`);
+                if (shouldAdd) {
+                    // Append a line at the end
+                    let modified = userTemplate;
+                    if (!modified.endsWith('\n')) modified += '\n';
+                    modified += `Aspect ratio: {aspect_ratio}`;
+                    return { modifiedTemplate: modified, warning: true };
+                }
+            }
+            return { modifiedTemplate: userTemplate, warning: false };
+        }
+
+        // ---------- CROP FUNCTION (client-side) ----------
+        async function cropImageFromBottom(imageUrl, aspectRatioOption) {
+            if (!aspectRatioOption) return imageUrl;
+            const parts = aspectRatioOption.split('x');
+            if (parts.length !== 2) return imageUrl;
+            const targetWidth = parseInt(parts[0], 10);
+            const targetHeight = parseInt(parts[1], 10);
+            if (isNaN(targetWidth) || isNaN(targetHeight)) return imageUrl;
+
+            // Fetch image as blob
+            const response = await fetch(imageUrl, { mode: 'cors' });
+            if (!response.ok) throw new Error(`Failed to fetch image: ${response.status}`);
+            const blob = await response.blob();
+
+            // Create an Image element
+            const img = new Image();
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = reject;
+                img.src = URL.createObjectURL(blob);
+            });
+
+            const originalWidth = img.width;
+            const originalHeight = img.height;
+
+            // Desired ratio (width/height)
+            const desiredRatio = targetWidth / targetHeight;
+            let cropHeight = originalWidth / desiredRatio; // height that matches desired ratio with original width
+
+            if (cropHeight > originalHeight) {
+                console.warn('Desired crop height larger than original; returning original.');
+                return imageUrl;
+            }
+
+            // Crop from bottom: keep top part
+            const canvas = document.createElement('canvas');
+            canvas.width = originalWidth;
+            canvas.height = cropHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, originalWidth, cropHeight, 0, 0, originalWidth, cropHeight);
+
+            const croppedBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+
+            // Upload cropped image
+            const formData = new FormData();
+            formData.append('image', croppedBlob, 'cropped.png');
+            const uploadRes = await fetch('https://api.zulushop.in/api/v1/user/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const uploadData = await uploadRes.json();
+            const croppedUrl = uploadData.url || uploadData.image_url;
+            if (!croppedUrl) throw new Error('Upload failed: no URL returned');
+            return croppedUrl;
+        }
+
+        // ---------- Progress image counters for column and row ----------
+        let columnProgressCounter = 0;
+        let rowProgressCounter = 0;
+
+        function addColumnImageToProgress(link) {
+            const progressDiv = document.getElementById('columnProgress');
+            const container = document.createElement('div');
+            container.className = 'img-container';
+            const imgId = `col-progress-img-${columnProgressCounter++}`;
+            container.id = imgId + '-container';
+            const img = document.createElement('img');
+            img.id = imgId;
+            img.src = link.url;
+            img.className = 'progress-img';
+            img.title = `${link.bannerName} - ${link.mood}`;
+            container.appendChild(img);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = link.url;
+            downloadLink.download = `${link.bannerName}_${link.mood}.png`;
+            downloadLink.className = 'img-download';
+            downloadLink.innerHTML = '⬇️';
+            downloadLink.onclick = (e) => e.stopPropagation();
+            container.appendChild(downloadLink);
+            progressDiv.appendChild(container);
+            return { container, imgId };
+        }
+
+        function addRowImageToProgress(link) {
+            const progressDiv = document.getElementById('rowProgress');
+            const container = document.createElement('div');
+            container.className = 'img-container';
+            const imgId = `row-progress-img-${rowProgressCounter++}`;
+            container.id = imgId + '-container';
+            const img = document.createElement('img');
+            img.id = imgId;
+            img.src = link.url;
+            img.className = 'progress-img';
+            img.title = `${link.bannerName} - ${link.mood}`;
+            container.appendChild(img);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = link.url;
+            downloadLink.download = `${link.bannerName}_${link.mood}.png`;
+            downloadLink.className = 'img-download';
+            downloadLink.innerHTML = '⬇️';
+            downloadLink.onclick = (e) => e.stopPropagation();
+            container.appendChild(downloadLink);
+            progressDiv.appendChild(container);
+            return { container, imgId };
+        }
+
+        // ---------- Column AI Modal with per‑mood config (no global JSON) ----------
         let columnGenerationState = {
             field: null,
             abortController: null,
@@ -1588,8 +1722,8 @@
             selectedMoodNames: [],
             completed: false,
             moodConfigs: {},        // key: mood name (lowercase), value: { title, sub_title, description, cta, background, object, size, aspect_ratio, prompt }
-            globalPrompt: null,      // new global prompt
-            globalInspiration: ''   // optional global inspiration
+            globalPrompt: null,
+            croppingPromises: []    // new: track async crops
         };
 
         function renderMoodChecklist(filter = '') {
@@ -1611,42 +1745,21 @@
             container.innerHTML = html;
         }
 
+        function toggleAllMoods(checked) {
+            const checkboxes = document.querySelectorAll('#columnMoodChecklist input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = checked);
+        }
+
         function openColumnAIModal(field) {
-            console.log('openColumnAIModal called with field:', field); // Debug
             const bannerId = fieldToBannerId[field];
             if (!bannerId) {
                 alert('Unknown field: ' + field);
                 return;
             }
-            console.log('bannerId:', bannerId);
 
             // Set the hidden field and display name
-            const fieldInput = document.getElementById('columnField');
-            const fieldNameSpan = document.getElementById('columnFieldName');
-            if (!fieldInput || !fieldNameSpan) {
-                console.error('Required elements missing: columnField or columnFieldName');
-                // Fallback: try to create them if missing (should not happen)
-                if (!fieldInput) {
-                    const newInput = document.createElement('input');
-                    newInput.type = 'hidden';
-                    newInput.id = 'columnField';
-                    document.body.appendChild(newInput);
-                }
-                if (!fieldNameSpan) {
-                    const newSpan = document.createElement('span');
-                    newSpan.id = 'columnFieldName';
-                    document.querySelector('#columnAiModal h2').appendChild(newSpan);
-                }
-                // Re-fetch after creation
-                fieldInput = document.getElementById('columnField');
-                fieldNameSpan = document.getElementById('columnFieldName');
-                if (!fieldInput || !fieldNameSpan) {
-                    alert('Critical error: cannot open Column AI modal. Please refresh.');
-                    return;
-                }
-            }
-            fieldInput.value = field;
-            fieldNameSpan.innerText = field;
+            document.getElementById('columnField').value = field;
+            document.getElementById('columnFieldName').innerText = field;
 
             renderMoodChecklist();
 
@@ -1666,7 +1779,7 @@
                 completed: false,
                 moodConfigs: {},
                 globalPrompt: null,
-                globalInspiration: ''
+                croppingPromises: []
             };
 
             // Reset single form fields
@@ -1688,13 +1801,11 @@
             document.getElementById('columnProgress').innerHTML = '';
             document.getElementById('columnStatus').innerText = '';
 
+            // Reset counter
+            columnProgressCounter = 0;
+
             // Show modal
-            const modal = document.getElementById('columnAiModal');
-            if (!modal) {
-                console.error('Modal element #columnAiModal not found');
-                return;
-            }
-            modal.classList.add('show');
+            document.getElementById('columnAiModal').classList.add('show');
         }
 
         function closeColumnAIModal() {
@@ -1728,7 +1839,7 @@
             const selectedMoods = columnGenerationState.selectedMoodNames;
             if (!selectedMoods || selectedMoods.length === 0) return;
 
-            // Read values from single form
+            // Read values from single form (including aspect ratio dropdown)
             const globalConfig = {
                 title: document.getElementById('column-global-title').value,
                 sub_title: document.getElementById('column-global-sub_title').value,
@@ -1737,7 +1848,7 @@
                 background: document.getElementById('column-global-background').value,
                 object: document.getElementById('column-global-object').value,
                 size: document.getElementById('column-global-size').value,
-                aspect_ratio: document.getElementById('column-global-aspect_ratio').value,  // new
+                aspect_ratio: document.getElementById('column-global-aspect_ratio').value,
                 prompt: columnGenerationState.globalPrompt   // global prompt
             };
 
@@ -1750,37 +1861,13 @@
             hideColumnConfigPanel();
         }
 
-        function applyColumnGlobalJson() {
-            const jsonStr = document.getElementById('columnGlobalJson').value.trim();
-            if (!jsonStr) { showMessage('Please paste JSON first.', 'error'); return; }
-            try {
-                const data = JSON.parse(jsonStr);
-                // data is expected to be a single object
-                if (data.title !== undefined) document.getElementById('column-global-title').value = data.title;
-                if (data.sub_title !== undefined) document.getElementById('column-global-sub_title').value = data.sub_title;
-                if (data.description !== undefined) document.getElementById('column-global-description').value = data.description;
-                if (data.cta !== undefined) document.getElementById('column-global-cta').value = data.cta;
-                if (data.background !== undefined) document.getElementById('column-global-background').value = data.background;
-                if (data.object !== undefined) document.getElementById('column-global-object').value = data.object;
-                if (data.size !== undefined) {
-                    const select = document.getElementById('column-global-size');
-                    if (Array.from(select.options).some(opt => opt.value === data.size)) select.value = data.size;
-                }
-                if (data.aspect_ratio !== undefined) document.getElementById('column-global-aspect_ratio').value = data.aspect_ratio;
-                document.getElementById('columnGlobalJson').value = '';
-                showMessage('✅ JSON applied to form.', 'success');
-            } catch (e) {
-                showMessage('❌ Invalid JSON: ' + e.message, 'error');
-            }
-        }
-
         async function startColumnGeneration() {
             const field = columnGenerationState.field;
             const bannerId = fieldToBannerId[field];
             if (!bannerId) return;
 
+            // If they didn't click Configure, get selected from checkboxes and use empty configs
             if (columnGenerationState.selectedMoodNames.length === 0) {
-                // If they didn't click Configure, get selected from checkboxes
                 const checkboxes = document.querySelectorAll('#columnMoodChecklist input[type="checkbox"]:checked');
                 if (checkboxes.length === 0) {
                     alert('Please select at least one mood.');
@@ -1801,6 +1888,7 @@
             columnGenerationState.isGenerating = true;
             columnGenerationState.links = [];
             columnGenerationState.completed = false;
+            columnGenerationState.croppingPromises = [];
 
             const statusDiv = document.getElementById('columnStatus');
 
@@ -1817,14 +1905,14 @@
                     const banner = {
                         banner_id: bannerId,
                         banner_name: field.replace(/_/g, ' '),
-                        size: config.size || '',
+                        size: config.size || 'Landscape',
                         title: config.title || '',
                         sub_title: config.sub_title || '',
                         description: config.description || '',
                         cta: config.cta || '',
                         background: config.background || '',
                         object: config.object || '',
-                        aspect_ratio: config.aspect_ratio || ''   // new field
+                        aspect_ratio: config.aspect_ratio || ''
                     };
 
                     const requestJson = {
@@ -1834,12 +1922,30 @@
                         moods: [mood]   // only this mood
                     };
 
+                    // Determine prompt template to use (per‑mood or global)
+                    let userTemplate = null;
+                    if (config.prompt && config.prompt.user) {
+                        userTemplate = config.prompt.user;
+                    } else if (columnGenerationState.globalPrompt && columnGenerationState.globalPrompt.user) {
+                        userTemplate = columnGenerationState.globalPrompt.user;
+                    }
+                    // Check and possibly modify for aspect ratio
+                    const { modifiedTemplate, warning } = checkAndAddAspectRatioToPrompt(userTemplate, config.aspect_ratio);
+                    if (warning) {
+                        // Use the modified template
+                        if (config.prompt && config.prompt.user) {
+                            config.prompt.user = modifiedTemplate;
+                        } else if (columnGenerationState.globalPrompt && columnGenerationState.globalPrompt.user) {
+                            columnGenerationState.globalPrompt.user = modifiedTemplate;
+                        }
+                    }
+
                     const body = {
                         json: requestJson,
-                        inspiration: config.inspiration || ''   // per‑mood inspiration
+                        inspiration: config.inspiration || ''
                     };
 
-                    // Add prompt if configured for this mood (either global or per‑mood)
+                    // Add prompts if present
                     if (config.prompt) {
                         body.systemPrompt = config.prompt.system;
                         body.userPromptTemplate = config.prompt.user;
@@ -1890,10 +1996,34 @@
                                     bannerId: data.bannerId,
                                     bannerName: data.bannerName,
                                     mood: data.mood.toLowerCase(),
-                                    url: data.imageUrl
+                                    url: data.imageUrl,
+                                    aspectRatio: config.aspect_ratio || null
                                 };
                                 columnGenerationState.links.push(link);
-                                addImageToProgress(link);
+                                const { imgId } = addColumnImageToProgress(link);
+
+                                // If aspect ratio is set, crop and re-upload
+                                if (link.aspectRatio) {
+                                    const cropPromise = cropImageFromBottom(link.url, link.aspectRatio)
+                                        .then(croppedUrl => {
+                                            link.url = croppedUrl;
+                                            // Update image in UI
+                                            const img = document.getElementById(imgId);
+                                            if (img) img.src = croppedUrl;
+                                            // Also update download link
+                                            const container = document.getElementById(imgId + '-container');
+                                            if (container) {
+                                                const downloadLink = container.querySelector('.img-download');
+                                                if (downloadLink) downloadLink.href = croppedUrl;
+                                            }
+                                        })
+                                        .catch(err => {
+                                            console.error('Cropping failed:', err);
+                                            // Keep original
+                                        });
+                                    columnGenerationState.croppingPromises.push(cropPromise);
+                                }
+
                                 statusDiv.innerText = `Generated: ${data.bannerName} (${data.mood})`;
                             }
                         }
@@ -1902,6 +2032,9 @@
                     // Small delay between moods
                     await new Promise(r => setTimeout(r, 500));
                 }
+
+                // Wait for all cropping to finish
+                await Promise.all(columnGenerationState.croppingPromises);
 
                 // All moods processed
                 if (!columnGenerationState.abortController.signal.aborted) {
@@ -1930,25 +2063,6 @@
                 document.getElementById('columnStopBtn').style.display = 'none';
                 document.getElementById('columnStatus').innerText = 'Generation stopped by user.';
             }
-        }
-
-        function addImageToProgress(link) {
-            const progressDiv = document.getElementById('columnProgress');
-            const container = document.createElement('div');
-            container.className = 'img-container';
-            const img = document.createElement('img');
-            img.src = link.url;
-            img.className = 'progress-img';
-            img.title = `${link.bannerName} - ${link.mood}`;
-            container.appendChild(img);
-            const downloadLink = document.createElement('a');
-            downloadLink.href = link.url;
-            downloadLink.download = `${link.bannerName}_${link.mood}.png`;
-            downloadLink.className = 'img-download';
-            downloadLink.innerHTML = '⬇️';
-            downloadLink.onclick = (e) => e.stopPropagation();
-            container.appendChild(downloadLink);
-            progressDiv.appendChild(container);
         }
 
         async function approveColumnGeneration() {
@@ -2062,12 +2176,13 @@
                 return;
             }
 
-            const headers = ['Banner ID', 'Banner Name', 'Mood', 'Image URL'];
+            const headers = ['Banner ID', 'Banner Name', 'Mood', 'Image URL', 'Aspect Ratio'];
             const rows = links.map(item => [
                 item.bannerId,
                 item.bannerName,
                 item.mood,
-                item.url
+                item.url,
+                item.aspectRatio || ''
             ]);
 
             let csvContent = headers.join(',') + '\n';
@@ -2314,7 +2429,7 @@
             }
         }
 
-        // ========== Row AI functions (with global JSON import, no per‑field JSON) ==========
+        // ========== Row AI functions (with global JSON import, aspect ratio dropdown) ==========
         let rowGenerationState = {
             moodId: null,
             moodName: null,
@@ -2324,7 +2439,8 @@
             selectedFields: [],
             completed: false,
             fieldConfigs: {},        // key: field name, value: { title, sub_title, description, cta, background, object, size, aspect_ratio, prompt }
-            globalInspiration: ''
+            globalInspiration: '',
+            croppingPromises: []     // new: track async crops
         };
 
         function renderFieldChecklist(filter = '') {
@@ -2358,7 +2474,8 @@
                 selectedFields: [],
                 completed: false,
                 fieldConfigs: {},
-                globalInspiration: ''
+                globalInspiration: '',
+                croppingPromises: []
             };
 
             document.getElementById('rowMoodName').innerText = rowGenerationState.moodName;
@@ -2375,6 +2492,9 @@
             document.getElementById('rowRejectMessage').style.display = 'none';
             document.getElementById('rowProgress').innerHTML = '';
             document.getElementById('rowStatus').innerText = '';
+
+            // Reset counter
+            rowProgressCounter = 0;
 
             // Set global inspiration input to empty
             document.getElementById('globalInspirationInput').value = rowGenerationState.globalInspiration;
@@ -2401,7 +2521,7 @@
             const selectedFields = Array.from(checkboxes).map(cb => cb.value);
             rowGenerationState.selectedFields = selectedFields;
 
-            // Build config panel HTML (without per‑field JSON imports)
+            // Build config panel HTML with aspect ratio dropdown
             let html = '';
             selectedFields.forEach(field => {
                 const bannerId = fieldToBannerId[field];
@@ -2428,7 +2548,7 @@
                 html += `<button class="fix-btn" onclick="selectPromptForField('${field}')" style="padding: 6px 12px;">📋 Select</button>`;
                 html += `</div>`;
 
-                // Existing fields (no JSON import here)
+                // Existing fields
                 html += `<div class="field-row"><label>Title</label><input type="text" id="config-${field}-title" value="${escapeHtml(config.title || '')}"></div>`;
                 html += `<div class="field-row"><label>Sub Title</label><input type="text" id="config-${field}-sub_title" value="${escapeHtml(config.sub_title || '')}"></div>`;
                 html += `<div class="field-row"><label>Description</label><input type="text" id="config-${field}-description" value="${escapeHtml(config.description || '')}"></div>`;
@@ -2442,9 +2562,16 @@
                             <option value="Square" ${config.size === 'Square' ? 'selected' : ''}>Square</option>
                         </select>
                         </div>`;
-                <!-- NEW ASPECT RATIO FIELD -->
+                // NEW ASPECT RATIO DROPDOWN
                 html += `<div class="field-row"><label>Aspect Ratio</label>
-                        <input type="text" id="config-${field}-aspect_ratio" value="${escapeHtml(config.aspect_ratio || '')}" placeholder="e.g. 16:9, 4:3">
+                        <select id="config-${field}-aspect_ratio">
+                            <option value="">Select aspect ratio</option>
+                            <option value="1536x1024" ${config.aspect_ratio === '1536x1024' ? 'selected' : ''}>3:2 (1536x1024)</option>
+                            <option value="1536x864" ${config.aspect_ratio === '1536x864' ? 'selected' : ''}>16:9 (1536x864)</option>
+                            <option value="1536x768" ${config.aspect_ratio === '1536x768' ? 'selected' : ''}>2:1 (1536x768)</option>
+                            <option value="1536x640" ${config.aspect_ratio === '1536x640' ? 'selected' : ''}>2.4:1 (1536x640)</option>
+                            <option value="1536x512" ${config.aspect_ratio === '1536x512' ? 'selected' : ''}>3:1 (1536x512)</option>
+                        </select>
                         </div>`;
 
                 html += `</div>`;
@@ -2477,7 +2604,7 @@
                     background: document.getElementById(`config-${field}-background`).value,
                     object: document.getElementById(`config-${field}-object`).value,
                     size: document.getElementById(`config-${field}-size`).value,
-                    aspect_ratio: document.getElementById(`config-${field}-aspect_ratio`).value, // NEW
+                    aspect_ratio: document.getElementById(`config-${field}-aspect_ratio`).value,
                     prompt: rowGenerationState.fieldConfigs[field].prompt // keep existing prompt
                 };
                 rowGenerationState.fieldConfigs[field] = config;
@@ -2519,8 +2646,12 @@
                                 select.value = fieldData.size;
                             }
                         }
-                        // NEW: aspect ratio
-                        if (fieldData.aspect_ratio !== undefined) document.getElementById(`config-${field}-aspect_ratio`).value = fieldData.aspect_ratio;
+                        if (fieldData.aspect_ratio !== undefined) {
+                            const select = document.getElementById(`config-${field}-aspect_ratio`);
+                            const optionExists = Array.from(select.options).some(opt => opt.value === fieldData.aspect_ratio);
+                            if (optionExists) select.value = fieldData.aspect_ratio;
+                            else showMessage(`Aspect ratio "${fieldData.aspect_ratio}" for field ${field} not in dropdown, please select manually.`, 'info');
+                        }
                     }
                 }
                 document.getElementById('rowGlobalJson').value = '';
@@ -2528,25 +2659,6 @@
             } catch (e) {
                 showMessage('❌ Invalid JSON: ' + e.message, 'error');
             }
-        }
-
-        function addRowImageToProgress(link) {
-            const progressDiv = document.getElementById('rowProgress');
-            const container = document.createElement('div');
-            container.className = 'img-container';
-            const img = document.createElement('img');
-            img.src = link.url;
-            img.className = 'progress-img';
-            img.title = `${link.bannerName} - ${link.mood}`;
-            container.appendChild(img);
-            const downloadLink = document.createElement('a');
-            downloadLink.href = link.url;
-            downloadLink.download = `${link.bannerName}_${link.mood}.png`;
-            downloadLink.className = 'img-download';
-            downloadLink.innerHTML = '⬇️';
-            downloadLink.onclick = (e) => e.stopPropagation();
-            container.appendChild(downloadLink);
-            progressDiv.appendChild(container);
         }
 
         async function startRowGeneration() {
@@ -2573,6 +2685,7 @@
             rowGenerationState.isGenerating = true;
             rowGenerationState.links = [];
             rowGenerationState.completed = false;
+            rowGenerationState.croppingPromises = [];
 
             const statusDiv = document.getElementById('rowStatus');
             const moodNameLower = rowGenerationState.moodName.toLowerCase();
@@ -2600,7 +2713,7 @@
                         cta: config.cta || '',
                         background: config.background || '',
                         object: config.object || '',
-                        aspect_ratio: config.aspect_ratio || ''   // NEW
+                        aspect_ratio: config.aspect_ratio || ''
                     };
 
                     const requestJson = {
@@ -2609,6 +2722,13 @@
                         banners: [banner],
                         moods: [moodNameLower]   // only this mood
                     };
+
+                    // Determine prompt template and check for aspect ratio placeholder
+                    let userTemplate = config.prompt ? config.prompt.user : null;
+                    const { modifiedTemplate, warning } = checkAndAddAspectRatioToPrompt(userTemplate, config.aspect_ratio);
+                    if (warning && config.prompt) {
+                        config.prompt.user = modifiedTemplate;
+                    }
 
                     const body = {
                         json: requestJson,
@@ -2665,10 +2785,34 @@
                                     bannerId: data.bannerId,
                                     bannerName: data.bannerName,
                                     mood: data.mood.toLowerCase(),
-                                    url: data.imageUrl
+                                    url: data.imageUrl,
+                                    aspectRatio: config.aspect_ratio || null
                                 };
                                 rowGenerationState.links.push(link);
-                                addRowImageToProgress(link);
+                                const { imgId } = addRowImageToProgress(link);
+
+                                // If aspect ratio is set, crop and re-upload
+                                if (link.aspectRatio) {
+                                    const cropPromise = cropImageFromBottom(link.url, link.aspectRatio)
+                                        .then(croppedUrl => {
+                                            link.url = croppedUrl;
+                                            // Update image in UI
+                                            const img = document.getElementById(imgId);
+                                            if (img) img.src = croppedUrl;
+                                            // Also update download link
+                                            const container = document.getElementById(imgId + '-container');
+                                            if (container) {
+                                                const downloadLink = container.querySelector('.img-download');
+                                                if (downloadLink) downloadLink.href = croppedUrl;
+                                            }
+                                        })
+                                        .catch(err => {
+                                            console.error('Cropping failed:', err);
+                                            // Keep original
+                                        });
+                                    rowGenerationState.croppingPromises.push(cropPromise);
+                                }
+
                                 statusDiv.innerText = `Generated: ${data.bannerName} (${data.mood})`;
                             }
                         }
@@ -2677,6 +2821,9 @@
                     // Small delay between fields
                     await new Promise(r => setTimeout(r, 500));
                 }
+
+                // Wait for all cropping to finish
+                await Promise.all(rowGenerationState.croppingPromises);
 
                 // All fields processed
                 if (!rowGenerationState.abortController.signal.aborted) {
