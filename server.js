@@ -12,7 +12,7 @@ const crypto = require('crypto');
 const fs = require('fs'); 
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-const { put } = require('@vercel/blob');
+const { put, list } = require('@vercel/blob');
 const productEnhanceRouter = require('./productEnhance');
 const FormData = require('form-data');
 const { File } = require("undici");
@@ -6291,6 +6291,46 @@ app.get('/api/products/simple', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+// ----------------------------------------------------------------------
+// GET /api/config/ai-defaults – retrieve the saved AI defaults from Vercel Blob
+// ----------------------------------------------------------------------
+app.get('/api/config/ai-defaults', async (req, res) => {
+  try {
+    const { blobs } = await list();
+    const defaultsBlob = blobs.find(b => b.pathname === 'ai-defaults.json');
+    if (!defaultsBlob) {
+      // No defaults saved yet – return empty structure
+      return res.status(200).json({ bannerDefaults: {}, globalInspiration: "" });
+    }
+    const response = await fetch(defaultsBlob.url);
+    const data = await response.json();
+    return res.status(200).json(data);
+  } catch (err) {
+    console.error('Error fetching AI defaults from blob:', err);
+    // Return empty structure to avoid frontend errors
+    return res.status(200).json({ bannerDefaults: {}, globalInspiration: "" });
+  }
+});
+
+// ----------------------------------------------------------------------
+// POST /api/config/ai-defaults – save/overwrite AI defaults in Vercel Blob
+// ----------------------------------------------------------------------
+app.post('/api/config/ai-defaults', async (req, res) => {
+  try {
+    const data = req.body; // expects a JSON object
+    const blob = await put('ai-defaults.json', JSON.stringify(data, null, 2), {
+      access: 'public',
+      contentType: 'application/json',
+      allowOverwrite: true, // <-- essential to overwrite existing file
+    });
+    return res.status(200).json({ success: true, url: blob.url });
+  } catch (err) {
+    console.error('Error saving AI defaults to blob:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // ===================== NEW ROUTE: /api/product/image-search =====================
 app.post('/api/product/image-search', async (req, res) => {
   try {

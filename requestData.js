@@ -106,6 +106,7 @@ const columnMapping = {
   'cart_banner', 'profile_bg', 'concierge', 'created_at', 'updated_at','visit2_bg',
   'watch2_bg','decorate2_bg','ask_zulu2_bg','sound2_bg','concierge2_bg','shop_bg',
   'watch_bg','visit_bg','chat_bg','decorate_bg','feel_bg','primary_color','secondary_color'
+  ,'explore_bg','discover_bg','vibe_bg','moment_bg','mood_bg'
 ],  
 'moods': [
     'id', 'user_mood', 'parent_mood', 'description',

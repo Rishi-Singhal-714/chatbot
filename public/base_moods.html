@@ -1154,6 +1154,7 @@
 
                     <div style="display: flex; gap: 10px; justify-content: flex-end;">
                         <button class="save-btn" onclick="saveColumnConfigs()">💾 Save Configurations</button>
+                        <button class="save-btn" onclick="saveColumnDefaults()" style="background: #4CAF50;">💾 Save as Default</button>
                         <button class="cancel-btn" onclick="hideColumnConfigPanel()">Cancel</button>
                     </div>
                 </div>
@@ -1223,6 +1224,7 @@
                     <div id="rowConfigList"></div>
                     <div style="display: flex; gap: 10px; justify-content: flex-end;">
                         <button class="save-btn" onclick="saveRowConfigs()">💾 Save Configurations</button>
+                        <button class="save-btn" onclick="saveRowDefaults()" style="background: #4CAF50;">💾 Save as Default</button>
                         <button class="cancel-btn" onclick="hideRowConfigPanel()">Cancel</button>
                     </div>
                 </div>
@@ -1340,6 +1342,11 @@
             22: 'chat_bg',
             23: 'decorate_bg',
             24: 'feel_bg',
+            25: 'explore_bg',
+            26: 'discover_bg',
+            27: 'vibe_bg',
+            28: 'moment_bg',
+            29: 'mood_bg',
         };
 
         const fieldToBannerId = {};
@@ -1371,7 +1378,13 @@
             21: { title: "", sub_title: "", description: "", cta: "", background: "", object: "" },
             22: { title: "", sub_title: "", description: "", cta: "", background: "", object: "" },
             23: { title: "", sub_title: "", description: "", cta: "", background: "", object: "" },
-            24: { title: "", sub_title: "", description: "", cta: "", background: "", object: "" }
+            24: { title: "", sub_title: "", description: "", cta: "", background: "", object: "" },
+            25: { title: "", sub_title: "", description: "", cta: "", background: "", object: "" },
+            26: { title: "", sub_title: "", description: "", cta: "", background: "", object: "" },
+            27: { title: "", sub_title: "", description: "", cta: "", background: "", object: "" },
+            28: { title: "", sub_title: "", description: "", cta: "", background: "", object: "" },
+            29: { title: "", sub_title: "", description: "", cta: "", background: "", object: "" },
+
         };
 
         const moodNameToId = {
@@ -1519,7 +1532,7 @@
                 alert('Please select a prompt');
                 return;
             }
-            const promptId = selected.value;
+            const promptId = parseInt(selected.value);
             const promptName = selected.dataset.name;
             const systemPrompt = selected.dataset.system;
             const userPrompt = selected.dataset.user;
@@ -1713,6 +1726,169 @@
             return { container, imgId };
         }
 
+        // ---------- Persistent AI defaults (Vercel Blob) ----------
+        let aiDefaults = { bannerDefaults: {}, globalInspiration: "" }; // always an object
+        async function loadAIDefaults() {
+            try {
+                const res = await fetch('/api/config/ai-defaults');
+                if (res.status === 404) {
+                    // No defaults yet, create empty structure
+                    aiDefaults = { bannerDefaults: {}, globalInspiration: "" };
+                    return;
+                }
+                const data = await res.json();
+                aiDefaults = data;
+            } catch (err) {
+                console.error('Failed to load AI defaults:', err);
+                aiDefaults = { bannerDefaults: {}, globalInspiration: "" };
+            }
+        }
+
+        async function saveAIDefaults(newDefaults) {
+            try {
+                const res = await fetch('/api/config/ai-defaults', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newDefaults)
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                aiDefaults = newDefaults;
+                showMessage('✅ Defaults saved to blob', 'success');
+            } catch (err) {
+                showMessage('❌ Failed to save defaults: ' + err.message, 'error');
+            }
+        }
+
+        function getPromptById(id) {
+            return promptsData.find(p => p.id === id) || null;
+        }
+
+        // Apply column defaults after opening modal
+function applyColumnDefaults(field) {
+    if (!aiDefaults || !aiDefaults.bannerDefaults) return; // safety
+    const def = aiDefaults.bannerDefaults[field];
+    if (!def) return;
+
+    document.getElementById('column-global-title').value = def.title || '';
+    document.getElementById('column-global-sub_title').value = def.sub_title || '';
+    document.getElementById('column-global-description').value = def.description || '';
+    document.getElementById('column-global-cta').value = def.cta || '';
+    document.getElementById('column-global-background').value = def.background || '';
+    document.getElementById('column-global-object').value = def.object || '';
+    document.getElementById('column-global-size').value = def.size || 'Landscape';
+    document.getElementById('column-global-aspect_ratio').value = def.aspect_ratio || '';
+
+    if (def.promptId) {
+        const prompt = getPromptById(def.promptId);
+        if (prompt) {
+            columnGenerationState.globalPrompt = {
+                id: prompt.id,
+                name: prompt.name,
+                system: prompt.system_prompt,
+                user: prompt.user_prompt
+            };
+            document.getElementById('column-global-prompt-name').innerText = escapeHtml(prompt.name);
+        } else {
+            columnGenerationState.globalPrompt = null;
+            document.getElementById('column-global-prompt-name').innerText = 'None (stale ID)';
+        }
+    } else {
+        columnGenerationState.globalPrompt = null;
+        document.getElementById('column-global-prompt-name').innerText = 'None';
+    }
+}
+
+        // Apply row defaults when showing config panel
+function applyRowDefaults() {
+    if (!aiDefaults || !aiDefaults.bannerDefaults) return;
+    document.getElementById('globalInspirationInput').value = aiDefaults.globalInspiration || '';
+
+    for (const field of rowGenerationState.selectedFields) {
+        const def = aiDefaults.bannerDefaults[field] || {};
+        const titleInput = document.getElementById(`config-${field}-title`);
+        if (titleInput) titleInput.value = def.title || '';
+        const subInput = document.getElementById(`config-${field}-sub_title`);
+        if (subInput) subInput.value = def.sub_title || '';
+                const descInput = document.getElementById(`config-${field}-description`);
+                if (descInput) descInput.value = def.description || '';
+                const ctaInput = document.getElementById(`config-${field}-cta`);
+                if (ctaInput) ctaInput.value = def.cta || '';
+                const bgInput = document.getElementById(`config-${field}-background`);
+                if (bgInput) bgInput.value = def.background || '';
+                const objInput = document.getElementById(`config-${field}-object`);
+                if (objInput) objInput.value = def.object || '';
+                const sizeSelect = document.getElementById(`config-${field}-size`);
+                if (sizeSelect) sizeSelect.value = def.size || 'Landscape';
+                const arSelect = document.getElementById(`config-${field}-aspect_ratio`);
+                if (arSelect) arSelect.value = def.aspect_ratio || '';
+
+                // Handle prompt
+                if (def.promptId) {
+                    const prompt = getPromptById(def.promptId);
+                    if (prompt) {
+                        if (!rowGenerationState.fieldConfigs[field]) rowGenerationState.fieldConfigs[field] = {};
+                        rowGenerationState.fieldConfigs[field].prompt = {
+                            id: prompt.id,
+                            name: prompt.name,
+                            system: prompt.system_prompt,
+                            user: prompt.user_prompt
+                        };
+                        const span = document.getElementById(`prompt-name-${field}`);
+                        if (span) span.innerText = escapeHtml(prompt.name);
+                    } else {
+                        const span = document.getElementById(`prompt-name-${field}`);
+                        if (span) span.innerText = 'None (stale ID)';
+                    }
+                } else {
+                    const span = document.getElementById(`prompt-name-${field}`);
+                    if (span) span.innerText = 'None';
+                }
+            }
+        }
+
+        // Save column defaults to blob
+        async function saveColumnDefaults() {
+            const field = columnGenerationState.field;
+            if (!field) return;
+
+            const newDefaults = { ...aiDefaults }; // shallow copy
+            if (!newDefaults.bannerDefaults) newDefaults.bannerDefaults = {};
+            newDefaults.bannerDefaults[field] = {
+                title: document.getElementById('column-global-title').value,
+                sub_title: document.getElementById('column-global-sub_title').value,
+                description: document.getElementById('column-global-description').value,
+                cta: document.getElementById('column-global-cta').value,
+                background: document.getElementById('column-global-background').value,
+                object: document.getElementById('column-global-object').value,
+                size: document.getElementById('column-global-size').value,
+                aspect_ratio: document.getElementById('column-global-aspect_ratio').value,
+                promptId: columnGenerationState.globalPrompt ? columnGenerationState.globalPrompt.id : null
+            };
+
+            await saveAIDefaults(newDefaults);
+        }
+
+        // Save row defaults to blob
+        async function saveRowDefaults() {
+            const newDefaults = { bannerDefaults: { ...(aiDefaults?.bannerDefaults || {}) }, globalInspiration: document.getElementById('globalInspirationInput').value };
+
+            for (const field of rowGenerationState.selectedFields) {
+                newDefaults.bannerDefaults[field] = {
+                    title: document.getElementById(`config-${field}-title`).value,
+                    sub_title: document.getElementById(`config-${field}-sub_title`).value,
+                    description: document.getElementById(`config-${field}-description`).value,
+                    cta: document.getElementById(`config-${field}-cta`).value,
+                    background: document.getElementById(`config-${field}-background`).value,
+                    object: document.getElementById(`config-${field}-object`).value,
+                    size: document.getElementById(`config-${field}-size`).value,
+                    aspect_ratio: document.getElementById(`config-${field}-aspect_ratio`).value,
+                    promptId: rowGenerationState.fieldConfigs[field]?.prompt?.id || null
+                };
+            }
+
+            await saveAIDefaults(newDefaults);
+        }
+
         // ---------- Column AI Modal with per‑mood config (no global JSON) ----------
         let columnGenerationState = {
             field: null,
@@ -1792,6 +1968,11 @@
             document.getElementById('column-global-size').value = 'Landscape';
             document.getElementById('column-global-aspect_ratio').value = '';
             document.getElementById('column-global-prompt-name').innerText = 'None';
+
+            // Apply defaults if available
+            if (aiDefaults) {
+                applyColumnDefaults(field);
+            }
 
             // Hide panels
             document.getElementById('columnConfigPanel').style.display = 'none';
@@ -2578,6 +2759,9 @@
             });
 
             document.getElementById('rowConfigList').innerHTML = html;
+
+            // Apply defaults after building the inputs
+            applyRowDefaults();
             document.getElementById('rowConfigPanel').style.display = 'block';
         }
 
@@ -3374,7 +3558,11 @@
         });
 
         // Initial load
-        loadMoods();
+        (async function init() {
+            await loadPrompts();
+            await loadAIDefaults();
+            await loadMoods();
+        })();
     </script>
 </body>
 </html>
