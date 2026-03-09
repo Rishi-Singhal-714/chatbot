@@ -4816,7 +4816,7 @@ app.post('/api/clear-cache/:type', (req, res) => {
   if (type === 'all') {
     db.clearAllCaches();
     res.json({ success: true, message: 'All caches cleared' });
-  } else if (['products', 'sellers', 'videos', 'users', 'galleries', 'appconfigs', 'categories', 'soc_booking_user','socbookinguser', 'base_moods', 'moods', 'tracks', 'business'].includes(type)) {
+  } else if (['products', 'sellers', 'videos', 'users', 'galleries', 'appconfigs', 'categories', 'soc_booking_user','socbookinguser', 'base_moods', 'moods', 'tracks', 'business','topics'].includes(type)) {
     db.clearCache(type);
     res.json({ success: true, message: `Cache cleared for ${type}` });
   } else {
@@ -5671,6 +5671,7 @@ app.get('/base_moods', (req, res) => {
 app.get('/moods', (req, res) => res.sendFile(__dirname + '/public/moods.html'));
 app.get('/tracks', (req, res) => res.sendFile(__dirname + '/public/tracks.html'));
 app.get('/business', (req, res) => res.sendFile(__dirname + '/public/business.html'));
+app.get('/topics', (req, res) => res.sendFile(__dirname + '/public/topics.html'));
 
 app.get('/image-search', (req, res) => res.sendFile(__dirname + '/public/image-search.html'));
 
@@ -6028,6 +6029,57 @@ app.get('/api/productsenhanced', async (req, res) => {
     });
   }
 });
+
+// -------------------------
+// Topics Endpoints
+// -------------------------
+app.get('/api/topics', async (req, res) => {
+  try {
+    const data = await db.getCachedData('topics');
+    res.json({ success: true, data: data, count: data.length });
+  } catch (error) {
+    console.error('Error fetching topics:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/topics/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const record = await db.getRecordById('topics', id);
+    if (!record) return res.status(404).json({ success: false, error: 'Topic not found' });
+    res.json({ success: true, data: record });
+  } catch (error) {
+    console.error('Get topic error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.put('/api/topics/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    delete updateData.id;
+    const result = await db.executeUpdate('topics', id, updateData);
+    res.json({ success: true, message: 'Topic updated', affectedRows: result.affectedRows });
+  } catch (error) {
+    console.error('Update topic error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.delete('/api/topics/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await db.executeDelete('topics', id);
+    db.clearCache('topics');
+    res.json({ success: true, message: 'Topic deleted', affectedRows: result.affectedRows });
+  } catch (error) {
+    console.error('Delete topic error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 app.get('/refresh-csv', async (req, res) => {
   try {
     galleriesData = await loadGalleriesData();

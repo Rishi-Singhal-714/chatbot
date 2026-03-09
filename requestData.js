@@ -32,7 +32,9 @@ const tableMapping = {
   'moods': 'moods',
   'tracks': 'tracks',
   'business': 'business',
-    'prompts': 'prompts'   // <-- add this line
+    'prompts': 'prompts',   // <-- add this line
+    'topics': 'topics'   // <-- add this line
+
 
 };
 
@@ -126,6 +128,10 @@ const columnMapping = {
   ],   
   'prompts': [
     'id', 'name', 'system_prompt', 'user_prompt', 'comments'
+  ],
+  'topics': [
+    'id', 'topics', 'image', 'mood_id', 'user_mood', 'tracks',
+    'sellers', 'products', 'videos', 'galleries'
   ]
 };
 
@@ -264,6 +270,15 @@ const cache = {
         ${columnMapping.prompts.join(',\n        ')}
       FROM u130660877_zulu.prompts
   
+    `
+  },
+  topics: {
+    data: null,
+    timestamp: 0,
+    query: `
+      SELECT
+        ${columnMapping.topics.join(',\n        ')}
+      FROM u130660877_zulu.topics
     `
   }
 };
