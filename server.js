@@ -4816,7 +4816,7 @@ app.post('/api/clear-cache/:type', (req, res) => {
   if (type === 'all') {
     db.clearAllCaches();
     res.json({ success: true, message: 'All caches cleared' });
-  } else if (['products', 'sellers', 'videos', 'users', 'galleries', 'appconfigs', 'categories', 'soc_booking_user','socbookinguser', 'base_moods', 'moods', 'tracks', 'business','topics'].includes(type)) {
+  } else if (['products', 'sellers', 'videos', 'users', 'galleries', 'appconfigs', 'categories', 'soc_booking_user','socbookinguser', 'base_moods', 'moods', 'tracks', 'business','topics','content_modules','databases'].includes(type)) {
     db.clearCache(type);
     res.json({ success: true, message: `Cache cleared for ${type}` });
   } else {
@@ -5674,9 +5674,9 @@ app.get('/business', (req, res) => res.sendFile(__dirname + '/public/business.ht
 app.get('/topics', (req, res) => res.sendFile(__dirname + '/public/topics.html'));
 
 app.get('/image-search', (req, res) => res.sendFile(__dirname + '/public/image-search.html'));
-
+app.get('/content_modules', (req, res) => { res.sendFile(__dirname + '/public/content_modules.html');});
 app.get('/curate-galleries', (req, res) => res.sendFile(__dirname + '/public/curate-galleries.html'));
-
+app.get('/control', (req, res) => res.sendFile(__dirname + '/public/control.html'));
 // -------------------------
 // Moods Endpoints
 // -------------------------
@@ -5898,7 +5898,7 @@ app.put('/api/:table/:id', async (req, res) => {
     const { table, id } = req.params;
     const updateData = req.body;
     
-    const validTables = ['products', 'sellers', 'users', 'videos', 'galleries'];
+    const validTables = ['products', 'sellers', 'users', 'videos', 'galleries','databases','content_modules'];
     if (!validTables.includes(table)) {
       return res.status(400).json({ 
         success: false, 
@@ -7780,6 +7780,91 @@ For Suno.ai: Use "Indie Pop" or "Acoustic" style with 30-second length`;
         });
     }
 });
+
+// ===================== Content Modules & Databases =====================
+
+// Get all content modules, or a single one if ?id= is provided
+
+
+// Get all base moods
+app.get('/api/content_modules', async (req, res) => {
+  try {
+    const data = await db.getCachedData('content_modules');
+    res.json({
+      success: true,
+      data: data,
+      count: data.length
+    });
+  } catch (error) {
+    console.error('Error fetching content_modules:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get single base mood record
+app.get('/api/content_modules/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const record = await db.getRecordById('content_modules', id);
+    if (!record) {
+      return res.status(404).json({ success: false, error: 'content_modules not found' });
+    }
+    res.json({ success: true, data: record });
+  } catch (error) {
+    console.error('Get content_modules error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Update base mood record
+app.put('/api/content_modules/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    delete updateData.id;  // never update the primary key
+
+    const result = await db.executeUpdate('content_modules', id, updateData);
+    res.json({
+      success: true,
+      message: 'content_modulesupdated successfully',
+      affectedRows: result.affectedRows
+    });
+  } catch (error) {
+    console.error('Update content_modules error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// (Optional) Delete base mood
+app.delete('/api/content_modules/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await db.executeDelete('content_modules', id);
+    db.clearCache('base_moods');
+    res.json({ success: true, message: 'content_modules deleted', affectedRows: result.affectedRows });
+  } catch (error) {
+    console.error('Delete content_modules error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+
+// Get databases entries, optionally filtered by table_name
+app.get('/api/databases', async (req, res) => {
+  try {
+    const data = await db.getCachedData('databases');
+    if (req.query.table_name) {
+      const filtered = data.filter(d => d.table_name === req.query.table_name);
+      return res.json({ success: true, data: filtered, count: filtered.length });
+    }
+    res.json({ success: true, data, count: data.length });
+  } catch (error) {
+    console.error('Error fetching databases:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+
 app.post('/chat/history-sheets', async (req, res) => {
     try {
         const { phoneNumber, page = 0, pageSize = 10 } = req.body;

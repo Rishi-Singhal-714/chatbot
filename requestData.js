@@ -24,6 +24,7 @@ const tableMapping = {
   'users': 'users',
   'videos': 'shop_able_videos',
   'galleries': 'galleries',
+      'content_modules': 'content_modules',   // actual table name
   'appconfigs': 'app_configs',
   'categories': 'categories',
   'socbookinguser': 'soc_booking_user',
@@ -33,7 +34,8 @@ const tableMapping = {
   'tracks': 'tracks',
   'business': 'business',
     'prompts': 'prompts',   // <-- add this line
-    'topics': 'topics'   // <-- add this line
+    'topics': 'topics',   // <-- add this line
+  'databases': 'databases',   // actual table name
 
 
 };
@@ -46,7 +48,7 @@ const columnMapping = {
     'image', 'other_images', 'hsn_code', 'brand', 'sku', 'stock', 
     'availability', 'description', 'business_id', 'whatsapp_toggle', 
     'location', 'priority', 'retail_simple_price', 'retail_simple_special_price', 
-    'short_description','cat1','cat2','tags','extra_description','download_link'
+    'short_description','cat1','cat2','tags','extra_description','download_link','tags2'
   ],
   'sellers': [
     'id', 'user_id', 'slug', 'store_name', 'store_description', 'business', 
@@ -132,7 +134,20 @@ const columnMapping = {
   'topics': [
     'id', 'topics', 'image', 'mood_id', 'user_mood', 'tracks',
     'sellers', 'products', 'videos', 'galleries'
-  ]
+  ],
+  'content_modules': [
+  'id','module_name','field_map','update_action','download_action','create_gallery','curate_gallery','create_album','curate_album'
+],
+'databases': [
+  'id',
+  'table_name',
+  'db_table_name',
+  'field_name',
+  'db_field_name',
+  'admin_use',
+  'api_use',
+  'link'
+]
 };
 
 // In-memory cache (2 hours = 7200000 ms)
@@ -279,6 +294,24 @@ const cache = {
       SELECT
         ${columnMapping.topics.join(',\n        ')}
       FROM u130660877_zulu.topics
+    `
+  },
+  'content_modules': {
+    data: null,
+    timestamp: 0,
+    query: `
+      SELECT
+        ${columnMapping.content_modules.join(',\n        ')}
+      FROM u130660877_zulu.content_modules
+    `
+  },
+  'databases': {
+    data: null,
+    timestamp: 0,
+    query: `
+      SELECT
+        ${columnMapping.databases.join(',\n        ')}
+      FROM u130660877_zulu.databases
     `
   }
 };
