@@ -3,7 +3,7 @@
 <head>
     <title>Base Moods - Admin</title>
     <style>
-        /* ... all your existing styles (unchanged) ... */
+        /* ---------- all existing styles (unchanged) ---------- */
         * {
             margin: 0;
             padding: 0;
@@ -1085,7 +1085,7 @@
         </div>
     </div>
 
-    <!-- ========== Column AI Modal (with per‑mood config, but without global JSON import) ========== -->
+    <!-- ========== Column AI Modal (modified as requested) ========== -->
     <div id="columnAiModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1097,21 +1097,20 @@
 
                 <p style="margin-bottom: 15px;">Select which moods you want to generate.</p>
                 
-                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
+                <!-- Prompt ID input replaces the search bar -->
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
                     <label>
-                        <input type="checkbox" id="selectAllMoods" onchange="toggleAllMoods(this.checked)"> Select All
+                        <input type="checkbox" id="selectAllMoods" onchange="toggleAllMoods(this.checked)" checked> Select All
                     </label>
-                    <input type="text" id="moodSearch" class="checklist-search" placeholder="Search moods..." style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+                        <input type="number" id="columnPromptId" class="checklist-search" value="1" min="1" style="flex: 1;" placeholder="Prompt ID">
+                        <button class="fix-btn" onclick="selectGlobalPromptForColumn()" style="padding: 10px 16px;">📋 Browse</button>
+                    </div>
                 </div>
                 <div id="columnMoodChecklist" class="mood-checklist"></div>
 
-                <!-- Button to open configuration panel -->
-                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                    <button class="fix-btn" onclick="showColumnConfigPanel()">⚙️ Configure Selected</button>
-                </div>
-
-                <!-- Configuration panel (without global JSON import) -->
-                <div id="columnConfigPanel" style="display: none; margin-top: 20px; border-top: 2px solid #e0e0e0; padding-top: 20px;">
+                <!-- Configuration panel (always visible) -->
+                <div id="columnConfigPanel" style="margin-top: 20px; border-top: 2px solid #e0e0e0; padding-top: 20px;">
                     <h4 style="margin-bottom: 15px;">Banner settings for all selected moods</h4>
 
                     <!-- Prompt selection (global) -->
@@ -1139,7 +1138,7 @@
                                 <option value="Square">Square</option>
                             </select>
                         </div>
-                        <!-- NEW ASPECT RATIO DROPDOWN -->
+                        <!-- Aspect Ratio dropdown -->
                         <div class="field-row"><label>Aspect Ratio</label>
                             <select id="column-global-aspect_ratio">
                                 <option value="">Select aspect ratio</option>
@@ -1153,9 +1152,8 @@
                     </div>
 
                     <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                        <button class="save-btn" onclick="saveColumnConfigs()">💾 Save Configurations</button>
+                        <!-- Save as Default remains; Save Configurations button removed -->
                         <button class="save-btn" onclick="saveColumnDefaults()" style="background: #4CAF50;">💾 Save as Default</button>
-                        <button class="cancel-btn" onclick="hideColumnConfigPanel()">Cancel</button>
                     </div>
                 </div>
 
@@ -1186,7 +1184,7 @@
         </div>
     </div>
 
-    <!-- ========== Row AI Modal (with global JSON import) ========== -->
+    <!-- ========== Row AI Modal (unchanged) ========== -->
     <div id="rowAiModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1199,22 +1197,18 @@
                 <input type="text" id="fieldSearch" class="checklist-search" placeholder="Search fields...">
                 <div id="fieldChecklist" class="mood-checklist"></div>
 
-                <!-- Button to open configuration panel -->
                 <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                     <button class="fix-btn" onclick="showRowConfigPanel()">⚙️ Configure Selected</button>
                 </div>
 
-                <!-- Configuration panel (hidden by default) -->
                 <div id="rowConfigPanel" style="display: none; margin-top: 20px; border-top: 2px solid #e0e0e0; padding-top: 20px;">
                     <h4 style="margin-bottom: 15px;">Customise banner texts for each selected field</h4>
                     
-                    <!-- Global Inspiration Text -->
                     <div class="global-inspiration">
                         <label for="globalInspirationInput">🌍 Global Inspiration Text (applies to all selected fields)</label>
                         <input type="text" id="globalInspirationInput" value="" placeholder="e.g. Bollywood landscape field">
                     </div>
 
-                    <!-- Global JSON Import for all fields -->
                     <div class="global-json-import">
                         <label for="rowGlobalJson">📥 Global JSON (field name or banner ID as key)</label>
                         <textarea id="rowGlobalJson" rows="4" placeholder='e.g. { "deliver_asap": { "title": "...", "sub_title": "...", "aspect_ratio": "1536x1024" }, "category_banner": { ... } } or { "1": { ... }, "2": { ... } }'></textarea>
@@ -1229,7 +1223,6 @@
                     </div>
                 </div>
 
-                <!-- Progress area -->
                 <div id="rowProgressArea" style="display: none;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <h4>Generated Images</h4>
@@ -1384,7 +1377,6 @@
             27: { title: "", sub_title: "", description: "", cta: "", background: "", object: "" },
             28: { title: "", sub_title: "", description: "", cta: "", background: "", object: "" },
             29: { title: "", sub_title: "", description: "", cta: "", background: "", object: "" },
-
         };
 
         const moodNameToId = {
@@ -1546,6 +1538,9 @@
                     user: userPrompt
                 };
                 document.getElementById('column-global-prompt-name').innerText = escapeHtml(promptName);
+                // Also update the prompt ID input
+                const idInput = document.getElementById('columnPromptId');
+                if (idInput) idInput.value = promptId;
                 window._currentPromptMood = null;
                 closePromptsModal();
                 return;
@@ -1563,7 +1558,6 @@
                     system: systemPrompt,
                     user: userPrompt
                 };
-                // Update the display in config panel
                 const span = document.getElementById(`prompt-name-${field}`);
                 if (span) span.innerText = escapeHtml(promptName);
                 window._currentPromptField = null;
@@ -1764,51 +1758,54 @@
         }
 
         // Apply column defaults after opening modal
-function applyColumnDefaults(field) {
-    if (!aiDefaults || !aiDefaults.bannerDefaults) return; // safety
-    const def = aiDefaults.bannerDefaults[field];
-    if (!def) return;
+        function applyColumnDefaults(field) {
+            if (!aiDefaults || !aiDefaults.bannerDefaults) return; // safety
+            const def = aiDefaults.bannerDefaults[field];
+            if (!def) return;
 
-    document.getElementById('column-global-title').value = def.title || '';
-    document.getElementById('column-global-sub_title').value = def.sub_title || '';
-    document.getElementById('column-global-description').value = def.description || '';
-    document.getElementById('column-global-cta').value = def.cta || '';
-    document.getElementById('column-global-background').value = def.background || '';
-    document.getElementById('column-global-object').value = def.object || '';
-    document.getElementById('column-global-size').value = def.size || 'Landscape';
-    document.getElementById('column-global-aspect_ratio').value = def.aspect_ratio || '';
+            document.getElementById('column-global-title').value = def.title || '';
+            document.getElementById('column-global-sub_title').value = def.sub_title || '';
+            document.getElementById('column-global-description').value = def.description || '';
+            document.getElementById('column-global-cta').value = def.cta || '';
+            document.getElementById('column-global-background').value = def.background || '';
+            document.getElementById('column-global-object').value = def.object || '';
+            document.getElementById('column-global-size').value = def.size || 'Landscape';
+            document.getElementById('column-global-aspect_ratio').value = def.aspect_ratio || '';
 
-    if (def.promptId) {
-        const prompt = getPromptById(def.promptId);
-        if (prompt) {
-            columnGenerationState.globalPrompt = {
-                id: prompt.id,
-                name: prompt.name,
-                system: prompt.system_prompt,
-                user: prompt.user_prompt
-            };
-            document.getElementById('column-global-prompt-name').innerText = escapeHtml(prompt.name);
-        } else {
-            columnGenerationState.globalPrompt = null;
-            document.getElementById('column-global-prompt-name').innerText = 'None (stale ID)';
+            if (def.promptId) {
+                const prompt = getPromptById(def.promptId);
+                if (prompt) {
+                    columnGenerationState.globalPrompt = {
+                        id: prompt.id,
+                        name: prompt.name,
+                        system: prompt.system_prompt,
+                        user: prompt.user_prompt
+                    };
+                    document.getElementById('column-global-prompt-name').innerText = escapeHtml(prompt.name);
+                    // Also set the prompt ID input
+                    const idInput = document.getElementById('columnPromptId');
+                    if (idInput) idInput.value = prompt.id;
+                } else {
+                    columnGenerationState.globalPrompt = null;
+                    document.getElementById('column-global-prompt-name').innerText = 'None (stale ID)';
+                }
+            } else {
+                columnGenerationState.globalPrompt = null;
+                document.getElementById('column-global-prompt-name').innerText = 'None';
+            }
         }
-    } else {
-        columnGenerationState.globalPrompt = null;
-        document.getElementById('column-global-prompt-name').innerText = 'None';
-    }
-}
 
         // Apply row defaults when showing config panel
-function applyRowDefaults() {
-    if (!aiDefaults || !aiDefaults.bannerDefaults) return;
-    document.getElementById('globalInspirationInput').value = aiDefaults.globalInspiration || '';
+        function applyRowDefaults() {
+            if (!aiDefaults || !aiDefaults.bannerDefaults) return;
+            document.getElementById('globalInspirationInput').value = aiDefaults.globalInspiration || '';
 
-    for (const field of rowGenerationState.selectedFields) {
-        const def = aiDefaults.bannerDefaults[field] || {};
-        const titleInput = document.getElementById(`config-${field}-title`);
-        if (titleInput) titleInput.value = def.title || '';
-        const subInput = document.getElementById(`config-${field}-sub_title`);
-        if (subInput) subInput.value = def.sub_title || '';
+            for (const field of rowGenerationState.selectedFields) {
+                const def = aiDefaults.bannerDefaults[field] || {};
+                const titleInput = document.getElementById(`config-${field}-title`);
+                if (titleInput) titleInput.value = def.title || '';
+                const subInput = document.getElementById(`config-${field}-sub_title`);
+                if (subInput) subInput.value = def.sub_title || '';
                 const descInput = document.getElementById(`config-${field}-description`);
                 if (descInput) descInput.value = def.description || '';
                 const ctaInput = document.getElementById(`config-${field}-cta`);
@@ -1889,7 +1886,24 @@ function applyRowDefaults() {
             await saveAIDefaults(newDefaults);
         }
 
-        // ---------- Column AI Modal with per‑mood config (no global JSON) ----------
+        // New function: update global prompt from ID input
+        function updateGlobalPromptFromId(id) {
+            const prompt = getPromptById(parseInt(id));
+            if (prompt) {
+                columnGenerationState.globalPrompt = {
+                    id: prompt.id,
+                    name: prompt.name,
+                    system: prompt.system_prompt,
+                    user: prompt.user_prompt
+                };
+                document.getElementById('column-global-prompt-name').innerText = escapeHtml(prompt.name);
+            } else {
+                columnGenerationState.globalPrompt = null;
+                document.getElementById('column-global-prompt-name').innerText = 'None (invalid ID)';
+            }
+        }
+
+        // ---------- Column AI Modal with per‑mood config (modified) ----------
         let columnGenerationState = {
             field: null,
             abortController: null,
@@ -1902,21 +1916,18 @@ function applyRowDefaults() {
             croppingPromises: []    // new: track async crops
         };
 
-        function renderMoodChecklist(filter = '') {
+        function renderMoodChecklist() {
             const container = document.getElementById('columnMoodChecklist');
-            const searchTerm = filter.toLowerCase();
             let html = '';
             allMoods.forEach(mood => {
                 const moodName = mood.name || `Mood ${mood.id}`;
-                if (moodName.toLowerCase().includes(searchTerm)) {
-                    html += `<label class="mood-pill">
-                        <input type="checkbox" value="${mood.id}" data-mood-name="${mood.name ? mood.name.toLowerCase() : ''}">
-                        ${escapeHtml(moodName)} <span class="mood-id">${mood.id}</span>
-                    </label>`;
-                }
+                html += `<label class="mood-pill">
+                    <input type="checkbox" value="${mood.id}" data-mood-name="${mood.name ? mood.name.toLowerCase() : ''}" checked>
+                    ${escapeHtml(moodName)} <span class="mood-id">${mood.id}</span>
+                </label>`;
             });
             if (!html) {
-                html = '<div class="no-results">No matching moods</div>';
+                html = '<div class="no-results">No moods</div>';
             }
             container.innerHTML = html;
         }
@@ -1937,13 +1948,7 @@ function applyRowDefaults() {
             document.getElementById('columnField').value = field;
             document.getElementById('columnFieldName').innerText = field;
 
-            renderMoodChecklist();
-
-            const searchInput = document.getElementById('moodSearch');
-            if (searchInput) {
-                searchInput.value = '';
-                searchInput.oninput = (e) => renderMoodChecklist(e.target.value);
-            }
+            renderMoodChecklist(); // all checked
 
             // Reset generation state
             columnGenerationState = {
@@ -1969,13 +1974,18 @@ function applyRowDefaults() {
             document.getElementById('column-global-aspect_ratio').value = '';
             document.getElementById('column-global-prompt-name').innerText = 'None';
 
-            // Apply defaults if available
+            // Set default prompt ID to 1 and load it
+            const promptIdInput = document.getElementById('columnPromptId');
+            promptIdInput.value = '1';
+            updateGlobalPromptFromId(1);
+
+            // Apply defaults if available (will override prompt ID if saved)
             if (aiDefaults) {
                 applyColumnDefaults(field);
             }
 
-            // Hide panels
-            document.getElementById('columnConfigPanel').style.display = 'none';
+            // Ensure config panel is visible
+            document.getElementById('columnConfigPanel').style.display = 'block';
             document.getElementById('columnProgressArea').style.display = 'none';
             document.getElementById('postGenActions').style.display = 'none';
             document.getElementById('rejectMessage').style.display = 'none';
@@ -1993,34 +2003,26 @@ function applyRowDefaults() {
             document.getElementById('columnAiModal').classList.remove('show');
         }
 
-        function showColumnConfigPanel() {
-            const checkboxes = document.querySelectorAll('#columnMoodChecklist input[type="checkbox"]:checked');
-            if (checkboxes.length === 0) {
-                alert('Please select at least one mood first.');
-                return;
-            }
-
-            // Store selected moods
-            columnGenerationState.selectedMoodNames = Array.from(checkboxes).map(cb => cb.dataset.moodName);
-
-            // Show the config panel
-            document.getElementById('columnConfigPanel').style.display = 'block';
-        }
-
         function selectGlobalPromptForColumn() {
             window._currentPromptMood = '__GLOBAL__';  // marker for global prompt
             openPromptsModal(true);
         }
 
-        function hideColumnConfigPanel() {
-            document.getElementById('columnConfigPanel').style.display = 'none';
-        }
+        async function startColumnGeneration() {
+            const field = columnGenerationState.field;
+            const bannerId = fieldToBannerId[field];
+            if (!bannerId) return;
 
-        function saveColumnConfigs() {
-            const selectedMoods = columnGenerationState.selectedMoodNames;
-            if (!selectedMoods || selectedMoods.length === 0) return;
+            // Gather selected moods from checkboxes
+            const checkboxes = document.querySelectorAll('#columnMoodChecklist input[type="checkbox"]:checked');
+            if (checkboxes.length === 0) {
+                alert('Please select at least one mood.');
+                return;
+            }
+            const selectedMoodNames = Array.from(checkboxes).map(cb => cb.dataset.moodName);
+            columnGenerationState.selectedMoodNames = selectedMoodNames;
 
-            // Read values from single form (including aspect ratio dropdown)
+            // Read current config from form and global prompt
             const globalConfig = {
                 title: document.getElementById('column-global-title').value,
                 sub_title: document.getElementById('column-global-sub_title').value,
@@ -2030,32 +2032,17 @@ function applyRowDefaults() {
                 object: document.getElementById('column-global-object').value,
                 size: document.getElementById('column-global-size').value,
                 aspect_ratio: document.getElementById('column-global-aspect_ratio').value,
-                prompt: columnGenerationState.globalPrompt   // global prompt
+                prompt: columnGenerationState.globalPrompt
             };
 
-            // Apply the same config to every selected mood
-            selectedMoods.forEach(mood => {
+            // Apply the same config to all selected moods
+            columnGenerationState.moodConfigs = {};
+            selectedMoodNames.forEach(mood => {
                 columnGenerationState.moodConfigs[mood] = { ...globalConfig };
             });
 
-            showMessage('Configurations saved for all selected moods.', 'success');
-            hideColumnConfigPanel();
-        }
-
-        async function startColumnGeneration() {
-            const field = columnGenerationState.field;
-            const bannerId = fieldToBannerId[field];
-            if (!bannerId) return;
-
-            // If they didn't click Configure, get selected from checkboxes and use empty configs
-            if (columnGenerationState.selectedMoodNames.length === 0) {
-                const checkboxes = document.querySelectorAll('#columnMoodChecklist input[type="checkbox"]:checked');
-                if (checkboxes.length === 0) {
-                    alert('Please select at least one mood.');
-                    return;
-                }
-                columnGenerationState.selectedMoodNames = Array.from(checkboxes).map(cb => cb.dataset.moodName);
-            }
+            // Save this config as default before generating
+            await saveColumnDefaults();
 
             // Prepare UI
             document.getElementById('columnProgress').innerHTML = '';
@@ -2075,7 +2062,7 @@ function applyRowDefaults() {
 
             try {
                 // Loop through each selected mood sequentially
-                for (const mood of columnGenerationState.selectedMoodNames) {
+                for (const mood of selectedMoodNames) {
                     if (columnGenerationState.abortController.signal.aborted) {
                         statusDiv.innerText = '⏹️ Generation aborted.';
                         break;
@@ -2103,22 +2090,11 @@ function applyRowDefaults() {
                         moods: [mood]   // only this mood
                     };
 
-                    // Determine prompt template to use (per‑mood or global)
-                    let userTemplate = null;
-                    if (config.prompt && config.prompt.user) {
-                        userTemplate = config.prompt.user;
-                    } else if (columnGenerationState.globalPrompt && columnGenerationState.globalPrompt.user) {
-                        userTemplate = columnGenerationState.globalPrompt.user;
-                    }
-                    // Check and possibly modify for aspect ratio
+                    // Determine prompt template
+                    let userTemplate = config.prompt ? config.prompt.user : null;
                     const { modifiedTemplate, warning } = checkAndAddAspectRatioToPrompt(userTemplate, config.aspect_ratio);
-                    if (warning) {
-                        // Use the modified template
-                        if (config.prompt && config.prompt.user) {
-                            config.prompt.user = modifiedTemplate;
-                        } else if (columnGenerationState.globalPrompt && columnGenerationState.globalPrompt.user) {
-                            columnGenerationState.globalPrompt.user = modifiedTemplate;
-                        }
+                    if (warning && config.prompt) {
+                        config.prompt.user = modifiedTemplate;
                     }
 
                     const body = {
@@ -2126,13 +2102,9 @@ function applyRowDefaults() {
                         inspiration: config.inspiration || ''
                     };
 
-                    // Add prompts if present
                     if (config.prompt) {
                         body.systemPrompt = config.prompt.system;
                         body.userPromptTemplate = config.prompt.user;
-                    } else if (columnGenerationState.globalPrompt) {
-                        body.systemPrompt = columnGenerationState.globalPrompt.system;
-                        body.userPromptTemplate = columnGenerationState.globalPrompt.user;
                     }
 
                     statusDiv.innerText = `Generating for mood: ${mood}...`;
@@ -3542,6 +3514,14 @@ function applyRowDefaults() {
         document.getElementById('imageSizeSlider').addEventListener('input', function(e) {
             document.getElementById('sizeValue').textContent = e.target.value + '%';
             updateImageSizes();
+        });
+
+        // Add event listener for prompt ID input
+        document.getElementById('columnPromptId').addEventListener('input', function(e) {
+            const id = parseInt(e.target.value);
+            if (!isNaN(id) && id > 0) {
+                updateGlobalPromptFromId(id);
+            }
         });
 
         window.addEventListener('click', (event) => {

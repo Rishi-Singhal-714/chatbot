@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Data Stats - Zulu Club</title>
+    <style>
+        /* ---------- Original Styles ---------- */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #666;
+            padding-bottom: 10px;
+        }
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .back-btn {
+            background: #6c757d;
+            color: white;
+        }
+        .refresh-btn {
+            background: #2196F3;
+            color: white;
+        }
+        .update-section-btn {
+            background: #ff9800;
+            color: white;
+            margin-left: 15px;
+            padding: 5px 12px;
+            font-size: 13px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+        .section {
+            grid-column: 1;
+        }
+        .section h2 {
+            margin-bottom: 10px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        th {
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+        }
+        td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .total-row {
+            font-weight: bold;
+        }
+        .stat-number {
+            font-weight: bold;
+        }
+        .last-updated {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+            margin-bottom: 20px;
+        }
+        #loading, #error {
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+            margin: 20px 0;
+            display: none;
+        }
+        #loading {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        #error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .action-panel {
+            grid-column: 2;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            align-self: start;
+        }
+        .button-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        .action-btn {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 16px;
+            text-align: left;
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            font-weight: 500;
+        }
+        .action-btn:hover {
+            background: #e0e0e0;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .action-btn:active {
+            transform: translateY(0);
+            background: #d0d0d0;
+        }
+
+        /* ---------- Modal Styles ---------- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 1100px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #666;
+        }
+        .modal-close:hover { color: #000; }
+        .modal-content h2 { margin-top: 0; border-bottom: 2px solid #666; padding-bottom: 8px; }
+        .modal-tables {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        .fields-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .fields-table th {
+            background: #4CAF50;
+            color: white;
+            padding: 8px;
+            text-align: left;
+        }
+        .fields-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        .fields-table tr:nth-child(even) { background: #f9f9f9; }
+        .save-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .save-btn:hover { background: #45a049; }
+        .field-checkbox { transform: scale(1.2); margin-right: 5px; }
+        #modal-loading { text-align: center; padding: 40px; color: #666; }
+
+        /* new search & selected styles */
+        #field-search {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        .selected-summary {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #e8f5e8;
+            border-radius: 4px;
+            font-size: 0.95em;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <h1>📊 All Data Statistics</h1>
+
+    <div class="controls">
+        <button class="back-btn" onclick="location.href='/'">← Back to Dashboard</button>
+        <button class="refresh-btn" onclick="loadAllStats()">🔄 Refresh All</button>
+    </div>
+
+    <div id="loading">Loading all data...</div>
+    <div id="error"></div>
+
+    <!-- Grid container: left column = stats, right column = actions -->
+    <div class="stats-grid">
+        <!-- Left column: statistics sections -->
+        <div class="section" id="productsSection" data-module-name="products">
+            <h2 style="color: #4CAF50;">
+                Products (tags2)
+                <button class="update-section-btn" data-module-name="products">Update</button>
+            </h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="background: #4CAF50;">Category</th>
+                        <th style="background: #4CAF50;">Status ON</th>
+                        <th style="background: #4CAF50;">Status OFF</th>
+                        <th style="background: #4CAF50;">Total</th>
+                    </tr>
+                </thead>
+                <tbody id="productsBody">
+                    <tr><td colspan="4">Loading...</td></tr>
+                </tbody>
+            </table>
+            <div class="last-updated" id="productsUpdated"></div>
+        </div>
+
+        <div class="section" id="sellersSection" data-module-name="sellers">
+            <h2 style="color: #ff9800;">
+                Sellers (buy_now)
+                <button class="update-section-btn" data-module-name="sellers">Update</button>
+            </h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="background: #ff9800;">Category</th>
+                        <th style="background: #ff9800;">Status ON</th>
+                        <th style="background: #ff9800;">Status OFF</th>
+                        <th style="background: #ff9800;">Total</th>
+                    </tr>
+                </thead>
+                <tbody id="sellersBody">
+                    <tr><td colspan="4">Loading...</td></tr>
+                </tbody>
+            </table>
+            <div class="last-updated" id="sellersUpdated"></div>
+        </div>
+
+        <div class="section" id="videosSection" data-module-name="videos">
+            <h2 style="color: #9C27B0;">
+                Videos (thumbnail)
+                <button class="update-section-btn" data-module-name="videos">Update</button>
+            </h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="background: #9C27B0;">Category</th>
+                        <th style="background: #9C27B0;">Status ON</th>
+                        <th style="background: #9C27B0;">Status OFF</th>
+                        <th style="background: #9C27B0;">Total</th>
+                    </tr>
+                </thead>
+                <tbody id="videosBody">
+                    <tr><td colspan="4">Loading...</td></tr>
+                </tbody>
+            </table>
+            <div class="last-updated" id="videosUpdated"></div>
+        </div>
+
+        <div class="section" id="galleriesSection" data-module-name="galleries">
+            <h2 style="color: #00ACC1;">
+                Galleries (version = 7)
+                <button class="update-section-btn" data-module-name="galleries">Update</button>
+            </h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="background: #00ACC1;">Category</th>
+                        <th style="background: #00ACC1;">Status ON</th>
+                        <th style="background: #00ACC1;">Status OFF</th>
+                        <th style="background: #00ACC1;">Total</th>
+                    </tr>
+                </thead>
+                <tbody id="galleriesBody">
+                    <tr><td colspan="4">Loading...</td></tr>
+                </tbody>
+            </table>
+            <div class="last-updated" id="galleriesUpdated"></div>
+        </div>
+
+        <!-- Right column: action buttons -->
+        <div class="action-panel">
+            <h2 style="color: #333; border-bottom: 2px solid #666; padding-bottom: 8px;">Actions</h2>
+            <div class="button-stack">
+                <button class="action-btn" onclick="alert('Update clicked')">📦 Update</button>
+                <button class="action-btn" onclick="alert('Download clicked')">⬇️ Download</button>
+                <button class="action-btn" onclick="alert('Create Gallery clicked')">🖼️ Create Gallery</button>
+                <button class="action-btn" onclick="alert('Curate Gallery clicked')">🎨 Curate Gallery</button>
+                <button class="action-btn" onclick="alert('Create Album clicked')">📁 Create Album</button>
+                <button class="action-btn" onclick="alert('Curate Album clicked')">✨ Curate Album</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ---------- Modal for Module Editor (modified) ---------- -->
+    <div id="moduleEditorModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModuleEditor()">&times;</span>
+            <h2>Module Field Editor</h2>
+            <div id="modal-loading">Loading module data...</div>
+            <div id="modal-error" style="color: #721c24; background: #f8d7da; padding: 10px; border-radius: 5px; display: none;"></div>
+
+            <div id="modal-body" style="display: none;">
+                <div class="modal-tables">
+                    <!-- Database Fields -->
+                    <div class="fields-table">
+                        <h3>Available Database Fields for <span id="modal-db-table-name"></span></h3>
+                        <p>Select the fields you want to include. Each selected field will be stored as <code>id:field_name</code> in the module's field_map.</p>
+                        
+                        <!-- Search bar for field_name -->
+                        <input type="text" id="field-search" placeholder="Search field_name..." autocomplete="off">
+
+                        <!-- Selected fields summary -->
+                        <div class="selected-summary">
+                            <strong>Selected:</strong> <span id="selected-fields-list"></span>
+                        </div>
+                        
+                        <div id="fields-list"></div>
+                        <button class="save-btn" id="modal-save-btn">Save field_map</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ---------- Original Statistics Code (unchanged) ----------
+        const endpoints = {
+            products:  '/api/products',
+            sellers:   '/api/sellers',
+            videos:    '/api/videos',
+            galleries: '/api/galleries'
+        };
+
+        const fieldMapping = {
+            products: {
+                status: 'status',
+                feature: 'tags2',
+                featureCheck: (val) => val && val.toString().trim() !== ''
+            },
+            sellers: {
+                status: 'outlet_live',
+                feature: 'buy_now',
+                featureCheck: (val) => {
+                    if (typeof val === 'string') {
+                        return val.toLowerCase() === 'on' || val === '1' || val === 'true';
+                    }
+                    return Boolean(val);
+                }
+            },
+            videos: {
+                status: 'status',
+                feature: 'thumbnail',
+                featureCheck: (val) => val && val.toString().trim() !== ''
+            },
+            galleries: {
+                status: 'status',
+                feature: 'version',
+                featureCheck: (val) => {
+                    if (val === null || val === undefined) return false;
+                    const str = String(val).trim();
+                    return str === '7' || Number(val) === 7;
+                }
+            }
+        };
+
+        const rowLabels = {
+            products:  { with: 'Products with tags2', without: 'Products without tags2' },
+            sellers:   { with: 'Sellers with Buy Now', without: 'Sellers without Buy Now' },
+            videos:    { with: 'Videos with thumbnail', without: 'Videos without thumbnail' },
+            galleries: { with: 'Galleries with version = 7', without: 'Galleries with other version' }
+        };
+
+        async function loadStatsForType(type, bodyId, updatedId) {
+            try {
+                const response = await fetch(endpoints[type]);
+                const result = await response.json();
+
+                if (!result.success || !Array.isArray(result.data)) {
+                    throw new Error(result.error || 'Invalid data');
+                }
+
+                const items = result.data;
+                const total = items.length;
+
+                const statusField = fieldMapping[type].status;
+                const featureField = fieldMapping[type].feature;
+                const featureCheck = fieldMapping[type].featureCheck;
+
+                let withOn = 0, withOff = 0;
+                let withoutOn = 0, withoutOff = 0;
+
+                items.forEach(item => {
+                    let status = item[statusField];
+                    if (typeof status === 'string') {
+                        const lower = status.toLowerCase().trim();
+                        status = (lower === 'on' || lower === 'active' || lower === 'true' || lower === '1') ? 1 : 0;
+                    } else {
+                        status = Number(status) === 1 ? 1 : 0;
+                    }
+                    const isOn = status === 1;
+
+                    const hasFeature = featureCheck(item[featureField]);
+
+                    if (hasFeature) {
+                        if (isOn) withOn++;
+                        else withOff++;
+                    } else {
+                        if (isOn) withoutOn++;
+                        else withoutOff++;
+                    }
+                });
+
+                const tbody = document.getElementById(bodyId);
+                tbody.innerHTML = `
+                    <tr>
+                        <td>${rowLabels[type].with}</td>
+                        <td class="stat-number">${withOn}</td>
+                        <td class="stat-number">${withOff}</td>
+                        <td class="stat-number">${withOn + withOff}</td>
+                    </tr>
+                    <tr>
+                        <td>${rowLabels[type].without}</td>
+                        <td class="stat-number">${withoutOn}</td>
+                        <td class="stat-number">${withoutOff}</td>
+                        <td class="stat-number">${withoutOn + withoutOff}</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td>Total</td>
+                        <td>${withOn + withoutOn}</td>
+                        <td>${withOff + withoutOff}</td>
+                        <td>${total}</td>
+                    </tr>
+                `;
+
+                const totalRowColor = 
+                    type === 'products'  ? '#e8f5e9' :
+                    type === 'sellers'   ? '#fff3e0' :
+                    type === 'videos'    ? '#f3e5f5' :
+                    type === 'galleries' ? '#e0f7fa' : '#f5f5f5';
+                tbody.querySelector('.total-row').style.background = totalRowColor;
+
+                document.getElementById(updatedId).textContent = `Last updated: ${new Date().toLocaleString()}`;
+
+            } catch (err) {
+                document.getElementById(bodyId).innerHTML = `<tr><td colspan="4" style="color:red;">Error: ${err.message}</td></tr>`;
+                document.getElementById(updatedId).textContent = 'Update failed';
+            }
+        }
+
+        async function loadAllStats() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+
+            try {
+                await Promise.all([
+                    loadStatsForType('products',  'productsBody',  'productsUpdated'),
+                    loadStatsForType('sellers',   'sellersBody',   'sellersUpdated'),
+                    loadStatsForType('videos',    'videosBody',    'videosUpdated'),
+                    loadStatsForType('galleries', 'galleriesBody', 'galleriesUpdated')
+                ]);
+            } catch (err) {
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = 'Error loading one or more tables: ' + err.message;
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // ---------- Module Editor Logic (modified) ----------
+        // Map from section data-module-name to content_modules.module_name
+        const moduleNameMap = {
+            'products': 'PRODUCTS',
+            'sellers': 'OUTLETS',
+            'videos': 'VIDEOS',
+            'galleries': 'GALLERIES'
+        };
+
+        // Map section name to actual database table name (adjust as needed)
+        const dbTableMap = {
+            'products': 'products',
+            'sellers': 'seller',      // because sellers data comes from 'outlets' table
+            'videos': 'videos',
+            'galleries': 'galleries'
+        };
+
+        let currentModuleId = null;
+
+        // Helper to update the selected fields summary
+        function updateSelectedList() {
+            const checkboxes = document.querySelectorAll('#fields-list .field-checkbox:checked');
+            const selected = Array.from(checkboxes).map(cb => cb.dataset.pair).join(', ');
+            document.getElementById('selected-fields-list').innerText = selected || '(none)';
+        }
+
+        // Render the fields table with checkboxes
+        function renderFieldsList(fields, currentFieldMapStr) {
+            const container = document.getElementById('fields-list');
+            container.innerHTML = '';
+
+            if (!fields.length) {
+                container.innerHTML = '<p style="color:#721c24;">No database field definitions found for this table.</p>';
+                return;
+            }
+
+            // Parse current field_map (format: "id:field_name,id:field_name,...")
+            const selectedSet = new Set();
+            if (currentFieldMapStr && currentFieldMapStr !== '0') {
+                currentFieldMapStr.split(',').forEach(pair => {
+                    const trimmed = pair.trim();
+                    if (trimmed) selectedSet.add(trimmed);
+                });
+            }
+
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Select</th>
+                        <th>ID</th>
+                        <th>field_name</th>
+                        <th>admin_use</th>
+                        <th>api_use</th>
+                        <th>link</th>
+                    </tr>
+                </thead>
+                <tbody id="fields-tbody"></tbody>
+            `;
+            const tbody = document.createElement('tbody');
+            tbody.id = 'fields-tbody';
+
+            fields.forEach(field => {
+                const tr = document.createElement('tr');
+                const pair = `${field.id}:${field.field_name}`;
+                const checked = selectedSet.has(pair) ? 'checked' : '';
+                tr.innerHTML = `
+                    <td><input type="checkbox" class="field-checkbox" data-pair="${pair}" ${checked}></td>
+                    <td>${field.id}</td>
+                    <td>${field.field_name}</td>
+                    <td>${field.admin_use || ''}</td>
+                    <td>${field.api_use || ''}</td>
+                    <td>${field.link || ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            table.appendChild(tbody);
+            container.appendChild(table);
+
+            // Attach change event to all checkboxes to update selected summary
+            document.querySelectorAll('#fields-list .field-checkbox').forEach(cb => {
+                cb.addEventListener('change', updateSelectedList);
+            });
+
+            // Initial update of selected summary
+            updateSelectedList();
+
+            // Set up search filter (on field_name column)
+            const searchInput = document.getElementById('field-search');
+            // Remove previous listener to avoid duplicates
+            const newSearchInput = searchInput.cloneNode(true);
+            searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+            newSearchInput.addEventListener('input', function() {
+                const filter = this.value.toLowerCase();
+                const rows = document.querySelectorAll('#fields-tbody tr');
+                rows.forEach(row => {
+                    const fieldNameCell = row.cells[2]; // field_name is the third column (index 2)
+                    const fieldName = fieldNameCell.textContent.toLowerCase();
+                    row.style.display = fieldName.includes(filter) ? '' : 'none';
+                });
+            });
+        }
+
+        // Open modal when any Update button is clicked
+        document.querySelectorAll('.update-section-btn').forEach(btn => {
+            btn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                const sectionName = this.getAttribute('data-module-name'); // e.g., 'products'
+                if (!sectionName) return;
+
+                const contentModuleName = moduleNameMap[sectionName];
+                if (!contentModuleName) {
+                    alert(`No mapping found for section "${sectionName}"`);
+                    return;
+                }
+
+                // Clear previous search input
+                document.getElementById('field-search').value = '';
+
+                document.getElementById('moduleEditorModal').style.display = 'flex';
+                document.getElementById('modal-loading').style.display = 'block';
+                document.getElementById('modal-body').style.display = 'none';
+                document.getElementById('modal-error').style.display = 'none';
+
+                try {
+                    // Fetch all content modules
+                    const modulesRes = await fetch('/api/content_modules');
+                    const modulesData = await modulesRes.json();
+                    if (!modulesData.success) throw new Error('Failed to load modules');
+
+                    const module = modulesData.data.find(m => m.module_name.toUpperCase() === contentModuleName.toUpperCase());
+                    if (!module) throw new Error(`No content module found with name "${contentModuleName}"`);
+
+                    currentModuleId = module.id;
+
+                    // Determine the actual database table name
+                    const dbTable = dbTableMap[sectionName] || sectionName; // fallback to sectionName
+                    document.getElementById('modal-db-table-name').innerText = dbTable;
+
+                    // Fetch database fields for this table
+                    const dbRes = await fetch(`/api/databases?table_name=${encodeURIComponent(dbTable)}`);
+                    const dbData = await dbRes.json();
+                    if (!dbData.success) throw new Error('Failed to load database fields');
+
+                    renderFieldsList(dbData.data || [], module.field_map);
+
+                    document.getElementById('modal-loading').style.display = 'none';
+                    document.getElementById('modal-body').style.display = 'block';
+
+                } catch (err) {
+                    document.getElementById('modal-loading').style.display = 'none';
+                    const errorDiv = document.getElementById('modal-error');
+                    errorDiv.style.display = 'block';
+                    errorDiv.innerText = 'Error: ' + err.message;
+                }
+            });
+        });
+
+        // Save button: update field_map and reflect changes in checkboxes
+        document.getElementById('modal-save-btn').addEventListener('click', async () => {
+            if (!currentModuleId) return;
+
+            const checkboxes = document.querySelectorAll('#fields-list .field-checkbox:checked');
+            const selectedPairs = Array.from(checkboxes).map(cb => cb.dataset.pair);
+            const newFieldMap = selectedPairs.join(',');
+
+            if (!confirm('Save this field_map? It will replace the current one.')) return;
+
+            try {
+                const res = await fetch(`/api/content_modules/${currentModuleId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ field_map: newFieldMap })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    alert('field_map updated successfully!');
+                    // Update checkboxes to match the newly saved field_map
+                    const newSelectedSet = new Set(newFieldMap.split(',').filter(p => p.trim()));
+                    document.querySelectorAll('#fields-list .field-checkbox').forEach(cb => {
+                        cb.checked = newSelectedSet.has(cb.dataset.pair);
+                    });
+                    updateSelectedList();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (err) {
+                alert('Network error: ' + err.message);
+            }
+        });
+
+        function closeModuleEditor() {
+            document.getElementById('moduleEditorModal').style.display = 'none';
+            currentModuleId = null;
+        }
+
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('moduleEditorModal');
+            if (e.target === modal) {
+                closeModuleEditor();
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', loadAllStats);
+    </script>
+</body>
+</html>
