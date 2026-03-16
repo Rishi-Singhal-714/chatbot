@@ -29,16 +29,15 @@ const tableMapping = {
   'categories': 'categories',
   'socbookinguser': 'soc_booking_user',
   'soc_booking_user': 'soc_booking_user',  // This is the issue
-  'base_moods': 'base_moods',
-  'moods': 'moods',
+  'base_moods': 'base_moods',  
+  'promptfields': 'promptfields',
+'moods': 'moods',
   'tracks': 'tracks',
   'business': 'business',
     'prompts': 'prompts',   // <-- add this line
     'topics': 'topics',   // <-- add this line
   'databases': 'databases',   // actual table name
   'voicedata': 'voicedata',
-
-
 };
 
 // Column mapping for each table - ONLY the columns we want to fetch and edit
@@ -140,17 +139,15 @@ const columnMapping = {
   'id','module_name','field_map','update_action','download_action','create_gallery','curate_gallery','create_album','curate_album'
 ],
 'databases': [
-  'id',
-  'table_name',
-  'db_table_name',
-  'field_name',
-  'db_field_name',
-  'admin_use',
-  'api_use',
-  'link'
-],  'voicedata': [
+  'id', 'table_name','db_table_name', 'field_name', 'db_field_name', 'admin_use','api_use', 'link'
+],  
+'voicedata': [
     'id', 'name', 'base_mood', 'gender', 'energy_level', 'voiceid'
+  ],  
+  'promptfields': [
+    'id','name','field'
   ],
+
 };
 
 // In-memory cache (2 hours = 7200000 ms)
@@ -324,6 +321,15 @@ const cache = {
       SELECT
         ${columnMapping.voicedata.join(',\n        ')}
       FROM u130660877_zulu.voicedata
+    `
+  },  
+  promptfields: {
+    data: null,
+    timestamp: 0,
+    query: `
+      SELECT
+        ${columnMapping.promptfields.join(',\n        ')}
+      FROM u130660877_zulu.promptfields
     `
   },
 };

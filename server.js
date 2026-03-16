@@ -4816,7 +4816,7 @@ app.post('/api/clear-cache/:type', (req, res) => {
   if (type === 'all') {
     db.clearAllCaches();
     res.json({ success: true, message: 'All caches cleared' });
-  } else if (['products', 'sellers', 'videos', 'users', 'galleries', 'appconfigs', 'categories', 'soc_booking_user','socbookinguser', 'base_moods', 'moods', 'tracks', 'business','topics','content_modules','databases'].includes(type)) {
+  } else if (['products', 'sellers', 'videos', 'users', 'galleries', 'appconfigs', 'categories', 'soc_booking_user','socbookinguser', 'base_moods', 'moods', 'tracks', 'business','topics','content_modules','databases','promptfields'].includes(type)) {
     db.clearCache(type);
     res.json({ success: true, message: `Cache cleared for ${type}` });
   } else {
@@ -5678,7 +5678,7 @@ app.get('/content_modules', (req, res) => { res.sendFile(__dirname + '/public/co
 app.get('/curate-galleries', (req, res) => res.sendFile(__dirname + '/public/curate-galleries.html'));
 app.get('/control', (req, res) => res.sendFile(__dirname + '/public/control.html'));
 app.get('/voicegen', (req, res) => res.sendFile(__dirname + '/public/voicegen.html'));
-
+app.get('/promptfields', (req, res) => res.sendFile(__dirname + '/public/promptfields.html'));
 // -------------------------
 // Moods Endpoints
 // -------------------------
@@ -5925,7 +5925,7 @@ app.put('/api/:table/:id', async (req, res) => {
     const { table, id } = req.params;
     const updateData = req.body;
     
-    const validTables = ['products', 'sellers', 'users', 'videos', 'galleries','databases','content_modules'];
+    const validTables = ['products', 'sellers', 'users', 'videos', 'galleries','databases','content_modules','promptfields'];
     if (!validTables.includes(table)) {
       return res.status(400).json({ 
         success: false, 
@@ -7884,6 +7884,73 @@ app.delete('/api/content_modules/:id', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+
+
+
+
+
+app.get('/api/promptfields', async (req, res) => {
+  try {
+    const data = await db.getCachedData('promptfields');
+    res.json({
+      success: true,
+      data: data,
+      count: data.length
+    });
+  } catch (error) {
+    console.error('Error fetching promptfields:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get single promptfields record
+app.get('/api/promptfields/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const record = await db.getRecordById('promptfields', id);
+    if (!record) {
+      return res.status(404).json({ success: false, error: 'promptfields not found' });
+    }
+    res.json({ success: true, data: record });
+  } catch (error) {
+    console.error('Get promptfields error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Update promptfields record
+app.put('/api/promptfields/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    delete updateData.id;  // never update the primary key
+
+    const result = await db.executeUpdate('promptfields', id, updateData);
+    res.json({
+      success: true,
+      message: 'promptfields updated successfully',
+      affectedRows: result.affectedRows
+    });
+  } catch (error) {
+    console.error('Update promptfields error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// (Optional) Delete promptfields
+app.delete('/api/promptfields/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await db.executeDelete('promptfields', id);
+    db.clearCache('promptfields');
+    res.json({ success: true, message: 'promptfields deleted', affectedRows: result.affectedRows });
+  } catch (error) {
+    console.error('Delete promptfields error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 
 
 // Get databases entries, optionally filtered by table_name

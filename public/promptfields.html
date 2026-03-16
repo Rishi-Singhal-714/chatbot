@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prompt Fields - Admin</title>
+    <style>
+        /* Same polished base styles, adjusted for table layout */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: #f4f7fb;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #1a2639;
+            font-weight: 600;
+            font-size: 2.2rem;
+            margin-bottom: 2rem;
+            border-bottom: 3px solid #4f46e5;
+            padding-bottom: 0.75rem;
+            display: inline-block;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+            border: 1px solid rgba(255,255,255,0.5);
+            margin-bottom: 2rem;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        .back-btn {
+            background: #5a6b7a;
+            color: white;
+        }
+        .refresh-btn {
+            background: #2196F3;
+            color: white;
+        }
+        .add-btn {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .search-box {
+            flex: 1;
+            max-width: 380px;
+            position: relative;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 12px 48px 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 40px;
+            font-size: 15px;
+            transition: 0.3s;
+            background: white;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 4px rgba(79,70,229,0.15);
+        }
+        .search-box:after {
+            content: "🔍";
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7f8c8d;
+            font-size: 18px;
+        }
+
+        #message {
+            padding: 16px 24px;
+            border-radius: 40px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            display: none;
+            animation: slideDown 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #loading {
+            text-align: center;
+            padding: 50px;
+            background: #fff8e7;
+            border: 2px solid #ffe0a3;
+            border-radius: 40px;
+            color: #7d5d23;
+            font-weight: 600;
+            font-size: 18px;
+            margin: 30px 0;
+        }
+
+        #error {
+            padding: 30px;
+            background: #ffe6e6;
+            border: 2px solid #ffb3b3;
+            border-radius: 40px;
+            color: #b00020;
+            display: none;
+            margin: 30px 0;
+            font-weight: 500;
+        }
+
+        /* Table styles */
+        .table-container {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th {
+            text-align: left;
+            padding: 18px 20px;
+            background: #f8fafd;
+            color: #1e2b3a;
+            font-weight: 600;
+            font-size: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid #edf2f7;
+            color: #2d3a4f;
+            font-size: 14px;
+        }
+
+        tr {
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        tr:hover {
+            background: #f1f5f9;
+        }
+
+        .field-cell {
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .delete-icon {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px 10px;
+            color: #e74c3c;
+            opacity: 0.7;
+            transition: 0.2s;
+            box-shadow: none;
+        }
+        .delete-icon:hover {
+            opacity: 1;
+            transform: scale(1.2);
+            background: none;
+            box-shadow: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 30px;
+            background: white;
+            border-radius: 40px;
+            border: 2px dashed #b0c4d9;
+            color: #5f7a9a;
+            font-size: 20px;
+        }
+
+        /* Modal styles (unchanged except textarea) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+        .modal.show {
+            display: block;
+            opacity: 1;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            background: white;
+            border-radius: 32px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+        .modal.show .modal-content {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 32px;
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            color: white;
+            border-radius: 32px 32px 0 0;
+        }
+        .modal-header h2 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 600;
+        }
+        .close-modal {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            font-size: 32px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        .close-modal:hover {
+            background: rgba(255,255,255,0.3);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 32px;
+        }
+
+        .fields-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        .field-card {
+            background: #f9fafc;
+            border: 2px solid #e9ecf0;
+            border-radius: 24px;
+            padding: 18px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .field-card:hover {
+            border-color: #4f46e5;
+            box-shadow: 0 10px 20px rgba(79,70,229,0.08);
+        }
+        .field-card.dirty {
+            border-color: #f97316;
+            background: #fffaf0;
+        }
+
+        .field-label {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #2c3e50;
+            font-size: 15px;
+            text-transform: capitalize;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .dirty-indicator {
+            width: 10px;
+            height: 10px;
+            background: #f97316;
+            border-radius: 50%;
+            display: inline-block;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .field-card.dirty .dirty-indicator {
+            opacity: 1;
+        }
+
+        .text-field, .textarea-field {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #dde3e9;
+            border-radius: 30px;
+            font-size: 14px;
+            transition: 0.2s;
+            margin-top: 8px;
+            background: white;
+        }
+        .textarea-field {
+            border-radius: 20px;
+            resize: vertical;
+            min-height: 120px;
+        }
+        .text-field:focus, .textarea-field:focus {
+            border-color: #4f46e5;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: flex-end;
+            padding: 24px 32px;
+            border-top: 2px solid #eef2f6;
+            background: #f8fafd;
+            border-radius: 0 0 32px 32px;
+        }
+        .save-btn, .cancel-btn, .delete-btn {
+            padding: 14px 32px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .save-btn {
+            background: #27ae60;
+            color: white;
+        }
+        .cancel-btn {
+            background: #95a5a6;
+            color: white;
+        }
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+            margin-right: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <h1>Prompt Fields</h1>
+
+        <div class="controls">
+            <button class="back-btn" onclick="location.href='/'">← Dashboard</button>
+            <button class="refresh-btn" onclick="loadItems()">🔄 Refresh</button>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by name or field...">
+            </div>
+        </div>
+
+        <div id="message"></div>
+        <div id="loading">Loading prompt fields...</div>
+        <div id="error"></div>
+        
+        <!-- Table container replaces cards-grid -->
+        <div id="tableContainer" class="table-container">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Field (Prompt)</th>
+                        <th style="width: 80px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- rows inserted via JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Edit/Create Modal -->
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTitle">Edit Prompt Field</h2>
+                    <button class="close-modal" onclick="closeEditModal()">&times;</button>
+                </div>
+                <div class="modal-body" id="modalBody"></div>
+                <div class="modal-actions">
+                    <button class="delete-btn" id="deleteBtn" onclick="deleteItem()">🗑️ Delete</button>
+                    <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
+                    <button class="save-btn" onclick="saveItem()">💾 Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    let allItems = [];
+    let currentEditId = null;
+
+    const API_BASE = '/api/promptfields';
+    const TABLE_ID_FIELD = 'id';
+
+    function escapeHtml(unsafe) {
+        if (unsafe === null || unsafe === undefined) return '';
+        const str = String(unsafe);
+        return str.replace(/[&<>"]/g, function(m) {
+            if(m === '&') return '&amp;';
+            if(m === '<') return '&lt;';
+            if(m === '>') return '&gt;';
+            if(m === '"') return '&quot;';
+            return m;
+        });
+    }
+
+    function showMessage(text, type = 'success') {
+        const msg = document.getElementById('message');
+        msg.textContent = text;
+        const colors = {
+            success: { bg: '#dff0d8', color: '#3c763d' },
+            error: { bg: '#f2dede', color: '#a94442' },
+            info: { bg: '#d9edf7', color: '#31708f' }
+        };
+        const s = colors[type] || colors.success;
+        msg.style.backgroundColor = s.bg;
+        msg.style.color = s.color;
+        msg.style.display = 'block';
+        setTimeout(() => msg.style.display = 'none', 4000);
+    }
+
+    async function loadItems() {
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('error').style.display = 'none';
+        try {
+            const res = await fetch(API_BASE);
+            const data = await res.json();
+            if (data.success) {
+                allItems = data.data;
+                filterAndDisplay();
+            } else throw new Error(data.error);
+        } catch (err) {
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').textContent = 'Error: ' + err.message;
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+        }
+    }
+
+    function filterAndDisplay() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = allItems.filter(item => {
+            const idMatch = String(item.id).includes(search);
+            const nameMatch = item.name && item.name.toLowerCase().includes(search);
+            const fieldMatch = item.field && item.field.toLowerCase().includes(search);
+            return idMatch || nameMatch || fieldMatch;
+        });
+        displayTable(filtered);
+    }
+
+    function displayTable(items) {
+        const tbody = document.getElementById('tableBody');
+        if (!items.length) {
+            // Show empty state inside table? We'll use a full message outside table? Better to keep table and show a row.
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:60px;">No prompt fields found</td></tr>`;
+            return;
+        }
+        let html = '';
+        items.forEach(item => {
+            const fieldSnippet = item.field ? item.field.substring(0, 100) + (item.field.length > 100 ? '…' : '') : '';
+            html += `
+                <tr data-id="${item.id}">
+                    <td>${escapeHtml(item.id)}</td>
+                    <td>${escapeHtml(item.name || '')}</td>
+                    <td class="field-cell" title="${escapeHtml(item.field || '')}">${escapeHtml(fieldSnippet)}</td>
+                    <td>
+                        <button class="delete-icon" onclick="event.stopPropagation(); quickDelete(${item.id})" title="Delete">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+
+        // Attach click event to rows (for editing)
+        document.querySelectorAll('#tableBody tr').forEach(row => {
+            row.addEventListener('click', (e) => {
+                // Ignore if click came from delete button
+                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+                const id = row.dataset.id;
+                if (id) openEditModal(parseInt(id));
+            });
+        });
+    }
+
+    // Quick delete without opening modal
+    async function quickDelete(id) {
+        if (!confirm('Are you sure you want to delete this prompt field?')) return;
+        try {
+            const res = await fetch(`${API_BASE}/${id}`, {
+                method: 'DELETE'
+            });
+            const result = await res.json();
+            if (result.success) {
+                await loadItems();
+                showMessage('Record deleted', 'info');
+            } else {
+                showMessage('Delete failed: ' + result.error, 'error');
+            }
+        } catch (err) {
+            showMessage('Delete error: ' + err.message, 'error');
+        }
+    }
+
+    function openEditModal(id) {
+        const item = allItems.find(i => i.id === id);
+        if (!item) return;
+        currentEditId = id;
+        document.getElementById('modalTitle').innerText = 'Edit Prompt Field';
+        document.getElementById('deleteBtn').style.display = 'inline-block';
+
+        let html = '<div class="fields-grid">';
+        // name field (short, use input)
+        html += `<div class="field-card" data-field="name">`;
+        html += `<div class="field-label">name<span class="dirty-indicator"></span></div>`;
+        html += `<input type="text" class="text-field" id="input-name" 
+                       value="${escapeHtml(item.name || '')}" oninput="markDirty('name')" placeholder="Enter name">`;
+        html += '</div>';
+        // field field (long text, use textarea)
+        html += `<div class="field-card" data-field="field">`;
+        html += `<div class="field-label">field (prompt)<span class="dirty-indicator"></span></div>`;
+        html += `<textarea class="textarea-field" id="input-field" 
+                  oninput="markDirty('field')" placeholder="Enter prompt (can be long)">${escapeHtml(item.field || '')}</textarea>`;
+        html += '</div>';
+        html += '</div>';
+        document.getElementById('modalBody').innerHTML = html;
+
+        const modal = document.getElementById('editModal');
+        modal.classList.add('show');
+    }
+
+    function openAddModal() {
+        currentEditId = null;
+        document.getElementById('modalTitle').innerText = 'Add Prompt Field';
+        document.getElementById('deleteBtn').style.display = 'none';
+
+        let html = '<div class="fields-grid">';
+        html += `<div class="field-card" data-field="name">`;
+        html += `<div class="field-label">name<span class="dirty-indicator"></span></div>`;
+        html += `<input type="text" class="text-field" id="input-name" value="" oninput="markDirty('name')" placeholder="Enter name">`;
+        html += '</div>';
+        html += `<div class="field-card" data-field="field">`;
+        html += `<div class="field-label">field (prompt)<span class="dirty-indicator"></span></div>`;
+        html += `<textarea class="textarea-field" id="input-field" oninput="markDirty('field')" placeholder="Enter prompt (can be long)"></textarea>`;
+        html += '</div>';
+        html += '</div>';
+        document.getElementById('modalBody').innerHTML = html;
+
+        const modal = document.getElementById('editModal');
+        modal.classList.add('show');
+    }
+
+    function markDirty(field) {
+        const card = document.querySelector(`.field-card[data-field="${field}"]`);
+        if (card) card.classList.add('dirty');
+    }
+
+    async function saveItem() {
+        const updateData = {
+            name: document.getElementById('input-name').value,
+            field: document.getElementById('input-field').value
+        };
+
+        if (!updateData.name.trim() || !updateData.field.trim()) {
+            showMessage('Both name and field are required', 'error');
+            return;
+        }
+
+        try {
+            let url = API_BASE;
+            let method = 'POST';
+            if (currentEditId) {
+                url = `${API_BASE}/${currentEditId}`;
+                method = 'PUT';
+            }
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateData)
+            });
+            const result = await res.json();
+            if (result.success) {
+                await loadItems();
+                closeEditModal();
+                showMessage(currentEditId ? 'Record updated successfully' : 'Record created successfully', 'success');
+            } else {
+                showMessage('Error: ' + result.error, 'error');
+            }
+        } catch (err) {
+            showMessage('Save failed: ' + err.message, 'error');
+        }
+    }
+
+    async function deleteItem() {
+        if (!currentEditId) return;
+        if (!confirm('Are you sure you want to delete this prompt field?')) return;
+
+        try {
+            const res = await fetch(`${API_BASE}/${currentEditId}`, {
+                method: 'DELETE'
+            });
+            const result = await res.json();
+            if (result.success) {
+                await loadItems();
+                closeEditModal();
+                showMessage('Record deleted', 'info');
+            } else {
+                showMessage('Delete failed: ' + result.error, 'error');
+            }
+        } catch (err) {
+            showMessage('Delete error: ' + err.message, 'error');
+        }
+    }
+
+    function closeEditModal() {
+        const modal = document.getElementById('editModal');
+        modal.classList.remove('show');
+        currentEditId = null;
+    }
+
+    document.getElementById('searchInput').addEventListener('input', filterAndDisplay);
+
+    window.addEventListener('click', (event) => {
+        const modal = document.getElementById('editModal');
+        if (event.target === modal) closeEditModal();
+    });
+
+    // Initial load
+    loadItems();
+</script>
+</body>
+</html>
