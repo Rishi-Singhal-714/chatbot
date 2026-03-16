@@ -250,6 +250,15 @@
             content: " *";
             color: #dc2626;
         }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .checkbox-label input {
+            width: auto;
+        }
     </style>
 </head>
 <body>
@@ -268,9 +277,15 @@
             <div id="panel-speech" class="panel active">
                 <form id="speech-form">
                     <div class="form-group">
-                        <label>Voice ID *</label>
-                        <input type="text" name="voice_id" value="JBFqnCBsd6RMkjVDRZzb" required>
-                        <small style="color:#6b7280;">e.g., JBFqnCBsd6RMkjVDRZzb (Rachel)</small>
+                        <label>Voice</label>
+                        <select name="voice_select" id="speech-voice-select" required>
+                            <option value="">-- Select a voice --</option>
+                        </select>
+                        <div class="checkbox-label">
+                            <input type="checkbox" id="speech-manual-toggle"> Use custom Voice ID
+                        </div>
+                        <input type="text" name="voice_id" id="speech-voice-id" style="display:none;" placeholder="Enter Voice ID">
+                        <small style="color:#6b7280;">Choose from predefined voices or enter manually</small>
                     </div>
                     <div class="form-group">
                         <label>Text *</label>
@@ -340,27 +355,37 @@
             <div id="panel-dialogue" class="panel">
                 <form id="dialogue-form">
                     <h3 style="margin-top:0;">Speaker 1</h3>
-                    <div class="row">
-                        <div class="form-group">
-                            <label>Voice ID</label>
-                            <input type="text" name="voice1" value="JBFqnCBsd6RMkjVDRZzb" required>
+                    <div class="form-group">
+                        <label>Voice</label>
+                        <select name="voice_select1" id="dialogue-voice1-select" required>
+                            <option value="">-- Select a voice --</option>
+                        </select>
+                        <div class="checkbox-label">
+                            <input type="checkbox" id="dialogue-manual1-toggle"> Use custom Voice ID
                         </div>
-                        <div class="form-group">
-                            <label>Text</label>
-                            <input type="text" name="text1" value="Knock knock" required>
-                        </div>
+                        <input type="text" name="voice1" id="dialogue-voice1" style="display:none;" placeholder="Enter Voice ID">
                     </div>
+                    <div class="form-group">
+                        <label>Text</label>
+                        <input type="text" name="text1" value="Knock knock" required>
+                    </div>
+
                     <h3>Speaker 2</h3>
-                    <div class="row">
-                        <div class="form-group">
-                            <label>Voice ID</label>
-                            <input type="text" name="voice2" value="Aw4FAjKCGjjNkVhN1Xmq" required>
+                    <div class="form-group">
+                        <label>Voice</label>
+                        <select name="voice_select2" id="dialogue-voice2-select" required>
+                            <option value="">-- Select a voice --</option>
+                        </select>
+                        <div class="checkbox-label">
+                            <input type="checkbox" id="dialogue-manual2-toggle"> Use custom Voice ID
                         </div>
-                        <div class="form-group">
-                            <label>Text</label>
-                            <input type="text" name="text2" value="Who is there?" required>
-                        </div>
+                        <input type="text" name="voice2" id="dialogue-voice2" style="display:none;" placeholder="Enter Voice ID">
                     </div>
+                    <div class="form-group">
+                        <label>Text</label>
+                        <input type="text" name="text2" value="Who is there?" required>
+                    </div>
+
                     <div class="row">
                         <div class="form-group">
                             <label>Model ID (optional)</label>
@@ -447,12 +472,28 @@
                     <div class="row">
                         <div class="form-group">
                             <label>Genre</label>
-                            <input type="text" name="genre">
+                            <input type="text" name="genre" id="save-genre">
                         </div>
                         <div class="form-group">
                             <label>Base Mood</label>
-                            <input type="text" name="base_mood">
+                            <input type="text" name="base_mood" id="save-base-mood">
                         </div>
+                    </div>
+                    <!-- New fields -->
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Tempo Type</label>
+                            <input type="text" name="tempo_type" id="save-tempo-type">
+                        </div>
+                        <div class="form-group">
+                            <label>Energy Level</label>
+                            <input type="text" name="energy_level" id="save-energy-level">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Type</label>
+                        <input type="text" name="type" id="save-type" readonly>
+                        <small>Auto‑filled based on generation type</small>
                     </div>
                     <div class="form-group">
                         <label>Sections</label>
@@ -469,7 +510,7 @@
                     <div class="form-group">
                         <label>Filename (URL)</label>
                         <input type="url" name="filename" id="filename-field" readonly>
-                        <small style="color:#6b7280;">Auto-filled after upload</small>
+                        <small>Auto-filled after upload</small>
                     </div>
                 </form>
             </div>
@@ -481,6 +522,12 @@
     </div>
 
     <script>
+        // Global state
+        let voices = [];                       // all voice data from API
+        let selectedVoice = null;               // last selected voice (for speech)
+        let selectedVoice1 = null;              // speaker1 for dialogue
+        let lastGenerationType = null;           // 'speech', 'dialogue', 'music'
+
         // Tab switching
         const tabs = document.querySelectorAll('.tab');
         const panels = {
@@ -499,6 +546,136 @@
             });
         });
 
+        // Fetch voices on load
+        async function loadVoices() {
+            try {
+                const res = await fetch('/api/voicedata');
+                const data = await res.json();
+                if (data.success) {
+                    voices = data.data;
+                    populateVoiceDropdowns();
+                } else {
+                    console.error('Failed to load voices:', data.error);
+                }
+            } catch (err) {
+                console.error('Error fetching voices:', err);
+            }
+        }
+
+        function populateVoiceDropdowns() {
+            const speechSelect = document.getElementById('speech-voice-select');
+            const dialogueSelect1 = document.getElementById('dialogue-voice1-select');
+            const dialogueSelect2 = document.getElementById('dialogue-voice2-select');
+
+            // Clear existing options
+            speechSelect.innerHTML = '<option value="">-- Select a voice --</option>';
+            dialogueSelect1.innerHTML = '<option value="">-- Select a voice --</option>';
+            dialogueSelect2.innerHTML = '<option value="">-- Select a voice --</option>';
+
+            voices.forEach(v => {
+                const option = document.createElement('option');
+                option.value = v.voiceid;
+                option.textContent = `${v.name} (${v.gender}, ${v.energy_level})`;
+                // Store metadata as data attributes
+                option.dataset.baseMood = v.base_mood || '';
+                option.dataset.gender = v.gender || '';
+                option.dataset.energy = v.energy_level || '';
+                option.dataset.name = v.name || '';
+                speechSelect.appendChild(option.cloneNode(true));
+                dialogueSelect1.appendChild(option.cloneNode(true));
+                dialogueSelect2.appendChild(option.cloneNode(true));
+            });
+
+            // Add event listeners for selection changes
+            speechSelect.addEventListener('change', (e) => {
+                const selected = e.target.selectedOptions[0];
+                if (selected && selected.value) {
+                    selectedVoice = {
+                        voiceid: selected.value,
+                        base_mood: selected.dataset.baseMood,
+                        gender: selected.dataset.gender,
+                        energy_level: selected.dataset.energy,
+                        name: selected.dataset.name
+                    };
+                } else {
+                    selectedVoice = null;
+                }
+            });
+
+            dialogueSelect1.addEventListener('change', (e) => {
+                const selected = e.target.selectedOptions[0];
+                if (selected && selected.value) {
+                    selectedVoice1 = {
+                        voiceid: selected.value,
+                        base_mood: selected.dataset.baseMood,
+                        gender: selected.dataset.gender,
+                        energy_level: selected.dataset.energy,
+                        name: selected.dataset.name
+                    };
+                } else {
+                    selectedVoice1 = null;
+                }
+            });
+        }
+
+        // Manual toggle for speech
+        document.getElementById('speech-manual-toggle').addEventListener('change', (e) => {
+            const manualInput = document.getElementById('speech-voice-id');
+            const select = document.getElementById('speech-voice-select');
+            if (e.target.checked) {
+                select.style.display = 'none';
+                select.disabled = true;
+                manualInput.style.display = 'block';
+                manualInput.disabled = false;
+                manualInput.required = true;
+                selectedVoice = null; // clear selected
+            } else {
+                select.style.display = 'block';
+                select.disabled = false;
+                manualInput.style.display = 'none';
+                manualInput.disabled = true;
+                manualInput.required = false;
+            }
+        });
+
+        // Manual toggles for dialogue
+        document.getElementById('dialogue-manual1-toggle').addEventListener('change', (e) => {
+            const manualInput = document.getElementById('dialogue-voice1');
+            const select = document.getElementById('dialogue-voice1-select');
+            if (e.target.checked) {
+                select.style.display = 'none';
+                select.disabled = true;
+                manualInput.style.display = 'block';
+                manualInput.disabled = false;
+                manualInput.required = true;
+                selectedVoice1 = null;
+            } else {
+                select.style.display = 'block';
+                select.disabled = false;
+                manualInput.style.display = 'none';
+                manualInput.disabled = true;
+                manualInput.required = false;
+            }
+        });
+
+        document.getElementById('dialogue-manual2-toggle').addEventListener('change', (e) => {
+            const manualInput = document.getElementById('dialogue-voice2');
+            const select = document.getElementById('dialogue-voice2-select');
+            if (e.target.checked) {
+                select.style.display = 'none';
+                select.disabled = true;
+                manualInput.style.display = 'block';
+                manualInput.disabled = false;
+                manualInput.required = true;
+            } else {
+                select.style.display = 'block';
+                select.disabled = false;
+                manualInput.style.display = 'none';
+                manualInput.disabled = true;
+                manualInput.required = false;
+            }
+        });
+
         // Helper to handle form submission
         async function handleSubmit(endpoint, formData, resultDiv, submitButton) {
             resultDiv.innerHTML = '<div class="loading">⏳ Generating... this may take a moment.</div>';
@@ -509,7 +686,18 @@
 
             // Build payload based on endpoint
             if (endpoint.includes('speech')) {
-                data.voice_id = form.voice_id.value;
+                // Determine voice_id: manual or selected
+                if (document.getElementById('speech-manual-toggle').checked) {
+                    data.voice_id = form.voice_id.value;
+                } else {
+                    const select = document.getElementById('speech-voice-select');
+                    if (!select.value) {
+                        resultDiv.innerHTML = '<div class="error">❌ Please select a voice.</div>';
+                        submitButton.disabled = false;
+                        return;
+                    }
+                    data.voice_id = select.value;
+                }
                 data.text = form.text.value;
                 if (form.model_id.value) data.model_id = form.model_id.value;
                 if (form.language_code.value) data.language_code = form.language_code.value;
@@ -522,18 +710,47 @@
                 if (Object.keys(voiceSettings).length > 0) {
                     data.voice_settings = voiceSettings;
                 }
+                lastGenerationType = 'speech';
             } else if (endpoint.includes('dialogue')) {
+                // Speaker 1
+                let voice1;
+                if (document.getElementById('dialogue-manual1-toggle').checked) {
+                    voice1 = form.voice1.value;
+                } else {
+                    const select1 = document.getElementById('dialogue-voice1-select');
+                    if (!select1.value) {
+                        resultDiv.innerHTML = '<div class="error">❌ Please select a voice for speaker 1.</div>';
+                        submitButton.disabled = false;
+                        return;
+                    }
+                    voice1 = select1.value;
+                }
+                // Speaker 2
+                let voice2;
+                if (document.getElementById('dialogue-manual2-toggle').checked) {
+                    voice2 = form.voice2.value;
+                } else {
+                    const select2 = document.getElementById('dialogue-voice2-select');
+                    if (!select2.value) {
+                        resultDiv.innerHTML = '<div class="error">❌ Please select a voice for speaker 2.</div>';
+                        submitButton.disabled = false;
+                        return;
+                    }
+                    voice2 = select2.value;
+                }
                 data.inputs = [
-                    { text: form.text1.value, voice_id: form.voice1.value },
-                    { text: form.text2.value, voice_id: form.voice2.value }
+                    { text: form.text1.value, voice_id: voice1 },
+                    { text: form.text2.value, voice_id: voice2 }
                 ];
                 if (form.model_id.value) data.model_id = form.model_id.value;
                 if (form.language_code.value) data.language_code = form.language_code.value;
+                lastGenerationType = 'dialogue';
             } else if (endpoint.includes('music')) {
                 data.prompt = form.prompt.value;
                 if (form.music_length_ms.value) data.music_length_ms = parseInt(form.music_length_ms.value);
                 if (form.force_instrumental.value === 'true') data.force_instrumental = true;
                 if (form.seed.value) data.seed = parseInt(form.seed.value);
+                lastGenerationType = 'music';
             }
 
             // Query parameters (output format, etc.)
@@ -622,6 +839,25 @@
             form.reset();
             filenameField.value = 'Uploading...';
 
+            // Auto‑fill based on last generation type and selected voice
+            if (lastGenerationType === 'speech' && selectedVoice) {
+                document.getElementById('save-genre').value = selectedVoice.name || '';
+                document.getElementById('save-base-mood').value = selectedVoice.base_mood || '';
+                document.getElementById('save-tempo-type').value = selectedVoice.gender || '';
+                document.getElementById('save-energy-level').value = selectedVoice.energy_level || '';
+                document.getElementById('save-type').value = 'PRELUDE';
+            } else if (lastGenerationType === 'dialogue' && selectedVoice1) {
+                // Use speaker1 for metadata
+                document.getElementById('save-genre').value = selectedVoice1.name || '';
+                document.getElementById('save-base-mood').value = selectedVoice1.base_mood || '';
+                document.getElementById('save-tempo-type').value = selectedVoice1.gender || '';
+                document.getElementById('save-energy-level').value = selectedVoice1.energy_level || '';
+                document.getElementById('save-type').value = 'PRELUDE';
+            } else if (lastGenerationType === 'music') {
+                document.getElementById('save-type').value = 'TRACK';
+                // For music, no voice data, leave other fields blank
+            }
+
             modal.classList.add('show');
 
             // Upload to Hostinger
@@ -660,6 +896,9 @@
                 description: form.description.value,
                 genre: form.genre.value,
                 base_mood: form.base_mood.value,
+                tempo_type: form.tempo_type.value,
+                energy_level: form.energy_level.value,
+                type: form.type.value,
                 sections: form.sections.value,
                 prompt1: form.prompt1.value,
                 prompt2: form.prompt2.value,
@@ -686,7 +925,6 @@
 
         function closeSaveModal() {
             document.getElementById('saveModal').classList.remove('show');
-            // Optionally clear the blob reference, but keep if user wants to save again
         }
 
         // Close modal when clicking outside content
@@ -696,6 +934,9 @@
                 closeSaveModal();
             }
         });
+
+        // Initialize
+        loadVoices();
     </script>
 </body>
 </html>

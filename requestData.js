@@ -36,6 +36,7 @@ const tableMapping = {
     'prompts': 'prompts',   // <-- add this line
     'topics': 'topics',   // <-- add this line
   'databases': 'databases',   // actual table name
+  'voicedata': 'voicedata',
 
 
 };
@@ -119,7 +120,7 @@ const columnMapping = {
   'tracks': [
     'id', 'old_name', 'name', 'description', 'genre', 'base_mood',
     'user_moods', 'sections', 'prompt1', 'prompt2', 'old_id',
-    'filename', 'reference', 'created_at', 'updated_at'
+    'filename', 'reference', 'created_at', 'updated_at','type','tempo_type','energy_level'
   ],
   'business': [
     'id', 'name', 'image1', 'image2', 'banner1', 'banner2', 'catId',
@@ -147,7 +148,9 @@ const columnMapping = {
   'admin_use',
   'api_use',
   'link'
-]
+],  'voicedata': [
+    'id', 'name', 'base_mood', 'gender', 'energy_level', 'voiceid'
+  ],
 };
 
 // In-memory cache (2 hours = 7200000 ms)
@@ -313,7 +316,16 @@ const cache = {
         ${columnMapping.databases.join(',\n        ')}
       FROM u130660877_zulu.databases
     `
-  }
+  },  
+  voicedata: {
+    data: null,
+    timestamp: 0,
+    query: `
+      SELECT
+        ${columnMapping.voicedata.join(',\n        ')}
+      FROM u130660877_zulu.voicedata
+    `
+  },
 };
 
 const CACHE_TTL = 7200000;

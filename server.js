@@ -7743,6 +7743,16 @@ Generate ONLY the lyrics, no explanations or additional text.`;
         });
     }
 });
+// GET /api/voicedata – fetch all voice data
+app.get('/api/voicedata', async (req, res) => {
+  try {
+    const data = await db.getCachedData('voicedata');
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('Error fetching voicedata:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 app.post('/api/ai/generate-gallery-style', async (req, res) => {
     try {
         const { galleryName, description, tags, type, prompt } = req.body;
