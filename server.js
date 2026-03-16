@@ -5676,6 +5676,8 @@ app.get('/topics', (req, res) => res.sendFile(__dirname + '/public/topics.html')
 app.get('/image-search', (req, res) => res.sendFile(__dirname + '/public/image-search.html'));
 app.get('/content_modules', (req, res) => { res.sendFile(__dirname + '/public/content_modules.html');});
 app.get('/curate-galleries', (req, res) => res.sendFile(__dirname + '/public/curate-galleries.html'));
+app.get('/control', (req, res) => res.sendFile(__dirname + '/public/control.html'));
+app.get('/voicegen', (req, res) => res.sendFile(__dirname + '/public/voicegen.html'));
 
 // -------------------------
 // Moods Endpoints
