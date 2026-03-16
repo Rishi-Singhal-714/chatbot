@@ -20,7 +20,7 @@ const cookieParser = require('cookie-parser');
 const { createCanvas } = require('canvas');
 const conversationDb = require('./requestData2');
 const {getComboData} = require('./requestData');
-
+const voicegenRouter = require('./voicegen');   // <-- add this line
 const upload = multer({ storage: multer.memoryStorage() });
 const sharp = require('sharp');
 
@@ -92,7 +92,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public')); 
 app.use(cookieParser());
-
+app.use('/api/voicegen', voicegenRouter);       // <-- add this line
 // OpenAI configuration
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || ''
@@ -5675,6 +5675,7 @@ app.get('/business', (req, res) => res.sendFile(__dirname + '/public/business.ht
 app.get('/image-search', (req, res) => res.sendFile(__dirname + '/public/image-search.html'));
 
 app.get('/curate-galleries', (req, res) => res.sendFile(__dirname + '/public/curate-galleries.html'));
+app.get('/voicegen', (req, res) => res.sendFile(__dirname + '/public/voicegen.html'));
 
 // -------------------------
 // Moods Endpoints
@@ -5738,7 +5739,32 @@ app.get('/api/tracks', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+// POST /api/tracks – Create a new track
+app.post('/api/tracks', async (req, res) => {
+  try {
+    const { name, description, genre, base_mood, sections, prompt1, prompt2, filename } = req.body;
+    if (!name) {
+      return res.status(400).json({ success: false, error: 'Name is required' });
+    }
 
+    // Insert into tracks table
+    const result = await db.executeInsert('tracks', {
+      name,
+      description,
+      genre,
+      base_mood,
+      sections,
+      prompt1,
+      prompt2,
+      filename
+    });
+
+    res.json({ success: true, message: 'Track created', id: result.insertId });
+  } catch (error) {
+    console.error('Create track error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 app.get('/api/tracks/:id', async (req, res) => {
   try {
     const { id } = req.params;

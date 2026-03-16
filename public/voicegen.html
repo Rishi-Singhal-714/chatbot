@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElevenLabs Voice & Music Studio</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+        .header {
+            background: #4f46e5;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 300;
+        }
+        .header p {
+            margin: 5px 0 0;
+            opacity: 0.8;
+        }
+        .tabs {
+            display: flex;
+            background: #f3f4f6;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 500;
+            color: #6b7280;
+            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
+        }
+        .tab.active {
+            color: #4f46e5;
+            border-bottom-color: #4f46e5;
+            background: white;
+        }
+        .tab-content {
+            padding: 30px;
+            background: white;
+        }
+        .panel {
+            display: none;
+        }
+        .panel.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #374151;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border 0.2s;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .row {
+            display: flex;
+            gap: 15px;
+        }
+        .row .form-group {
+            flex: 1;
+        }
+        button {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #4338ca;
+        }
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+        }
+        .audio-player {
+            width: 100%;
+            margin-top: 10px;
+        }
+        .error {
+            color: #dc2626;
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        .loading {
+            color: #4f46e5;
+            text-align: center;
+            padding: 10px;
+        }
+        .success {
+            color: #059669;
+            background: #d1fae5;
+            border: 1px solid #a7f3d0;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        .voice-settings {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            background: #f9fafb;
+        }
+        .voice-settings h4 {
+            margin: 0 0 15px;
+            color: #374151;
+        }
+        .save-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+        .save-btn:hover {
+            background: #219a52;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 32px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .modal-header {
+            padding: 24px 32px;
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            color: white;
+            border-radius: 32px 32px 0 0;
+        }
+        .modal-header h2 {
+            margin: 0;
+        }
+        .close-modal {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 28px;
+            color: white;
+            cursor: pointer;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        .close-modal:hover {
+            background: rgba(255,255,255,0.3);
+            transform: rotate(90deg);
+        }
+        .modal-body {
+            padding: 32px;
+        }
+        .modal-actions {
+            padding: 24px 32px;
+            border-top: 2px solid #eef2f6;
+            display: flex;
+            gap: 16px;
+            justify-content: flex-end;
+        }
+        .required:after {
+            content: " *";
+            color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎙️ ElevenLabs Voice & Music Studio</h1>
+            <p>Generate speech, dialogue, and music with AI</p>
+        </div>
+        <div class="tabs">
+            <div class="tab active" data-tab="speech">🗣️ Speech</div>
+            <div class="tab" data-tab="dialogue">💬 Dialogue</div>
+            <div class="tab" data-tab="music">🎵 Music</div>
+        </div>
+        <div class="tab-content">
+            <!-- Speech Panel -->
+            <div id="panel-speech" class="panel active">
+                <form id="speech-form">
+                    <div class="form-group">
+                        <label>Voice ID *</label>
+                        <input type="text" name="voice_id" value="JBFqnCBsd6RMkjVDRZzb" required>
+                        <small style="color:#6b7280;">e.g., JBFqnCBsd6RMkjVDRZzb (Rachel)</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Text *</label>
+                        <textarea name="text" required>Hello, this is a test of the ElevenLabs text to speech API.</textarea>
+                    </div>
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Model ID (optional)</label>
+                            <input type="text" name="model_id" value="eleven_multilingual_v2">
+                        </div>
+                        <div class="form-group">
+                            <label>Language Code (optional)</label>
+                            <input type="text" name="language_code" placeholder="en">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Output Format</label>
+                            <select name="output_format">
+                                <option value="mp3_44100_128">MP3 44.1kHz 128kbps</option>
+                                <option value="mp3_44100_192">MP3 44.1kHz 192kbps</option>
+                                <option value="pcm_44100">PCM 44.1kHz</option>
+                                <option value="opus_48000_128">Opus 48kHz 128kbps</option>
+                                <option value="ulaw_8000">μ-law 8kHz</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Optimize Latency</label>
+                            <select name="optimize_streaming_latency">
+                                <option value="0">0 - None</option>
+                                <option value="1">1 - Normal</option>
+                                <option value="2">2 - Strong</option>
+                                <option value="3">3 - Max</option>
+                                <option value="4">4 - Max + no text norm</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="voice-settings">
+                        <h4>Voice Settings (optional)</h4>
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Stability (0-1)</label>
+                                <input type="number" name="stability" step="0.1" min="0" max="1" value="0.5">
+                            </div>
+                            <div class="form-group">
+                                <label>Similarity Boost (0-1)</label>
+                                <input type="number" name="similarity_boost" step="0.1" min="0" max="1" value="0.5">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Style (0-1)</label>
+                                <input type="number" name="style" step="0.1" min="0" max="1" value="0.5">
+                            </div>
+                            <div class="form-group">
+                                <label>Speed (0.7-1.2)</label>
+                                <input type="number" name="speed" step="0.1" min="0.7" max="1.2" value="1.0">
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" id="speech-submit">Generate Speech</button>
+                </form>
+                <div id="speech-result" class="result"></div>
+            </div>
+
+            <!-- Dialogue Panel -->
+            <div id="panel-dialogue" class="panel">
+                <form id="dialogue-form">
+                    <h3 style="margin-top:0;">Speaker 1</h3>
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Voice ID</label>
+                            <input type="text" name="voice1" value="JBFqnCBsd6RMkjVDRZzb" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Text</label>
+                            <input type="text" name="text1" value="Knock knock" required>
+                        </div>
+                    </div>
+                    <h3>Speaker 2</h3>
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Voice ID</label>
+                            <input type="text" name="voice2" value="Aw4FAjKCGjjNkVhN1Xmq" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Text</label>
+                            <input type="text" name="text2" value="Who is there?" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Model ID (optional)</label>
+                            <input type="text" name="model_id" value="eleven_multilingual_v2">
+                        </div>
+                        <div class="form-group">
+                            <label>Language Code (optional)</label>
+                            <input type="text" name="language_code" placeholder="en">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Output Format</label>
+                        <select name="output_format">
+                            <option value="mp3_44100_128">MP3 44.1kHz 128kbps</option>
+                            <option value="mp3_44100_192">MP3 44.1kHz 192kbps</option>
+                            <option value="pcm_44100">PCM 44.1kHz</option>
+                            <option value="opus_48000_128">Opus 48kHz 128kbps</option>
+                        </select>
+                    </div>
+                    <button type="submit" id="dialogue-submit">Generate Dialogue</button>
+                </form>
+                <div id="dialogue-result" class="result"></div>
+            </div>
+
+            <!-- Music Panel -->
+            <div id="panel-music" class="panel">
+                <form id="music-form">
+                    <div class="form-group">
+                        <label>Prompt *</label>
+                        <textarea name="prompt" required>An uplifting Indian indie pop song with acoustic guitar and soft vocals</textarea>
+                    </div>
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Music Length (ms)</label>
+                            <input type="number" name="music_length_ms" value="30000" min="3000" max="600000">
+                        </div>
+                        <div class="form-group">
+                            <label>Output Format</label>
+                            <select name="output_format">
+                                <option value="mp3_44100_128">MP3 44.1kHz 128kbps</option>
+                                <option value="mp3_44100_192">MP3 44.1kHz 192kbps</option>
+                                <option value="pcm_44100">PCM 44.1kHz</option>
+                                <option value="opus_48000_128">Opus 48kHz 128kbps</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Force Instrumental?</label>
+                            <select name="force_instrumental">
+                                <option value="false">No</option>
+                                <option value="true">Yes</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Seed (optional)</label>
+                            <input type="number" name="seed" min="0" max="2147483647">
+                        </div>
+                    </div>
+                    <button type="submit" id="music-submit">Generate Music</button>
+                </form>
+                <div id="music-result" class="result"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save to Tracks Modal -->
+    <div id="saveModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Save to Tracks</h2>
+                <button class="close-modal" onclick="closeSaveModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="save-track-form">
+                    <div class="form-group">
+                        <label class="required">Name</label>
+                        <input type="text" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Genre</label>
+                            <input type="text" name="genre">
+                        </div>
+                        <div class="form-group">
+                            <label>Base Mood</label>
+                            <input type="text" name="base_mood">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Sections</label>
+                        <input type="text" name="sections" placeholder="e.g., intro,verse,chorus">
+                    </div>
+                    <div class="form-group">
+                        <label>Prompt 1</label>
+                        <textarea name="prompt1" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Prompt 2</label>
+                        <textarea name="prompt2" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Filename (URL)</label>
+                        <input type="url" name="filename" id="filename-field" readonly>
+                        <small style="color:#6b7280;">Auto-filled after upload</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-actions">
+                <button class="cancel-btn" onclick="closeSaveModal()">Cancel</button>
+                <button class="save-btn" onclick="submitSaveTrack()">💾 Save Track</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        const tabs = document.querySelectorAll('.tab');
+        const panels = {
+            speech: document.getElementById('panel-speech'),
+            dialogue: document.getElementById('panel-dialogue'),
+            music: document.getElementById('panel-music')
+        };
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const target = tab.dataset.tab;
+                Object.values(panels).forEach(p => p.classList.remove('active'));
+                panels[target].classList.add('active');
+            });
+        });
+
+        // Helper to handle form submission
+        async function handleSubmit(endpoint, formData, resultDiv, submitButton) {
+            resultDiv.innerHTML = '<div class="loading">⏳ Generating... this may take a moment.</div>';
+            submitButton.disabled = true;
+
+            const form = formData;
+            const data = {};
+
+            // Build payload based on endpoint
+            if (endpoint.includes('speech')) {
+                data.voice_id = form.voice_id.value;
+                data.text = form.text.value;
+                if (form.model_id.value) data.model_id = form.model_id.value;
+                if (form.language_code.value) data.language_code = form.language_code.value;
+
+                const voiceSettings = {};
+                if (form.stability.value) voiceSettings.stability = parseFloat(form.stability.value);
+                if (form.similarity_boost.value) voiceSettings.similarity_boost = parseFloat(form.similarity_boost.value);
+                if (form.style.value) voiceSettings.style = parseFloat(form.style.value);
+                if (form.speed.value) voiceSettings.speed = parseFloat(form.speed.value);
+                if (Object.keys(voiceSettings).length > 0) {
+                    data.voice_settings = voiceSettings;
+                }
+            } else if (endpoint.includes('dialogue')) {
+                data.inputs = [
+                    { text: form.text1.value, voice_id: form.voice1.value },
+                    { text: form.text2.value, voice_id: form.voice2.value }
+                ];
+                if (form.model_id.value) data.model_id = form.model_id.value;
+                if (form.language_code.value) data.language_code = form.language_code.value;
+            } else if (endpoint.includes('music')) {
+                data.prompt = form.prompt.value;
+                if (form.music_length_ms.value) data.music_length_ms = parseInt(form.music_length_ms.value);
+                if (form.force_instrumental.value === 'true') data.force_instrumental = true;
+                if (form.seed.value) data.seed = parseInt(form.seed.value);
+            }
+
+            // Query parameters (output format, etc.)
+            const params = new URLSearchParams();
+            if (form.output_format) {
+                params.append('output_format', form.output_format.value);
+            }
+            if (form.optimize_streaming_latency) {
+                params.append('optimize_streaming_latency', form.optimize_streaming_latency.value);
+            }
+
+            const url = `/api/voicegen/${endpoint}?${params.toString()}`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const contentType = response.headers.get('content-type');
+                    let errorMsg = `HTTP error ${response.status}`;
+                    if (contentType && contentType.includes('application/json')) {
+                        const errorData = await response.json();
+                        errorMsg = errorData.error || errorData.message || errorMsg;
+                        if (errorData.details) errorMsg += `: ${errorData.details}`;
+                    } else {
+                        const text = await response.text();
+                        errorMsg += ` - ${text.substring(0, 200)}`;
+                    }
+                    throw new Error(errorMsg);
+                }
+
+                // Success – audio blob
+                const blob = await response.blob();
+                const audioUrl = URL.createObjectURL(blob);
+
+                // Store blob for later saving
+                window.__lastAudioBlob = blob;
+                window.__lastAudioUrl = audioUrl;
+
+                resultDiv.innerHTML = `
+                    <div class="success">✅ Generated successfully!</div>
+                    <audio class="audio-player" controls src="${audioUrl}"></audio>
+                    <p style="margin-top:10px;">
+                        <a href="${audioUrl}" download="generated.${blob.type.includes('mp3') ? 'mp3' : 'wav'}">Download</a>
+                    </p>
+                    <button class="save-btn" onclick="prepareSaveTrack()">💾 Save to Tracks</button>
+                `;
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${err.message}</div>`;
+            } finally {
+                submitButton.disabled = false;
+            }
+        }
+
+        // Attach form listeners
+        document.getElementById('speech-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            handleSubmit('speech', e.target, document.getElementById('speech-result'), document.getElementById('speech-submit'));
+        });
+
+        document.getElementById('dialogue-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            handleSubmit('dialogue', e.target, document.getElementById('dialogue-result'), document.getElementById('dialogue-submit'));
+        });
+
+        document.getElementById('music-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            handleSubmit('music', e.target, document.getElementById('music-result'), document.getElementById('music-submit'));
+        });
+
+        // Save to Tracks functionality
+        async function prepareSaveTrack() {
+            if (!window.__lastAudioBlob) {
+                alert('No audio generated yet.');
+                return;
+            }
+
+            const modal = document.getElementById('saveModal');
+            const filenameField = document.getElementById('filename-field');
+            const form = document.getElementById('save-track-form');
+
+            // Clear previous values
+            form.reset();
+            filenameField.value = 'Uploading...';
+
+            modal.classList.add('show');
+
+            // Upload to Hostinger
+            const formData = new FormData();
+            formData.append('image', window.__lastAudioBlob, 'audio.mp3');
+
+            try {
+                const uploadRes = await fetch('https://api.zulushop.in/api/v1/user/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const uploadData = await uploadRes.json();
+                const fileUrl = uploadData.url || uploadData.image_url;
+                if (fileUrl) {
+                    filenameField.value = fileUrl;
+                } else {
+                    filenameField.value = 'Upload failed';
+                    alert('Upload failed: no URL returned');
+                }
+            } catch (err) {
+                filenameField.value = 'Error';
+                alert('Upload error: ' + err.message);
+            }
+        }
+
+        async function submitSaveTrack() {
+            const form = document.getElementById('save-track-form');
+            const name = form.name.value.trim();
+            if (!name) {
+                alert('Name is required');
+                return;
+            }
+
+            const data = {
+                name: name,
+                description: form.description.value,
+                genre: form.genre.value,
+                base_mood: form.base_mood.value,
+                sections: form.sections.value,
+                prompt1: form.prompt1.value,
+                prompt2: form.prompt2.value,
+                filename: form.filename.value
+            };
+
+            try {
+                const res = await fetch('/api/tracks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if (result.success) {
+                    alert('Track saved successfully!');
+                    closeSaveModal();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (err) {
+                alert('Save failed: ' + err.message);
+            }
+        }
+
+        function closeSaveModal() {
+            document.getElementById('saveModal').classList.remove('show');
+            // Optionally clear the blob reference, but keep if user wants to save again
+        }
+
+        // Close modal when clicking outside content
+        window.addEventListener('click', (e) => {
+            const modal = document.getElementById('saveModal');
+            if (e.target === modal) {
+                closeSaveModal();
+            }
+        });
+    </script>
+</body>
+</html>

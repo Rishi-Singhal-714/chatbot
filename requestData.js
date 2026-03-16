@@ -336,6 +336,55 @@ function ensureConnection() {
   return true;
 }
 
+// Insert a new record into a table
+async function executeInsert(table, data) {
+  // Handle table alias mapping
+  const tableAliasMap = {
+    'socbookinguser': 'soc_booking_user',
+    'soc_booking_user': 'soc_booking_user'
+  };
+  const actualTable = tableAliasMap[table] || table;
+  const tableName = tableMapping[actualTable];
+  if (!tableName) throw new Error(`Invalid table: ${actualTable}`);
+
+  const validColumns = columnMapping[table];
+  if (!validColumns) throw new Error(`No column mapping for table: ${table}`);
+
+  // Filter data to only valid columns
+  const filteredData = {};
+  for (const key of Object.keys(data)) {
+    if (validColumns.includes(key)) {
+      filteredData[key] = data[key];
+    }
+  }
+
+  if (Object.keys(filteredData).length === 0) {
+    throw new Error('No valid fields to insert');
+  }
+
+  const columns = Object.keys(filteredData).join('`, `');
+  const placeholders = Object.keys(filteredData).map(() => '?').join(', ');
+  const values = Object.values(filteredData);
+
+  const query = `INSERT INTO \`${tableName}\` (\`${columns}\`) VALUES (${placeholders})`;
+
+  return new Promise((resolve, reject) => {
+    ensureConnection();
+    if (!pool) return reject(new Error('Database not available'));
+
+    pool.getConnection((err, connection) => {
+      if (err) return reject(err);
+      connection.query(query, values, (error, results) => {
+        connection.release();
+        if (error) return reject(error);
+        clearCache(table); // optional, but good practice
+        setTimeout(() => closeConnectionPool(), 3000);
+        resolve(results);
+      });
+    });
+  });
+}
+
 // In requestData.js - Fix the executeQuery function
 function executeQuery(query, params = []) {
   return new Promise((resolve, reject) => {
@@ -1032,6 +1081,7 @@ module.exports = {
   getAppConfigsData,
   executeUpdate,
   executeDelete,  // Make sure this is exported
+    executeInsert,   // <-- add this
   getRecordById,
   clearCache,
   clearAllCaches,
