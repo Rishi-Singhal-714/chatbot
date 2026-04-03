@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcript → Products → Galleries</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { margin-top: 0; }
+        input, textarea, button { margin: 5px 0; padding: 8px; width: 100%; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        button:hover { background: #0056b3; }
+        .status { font-weight: bold; margin-top: 10px; }
+        .success { color: green; }
+        .error { color: red; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #f0f0f0; }
+        .flex { display: flex; gap: 10px; }
+        .flex input { flex: 1; }
+    </style>
+</head>
+<body>
+    <h1>📄 Transcript Analysis → Product Import → Auto Gallery</h1>
+
+    <!-- Step 1: Create Job -->
+    <div class="card">
+        <h2>1. Create Analysis Job</h2>
+        <input type="text" id="userId" placeholder="User ID (e.g., 123)" required>
+        <textarea id="fileLinks" rows="3" placeholder="Image URLs (one per line)"></textarea>
+        <input type="text" id="transcriptIds" placeholder="Transcript IDs (comma separated, e.g., 45,67)">
+        <input type="text" id="notes" placeholder="Optional notes">
+        <button id="createJobBtn">🚀 Create Job</button>
+        <div id="createResult"></div>
+    </div>
+
+    <!-- Step 2: Monitor Job -->
+    <div class="card">
+        <h2>2. Monitor Job Status</h2>
+        <div class="flex">
+            <input type="text" id="jobIdPoll" placeholder="Job ID">
+            <button id="pollBtn">🔄 Poll Status</button>
+        </div>
+        <div id="pollResult"></div>
+        <div id="productsPreview"></div>
+    </div>
+
+    <!-- Step 3: Import & Create Gallery -->
+    <div class="card">
+        <h2>3. Import Products & Create Gallery</h2>
+        <input type="text" id="importJobId" placeholder="Job ID (completed)">
+        <input type="text" id="sellerId" placeholder="Seller ID (e.g., 456)">
+        <input type="text" id="importUserId" placeholder="User ID (same as above)">
+        <input type="text" id="defaultCategory" placeholder="Default Category ID (optional)">
+        <label><input type="checkbox" id="createGalleryCheckbox" checked> Auto-create gallery from imported products</label>
+        <button id="importBtn">📦 Import Products & Create Gallery</button>
+        <div id="importResult"></div>
+    </div>
+
+    <script>
+        const API_BASE = ''; // relative to same origin
+
+        document.getElementById('createJobBtn').addEventListener('click', async () => {
+            const user_id = document.getElementById('userId').value.trim();
+            const fileLinksRaw = document.getElementById('fileLinks').value;
+            const transcriptIdsRaw = document.getElementById('transcriptIds').value;
+            const notes = document.getElementById('notes').value;
+
+            if (!user_id || !fileLinksRaw || !transcriptIdsRaw) {
+                alert('User ID, file links, and transcript IDs required');
+                return;
+            }
+            const file_links = fileLinksRaw.split('\n').filter(l => l.trim());
+            const transcript_ids = transcriptIdsRaw.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+
+            const res = await fetch(`${API_BASE}/api/v1/transcript-jobs`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id, file_links, transcript_ids, notes })
+            });
+            const data = await res.json();
+            if (data.error) {
+                document.getElementById('createResult').innerHTML = `<span class="error">❌ ${data.message}</span>`;
+            } else {
+                document.getElementById('createResult').innerHTML = `<span class="success">✅ Job created: ${data.data.job_id}</span>`;
+                document.getElementById('jobIdPoll').value = data.data.job_id;
+                document.getElementById('importJobId').value = data.data.job_id;
+            }
+        });
+
+        document.getElementById('pollBtn').addEventListener('click', async () => {
+            const jobId = document.getElementById('jobIdPoll').value.trim();
+            if (!jobId) return alert('Enter Job ID');
+            const res = await fetch(`${API_BASE}/api/jobs/status/${jobId}`);
+            const job = await res.json();
+            if (job.error) {
+                document.getElementById('pollResult').innerHTML = `<span class="error">Error: ${job.message}</span>`;
+                return;
+            }
+            let statusHtml = `<div class="status">Status: <strong>${job.status}</strong><br>Progress: ${job.progress?.current || ''} (${job.progress?.completed || 0}/${job.progress?.total || 0})</div>`;
+            if (job.status === 'completed') {
+                const products = job.result?.products || [];
+                statusHtml += `<div><strong>✅ Extracted ${products.length} products</strong></div>`;
+                let table = '<tr><th>Name</th><th>Price (min)</th><th>Confidence</th></tr>';
+                products.forEach(p => {
+                    table += `<tr><td>${p.name}</td><td>₹${p.min_max_price?.min_price || '?'}</td><td>${p.confidence_level}</td></tr>`;
+                });
+                table += '</table>';
+                document.getElementById('productsPreview').innerHTML = table;
+            } else if (job.status === 'failed') {
+                statusHtml += `<div class="error">Failed: ${job.error}</div>`;
+            }
+            document.getElementById('pollResult').innerHTML = statusHtml;
+        });
+
+        document.getElementById('importBtn').addEventListener('click', async () => {
+            const job_id = document.getElementById('importJobId').value.trim();
+            const seller_id = document.getElementById('sellerId').value.trim();
+            const user_id = document.getElementById('importUserId').value.trim();
+            const default_category_id = document.getElementById('defaultCategory').value.trim() || null;
+            const createGallery = document.getElementById('createGalleryCheckbox').checked;
+
+            if (!job_id || !seller_id || !user_id) {
+                alert('Job ID, Seller ID, and User ID required');
+                return;
+            }
+
+            const res = await fetch(`${API_BASE}/api/v1/transcript-jobs/${job_id}/import-products`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ seller_id, user_id, createGallery, default_category_id, genrateOutletSongs: true })
+            });
+            const data = await res.json();
+            if (data.error) {
+                document.getElementById('importResult').innerHTML = `<span class="error">❌ ${data.message}</span>`;
+            } else {
+                let msg = `✅ ${data.data.product_ids.length} products imported.`;
+                if (data.data.gallery_job_id) msg += `<br>🎨 Gallery creation job started: ${data.data.gallery_job_id}`;
+                document.getElementById('importResult').innerHTML = `<span class="success">${msg}</span>`;
+            }
+        });
+    </script>
+</body>
+</html>

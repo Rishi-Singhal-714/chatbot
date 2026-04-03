@@ -23,6 +23,9 @@ const {getComboData} = require('./requestData');
 const voicegenRouter = require('./voicegen');   // <-- add this line
 const upload = multer({ storage: multer.memoryStorage() });
 const sharp = require('sharp');
+const transcriptJobController = require('./controllers/TranscriptJobController');
+const importProductsController = require('./controllers/ImportProductsController');
+const { getJob } = require('./services/JobService');
 
 let productHashes = new Map();           // productId -> { hash: BigInt, product }
 let hashesComputed = false;
@@ -5679,6 +5682,8 @@ app.get('/curate-galleries', (req, res) => res.sendFile(__dirname + '/public/cur
 app.get('/control', (req, res) => res.sendFile(__dirname + '/public/control.html'));
 app.get('/voicegen', (req, res) => res.sendFile(__dirname + '/public/voicegen.html'));
 app.get('/promptfields', (req, res) => res.sendFile(__dirname + '/public/promptfields.html'));
+app.get('/transcript-dashboard', (req, res) => res.sendFile(__dirname + '/public/transcript-dashboard.html'));
+
 // -------------------------
 // Moods Endpoints
 // -------------------------
@@ -7461,7 +7466,25 @@ Generate ONLY the lyrics, no explanations or additional text.
     }
 });
 
+// Transcript analysis job
+app.post('/api/v1/transcript-jobs', transcriptJobController.createTranscriptJob);
 
+// Import products from completed job (and optionally create gallery)
+app.post('/api/v1/transcript-jobs/:job_id/import-products', importProductsController.importProducts.bind(importProductsController));
+
+// Poll job status (used by frontend)
+app.get('/api/jobs/status/:job_id', async (req, res) => {
+    try {
+        const job = await getJob(req.params.job_id);
+        if (!job) return res.status(404).json({ error: true, message: 'Job not found' });
+        // Parse JSON fields if stored as strings
+        if (job.progress && typeof job.progress === 'string') job.progress = JSON.parse(job.progress);
+        if (job.result && typeof job.result === 'string') job.result = JSON.parse(job.result);
+        res.json(job);
+    } catch (err) {
+        res.status(500).json({ error: true, message: err.message });
+    }
+});
 
 // ----- The updated endpoint -----
 app.post('/api/ai/generate-galleries', async (req, res) => {

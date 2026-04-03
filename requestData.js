@@ -1148,7 +1148,8 @@ module.exports = {
   executeUpdate,
   executeDelete,  // Make sure this is exported
     executeInsert,   // <-- add this
-  getRecordById,
+    executeQuery,        // <-- ADD THIS LINE
+    getRecordById,
   clearCache,
   clearAllCaches,
 getComboData,

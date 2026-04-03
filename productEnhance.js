@@ -717,6 +717,7 @@ router.post('/api/ai/enhance-product', async (req, res) => {
         },
         body: JSON.stringify({
           productName: name,
+          productimage: image,
           category: categoryResult.suggestedCategory?.name || 'Home',
           cat1: categoryResult.suggestedCat1?.name || '',
           description: description || '',
@@ -752,6 +753,7 @@ router.post('/api/ai/enhance-product', async (req, res) => {
         },
         body: JSON.stringify({
           productName: name,
+          productimage: image,
           category: categoryResult.suggestedCategory?.name || 'Home',
           cat1: categoryResult.suggestedCat1?.name || '',
           tags: tags,
