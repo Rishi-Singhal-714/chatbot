@@ -26,6 +26,7 @@ const sharp = require('sharp');
 const transcriptJobController = require('./controllers/TranscriptJobController');
 const importProductsController = require('./controllers/ImportProductsController');
 const { getJob } = require('./services/JobService');
+const AutoGalleryController = require('./controllers/AutoGalleryController'); // adjust path as needed
 
 let productHashes = new Map();           // productId -> { hash: BigInt, product }
 let hashesComputed = false;
@@ -7485,6 +7486,16 @@ app.get('/api/jobs/status/:job_id', async (req, res) => {
         res.status(500).json({ error: true, message: err.message });
     }
 });
+
+// New routes for stepwise approval
+// ==================== AUTO GALLERY ROUTES (new workflow) ====================
+
+app.post("/api/v1/auto-gallery/identify-products", upload.array('images', 10), AutoGalleryController.identifyProductsFromImages);
+app.post("/api/v1/auto-gallery/stepwise-preview", AutoGalleryController.stepwisePreview);
+app.post("/api/v1/auto-gallery/generate-banner", AutoGalleryController.generateBannerImageItem);
+app.post("/api/v1/auto-gallery/generate-audio", AutoGalleryController.generateAudioItem);
+app.post("/api/v1/auto-gallery/save-gallery", AutoGalleryController.saveApprovedGallery);
+
 
 // ----- The updated endpoint -----
 app.post('/api/ai/generate-galleries', async (req, res) => {
