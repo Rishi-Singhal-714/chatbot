@@ -84,6 +84,31 @@ async function generateMusicPromptsForGallery(galleryName, galleryDescription, g
   throw new Error("Music prompts generation returned invalid format");
 }
 
+// Ensure exactly 6 banners (one per mood)
+function ensureSixBanners(gallery, galleryName, galleryDescription) {
+  const allMoods = ["Calm", "Nostalgic", "Playful", "Confident", "Ambitious", "Introspective"];
+  const existingBanners = gallery.banners || [];
+  const bannerMap = new Map();
+  for (const banner of existingBanners) {
+    if (banner.mood && allMoods.includes(banner.mood)) {
+      bannerMap.set(banner.mood, banner);
+    }
+  }
+  for (const mood of allMoods) {
+    if (!bannerMap.has(mood)) {
+      bannerMap.set(mood, {
+        mood: mood,
+        title: `${galleryName || "Gallery"} – ${mood}`,
+        subtitle: galleryDescription || "Discover our collection",
+        cta: "Explore Now",
+        image_idea: `A single elegant product representing ${mood} mood, isolated on clean background, premium aesthetic.`
+      });
+    }
+  }
+  gallery.banners = allMoods.map(mood => bannerMap.get(mood));
+  return gallery;
+}
+
 // Product selection (IDs 36,37) – not used directly in new workflow, but kept for reference
 // Identify products from images (IDs 38,39)
 async function identifyProductsFromImagesGPT(files) {
@@ -159,7 +184,7 @@ async function generateProductSpeechText(productId, productName, productTags, pr
 
 const identifyProductsFromImages = async (req, res) => {
   try {
-    const seller_id = req.query.seller_id;  // ✅ read from query param
+    const seller_id = req.query.seller_id;
     const files = req.files;
     if (!seller_id) return res.status(400).json({ error: 'seller_id required' });
     if (!files?.length) return res.status(400).json({ error: 'At least one image required' });
@@ -209,9 +234,12 @@ const stepwisePreview = async (req, res) => {
 
     const gptResult = await callGalleryGPT({ seller, products, transcripts: [], numGalleries: 1, note: userNote, genrateOutletSongs: false, genrateProductSpeeches: true });
     if (!gptResult.galleries?.length) throw new Error("No galleries generated");
-    const gallery = gptResult.galleries[0];
+    let gallery = gptResult.galleries[0];
     const validIds = new Set(product_ids);
     gallery.product_ids = gallery.product_ids.filter(id => validIds.has(id));
+
+    // ✅ Ensure we have all 6 banners
+    gallery = ensureSixBanners(gallery, gallery.name, gallery.description);
 
     const musicPrompts = await generateMusicPromptsForGallery(gallery.name, gallery.description, gallery.heading);
     gallery.gallery_music_prompts = musicPrompts;
@@ -236,12 +264,6 @@ const generateBannerImageItem = async (req, res) => {
   try {
     const { prompt } = req.body;
     if (!prompt) return res.status(400).json({ error: 'prompt required' });
-    // The frontend sends a full prompt string; we reuse the existing logic by extracting fields.
-    // For simplicity, we assume the prompt contains title/subtitle/cta/image_idea.
-    // Alternatively, we can call generateBannerImageFromPrompt with dummy data.
-    // To keep it generic, we'll parse the prompt or use a default.
-    // But the frontend currently sends { prompt: "Create a square banner..." }.
-    // We'll map it to bannerData.
     const bannerData = {
       image_idea: prompt,
       title: "",

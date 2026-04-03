@@ -23,10 +23,9 @@
         .product-card img { width: 100%; height: 100px; object-fit: cover; border-radius: 10px; margin-bottom: 6px; }
         .product-card label { font-size: 11px; display: flex; align-items: center; gap: 4px; margin-top: 6px; }
         .json-edit { background: #1e293b; color: #e2e8f0; padding: 12px; border-radius: 12px; font-family: monospace; font-size: 12px; margin-top: 12px; white-space: pre-wrap; overflow-x: auto; max-height: 300px; }
-        .approval-item { border: 1px solid #e5e7eb; border-radius: 16px; padding: 16px; margin-bottom: 16px; background: #fefce8; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
-        .approval-item img { max-width: 150px; border-radius: 12px; }
-        .approval-item audio { width: 200px; }
-        .approval-actions { margin-left: auto; display: flex; gap: 12px; }
+        .generated-item { border: 1px solid #e5e7eb; border-radius: 16px; padding: 16px; margin-bottom: 16px; background: #fefce8; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+        .generated-item img { max-width: 150px; border-radius: 12px; }
+        .generated-item audio { width: 200px; }
         .progress-bar { width: 100%; background: #e5e7eb; border-radius: 20px; overflow: hidden; margin: 16px 0; }
         .progress-fill { width: 0%; height: 8px; background: #3b82f6; transition: width 0.3s; }
         .loading { display: inline-block; width: 18px; height: 18px; border: 2px solid #e5e7eb; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 8px; }
@@ -77,15 +76,16 @@
         <div id="selectedProductsPanel"></div>
         <button id="generateFullBtn" class="success">✨ Generate Gallery (Banners, Music, Speeches)</button>
         <div id="generationProgress" style="margin-top: 16px;"></div>
+        <div id="livePreview" style="margin-top: 24px;"></div>
     </div>
 
     <!-- STEP 3 (hidden until generation done) -->
     <div id="step3Card" class="card" style="display:none;">
-        <h2>✅ Step 3: Approve or Reject Items</h2>
-        <div id="approvalContainer"></div>
-        <div class="flex-row" style="margin-top: 24px;">
-            <button id="saveApprovedBtn" class="success">💾 Save Approved Only</button>
-            <button id="cancelAllBtn" class="danger">❌ Cancel All</button>
+        <h2>✅ Step 3: Approve or Reject Entire Gallery</h2>
+        <div id="finalPreview"></div>
+        <div class="flex-row" style="margin-top: 24px; justify-content: center; gap: 20px;">
+            <button id="approveAllBtn" class="success" style="width: auto; padding: 12px 32px;">✅ Approve All & Save</button>
+            <button id="rejectAllBtn" class="danger" style="width: auto; padding: 12px 32px;">❌ Reject All & Reset</button>
         </div>
         <div id="saveResult"></div>
     </div>
@@ -101,7 +101,6 @@
             moodSongs: [],
             speeches: []
         };
-        let approvalStatus = {};
 
         // Step 1: Identify products
         document.getElementById('identifyBtn').onclick = async () => {
@@ -177,7 +176,43 @@
             });
         }
 
-        // Step 2: Generate everything
+        // Helper: Append a generated banner to live preview
+        function appendBannerPreview(banner, imageUrl) {
+            const previewDiv = document.getElementById('livePreview');
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'generated-item';
+            itemDiv.setAttribute('data-type', `banner_${banner.mood}`);
+            itemDiv.innerHTML = `
+                <img src="${imageUrl}" style="max-width:150px;">
+                <div><strong>${banner.mood}</strong><br>${banner.title}<br><small>${banner.subtitle}</small></div>
+            `;
+            previewDiv.appendChild(itemDiv);
+        }
+
+        function appendMusicPreview(title, audioUrl, type, mood = null) {
+            const previewDiv = document.getElementById('livePreview');
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'generated-item';
+            let label = type === 'main' ? 'Main Gallery Music' : `Mood Song: ${mood}`;
+            itemDiv.innerHTML = `
+                <audio controls src="${audioUrl}"></audio>
+                <div><strong>${label}</strong><br><small>${title.substring(0,100)}</small></div>
+            `;
+            previewDiv.appendChild(itemDiv);
+        }
+
+        function appendSpeechPreview(productId, speechText, audioUrl) {
+            const previewDiv = document.getElementById('livePreview');
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'generated-item';
+            itemDiv.innerHTML = `
+                <audio controls src="${audioUrl}"></audio>
+                <div><strong>Product ${productId}</strong><br><small>${speechText.substring(0,100)}</small></div>
+            `;
+            previewDiv.appendChild(itemDiv);
+        }
+
+        // Step 2: Generate everything and show one by one
         document.getElementById('generateFullBtn').onclick = async () => {
             if (!selectedProductIds.length) return alert('Select at least one product');
             const descriptionText = document.getElementById('descriptionText').value;
@@ -187,6 +222,8 @@
             btn.innerHTML = '<span class="loading"></span> Getting gallery structure...';
             const progressDiv = document.getElementById('generationProgress');
             progressDiv.innerHTML = '<div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div><div id="statusMsg">Starting...</div>';
+            const previewDiv = document.getElementById('livePreview');
+            previewDiv.innerHTML = '<h3>Generated Items (appearing live):</h3>';
             try {
                 // 1. Get gallery structure and speech texts
                 const res = await fetch(`${API_BASE}/stepwise-preview`, {
@@ -233,7 +270,9 @@
                 for (let i = 0; i < banners.length; i++) {
                     updateProgress(`Generating banner ${i+1}/${banners.length} (${banners[i].mood})...`);
                     const imgUrl = await genBanner(banners[i]);
-                    generatedItems.banners.push({ ...banners[i], image_url: imgUrl });
+                    const bannerWithUrl = { ...banners[i], image_url: imgUrl };
+                    generatedItems.banners.push(bannerWithUrl);
+                    appendBannerPreview(banners[i], imgUrl);
                     completed++;
                 }
                 // Main music
@@ -241,6 +280,7 @@
                     updateProgress(`Generating main gallery music...`);
                     const audioUrl = await genAudio('music', { type: 'music', prompt: mainMusicPrompt });
                     generatedItems.mainMusic = { name: `${gallery.name} — Music`, prompt: mainMusicPrompt, audio_url: audioUrl };
+                    appendMusicPreview(generatedItems.mainMusic.name, audioUrl, 'main');
                     completed++;
                 } else { completed++; }
                 // Mood songs
@@ -248,6 +288,7 @@
                     updateProgress(`Generating mood song ${i+1}/${moodPrompts.length} (${moodPrompts[i].mood})...`);
                     const audioUrl = await genAudio('music', { type: 'music', prompt: moodPrompts[i].prompt });
                     generatedItems.moodSongs.push({ mood: moodPrompts[i].mood, prompt: moodPrompts[i].prompt, audio_url: audioUrl });
+                    appendMusicPreview(`${moodPrompts[i].mood} song`, audioUrl, 'mood', moodPrompts[i].mood);
                     completed++;
                 }
                 // Speeches
@@ -255,12 +296,15 @@
                     updateProgress(`Generating speech for product ${productSpeeches[i].product_id}...`);
                     const audioUrl = await genAudio('speech', { type: 'speech', text: productSpeeches[i].speech });
                     generatedItems.speeches.push({ product_id: productSpeeches[i].product_id, speech: productSpeeches[i].speech, audio_url: audioUrl });
+                    appendSpeechPreview(productSpeeches[i].product_id, productSpeeches[i].speech, audioUrl);
                     completed++;
                 }
 
-                updateProgress(`Generation complete! Showing approval panel.`);
-                showApprovalPanel();
+                updateProgress(`Generation complete! Moving to approval step.`);
+                // Show final preview in Step 3 (copy from live preview or rebuild)
+                showFinalPreview();
                 document.getElementById('step3Card').style.display = 'block';
+                // Hide generation button container or disable? Keep but user can proceed.
             } catch (err) {
                 progressDiv.innerHTML += `<div class="error-msg">Generation failed: ${err.message}</div>`;
                 console.error(err);
@@ -270,120 +314,68 @@
             }
         };
 
-        function showApprovalPanel() {
-            const container = document.getElementById('approvalContainer');
-            let html = '';
-            approvalStatus = {};
-
+        function showFinalPreview() {
+            const container = document.getElementById('finalPreview');
+            let html = '<h3>Generated Gallery Items</h3>';
+            
             // Banners
-            html += `<h3>🖼️ Banners (6 moods)</h3>`;
+            html += `<h4>🖼️ Banners (6 moods)</h4>`;
             for (const b of generatedItems.banners) {
-                const key = `banner_${b.mood}`;
-                approvalStatus[key] = 'pending';
                 html += `
-                    <div class="approval-item" data-key="${key}">
+                    <div class="generated-item">
                         <img src="${b.image_url}" style="max-width:150px;">
                         <div><strong>${b.mood}</strong><br>${b.title}<br><small>${b.subtitle}</small></div>
-                        <div class="approval-actions">
-                            <button class="approve-btn" data-key="${key}">✅ Approve</button>
-                            <button class="reject-btn" data-key="${key}">❌ Reject</button>
-                        </div>
-                        <div class="status status-pending" id="status-${key}">Pending</div>
                     </div>
                 `;
             }
             // Main music
             if (generatedItems.mainMusic) {
-                const key = 'main_music';
-                approvalStatus[key] = 'pending';
-                html += `<h3>🎵 Main Gallery Music</h3>`;
+                html += `<h4>🎵 Main Gallery Music</h4>`;
                 html += `
-                    <div class="approval-item" data-key="${key}">
+                    <div class="generated-item">
                         <audio controls src="${generatedItems.mainMusic.audio_url}"></audio>
                         <div><strong>Main Music</strong><br><small>${generatedItems.mainMusic.prompt.substring(0,100)}</small></div>
-                        <div class="approval-actions">
-                            <button class="approve-btn" data-key="${key}">✅ Approve</button>
-                            <button class="reject-btn" data-key="${key}">❌ Reject</button>
-                        </div>
-                        <div class="status status-pending" id="status-${key}">Pending</div>
                     </div>
                 `;
             }
             // Mood songs
             if (generatedItems.moodSongs.length) {
-                html += `<h3>🎶 Mood Songs</h3>`;
+                html += `<h4>🎶 Mood Songs</h4>`;
                 for (const m of generatedItems.moodSongs) {
-                    const key = `mood_${m.mood}`;
-                    approvalStatus[key] = 'pending';
                     html += `
-                        <div class="approval-item" data-key="${key}">
+                        <div class="generated-item">
                             <audio controls src="${m.audio_url}"></audio>
                             <div><strong>${m.mood}</strong><br><small>${m.prompt.substring(0,100)}</small></div>
-                            <div class="approval-actions">
-                                <button class="approve-btn" data-key="${key}">✅ Approve</button>
-                                <button class="reject-btn" data-key="${key}">❌ Reject</button>
-                            </div>
-                            <div class="status status-pending" id="status-${key}">Pending</div>
                         </div>
                     `;
                 }
             }
             // Speeches
             if (generatedItems.speeches.length) {
-                html += `<h3>🎙️ Product Speeches</h3>`;
+                html += `<h4>🎙️ Product Speeches</h4>`;
                 for (const s of generatedItems.speeches) {
-                    const key = `speech_${s.product_id}`;
-                    approvalStatus[key] = 'pending';
                     html += `
-                        <div class="approval-item" data-key="${key}">
+                        <div class="generated-item">
                             <audio controls src="${s.audio_url}"></audio>
                             <div><strong>Product ${s.product_id}</strong><br><small>${s.speech.substring(0,100)}</small></div>
-                            <div class="approval-actions">
-                                <button class="approve-btn" data-key="${key}">✅ Approve</button>
-                                <button class="reject-btn" data-key="${key}">❌ Reject</button>
-                            </div>
-                            <div class="status status-pending" id="status-${key}">Pending</div>
                         </div>
                     `;
                 }
             }
-
             container.innerHTML = html;
-            // Attach listeners
-            document.querySelectorAll('.approve-btn').forEach(btn => {
-                btn.onclick = () => {
-                    const key = btn.dataset.key;
-                    approvalStatus[key] = 'approved';
-                    document.getElementById(`status-${key}`).className = 'status status-approved';
-                    document.getElementById(`status-${key}`).innerText = 'Approved';
-                };
-            });
-            document.querySelectorAll('.reject-btn').forEach(btn => {
-                btn.onclick = () => {
-                    const key = btn.dataset.key;
-                    approvalStatus[key] = 'rejected';
-                    document.getElementById(`status-${key}`).className = 'status status-rejected';
-                    document.getElementById(`status-${key}`).innerText = 'Rejected';
-                };
-            });
         }
 
-        // Save only approved items
-        document.getElementById('saveApprovedBtn').onclick = async () => {
-            const approvedBanners = generatedItems.banners.filter((b) => approvalStatus[`banner_${b.mood}`] === 'approved');
-            const approvedMainMusic = (generatedItems.mainMusic && approvalStatus['main_music'] === 'approved') ? generatedItems.mainMusic : null;
-            const approvedMoodSongs = generatedItems.moodSongs.filter(m => approvalStatus[`mood_${m.mood}`] === 'approved');
-            const approvedSpeeches = generatedItems.speeches.filter(s => approvalStatus[`speech_${s.product_id}`] === 'approved');
-
+        // Approve all – save everything to DB
+        document.getElementById('approveAllBtn').onclick = async () => {
             const payload = {
                 user_id: currentSellerId,
                 gallery: galleryData.gallery,
-                banners: approvedBanners,
-                music_track: approvedMainMusic,
-                mood_tracks: approvedMoodSongs,
-                speech_tracks: approvedSpeeches
+                banners: generatedItems.banners,
+                music_track: generatedItems.mainMusic,
+                mood_tracks: generatedItems.moodSongs,
+                speech_tracks: generatedItems.speeches
             };
-            const btn = document.getElementById('saveApprovedBtn');
+            const btn = document.getElementById('approveAllBtn');
             btn.disabled = true;
             btn.innerHTML = '<span class="loading"></span> Saving...';
             try {
@@ -395,17 +387,20 @@
                 const data = await res.json();
                 if (data.success) {
                     document.getElementById('saveResult').innerHTML = `<div style="color:green;">✅ Gallery saved! ID: ${data.gallery_id}</div>`;
+                    // Optionally disable reject button too
+                    document.getElementById('rejectAllBtn').disabled = true;
                 } else throw new Error(data.error);
             } catch (err) {
                 document.getElementById('saveResult').innerHTML = `<div class="error-msg">Save failed: ${err.message}</div>`;
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '💾 Save Approved Only';
+                btn.innerHTML = '✅ Approve All & Save';
             }
         };
 
-        document.getElementById('cancelAllBtn').onclick = () => {
-            if (confirm('Cancel all and reset? All generated data will be lost.')) {
+        // Reject all – reset everything
+        document.getElementById('rejectAllBtn').onclick = () => {
+            if (confirm('Reject all and reset? All generated data will be lost.')) {
                 location.reload();
             }
         };
