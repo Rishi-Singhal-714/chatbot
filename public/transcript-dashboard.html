@@ -2,408 +2,832 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Gallery Creator – 3 Step Workflow</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>AI Gallery Creator – Multi‑Gallery Selection</title>
     <style>
-        * { box-sizing: border-box; }
-        body { font-family: 'Inter', system-ui, sans-serif; max-width: 1400px; margin: 0 auto; padding: 24px; background: #f3f4f6; color: #1f2937; }
-        .card { background: white; border-radius: 24px; padding: 24px; margin-bottom: 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; }
-        .card h2 { margin-top: 0; font-size: 20px; display: flex; align-items: center; gap: 8px; }
-        .form-group { margin-bottom: 20px; }
-        label { font-weight: 600; display: block; margin-bottom: 6px; }
-        select, input, textarea, button { padding: 10px 14px; border-radius: 12px; border: 1px solid #d1d5db; font-size: 14px; width: 100%; }
-        textarea { resize: vertical; font-family: inherit; }
-        button { background: #3b82f6; color: white; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; }
-        button:hover { background: #2563eb; }
-        button.success { background: #10b981; }
-        button.danger { background: #ef4444; }
-        .flex-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 16px; }
-        .product-card { border: 1px solid #e5e7eb; border-radius: 16px; padding: 8px; background: #f9fafb; position: relative; font-size: 12px; }
-        .product-card img { width: 100%; height: 100px; object-fit: cover; border-radius: 10px; margin-bottom: 6px; }
-        .product-card label { font-size: 11px; display: flex; align-items: center; gap: 4px; margin-top: 6px; }
-        .json-edit { background: #1e293b; color: #e2e8f0; padding: 12px; border-radius: 12px; font-family: monospace; font-size: 12px; margin-top: 12px; white-space: pre-wrap; overflow-x: auto; max-height: 300px; }
-        .generated-item { border: 1px solid #e5e7eb; border-radius: 16px; padding: 16px; margin-bottom: 16px; background: #fefce8; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
-        .generated-item img { max-width: 150px; border-radius: 12px; }
-        .generated-item audio { width: 200px; }
-        .progress-bar { width: 100%; background: #e5e7eb; border-radius: 20px; overflow: hidden; margin: 16px 0; }
-        .progress-fill { width: 0%; height: 8px; background: #3b82f6; transition: width 0.3s; }
-        .loading { display: inline-block; width: 18px; height: 18px; border: 2px solid #e5e7eb; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 8px; }
+        :root {
+            --bg-primary: #000000;
+            --bg-secondary: #1c1c1e;
+            --bg-tertiary: #2c2c2e;
+            --text-primary: #ffffff;
+            --text-secondary: #8e8e93;
+            --text-tertiary: #636366;
+            --accent: #dc2626;
+            --accent-hover: #b91c1c;
+            --border-radius-card: 16px;
+            --border-radius-inner: 12px;
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 12px;
+            --spacing-lg: 16px;
+            --spacing-xl: 24px;
+            --transition: 200ms ease;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+            font-size: 15px;
+            padding: var(--spacing-lg) var(--spacing-md) var(--spacing-xl);
+            padding-top: calc(env(safe-area-inset-top, 0px) + var(--spacing-lg));
+        }
+        h1 {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            margin-bottom: var(--spacing-xl);
+            text-align: center;
+        }
+        .section-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-md);
+        }
+        .mode-toggle {
+            display: flex;
+            gap: var(--spacing-sm);
+            background: var(--bg-secondary);
+            padding: 4px;
+            border-radius: 40px;
+            margin-bottom: var(--spacing-xl);
+        }
+        .mode-btn {
+            flex: 1;
+            text-align: center;
+            padding: 8px 12px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 14px;
+            background: transparent;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .mode-btn.active {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        .card {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius-card);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+        .scroller {
+            display: flex;
+            overflow-x: auto;
+            gap: var(--spacing-md);
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: var(--spacing-sm);
+        }
+        .scroller::-webkit-scrollbar { display: none; }
+        .gallery-card {
+            flex-shrink: 0;
+            width: 160px;
+            background: var(--bg-tertiary);
+            border-radius: var(--border-radius-card);
+            padding: var(--spacing-md);
+            transition: var(--transition);
+            border: 1px solid transparent;
+        }
+        .gallery-card.selected {
+            border-color: var(--accent);
+            background: #2c2c2e;
+        }
+        .gallery-card h3 {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .gallery-card p {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        .gallery-card input {
+            margin-top: var(--spacing-sm);
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+        }
+        .product-card {
+            flex-shrink: 0;
+            width: 140px;
+            background: var(--bg-tertiary);
+            border-radius: var(--border-radius-card);
+            padding: var(--spacing-md);
+        }
+        .product-card img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: var(--border-radius-inner);
+            margin-bottom: var(--spacing-sm);
+            background: #111;
+        }
+        .product-card .title {
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: var(--spacing-xs);
+        }
+        .product-card input {
+            margin-top: var(--spacing-xs);
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+        }
+        button, .button {
+            background: var(--accent);
+            border: none;
+            border-radius: var(--border-radius-card);
+            padding: 12px var(--spacing-lg);
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: white;
+            width: 100%;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        button:active { transform: scale(0.98); background: var(--accent-hover); }
+        .button-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        select, input, textarea {
+            background: var(--bg-secondary);
+            border: 1px solid var(--bg-tertiary);
+            border-radius: var(--border-radius-card);
+            padding: 12px var(--spacing-lg);
+            color: var(--text-primary);
+            font-size: 15px;
+            width: 100%;
+            outline: none;
+        }
+        select:focus, input:focus, textarea:focus { border-color: var(--accent); }
+        ::placeholder { color: var(--text-tertiary); }
+        .selected-info {
+            background: var(--bg-tertiary);
+            border-radius: var(--border-radius-card);
+            padding: var(--spacing-md);
+            margin: var(--spacing-md) 0;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .progress-bar {
+            background: var(--bg-tertiary);
+            border-radius: 30px;
+            height: 6px;
+            overflow: hidden;
+            margin: var(--spacing-md) 0;
+        }
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            background: var(--accent);
+            transition: width 0.3s;
+        }
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--bg-tertiary);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .error-msg { color: #dc2626; background: #fee2e2; padding: 12px; border-radius: 12px; margin-top: 12px; }
-        .status { padding: 8px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        .status-pending { background: #fef3c7; color: #92400e; }
-        .status-approved { background: #d1fae5; color: #065f46; }
-        .status-rejected { background: #fee2e2; color: #991b1b; }
+        .error-msg {
+            color: var(--accent);
+            background: rgba(220,38,38,0.1);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius-card);
+            margin-top: var(--spacing-md);
+            font-size: 13px;
+        }
+        .generated-item {
+            background: var(--bg-tertiary);
+            border-radius: var(--border-radius-card);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .gallery-section {
+            margin-top: var(--spacing-xl);
+            border-top: 1px solid var(--bg-tertiary);
+            padding-top: var(--spacing-lg);
+        }
+        .gallery-section h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+            color: var(--accent);
+        }
+        @media (min-width: 768px) {
+            body { max-width: 800px; margin: 0 auto; }
+        }
     </style>
 </head>
 <body>
-    <h1>🎨 AI Gallery Creator</h1>
 
-    <!-- STEP 1 -->
+<h1>🎨 AI Gallery Creator</h1>
+
+<div class="mode-toggle">
+    <div id="modeExistingBtn" class="mode-btn active">📦 EXISTING</div>
+    <div id="modeTranscriptBtn" class="mode-btn">🔍 EXTRACT</div>
+</div>
+
+<!-- MODE A: EXISTING PRODUCTS -->
+<div id="modeA">
     <div class="card">
-        <h2>📦 Step 1: Select Seller, Add Description & Upload Images</h2>
-        <div class="flex-row">
-            <div style="flex:1">
-                <label>Seller</label>
-                <select id="sellerSelect">
-                    <option value="">-- Select Seller --</option>
-                    <option value="273">the-quince-life-urbana</option>
-                    <option value="274">seevan-apparels-urbana-1</option>
-                    <option value="3547">shahtut</option>
-                    <option value="3548">simkraftz</option>
-                    <option value="3667">perfectdate</option>
-                    <option value="5532">zulu club sector 65</option>
-                </select>
-            </div>
-            <div style="flex:2">
-                <label>Upload Images (product inspiration)</label>
-                <input type="file" id="imageUpload" multiple accept="image/*">
-            </div>
-        </div>
-        <div class="form-group">
-            <label>Optional description / instructions for AI</label>
-            <textarea id="descriptionText" rows="2" placeholder="E.g., Focus on winter collection, target young professionals..."></textarea>
-        </div>
-        <button id="identifyBtn">🔍 Identify Products</button>
-        <div id="productResults" style="margin-top: 20px;"></div>
-        <div id="step1Error" class="error-msg" style="display:none;"></div>
+        <div class="section-label">Step 1 · SELECT SELLER</div>
+        <select id="sellerSelectA">
+            <option value="">-- Select Seller --</option>
+            <option value="273">the-quince-life-urbana</option>
+            <option value="274">seevan-apparels-urbana-1</option>
+            <option value="3547">shahtut</option>
+            <option value="3548">simkraftz</option>
+            <option value="3667">perfectdate</option>
+            <option value="5532">zulu club sector 65</option>
+        </select>
+        <button id="loadProductsBtn" style="margin-top: var(--spacing-md);">📦 LOAD PRODUCTS & GALLERIES</button>
+        <div id="step1ErrorA" class="error-msg" style="display:none;"></div>
     </div>
 
-    <!-- STEP 2 (hidden until products identified) -->
-    <div id="step2Card" class="card" style="display:none;">
-        <h2>✏️ Step 2: Select Products & Generate Gallery</h2>
-        <div id="selectedProductsPanel"></div>
-        <button id="generateFullBtn" class="success">✨ Generate Gallery (Banners, Music, Speeches)</button>
-        <div id="generationProgress" style="margin-top: 16px;"></div>
-        <div id="livePreview" style="margin-top: 24px;"></div>
-    </div>
-
-    <!-- STEP 3 (hidden until generation done) -->
-    <div id="step3Card" class="card" style="display:none;">
-        <h2>✅ Step 3: Approve or Reject Entire Gallery</h2>
-        <div id="finalPreview"></div>
-        <div class="flex-row" style="margin-top: 24px; justify-content: center; gap: 20px;">
-            <button id="approveAllBtn" class="success" style="width: auto; padding: 12px 32px;">✅ Approve All & Save</button>
-            <button id="rejectAllBtn" class="danger" style="width: auto; padding: 12px 32px;">❌ Reject All & Reset</button>
+    <div class="card" id="productsCard" style="display:none;">
+        <div class="section-label">Step 2 · ALL PRODUCTS (search & select)</div>
+        <div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+            <input type="text" id="searchProducts" placeholder="🔍 Search products...">
+            <button id="selectAllBtn" style="width: auto; padding: 8px 16px;">ALL</button>
+            <button id="unselectAllBtn" style="width: auto; padding: 8px 16px; background: var(--bg-tertiary);">NONE</button>
         </div>
-        <div id="saveResult"></div>
+            <div class="card" id="galleriesCard" style="display:none;">
+        <div class="section-label">Step 3 · SELECT GALLERIES (tick to see & choose products)</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+            <span style="font-size:12px; color: var(--text-secondary);">select multiple galleries</span>
+            <button id="viewAllGalleriesBtn" class="button-secondary" style="width: auto; padding: 2px 12px; font-size: 11px;">SELECT ALL</button>
+        </div>
+        <div id="galleriesSlider" class="scroller"></div>
+        <div id="selectedGalleriesProducts"></div>
+    </div>
+        <div id="productSliderA" class="scroller"></div>
+        <div id="selectedInfo" class="selected-info" style="display:none;">
+            <strong>✓ SELECTED (<span id="selectedCount">0</span>)</strong> <span id="selectedIds"></span>
+        </div>
+        
     </div>
 
-    <script>
-        const API_BASE = '/api/v1/auto-gallery';
-        let currentSellerId = null;
-        let selectedProductIds = [];
-        let galleryData = null;
-        let generatedItems = {
-            banners: [],
-            mainMusic: null,
-            moodSongs: [],
-            speeches: []
-        };
 
-        // Step 1: Identify products
-        document.getElementById('identifyBtn').onclick = async () => {
-            const sellerId = document.getElementById('sellerSelect').value;
-            if (!sellerId) return alert('Select seller');
-            currentSellerId = sellerId;
-            const files = document.getElementById('imageUpload').files;
-            if (!files.length) return alert('Upload at least one image');
 
-            const formData = new FormData();
-            for (let f of files) formData.append('images', f);
+    <button id="generateFromExistingBtn" class="success" style="display:none;">✨ GENERATE GALLERY</button>
+</div>
 
-            const btn = document.getElementById('identifyBtn');
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span> Identifying...';
-            document.getElementById('step1Error').style.display = 'none';
-            try {
-                const res = await fetch(`${API_BASE}/identify-products?seller_id=${sellerId}`, {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await res.json();
-                if (!data.success) throw new Error(data.error);
-                displayProductsWithEdit(data.products);
-                document.getElementById('step2Card').style.display = 'block';
-            } catch (err) {
-                document.getElementById('step1Error').style.display = 'block';
-                document.getElementById('step1Error').innerText = err.message;
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-            }
-        };
+<!-- MODE B: EXTRACT (simplified, same style) -->
+<div id="modeB" style="display:none;">
+    <div class="card">
+        <div class="section-label">Step 1 · SELLER</div>
+        <select id="sellerSelectB">
+            <option value="">-- Select Seller --</option>
+            <option value="273">the-quince-life-urbana</option>
+            <option value="274">seevan-apparels-urbana-1</option>
+            <option value="3547">shahtut</option>
+            <option value="3548">simkraftz</option>
+            <option value="3667">perfectdate</option>
+            <option value="5532">zulu club sector 65</option>
+        </select>
+        <div class="section-label" style="margin-top: var(--spacing-lg);">Step 2 · DESCRIPTION</div>
+        <textarea id="productTextB" rows="3" placeholder="Describe products... e.g. lamp price 1000"></textarea>
+        <div class="section-label" style="margin-top: var(--spacing-lg);">Upload images (optional)</div>
+        <input type="file" id="imageUploadB" multiple accept="image/*">
+        <button id="extractBtn" style="margin-top: var(--spacing-md);">🔍 EXTRACT PRODUCTS</button>
+        <div id="extractProgress" class="progress-bar" style="display:none;"><div class="progress-fill"></div></div>
+        <div id="extractError" class="error-msg" style="display:none;"></div>
+        <div class="section-label" style="margin-top: var(--spacing-lg);">Step 3 · SELECT PRODUCTS</div>
+        <div id="productSlider" class="scroller"></div>
+        <button id="generateFromExtractedBtn" class="success" style="display:none; margin-top: var(--spacing-md);">✨ GENERATE GALLERY</button>
+    </div>
+</div>
 
-        function displayProductsWithEdit(products) {
-            const container = document.getElementById('productResults');
-            container.innerHTML = '<h3>Matched Products (check/uncheck to select)</h3><div class="product-grid" id="productGrid"></div>';
-            const grid = document.getElementById('productGrid');
-            selectedProductIds = [];
-            products.forEach(p => {
-                const card = document.createElement('div');
-                card.className = 'product-card';
-                card.innerHTML = `
+<!-- Shared generation & approval -->
+<div id="step2Card" class="card" style="display:none;">
+    <div class="section-label">GENERATE GALLERY</div>
+    <div id="selectedProductsPanel"></div>
+    <button id="generateFullBtn" class="success">✨ GENERATE (Banners, Music, Speeches)</button>
+    <div id="generationProgress" style="margin-top: var(--spacing-md);"></div>
+    <div id="livePreview" style="margin-top: var(--spacing-lg);"></div>
+</div>
+
+<div id="step3Card" class="card" style="display:none;">
+    <div class="section-label">APPROVE & SAVE</div>
+    <div id="finalPreview"></div>
+    <div style="display: flex; gap: var(--spacing-md); margin-top: var(--spacing-lg);">
+        <button id="approveAllBtn" class="success" style="flex:1;">✅ APPROVE</button>
+        <button id="rejectAllBtn" class="button-secondary" style="flex:1;">❌ REJECT</button>
+    </div>
+    <div id="saveResult"></div>
+</div>
+
+<script>
+    const API_BASE = '/api/v1/auto-gallery';
+    let currentMode = 'existing';
+    let currentSellerId = null;
+    let selectedProductIds = [];
+    let allProducts = [];
+    let galleriesList = [];
+    let selectedGalleryIds = new Set();   // track which galleries are selected
+    let galleryProductsMap = new Map();    // id -> array of product objects
+
+    // DOM elements
+    const modeExisting = document.getElementById('modeExistingBtn');
+    const modeTranscript = document.getElementById('modeTranscriptBtn');
+    const modeAContainer = document.getElementById('modeA');
+    const modeBContainer = document.getElementById('modeB');
+    const productsCard = document.getElementById('productsCard');
+    const galleriesCard = document.getElementById('galleriesCard');
+    const generateBtn = document.getElementById('generateFromExistingBtn');
+    const step2Card = document.getElementById('step2Card');
+    const step3Card = document.getElementById('step3Card');
+
+    // Mode toggle
+    modeExisting.onclick = () => {
+        currentMode = 'existing';
+        modeExisting.classList.add('active');
+        modeTranscript.classList.remove('active');
+        modeAContainer.style.display = 'block';
+        modeBContainer.style.display = 'none';
+        resetToStep1();
+    };
+    modeTranscript.onclick = () => {
+        currentMode = 'transcript';
+        modeTranscript.classList.add('active');
+        modeExisting.classList.remove('active');
+        modeAContainer.style.display = 'none';
+        modeBContainer.style.display = 'block';
+        resetToStep1();
+    };
+
+    function resetToStep1() {
+        step2Card.style.display = 'none';
+        step3Card.style.display = 'none';
+        document.getElementById('livePreview').innerHTML = '';
+        document.getElementById('finalPreview').innerHTML = '';
+        selectedProductIds = [];
+        selectedGalleryIds.clear();
+        if (productsCard) productsCard.style.display = 'none';
+        if (galleriesCard) galleriesCard.style.display = 'none';
+        if (generateBtn) generateBtn.style.display = 'none';
+        document.getElementById('selectedInfo').style.display = 'none';
+        document.getElementById('selectedGalleriesProducts').innerHTML = '';
+    }
+
+    // LOAD products & galleries
+    document.getElementById('loadProductsBtn').onclick = async () => {
+        const sellerId = document.getElementById('sellerSelectA').value;
+        if (!sellerId) return alert('Select seller');
+        currentSellerId = sellerId;
+        const btn = document.getElementById('loadProductsBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading"></span> LOADING...';
+        try {
+            const resProducts = await fetch(`${API_BASE}/seller-products?seller_id=${sellerId}`);
+            const dataProducts = await resProducts.json();
+            if (!dataProducts.success) throw new Error(dataProducts.error);
+            allProducts = dataProducts.products;
+            displayProductSlider(allProducts);
+
+            const resGalleries = await fetch(`${API_BASE}/seller-galleries?seller_id=${sellerId}`);
+            const dataGalleries = await resGalleries.json();
+            if (!dataGalleries.success) throw new Error(dataGalleries.error);
+            galleriesList = dataGalleries.galleries;
+            // Build product maps for galleries
+            galleriesList.forEach(g => {
+                const productObjs = allProducts.filter(p => g.product_ids?.includes(p.id));
+                galleryProductsMap.set(g.id, productObjs);
+            });
+            displayGalleriesSlider(galleriesList);
+
+            productsCard.style.display = 'block';
+            galleriesCard.style.display = 'block';
+            generateBtn.style.display = 'block';
+        } catch (err) {
+            document.getElementById('step1ErrorA').style.display = 'block';
+            document.getElementById('step1ErrorA').innerText = err.message;
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '📦 LOAD PRODUCTS & GALLERIES';
+        }
+    };
+
+    function displayProductSlider(products) {
+        const container = document.getElementById('productSliderA');
+        container.innerHTML = '';
+        products.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'product-card';
+            div.innerHTML = `
+                <img src="${p.image || 'https://placehold.co/200x200?text=No+Image'}" onerror="this.src='https://placehold.co/200x200?text=No+Image'">
+                <div class="title">${escapeHtml(p.name)}</div>
+                <label><input type="checkbox" class="product-checkbox" value="${p.id}"> Select</label>
+            `;
+            const cb = div.querySelector('.product-checkbox');
+            cb.addEventListener('change', (e) => {
+                const id = parseInt(e.target.value);
+                if (e.target.checked) {
+                    if (!selectedProductIds.includes(id)) selectedProductIds.push(id);
+                } else {
+                    const idx = selectedProductIds.indexOf(id);
+                    if (idx !== -1) selectedProductIds.splice(idx, 1);
+                }
+                updateSelectedInfo();
+                syncAllProductCheckboxes();
+            });
+            container.appendChild(div);
+        });
+        document.getElementById('selectedInfo').style.display = 'block';
+        updateSelectedInfo();
+
+        // Search
+        document.getElementById('searchProducts').oninput = (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = products.filter(p => p.name.toLowerCase().includes(term));
+            container.innerHTML = '';
+            filtered.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'product-card';
+                div.innerHTML = `
                     <img src="${p.image || 'https://placehold.co/200x200?text=No+Image'}" onerror="this.src='https://placehold.co/200x200?text=No+Image'">
-                    <div><strong>${p.name}</strong></div>
-                    <label><input type="checkbox" class="product-checkbox" value="${p.id}" checked> Select</label>
+                    <div class="title">${escapeHtml(p.name)}</div>
+                    <label><input type="checkbox" class="product-checkbox" value="${p.id}" ${selectedProductIds.includes(p.id) ? 'checked' : ''}> Select</label>
                 `;
-                const cb = card.querySelector('.product-checkbox');
-                cb.onchange = (e) => {
-                    if (e.target.checked) { if (!selectedProductIds.includes(p.id)) selectedProductIds.push(p.id); }
-                    else { const idx = selectedProductIds.indexOf(p.id); if (idx !== -1) selectedProductIds.splice(idx, 1); }
-                };
-                grid.appendChild(card);
-                selectedProductIds.push(p.id);
-            });
-            // JSON edit for advanced users
-            const jsonDiv = document.createElement('div');
-            jsonDiv.className = 'json-edit';
-            jsonDiv.innerHTML = `<details><summary>📝 Edit product IDs (JSON)</summary><textarea id="productIdsJson" rows="3" style="width:100%; font-family:monospace;">${JSON.stringify(selectedProductIds, null, 2)}</textarea><button id="applyJsonBtn" style="margin-top:8px;">Apply</button></details>`;
-            container.appendChild(jsonDiv);
-            document.getElementById('applyJsonBtn')?.addEventListener('click', () => {
-                try {
-                    const newIds = JSON.parse(document.getElementById('productIdsJson').value);
-                    if (Array.isArray(newIds)) {
-                        selectedProductIds = newIds;
-                        document.querySelectorAll('.product-checkbox').forEach(cb => {
-                            const val = parseInt(cb.value);
-                            cb.checked = selectedProductIds.includes(val);
-                        });
-                    } else throw new Error('Not an array');
-                } catch(e) { alert('Invalid JSON: '+e.message); }
-            });
-        }
-
-        // Helper: Append a generated banner to live preview
-        function appendBannerPreview(banner, imageUrl) {
-            const previewDiv = document.getElementById('livePreview');
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'generated-item';
-            itemDiv.setAttribute('data-type', `banner_${banner.mood}`);
-            itemDiv.innerHTML = `
-                <img src="${imageUrl}" style="max-width:150px;">
-                <div><strong>${banner.mood}</strong><br>${banner.title}<br><small>${banner.subtitle}</small></div>
-            `;
-            previewDiv.appendChild(itemDiv);
-        }
-
-        function appendMusicPreview(title, audioUrl, type, mood = null) {
-            const previewDiv = document.getElementById('livePreview');
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'generated-item';
-            let label = type === 'main' ? 'Main Gallery Music' : `Mood Song: ${mood}`;
-            itemDiv.innerHTML = `
-                <audio controls src="${audioUrl}"></audio>
-                <div><strong>${label}</strong><br><small>${title.substring(0,100)}</small></div>
-            `;
-            previewDiv.appendChild(itemDiv);
-        }
-
-        function appendSpeechPreview(productId, speechText, audioUrl) {
-            const previewDiv = document.getElementById('livePreview');
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'generated-item';
-            itemDiv.innerHTML = `
-                <audio controls src="${audioUrl}"></audio>
-                <div><strong>Product ${productId}</strong><br><small>${speechText.substring(0,100)}</small></div>
-            `;
-            previewDiv.appendChild(itemDiv);
-        }
-
-        // Step 2: Generate everything and show one by one
-        document.getElementById('generateFullBtn').onclick = async () => {
-            if (!selectedProductIds.length) return alert('Select at least one product');
-            const descriptionText = document.getElementById('descriptionText').value;
-
-            const btn = document.getElementById('generateFullBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span> Getting gallery structure...';
-            const progressDiv = document.getElementById('generationProgress');
-            progressDiv.innerHTML = '<div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div><div id="statusMsg">Starting...</div>';
-            const previewDiv = document.getElementById('livePreview');
-            previewDiv.innerHTML = '<h3>Generated Items (appearing live):</h3>';
-            try {
-                // 1. Get gallery structure and speech texts
-                const res = await fetch(`${API_BASE}/stepwise-preview`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: currentSellerId, product_ids: selectedProductIds, description_text: descriptionText })
+                const cb = div.querySelector('.product-checkbox');
+                cb.addEventListener('change', (e) => {
+                    const id = parseInt(e.target.value);
+                    if (e.target.checked) { if (!selectedProductIds.includes(id)) selectedProductIds.push(id); }
+                    else { const idx = selectedProductIds.indexOf(id); if (idx !== -1) selectedProductIds.splice(idx, 1); }
+                    updateSelectedInfo();
+                    syncAllProductCheckboxes();
                 });
-                const data = await res.json();
-                if (!data.success) throw new Error(data.error);
-                galleryData = data;
-                const gallery = data.gallery;
-                const productSpeeches = data.product_speeches;
-
-                const banners = gallery.banners || [];
-                const mainMusicPrompt = gallery.music_prompt;
-                const moodPrompts = gallery.gallery_music_prompts || [];
-                
-                const totalItems = banners.length + 1 + moodPrompts.length + productSpeeches.length;
-                let completed = 0;
-                const updateProgress = (msg) => {
-                    const percent = (completed / totalItems) * 100;
-                    document.querySelector('.progress-fill').style.width = `${percent}%`;
-                    document.getElementById('statusMsg').innerHTML = msg;
-                };
-
-                async function genBanner(banner) {
-                    const promptText = `Create a square banner for mood ${banner.mood}. Title: ${banner.title}. Subtitle: ${banner.subtitle}. CTA: ${banner.cta}. Visual: ${banner.image_idea}. Style: premium lifestyle photography, Indian aesthetics, no text other than given.`;
-                    const res = await fetch(`${API_BASE}/generate-banner`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: promptText }) });
-                    const json = await res.json();
-                    if (json.success) return json.image;
-                    throw new Error(json.error);
-                }
-
-                async function genAudio(type, payload) {
-                    const res = await fetch(`${API_BASE}/generate-audio`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                    const json = await res.json();
-                    if (json.success) return json.audio;
-                    throw new Error(json.error);
-                }
-
-                generatedItems = { banners: [], mainMusic: null, moodSongs: [], speeches: [] };
-
-                // Generate banners
-                for (let i = 0; i < banners.length; i++) {
-                    updateProgress(`Generating banner ${i+1}/${banners.length} (${banners[i].mood})...`);
-                    const imgUrl = await genBanner(banners[i]);
-                    const bannerWithUrl = { ...banners[i], image_url: imgUrl };
-                    generatedItems.banners.push(bannerWithUrl);
-                    appendBannerPreview(banners[i], imgUrl);
-                    completed++;
-                }
-                // Main music
-                if (mainMusicPrompt) {
-                    updateProgress(`Generating main gallery music...`);
-                    const audioUrl = await genAudio('music', { type: 'music', prompt: mainMusicPrompt });
-                    generatedItems.mainMusic = { name: `${gallery.name} — Music`, prompt: mainMusicPrompt, audio_url: audioUrl };
-                    appendMusicPreview(generatedItems.mainMusic.name, audioUrl, 'main');
-                    completed++;
-                } else { completed++; }
-                // Mood songs
-                for (let i = 0; i < moodPrompts.length; i++) {
-                    updateProgress(`Generating mood song ${i+1}/${moodPrompts.length} (${moodPrompts[i].mood})...`);
-                    const audioUrl = await genAudio('music', { type: 'music', prompt: moodPrompts[i].prompt });
-                    generatedItems.moodSongs.push({ mood: moodPrompts[i].mood, prompt: moodPrompts[i].prompt, audio_url: audioUrl });
-                    appendMusicPreview(`${moodPrompts[i].mood} song`, audioUrl, 'mood', moodPrompts[i].mood);
-                    completed++;
-                }
-                // Speeches
-                for (let i = 0; i < productSpeeches.length; i++) {
-                    updateProgress(`Generating speech for product ${productSpeeches[i].product_id}...`);
-                    const audioUrl = await genAudio('speech', { type: 'speech', text: productSpeeches[i].speech });
-                    generatedItems.speeches.push({ product_id: productSpeeches[i].product_id, speech: productSpeeches[i].speech, audio_url: audioUrl });
-                    appendSpeechPreview(productSpeeches[i].product_id, productSpeeches[i].speech, audioUrl);
-                    completed++;
-                }
-
-                updateProgress(`Generation complete! Moving to approval step.`);
-                // Show final preview in Step 3 (copy from live preview or rebuild)
-                showFinalPreview();
-                document.getElementById('step3Card').style.display = 'block';
-                // Hide generation button container or disable? Keep but user can proceed.
-            } catch (err) {
-                progressDiv.innerHTML += `<div class="error-msg">Generation failed: ${err.message}</div>`;
-                console.error(err);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '✨ Generate Gallery (Banners, Music, Speeches)';
-            }
+                container.appendChild(div);
+            });
         };
+        // Select all / none
+        document.getElementById('selectAllBtn').onclick = () => {
+            document.querySelectorAll('#productSliderA .product-checkbox').forEach(cb => {
+                cb.checked = true;
+                const id = parseInt(cb.value);
+                if (!selectedProductIds.includes(id)) selectedProductIds.push(id);
+            });
+            updateSelectedInfo();
+            syncAllProductCheckboxes();
+        };
+        document.getElementById('unselectAllBtn').onclick = () => {
+            document.querySelectorAll('#productSliderA .product-checkbox').forEach(cb => {
+                cb.checked = false;
+                const id = parseInt(cb.value);
+                const idx = selectedProductIds.indexOf(id);
+                if (idx !== -1) selectedProductIds.splice(idx, 1);
+            });
+            updateSelectedInfo();
+            syncAllProductCheckboxes();
+        };
+    }
 
-        function showFinalPreview() {
-            const container = document.getElementById('finalPreview');
-            let html = '<h3>Generated Gallery Items</h3>';
-            
-            // Banners
-            html += `<h4>🖼️ Banners (6 moods)</h4>`;
-            for (const b of generatedItems.banners) {
-                html += `
-                    <div class="generated-item">
-                        <img src="${b.image_url}" style="max-width:150px;">
-                        <div><strong>${b.mood}</strong><br>${b.title}<br><small>${b.subtitle}</small></div>
-                    </div>
-                `;
-            }
-            // Main music
-            if (generatedItems.mainMusic) {
-                html += `<h4>🎵 Main Gallery Music</h4>`;
-                html += `
-                    <div class="generated-item">
-                        <audio controls src="${generatedItems.mainMusic.audio_url}"></audio>
-                        <div><strong>Main Music</strong><br><small>${generatedItems.mainMusic.prompt.substring(0,100)}</small></div>
-                    </div>
-                `;
-            }
-            // Mood songs
-            if (generatedItems.moodSongs.length) {
-                html += `<h4>🎶 Mood Songs</h4>`;
-                for (const m of generatedItems.moodSongs) {
-                    html += `
-                        <div class="generated-item">
-                            <audio controls src="${m.audio_url}"></audio>
-                            <div><strong>${m.mood}</strong><br><small>${m.prompt.substring(0,100)}</small></div>
-                        </div>
-                    `;
+    function displayGalleriesSlider(galleries) {
+        const container = document.getElementById('galleriesSlider');
+        container.innerHTML = '';
+        galleries.forEach(g => {
+            const div = document.createElement('div');
+            div.className = 'gallery-card';
+            div.dataset.id = g.id;
+            div.innerHTML = `
+                <h3>${escapeHtml(g.name)}</h3>
+                <p>${g.product_ids?.length || 0} products</p>
+                <label><input type="checkbox" class="gallery-select-checkbox" value="${g.id}"> Select Gallery</label>
+            `;
+            const cb = div.querySelector('.gallery-select-checkbox');
+            cb.addEventListener('change', (e) => {
+                const id = parseInt(e.target.value);
+                if (e.target.checked) {
+                    selectedGalleryIds.add(id);
+                } else {
+                    selectedGalleryIds.delete(id);
                 }
-            }
-            // Speeches
-            if (generatedItems.speeches.length) {
-                html += `<h4>🎙️ Product Speeches</h4>`;
-                for (const s of generatedItems.speeches) {
-                    html += `
-                        <div class="generated-item">
-                            <audio controls src="${s.audio_url}"></audio>
-                            <div><strong>Product ${s.product_id}</strong><br><small>${s.speech.substring(0,100)}</small></div>
-                        </div>
-                    `;
-                }
-            }
-            container.innerHTML = html;
+                updateGallerySelectionUI();
+                renderSelectedGalleriesProducts();
+            });
+            container.appendChild(div);
+        });
+        // View All button
+        document.getElementById('viewAllGalleriesBtn').onclick = () => {
+            galleries.forEach(g => {
+                selectedGalleryIds.add(g.id);
+            });
+            updateGallerySelectionUI();
+            renderSelectedGalleriesProducts();
+        };
+    }
+
+    function updateGallerySelectionUI() {
+        document.querySelectorAll('#galleriesSlider .gallery-card').forEach(card => {
+            const id = parseInt(card.dataset.id);
+            const cb = card.querySelector('.gallery-select-checkbox');
+            if (cb) cb.checked = selectedGalleryIds.has(id);
+            if (selectedGalleryIds.has(id)) card.classList.add('selected');
+            else card.classList.remove('selected');
+        });
+    }
+
+    function renderSelectedGalleriesProducts() {
+        const container = document.getElementById('selectedGalleriesProducts');
+        container.innerHTML = '';
+        if (selectedGalleryIds.size === 0) {
+            container.innerHTML = '<div class="selected-info" style="margin-top:0;">No galleries selected. Tick some galleries above.</div>';
+            return;
         }
+        // Sort selected galleries by name
+        const selectedGalleries = galleriesList.filter(g => selectedGalleryIds.has(g.id));
+        for (let gallery of selectedGalleries) {
+            const products = galleryProductsMap.get(gallery.id) || [];
+            if (!products.length) continue;
+            const section = document.createElement('div');
+            section.className = 'gallery-section';
+            section.innerHTML = `<h3>📁 ${escapeHtml(gallery.name)} (${products.length} products)</h3><div class="scroller" id="gallery-scroller-${gallery.id}"></div>`;
+            const scroller = section.querySelector(`.scroller`);
+            products.forEach(p => {
+                const isChecked = selectedProductIds.includes(p.id);
+                const productDiv = document.createElement('div');
+                productDiv.className = 'product-card';
+                productDiv.innerHTML = `
+                    <img src="${p.image || 'https://placehold.co/200x200?text=No+Image'}" onerror="this.src='https://placehold.co/200x200?text=No+Image'">
+                    <div class="title">${escapeHtml(p.name)}</div>
+                    <label><input type="checkbox" class="gallery-product-checkbox" data-gallery="${gallery.id}" value="${p.id}" ${isChecked ? 'checked' : ''}> Select</label>
+                `;
+                const cb = productDiv.querySelector('.gallery-product-checkbox');
+                cb.addEventListener('change', (e) => {
+                    const id = parseInt(e.target.value);
+                    if (e.target.checked) {
+                        if (!selectedProductIds.includes(id)) selectedProductIds.push(id);
+                    } else {
+                        const idx = selectedProductIds.indexOf(id);
+                        if (idx !== -1) selectedProductIds.splice(idx, 1);
+                    }
+                    updateSelectedInfo();
+                    syncAllProductCheckboxes();
+                });
+                scroller.appendChild(productDiv);
+            });
+            container.appendChild(section);
+        }
+    }
 
-        // Approve all – save everything to DB
-        document.getElementById('approveAllBtn').onclick = async () => {
-            const payload = {
-                user_id: currentSellerId,
-                gallery: galleryData.gallery,
-                banners: generatedItems.banners,
-                music_track: generatedItems.mainMusic,
-                mood_tracks: generatedItems.moodSongs,
-                speech_tracks: generatedItems.speeches
+    function syncAllProductCheckboxes() {
+        // Sync main product slider
+        document.querySelectorAll('#productSliderA .product-checkbox').forEach(cb => {
+            const id = parseInt(cb.value);
+            cb.checked = selectedProductIds.includes(id);
+        });
+        // Sync all gallery product checkboxes
+        document.querySelectorAll('.gallery-product-checkbox').forEach(cb => {
+            const id = parseInt(cb.value);
+            cb.checked = selectedProductIds.includes(id);
+        });
+    }
+
+    function updateSelectedInfo() {
+        document.getElementById('selectedCount').innerText = selectedProductIds.length;
+        const idsPreview = selectedProductIds.slice(0, 10).join(', ');
+        document.getElementById('selectedIds').innerHTML = selectedProductIds.length ? `IDs: ${idsPreview}${selectedProductIds.length > 10 ? '...' : ''}` : 'None';
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    document.getElementById('generateFromExistingBtn').onclick = async () => {
+        if (!selectedProductIds.length) return alert('Select at least one product');
+        currentDescription = '';
+        modeAContainer.style.display = 'none';
+        step2Card.style.display = 'block';
+        document.getElementById('selectedProductsPanel').innerHTML = `<p>✅ ${selectedProductIds.length} products selected. Ready to generate gallery.</p>`;
+        step3Card.style.display = 'none';
+        document.getElementById('livePreview').innerHTML = '';
+        await generateGallery();
+    };
+
+    // Mode B extraction (unchanged, but we include it for completeness)
+    document.getElementById('extractBtn').onclick = async () => {
+        const sellerId = document.getElementById('sellerSelectB').value;
+        if (!sellerId) return alert('Select seller');
+        currentSellerId = sellerId;
+        const text = document.getElementById('productTextB').value.trim();
+        if (!text) return alert('Enter product description');
+        const files = document.getElementById('imageUploadB').files;
+        const formData = new FormData();
+        formData.append('seller_id', sellerId);
+        formData.append('text', text);
+        for (let f of files) formData.append('images', f);
+        const btn = document.getElementById('extractBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading"></span> EXTRACTING...';
+        document.getElementById('extractProgress').style.display = 'block';
+        try {
+            const res = await fetch(`${API_BASE}/extract-products`, { method: 'POST', body: formData });
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error);
+            displayExtractedProducts(data.products);
+            document.getElementById('generateFromExtractedBtn').style.display = 'block';
+        } catch (err) {
+            document.getElementById('extractError').innerText = err.message;
+            document.getElementById('extractError').style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '🔍 EXTRACT PRODUCTS';
+            document.getElementById('extractProgress').style.display = 'none';
+        }
+    };
+    function displayExtractedProducts(products) {
+        const container = document.getElementById('productSlider');
+        container.innerHTML = '';
+        selectedProductIds = products.map(p => p.id);
+        products.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'product-card';
+            div.innerHTML = `
+                <img src="${p.image || 'https://placehold.co/200x200?text=No+Image'}" onerror="this.src='https://placehold.co/200x200?text=No+Image'">
+                <div class="title">${escapeHtml(p.name)}</div>
+                <label><input type="checkbox" class="extract-checkbox" value="${p.id}" checked> Select</label>
+            `;
+            const cb = div.querySelector('.extract-checkbox');
+            cb.addEventListener('change', (e) => {
+                const id = parseInt(e.target.value);
+                if (e.target.checked) { if (!selectedProductIds.includes(id)) selectedProductIds.push(id); }
+                else { const idx = selectedProductIds.indexOf(id); if (idx !== -1) selectedProductIds.splice(idx, 1); }
+            });
+            container.appendChild(div);
+        });
+    }
+    document.getElementById('generateFromExtractedBtn').onclick = async () => {
+        if (!selectedProductIds.length) return alert('Select at least one product');
+        currentDescription = document.getElementById('productTextB').value;
+        modeBContainer.style.display = 'none';
+        step2Card.style.display = 'block';
+        document.getElementById('selectedProductsPanel').innerHTML = `<p>✅ ${selectedProductIds.length} products selected. Ready to generate gallery.</p>`;
+        step3Card.style.display = 'none';
+        await generateGallery();
+    };
+
+    // Shared generation (unchanged – same as before)
+    let galleryDataForSave = null;
+    let generatedItems = { banners: [], mainMusic: null, moodSongs: [], speeches: [] };
+    async function generateGallery() {
+        const btn = document.getElementById('generateFullBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading"></span> GENERATING...';
+        const progressDiv = document.getElementById('generationProgress');
+        progressDiv.innerHTML = '<div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div><div id="statusMsg">Starting...</div>';
+        const previewDiv = document.getElementById('livePreview');
+        previewDiv.innerHTML = '<div class="section-label">Generated Items</div>';
+        try {
+            const res = await fetch(`${API_BASE}/stepwise-preview`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: currentSellerId, product_ids: selectedProductIds, description_text: currentDescription })
+            });
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error);
+            galleryDataForSave = data;
+            const gallery = data.gallery;
+            const productSpeeches = data.product_speeches;
+            const banners = gallery.banners || [];
+            const mainMusicPrompt = gallery.music_prompt;
+            const moodPrompts = gallery.gallery_music_prompts || [];
+            const total = banners.length + 1 + moodPrompts.length + productSpeeches.length;
+            let completed = 0;
+            const update = (msg) => {
+                const percent = (completed / total) * 100;
+                document.querySelector('.progress-fill').style.width = `${percent}%`;
+                document.getElementById('statusMsg').innerHTML = msg;
             };
-            const btn = document.getElementById('approveAllBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span> Saving...';
-            try {
-                const res = await fetch(`${API_BASE}/save-gallery`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                if (data.success) {
-                    document.getElementById('saveResult').innerHTML = `<div style="color:green;">✅ Gallery saved! ID: ${data.gallery_id}</div>`;
-                    // Optionally disable reject button too
-                    document.getElementById('rejectAllBtn').disabled = true;
-                } else throw new Error(data.error);
-            } catch (err) {
-                document.getElementById('saveResult').innerHTML = `<div class="error-msg">Save failed: ${err.message}</div>`;
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '✅ Approve All & Save';
+            async function genBanner(b) {
+                const promptText = `Create a square banner for mood ${b.mood}. Title: ${b.title}. Subtitle: ${b.subtitle}. CTA: ${b.cta}. Visual: ${b.image_idea}.`;
+                const r = await fetch(`${API_BASE}/generate-banner`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: promptText }) });
+                const j = await r.json();
+                if (j.success) return j.image;
+                throw new Error(j.error);
             }
-        };
-
-        // Reject all – reset everything
-        document.getElementById('rejectAllBtn').onclick = () => {
-            if (confirm('Reject all and reset? All generated data will be lost.')) {
-                location.reload();
+            async function genAudio(type, payload) {
+                const r = await fetch(`${API_BASE}/generate-audio`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const j = await r.json();
+                if (j.success) return j.audio;
+                throw new Error(j.error);
             }
+            generatedItems = { banners: [], mainMusic: null, moodSongs: [], speeches: [] };
+            for (let b of banners) {
+                update(`Banner ${b.mood}...`);
+                const img = await genBanner(b);
+                generatedItems.banners.push({ ...b, image_url: img });
+                appendPreviewImage(b, img);
+                completed++;
+            }
+            if (mainMusicPrompt) {
+                update(`Main music...`);
+                const audio = await genAudio('music', { type: 'music', prompt: mainMusicPrompt });
+                generatedItems.mainMusic = { name: `${gallery.name} — Music`, prompt: mainMusicPrompt, audio_url: audio };
+                appendPreviewAudio(generatedItems.mainMusic.name, audio, 'main');
+                completed++;
+            } else completed++;
+            for (let m of moodPrompts) {
+                update(`Mood song ${m.mood}...`);
+                const audio = await genAudio('music', { type: 'music', prompt: m.prompt });
+                generatedItems.moodSongs.push({ mood: m.mood, prompt: m.prompt, audio_url: audio });
+                appendPreviewAudio(`${m.mood} song`, audio, 'mood', m.mood);
+                completed++;
+            }
+            for (let s of productSpeeches) {
+                update(`Speech for product ${s.product_id}...`);
+                const audio = await genAudio('speech', { type: 'speech', text: s.speech });
+                generatedItems.speeches.push({ product_id: s.product_id, speech: s.speech, audio_url: audio });
+                appendPreviewSpeech(s.product_id, s.speech, audio);
+                completed++;
+            }
+            update(`Complete!`);
+            showFinalPreview();
+            step3Card.style.display = 'block';
+        } catch (err) {
+            progressDiv.innerHTML += `<div class="error-msg">${err.message}</div>`;
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '✨ GENERATE GALLERY';
+        }
+    }
+    function appendPreviewImage(b, url) {
+        const div = document.createElement('div'); div.className = 'generated-item';
+        div.innerHTML = `<img src="${url}" style="max-width:120px; border-radius:12px;"><div><strong>${b.mood}</strong><br>${b.title}</div>`;
+        document.getElementById('livePreview').appendChild(div);
+    }
+    function appendPreviewAudio(title, url, type, mood=null) {
+        const div = document.createElement('div'); div.className = 'generated-item';
+        div.innerHTML = `<audio controls src="${url}" style="width:180px;"></audio><div><strong>${type==='main'?'Main Music':mood}</strong><br><small>${title.substring(0,60)}</small></div>`;
+        document.getElementById('livePreview').appendChild(div);
+    }
+    function appendPreviewSpeech(pid, text, url) {
+        const div = document.createElement('div'); div.className = 'generated-item';
+        div.innerHTML = `<audio controls src="${url}" style="width:180px;"></audio><div><strong>Product ${pid}</strong><br><small>${text.substring(0,60)}</small></div>`;
+        document.getElementById('livePreview').appendChild(div);
+    }
+    function showFinalPreview() {
+        const container = document.getElementById('finalPreview');
+        let html = '<div class="section-label">READY TO SAVE</div>';
+        html += '<div style="display:flex; flex-wrap:wrap; gap:12px;">';
+        for (let b of generatedItems.banners) html += `<div><img src="${b.image_url}" style="width:100px; border-radius:12px;"></div>`;
+        if (generatedItems.mainMusic) html += `<div><audio controls src="${generatedItems.mainMusic.audio_url}" style="width:140px;"></audio></div>`;
+        for (let m of generatedItems.moodSongs) html += `<div><audio controls src="${m.audio_url}" style="width:140px;"></audio></div>`;
+        for (let s of generatedItems.speeches) html += `<div><audio controls src="${s.audio_url}" style="width:140px;"></audio></div>`;
+        html += '</div>';
+        container.innerHTML = html;
+    }
+    document.getElementById('approveAllBtn').onclick = async () => {
+        const payload = {
+            user_id: currentSellerId,
+            gallery: galleryDataForSave.gallery,
+            banners: generatedItems.banners,
+            music_track: generatedItems.mainMusic,
+            mood_tracks: generatedItems.moodSongs,
+            speech_tracks: generatedItems.speeches
         };
-    </script>
+        const btn = document.getElementById('approveAllBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading"></span> SAVING...';
+        try {
+            const res = await fetch(`${API_BASE}/save-gallery`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            const data = await res.json();
+            if (data.success) document.getElementById('saveResult').innerHTML = `<div style="color:#a7f3d0;">✅ Gallery saved! ID: ${data.gallery_id}</div>`;
+            else throw new Error(data.error);
+        } catch (err) { document.getElementById('saveResult').innerHTML = `<div class="error-msg">${err.message}</div>`; }
+        finally { btn.disabled = false; btn.innerHTML = '✅ APPROVE'; }
+    };
+    document.getElementById('rejectAllBtn').onclick = () => { if(confirm('Reset all?')) location.reload(); };
+</script>
 </body>
 </html>
