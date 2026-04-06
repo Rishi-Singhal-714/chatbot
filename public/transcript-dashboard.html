@@ -3,17 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>AI Gallery Creator – Multi‑Gallery Selection</title>
+    <title>AI GALLERY CREATOR | CUSTOM DROPDOWN</title>
     <style>
         :root {
             --bg-primary: #000000;
             --bg-secondary: #1c1c1e;
             --bg-tertiary: #2c2c2e;
+            --bg-dropdown: #1e1e20;
             --text-primary: #ffffff;
             --text-secondary: #8e8e93;
             --text-tertiary: #636366;
             --accent: #dc2626;
             --accent-hover: #b91c1c;
+            --accent-glow: rgba(220, 38, 38, 0.3);
             --border-radius-card: 16px;
             --border-radius-inner: 12px;
             --spacing-xs: 4px;
@@ -28,24 +30,41 @@
             background: var(--bg-primary);
             color: var(--text-primary);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
-            font-size: 15px;
-            padding: var(--spacing-lg) var(--spacing-md) var(--spacing-xl);
-            padding-top: calc(env(safe-area-inset-top, 0px) + var(--spacing-lg));
+            font-size: 14px;
+            padding: var(--spacing-xl) var(--spacing-xl);
+            padding-top: calc(env(safe-area-inset-top, 0px) + var(--spacing-xl));
+            padding-bottom: var(--spacing-xl);
+        }
+        /* GLOBAL UPPERCASE */
+        body, button, .button, .mode-btn, .section-label, h1, .gallery-name, .gallery-count, 
+        .title, label, .selected-info, .error-msg, .generated-item, .product-card .title,
+        input, textarea, ::placeholder, .action-row button, .gallery-section h3,
+        .custom-dropdown, .dropdown-trigger, .dropdown-option {
+            text-transform: uppercase;
+        }
+        input, textarea {
+            text-transform: uppercase;
+        }
+        ::placeholder {
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            font-size: 12px;
         }
         h1 {
-            font-size: 20px;
-            font-weight: 600;
-            letter-spacing: -0.3px;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 1px;
             margin-bottom: var(--spacing-xl);
             text-align: center;
         }
         .section-label {
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            color: var(--accent);
             margin-bottom: var(--spacing-md);
+            border-left: 3px solid var(--accent);
+            padding-left: var(--spacing-sm);
         }
         .mode-toggle {
             display: flex;
@@ -60,23 +79,115 @@
             text-align: center;
             padding: 8px 12px;
             border-radius: 40px;
-            font-weight: 500;
-            font-size: 14px;
+            font-weight: 700;
+            font-size: 13px;
             background: transparent;
             color: var(--text-secondary);
             transition: var(--transition);
             cursor: pointer;
+            letter-spacing: 0.5px;
         }
         .mode-btn.active {
             background: var(--bg-tertiary);
             color: var(--text-primary);
+            box-shadow: 0 0 0 1px var(--accent);
         }
         .card {
             background: var(--bg-secondary);
             border-radius: var(--border-radius-card);
-            padding: var(--spacing-lg);
+            padding: var(--spacing-xl);
             margin-bottom: var(--spacing-xl);
+            transition: transform 0.1s ease;
         }
+        /* ========= CUSTOM DROPDOWN STYLES ========= */
+        .custom-dropdown {
+            position: relative;
+            width: 100%;
+            margin-bottom: var(--spacing-sm);
+        }
+        .dropdown-trigger {
+            background: var(--bg-tertiary);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 60px;
+            padding: 14px 20px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: var(--text-primary);
+            width: 100%;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.25s ease;
+        }
+        .dropdown-trigger:hover {
+            border-color: var(--accent);
+            background-color: #2a2a2c;
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+        .dropdown-arrow {
+            font-size: 18px;
+            transition: transform 0.2s;
+            color: var(--accent);
+        }
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            width: 100%;
+            background: var(--bg-dropdown);
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.15);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            max-height: 280px;
+            overflow-y: auto;
+            box-shadow: 0 20px 35px -10px rgba(0,0,0,0.5);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+        }
+        .dropdown-menu.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .dropdown-option {
+            padding: 14px 20px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            transition: background 0.15s;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .dropdown-option:last-child {
+            border-bottom: none;
+        }
+        .dropdown-option:hover {
+            background: var(--accent);
+            color: white;
+        }
+        .dropdown-option.selected {
+            background: var(--accent);
+            color: white;
+            font-weight: 700;
+        }
+        /* scrollbar */
+        .dropdown-menu::-webkit-scrollbar {
+            width: 6px;
+        }
+        .dropdown-menu::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+        }
+        .dropdown-menu::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 10px;
+        }
+        /* rest styles */
         .scroller {
             display: flex;
             overflow-x: auto;
@@ -88,34 +199,48 @@
         .scroller::-webkit-scrollbar { display: none; }
         .gallery-card {
             flex-shrink: 0;
-            width: 160px;
+            min-width: 210px;
             background: var(--bg-tertiary);
             border-radius: var(--border-radius-card);
-            padding: var(--spacing-md);
+            padding: var(--spacing-md) var(--spacing-lg);
             transition: var(--transition);
             border: 1px solid transparent;
+            cursor: pointer;
         }
         .gallery-card.selected {
             border-color: var(--accent);
             background: #2c2c2e;
+            box-shadow: 0 0 0 1px var(--accent);
         }
-        .gallery-card h3 {
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 4px;
+        .gallery-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-sm);
+        }
+        .gallery-name {
+            font-size: 13px;
+            font-weight: 700;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            max-width: 130px;
+            letter-spacing: 0.3px;
         }
-        .gallery-card p {
+        .gallery-count {
             font-size: 11px;
-            color: var(--text-secondary);
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 0.5px;
         }
         .gallery-card input {
-            margin-top: var(--spacing-sm);
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             accent-color: var(--accent);
+            margin: 0;
+            flex-shrink: 0;
+            cursor: pointer;
         }
         .product-card {
             flex-shrink: 0;
@@ -123,6 +248,10 @@
             background: var(--bg-tertiary);
             border-radius: var(--border-radius-card);
             padding: var(--spacing-md);
+            transition: transform 0.1s;
+        }
+        .product-card:hover {
+            transform: translateY(-2px);
         }
         .product-card img {
             width: 100%;
@@ -133,15 +262,24 @@
             background: #111;
         }
         .product-card .title {
-            font-size: 12px;
-            font-weight: 500;
+            font-size: 11px;
+            font-weight: 700;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             margin-bottom: var(--spacing-xs);
+            letter-spacing: 0.3px;
+        }
+        .product-card label {
+            font-size: 10px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
         }
         .product-card input {
-            margin-top: var(--spacing-xs);
+            margin: 0;
             width: 18px;
             height: 18px;
             accent-color: var(--accent);
@@ -149,41 +287,55 @@
         button, .button {
             background: var(--accent);
             border: none;
-            border-radius: var(--border-radius-card);
-            padding: 12px var(--spacing-lg);
-            font-size: 14px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            border-radius: 60px;
+            padding: 12px 20px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
             color: white;
             width: 100%;
             cursor: pointer;
             transition: var(--transition);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
-        button:active { transform: scale(0.98); background: var(--accent-hover); }
+        button:active { transform: scale(0.97); background: var(--accent-hover); }
         .button-secondary {
             background: var(--bg-tertiary);
             color: var(--text-primary);
+            border: 1px solid rgba(255,255,255,0.1);
         }
-        select, input, textarea {
-            background: var(--bg-secondary);
-            border: 1px solid var(--bg-tertiary);
-            border-radius: var(--border-radius-card);
-            padding: 12px var(--spacing-lg);
+        .button-secondary:hover {
+            background: #3a3a3c;
+        }
+        input, textarea {
+            background: var(--bg-tertiary);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 60px;
+            padding: 12px 18px;
             color: var(--text-primary);
-            font-size: 15px;
+            font-size: 13px;
+            font-weight: 500;
             width: 100%;
             outline: none;
+            font-family: inherit;
+            transition: 0.2s;
         }
-        select:focus, input:focus, textarea:focus { border-color: var(--accent); }
-        ::placeholder { color: var(--text-tertiary); }
+        input:focus, textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+        textarea {
+            border-radius: 24px;
+        }
         .selected-info {
             background: var(--bg-tertiary);
-            border-radius: var(--border-radius-card);
-            padding: var(--spacing-md);
+            border-radius: 40px;
+            padding: var(--spacing-md) var(--spacing-lg);
             margin: var(--spacing-md) 0;
-            font-size: 12px;
+            font-size: 11px;
+            font-weight: 600;
             color: var(--text-secondary);
+            letter-spacing: 0.5px;
         }
         .progress-bar {
             background: var(--bg-tertiary);
@@ -212,11 +364,13 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         .error-msg {
             color: var(--accent);
-            background: rgba(220,38,38,0.1);
+            background: rgba(220,38,38,0.15);
             padding: var(--spacing-md);
-            border-radius: var(--border-radius-card);
+            border-radius: 60px;
             margin-top: var(--spacing-md);
-            font-size: 13px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
         }
         .generated-item {
             background: var(--bg-tertiary);
@@ -230,97 +384,127 @@
         }
         .gallery-section {
             margin-top: var(--spacing-xl);
-            border-top: 1px solid var(--bg-tertiary);
+            border-top: 1px solid rgba(255,255,255,0.1);
             padding-top: var(--spacing-lg);
         }
         .gallery-section h3 {
-            font-size: 14px;
-            font-weight: 600;
+            font-size: 13px;
+            font-weight: 800;
             margin-bottom: var(--spacing-md);
             color: var(--accent);
+            letter-spacing: 1px;
+        }
+        .action-row {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .action-row input {
+            flex: 2;
+        }
+        .action-row button {
+            width: auto;
+            padding: 10px 20px;
+            font-size: 12px;
         }
         @media (min-width: 768px) {
-            body { max-width: 800px; margin: 0 auto; }
+            body { max-width: 920px; margin: 0 auto; }
+        }
+        .gallery-card:hover {
+            transform: translateY(-2px);
+            background: #323234;
         }
     </style>
 </head>
 <body>
 
-<h1>🎨 AI Gallery Creator</h1>
+<h1>AI GALLERY CREATOR</h1>
 
 <div class="mode-toggle">
-    <div id="modeExistingBtn" class="mode-btn active">📦 EXISTING</div>
-    <div id="modeTranscriptBtn" class="mode-btn">🔍 EXTRACT</div>
+    <div id="modeExistingBtn" class="mode-btn active">EXISTING</div>
+    <div id="modeTranscriptBtn" class="mode-btn">EXTRACT</div>
 </div>
 
 <!-- MODE A: EXISTING PRODUCTS -->
 <div id="modeA">
     <div class="card">
-        <div class="section-label">Step 1 · SELECT SELLER</div>
-        <select id="sellerSelectA">
-            <option value="">-- Select Seller --</option>
-            <option value="273">the-quince-life-urbana</option>
-            <option value="274">seevan-apparels-urbana-1</option>
-            <option value="3547">shahtut</option>
-            <option value="3548">simkraftz</option>
-            <option value="3667">perfectdate</option>
-            <option value="5532">zulu club sector 65</option>
-        </select>
-        <button id="loadProductsBtn" style="margin-top: var(--spacing-md);">📦 LOAD PRODUCTS & GALLERIES</button>
+        <div class="section-label">STEP 1 · SELECT SELLER</div>
+        <!-- CUSTOM DROPDOWN FOR SELLER A -->
+        <div class="custom-dropdown" id="dropdownA">
+            <div class="dropdown-trigger">
+                <span class="dropdown-selected-text">SELECT SELLER</span>
+                <span class="dropdown-arrow">▼</span>
+            </div>
+            <div class="dropdown-menu">
+                <div class="dropdown-option" data-value="273">THE QUINCE LIFE URBANA</div>
+                <div class="dropdown-option" data-value="274">SEEVAN APPARELS</div>
+                <div class="dropdown-option" data-value="3547">SHAHTUT</div>
+                <div class="dropdown-option" data-value="3548">SIMKRAFTZ</div>
+                <div class="dropdown-option" data-value="3667">PERFECTDATE</div>
+                <div class="dropdown-option" data-value="5532">ZULU CLUB SECTOR 65</div>
+            </div>
+        </div>
+        <button id="loadProductsBtn" style="margin-top: var(--spacing-md);">LOAD PRODUCTS & GALLERIES</button>
         <div id="step1ErrorA" class="error-msg" style="display:none;"></div>
     </div>
 
     <div class="card" id="productsCard" style="display:none;">
-        <div class="section-label">Step 2 · ALL PRODUCTS (search & select)</div>
-        <div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
-            <input type="text" id="searchProducts" placeholder="🔍 Search products...">
-            <button id="selectAllBtn" style="width: auto; padding: 8px 16px;">ALL</button>
-            <button id="unselectAllBtn" style="width: auto; padding: 8px 16px; background: var(--bg-tertiary);">NONE</button>
+        <div class="section-label">STEP 2 · ALL PRODUCTS (SEARCH & SELECT)</div>
+        <div class="action-row">
+            <input type="text" id="searchProducts" placeholder="SEARCH PRODUCTS...">
+            <button id="selectAllBtn" class="button-secondary">ALL</button>
+            <button id="unselectAllBtn" class="button-secondary">NONE</button>
         </div>
-            <div class="card" id="galleriesCard" style="display:none;">
-        <div class="section-label">Step 3 · SELECT GALLERIES (tick to see & choose products)</div>
+        <div id="productSliderA" class="scroller"></div>
+        <div id="selectedInfo" class="selected-info" style="display:none;">
+            <strong>SELECTED (<span id="selectedCount">0</span>)</strong> <span id="selectedIds"></span>
+        </div>
+    </div>
+
+    <div class="card" id="galleriesCard" style="display:none;">
+        <div class="section-label">STEP 3 · SELECT GALLERIES (TICK TO SEE & CHOOSE PRODUCTS)</div>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
-            <span style="font-size:12px; color: var(--text-secondary);">select multiple galleries</span>
-            <button id="viewAllGalleriesBtn" class="button-secondary" style="width: auto; padding: 2px 12px; font-size: 11px;">SELECT ALL</button>
+            <span style="font-size:11px; font-weight:600; color: var(--text-secondary); letter-spacing:1px;">SELECT MULTIPLE GALLERIES</span>
+            <button id="viewAllGalleriesBtn" class="button-secondary" style="width: auto; padding: 6px 16px; font-size: 11px;">SELECT ALL</button>
         </div>
         <div id="galleriesSlider" class="scroller"></div>
         <div id="selectedGalleriesProducts"></div>
     </div>
-        <div id="productSliderA" class="scroller"></div>
-        <div id="selectedInfo" class="selected-info" style="display:none;">
-            <strong>✓ SELECTED (<span id="selectedCount">0</span>)</strong> <span id="selectedIds"></span>
-        </div>
-        
-    </div>
 
-
-
-    <button id="generateFromExistingBtn" class="success" style="display:none;">✨ GENERATE GALLERY</button>
+    <button id="generateFromExistingBtn" class="success" style="display:none;">GENERATE GALLERY</button>
 </div>
 
-<!-- MODE B: EXTRACT (simplified, same style) -->
+<!-- MODE B: EXTRACT -->
 <div id="modeB" style="display:none;">
     <div class="card">
-        <div class="section-label">Step 1 · SELLER</div>
-        <select id="sellerSelectB">
-            <option value="">-- Select Seller --</option>
-            <option value="273">the-quince-life-urbana</option>
-            <option value="274">seevan-apparels-urbana-1</option>
-            <option value="3547">shahtut</option>
-            <option value="3548">simkraftz</option>
-            <option value="3667">perfectdate</option>
-            <option value="5532">zulu club sector 65</option>
-        </select>
-        <div class="section-label" style="margin-top: var(--spacing-lg);">Step 2 · DESCRIPTION</div>
-        <textarea id="productTextB" rows="3" placeholder="Describe products... e.g. lamp price 1000"></textarea>
-        <div class="section-label" style="margin-top: var(--spacing-lg);">Upload images (optional)</div>
+        <div class="section-label">STEP 1 · SELLER</div>
+        <!-- CUSTOM DROPDOWN FOR SELLER B -->
+        <div class="custom-dropdown" id="dropdownB">
+            <div class="dropdown-trigger">
+                <span class="dropdown-selected-text">-- SELECT SELLER --</span>
+                <span class="dropdown-arrow">▼</span>
+            </div>
+            <div class="dropdown-menu">
+                <div class="dropdown-option" data-value="273">THE-QUINCE-LIFE-URBANA</div>
+                <div class="dropdown-option" data-value="274">SEEVAN-APPARELS-URBANA-1</div>
+                <div class="dropdown-option" data-value="3547">SHAHTUT</div>
+                <div class="dropdown-option" data-value="3548">SIMKRAFTZ</div>
+                <div class="dropdown-option" data-value="3667">PERFECTDATE</div>
+                <div class="dropdown-option" data-value="5532">ZULU CLUB SECTOR 65</div>
+            </div>
+        </div>
+        <div class="section-label" style="margin-top: var(--spacing-lg);">STEP 2 · DESCRIPTION</div>
+        <textarea id="productTextB" rows="3" placeholder="DESCRIBE PRODUCTS... E.G. LAMP PRICE 1000"></textarea>
+        <div class="section-label" style="margin-top: var(--spacing-lg);">UPLOAD IMAGES (OPTIONAL)</div>
         <input type="file" id="imageUploadB" multiple accept="image/*">
-        <button id="extractBtn" style="margin-top: var(--spacing-md);">🔍 EXTRACT PRODUCTS</button>
+        <button id="extractBtn" style="margin-top: var(--spacing-md);">EXTRACT PRODUCTS</button>
         <div id="extractProgress" class="progress-bar" style="display:none;"><div class="progress-fill"></div></div>
         <div id="extractError" class="error-msg" style="display:none;"></div>
-        <div class="section-label" style="margin-top: var(--spacing-lg);">Step 3 · SELECT PRODUCTS</div>
+        <div class="section-label" style="margin-top: var(--spacing-lg);">STEP 3 · SELECT PRODUCTS</div>
         <div id="productSlider" class="scroller"></div>
-        <button id="generateFromExtractedBtn" class="success" style="display:none; margin-top: var(--spacing-md);">✨ GENERATE GALLERY</button>
+        <button id="generateFromExtractedBtn" class="success" style="display:none; margin-top: var(--spacing-md);">GENERATE GALLERY</button>
     </div>
 </div>
 
@@ -328,7 +512,7 @@
 <div id="step2Card" class="card" style="display:none;">
     <div class="section-label">GENERATE GALLERY</div>
     <div id="selectedProductsPanel"></div>
-    <button id="generateFullBtn" class="success">✨ GENERATE (Banners, Music, Speeches)</button>
+    <button id="generateFullBtn" class="success">GENERATE (BANNERS, MUSIC, SPEECHES)</button>
     <div id="generationProgress" style="margin-top: var(--spacing-md);"></div>
     <div id="livePreview" style="margin-top: var(--spacing-lg);"></div>
 </div>
@@ -337,21 +521,80 @@
     <div class="section-label">APPROVE & SAVE</div>
     <div id="finalPreview"></div>
     <div style="display: flex; gap: var(--spacing-md); margin-top: var(--spacing-lg);">
-        <button id="approveAllBtn" class="success" style="flex:1;">✅ APPROVE</button>
-        <button id="rejectAllBtn" class="button-secondary" style="flex:1;">❌ REJECT</button>
+        <button id="approveAllBtn" class="success" style="flex:1;">APPROVE</button>
+        <button id="rejectAllBtn" class="button-secondary" style="flex:1;">REJECT</button>
     </div>
     <div id="saveResult"></div>
 </div>
 
 <script>
-    const API_BASE = '/api/v1/auto-gallery';
-    let currentMode = 'existing';
+    // ========== CUSTOM DROPDOWN CONTROLLER ==========
+    function initCustomDropdown(dropdownContainerId, onSelectCallback) {
+        const container = document.getElementById(dropdownContainerId);
+        if (!container) return;
+        const trigger = container.querySelector('.dropdown-trigger');
+        const menu = container.querySelector('.dropdown-menu');
+        const selectedTextSpan = trigger.querySelector('.dropdown-selected-text');
+        let currentValue = '';
+
+        function closeDropdown() {
+            menu.classList.remove('open');
+        }
+        function openDropdown() {
+            menu.classList.add('open');
+        }
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = menu.classList.contains('open');
+            if (isOpen) closeDropdown();
+            else openDropdown();
+        });
+        // handle option click
+        const options = container.querySelectorAll('.dropdown-option');
+        options.forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const value = opt.getAttribute('data-value');
+                const text = opt.innerText;
+                selectedTextSpan.innerText = text;
+                currentValue = value;
+                // update selected class
+                options.forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+                closeDropdown();
+                if (onSelectCallback) onSelectCallback(value, text);
+            });
+        });
+        // close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!container.contains(e.target)) {
+                closeDropdown();
+            }
+        });
+        return {
+            getValue: () => currentValue,
+            setValue: (val, text) => {
+                currentValue = val;
+                selectedTextSpan.innerText = text;
+                options.forEach(opt => {
+                    if (opt.getAttribute('data-value') === val) opt.classList.add('selected');
+                    else opt.classList.remove('selected');
+                });
+            }
+        };
+    }
+
+    // Global sellers data
+    let dropdownA, dropdownB;
     let currentSellerId = null;
     let selectedProductIds = [];
     let allProducts = [];
     let galleriesList = [];
-    let selectedGalleryIds = new Set();   // track which galleries are selected
-    let galleryProductsMap = new Map();    // id -> array of product objects
+    let selectedGalleryIds = new Set();
+    let galleryProductsMap = new Map();
+    let currentDescription = '';
+    let galleryDataForSave = null;
+    let generatedItems = { banners: [], mainMusic: null, moodSongs: [], speeches: [] };
 
     // DOM elements
     const modeExisting = document.getElementById('modeExistingBtn');
@@ -364,24 +607,16 @@
     const step2Card = document.getElementById('step2Card');
     const step3Card = document.getElementById('step3Card');
 
-    // Mode toggle
-    modeExisting.onclick = () => {
-        currentMode = 'existing';
-        modeExisting.classList.add('active');
-        modeTranscript.classList.remove('active');
-        modeAContainer.style.display = 'block';
-        modeBContainer.style.display = 'none';
-        resetToStep1();
-    };
-    modeTranscript.onclick = () => {
-        currentMode = 'transcript';
-        modeTranscript.classList.add('active');
-        modeExisting.classList.remove('active');
-        modeAContainer.style.display = 'none';
-        modeBContainer.style.display = 'block';
-        resetToStep1();
-    };
+    // Helper to get current seller value from custom dropdown
+    function getCurrentSellerValue() {
+        if (currentMode === 'existing') {
+            return dropdownA ? dropdownA.getValue() : '';
+        } else {
+            return dropdownB ? dropdownB.getValue() : '';
+        }
+    }
 
+    // Reset states
     function resetToStep1() {
         step2Card.style.display = 'none';
         step3Card.style.display = 'none';
@@ -398,8 +633,11 @@
 
     // LOAD products & galleries
     document.getElementById('loadProductsBtn').onclick = async () => {
-        const sellerId = document.getElementById('sellerSelectA').value;
-        if (!sellerId) return alert('Select seller');
+        const sellerId = getCurrentSellerValue();
+        if (!sellerId) {
+            alert('SELECT SELLER FIRST');
+            return;
+        }
         currentSellerId = sellerId;
         const btn = document.getElementById('loadProductsBtn');
         btn.disabled = true;
@@ -415,7 +653,6 @@
             const dataGalleries = await resGalleries.json();
             if (!dataGalleries.success) throw new Error(dataGalleries.error);
             galleriesList = dataGalleries.galleries;
-            // Build product maps for galleries
             galleriesList.forEach(g => {
                 const productObjs = allProducts.filter(p => g.product_ids?.includes(p.id));
                 galleryProductsMap.set(g.id, productObjs);
@@ -427,10 +664,10 @@
             generateBtn.style.display = 'block';
         } catch (err) {
             document.getElementById('step1ErrorA').style.display = 'block';
-            document.getElementById('step1ErrorA').innerText = err.message;
+            document.getElementById('step1ErrorA').innerText = err.message.toUpperCase();
         } finally {
             btn.disabled = false;
-            btn.innerHTML = '📦 LOAD PRODUCTS & GALLERIES';
+            btn.innerHTML = 'LOAD PRODUCTS & GALLERIES';
         }
     };
 
@@ -441,9 +678,9 @@
             const div = document.createElement('div');
             div.className = 'product-card';
             div.innerHTML = `
-                <img src="${p.image || 'https://placehold.co/200x200?text=No+Image'}" onerror="this.src='https://placehold.co/200x200?text=No+Image'">
-                <div class="title">${escapeHtml(p.name)}</div>
-                <label><input type="checkbox" class="product-checkbox" value="${p.id}"> Select</label>
+                <img src="${p.image || 'https://placehold.co/200x200?text=NO+IMAGE'}" onerror="this.src='https://placehold.co/200x200?text=NO+IMAGE'">
+                <div class="title">${escapeHtml(p.name).toUpperCase()}</div>
+                <label><input type="checkbox" class="product-checkbox" value="${p.id}"> SELECT</label>
             `;
             const cb = div.querySelector('.product-checkbox');
             cb.addEventListener('change', (e) => {
@@ -462,7 +699,6 @@
         document.getElementById('selectedInfo').style.display = 'block';
         updateSelectedInfo();
 
-        // Search
         document.getElementById('searchProducts').oninput = (e) => {
             const term = e.target.value.toLowerCase();
             const filtered = products.filter(p => p.name.toLowerCase().includes(term));
@@ -471,9 +707,9 @@
                 const div = document.createElement('div');
                 div.className = 'product-card';
                 div.innerHTML = `
-                    <img src="${p.image || 'https://placehold.co/200x200?text=No+Image'}" onerror="this.src='https://placehold.co/200x200?text=No+Image'">
-                    <div class="title">${escapeHtml(p.name)}</div>
-                    <label><input type="checkbox" class="product-checkbox" value="${p.id}" ${selectedProductIds.includes(p.id) ? 'checked' : ''}> Select</label>
+                    <img src="${p.image || 'https://placehold.co/200x200?text=NO+IMAGE'}" onerror="this.src='https://placehold.co/200x200?text=NO+IMAGE'">
+                    <div class="title">${escapeHtml(p.name).toUpperCase()}</div>
+                    <label><input type="checkbox" class="product-checkbox" value="${p.id}" ${selectedProductIds.includes(p.id) ? 'checked' : ''}> SELECT</label>
                 `;
                 const cb = div.querySelector('.product-checkbox');
                 cb.addEventListener('change', (e) => {
@@ -486,7 +722,6 @@
                 container.appendChild(div);
             });
         };
-        // Select all / none
         document.getElementById('selectAllBtn').onclick = () => {
             document.querySelectorAll('#productSliderA .product-checkbox').forEach(cb => {
                 cb.checked = true;
@@ -516,28 +751,25 @@
             div.className = 'gallery-card';
             div.dataset.id = g.id;
             div.innerHTML = `
-                <h3>${escapeHtml(g.name)}</h3>
-                <p>${g.product_ids?.length || 0} products</p>
-                <label><input type="checkbox" class="gallery-select-checkbox" value="${g.id}"> Select Gallery</label>
+                <div class="gallery-row">
+                    <span class="gallery-name" title="${escapeHtml(g.name)}">${escapeHtml(g.name).toUpperCase()}</span>
+                    <input type="checkbox" class="gallery-select-checkbox" value="${g.id}">
+                </div>
+                <div class="gallery-count">${g.product_ids?.length || 0} PRODUCTS</div>
             `;
             const cb = div.querySelector('.gallery-select-checkbox');
             cb.addEventListener('change', (e) => {
+                e.stopPropagation();
                 const id = parseInt(e.target.value);
-                if (e.target.checked) {
-                    selectedGalleryIds.add(id);
-                } else {
-                    selectedGalleryIds.delete(id);
-                }
+                if (e.target.checked) selectedGalleryIds.add(id);
+                else selectedGalleryIds.delete(id);
                 updateGallerySelectionUI();
                 renderSelectedGalleriesProducts();
             });
             container.appendChild(div);
         });
-        // View All button
         document.getElementById('viewAllGalleriesBtn').onclick = () => {
-            galleries.forEach(g => {
-                selectedGalleryIds.add(g.id);
-            });
+            galleries.forEach(g => { selectedGalleryIds.add(g.id); });
             updateGallerySelectionUI();
             renderSelectedGalleriesProducts();
         };
@@ -557,36 +789,31 @@
         const container = document.getElementById('selectedGalleriesProducts');
         container.innerHTML = '';
         if (selectedGalleryIds.size === 0) {
-            container.innerHTML = '<div class="selected-info" style="margin-top:0;">No galleries selected. Tick some galleries above.</div>';
+            container.innerHTML = '<div class="selected-info" style="margin-top:0;">NO GALLERIES SELECTED. TICK SOME GALLERIES ABOVE.</div>';
             return;
         }
-        // Sort selected galleries by name
         const selectedGalleries = galleriesList.filter(g => selectedGalleryIds.has(g.id));
         for (let gallery of selectedGalleries) {
             const products = galleryProductsMap.get(gallery.id) || [];
             if (!products.length) continue;
             const section = document.createElement('div');
             section.className = 'gallery-section';
-            section.innerHTML = `<h3>📁 ${escapeHtml(gallery.name)} (${products.length} products)</h3><div class="scroller" id="gallery-scroller-${gallery.id}"></div>`;
+            section.innerHTML = `<h3>${escapeHtml(gallery.name).toUpperCase()} (${products.length} PRODUCTS)</h3><div class="scroller" id="gallery-scroller-${gallery.id}"></div>`;
             const scroller = section.querySelector(`.scroller`);
             products.forEach(p => {
                 const isChecked = selectedProductIds.includes(p.id);
                 const productDiv = document.createElement('div');
                 productDiv.className = 'product-card';
                 productDiv.innerHTML = `
-                    <img src="${p.image || 'https://placehold.co/200x200?text=No+Image'}" onerror="this.src='https://placehold.co/200x200?text=No+Image'">
-                    <div class="title">${escapeHtml(p.name)}</div>
-                    <label><input type="checkbox" class="gallery-product-checkbox" data-gallery="${gallery.id}" value="${p.id}" ${isChecked ? 'checked' : ''}> Select</label>
+                    <img src="${p.image || 'https://placehold.co/200x200?text=NO+IMAGE'}" onerror="this.src='https://placehold.co/200x200?text=NO+IMAGE'">
+                    <div class="title">${escapeHtml(p.name).toUpperCase()}</div>
+                    <label><input type="checkbox" class="gallery-product-checkbox" data-gallery="${gallery.id}" value="${p.id}" ${isChecked ? 'checked' : ''}> SELECT</label>
                 `;
                 const cb = productDiv.querySelector('.gallery-product-checkbox');
                 cb.addEventListener('change', (e) => {
                     const id = parseInt(e.target.value);
-                    if (e.target.checked) {
-                        if (!selectedProductIds.includes(id)) selectedProductIds.push(id);
-                    } else {
-                        const idx = selectedProductIds.indexOf(id);
-                        if (idx !== -1) selectedProductIds.splice(idx, 1);
-                    }
+                    if (e.target.checked) { if (!selectedProductIds.includes(id)) selectedProductIds.push(id); }
+                    else { const idx = selectedProductIds.indexOf(id); if (idx !== -1) selectedProductIds.splice(idx, 1); }
                     updateSelectedInfo();
                     syncAllProductCheckboxes();
                 });
@@ -597,12 +824,10 @@
     }
 
     function syncAllProductCheckboxes() {
-        // Sync main product slider
         document.querySelectorAll('#productSliderA .product-checkbox').forEach(cb => {
             const id = parseInt(cb.value);
             cb.checked = selectedProductIds.includes(id);
         });
-        // Sync all gallery product checkboxes
         document.querySelectorAll('.gallery-product-checkbox').forEach(cb => {
             const id = parseInt(cb.value);
             cb.checked = selectedProductIds.includes(id);
@@ -612,10 +837,11 @@
     function updateSelectedInfo() {
         document.getElementById('selectedCount').innerText = selectedProductIds.length;
         const idsPreview = selectedProductIds.slice(0, 10).join(', ');
-        document.getElementById('selectedIds').innerHTML = selectedProductIds.length ? `IDs: ${idsPreview}${selectedProductIds.length > 10 ? '...' : ''}` : 'None';
+        document.getElementById('selectedIds').innerHTML = selectedProductIds.length ? `IDS: ${idsPreview}${selectedProductIds.length > 10 ? '...' : ''}` : 'NONE';
     }
 
     function escapeHtml(str) {
+        if(!str) return '';
         return str.replace(/[&<>]/g, function(m) {
             if (m === '&') return '&amp;';
             if (m === '<') return '&lt;';
@@ -625,23 +851,23 @@
     }
 
     document.getElementById('generateFromExistingBtn').onclick = async () => {
-        if (!selectedProductIds.length) return alert('Select at least one product');
+        if (!selectedProductIds.length) return alert('SELECT AT LEAST ONE PRODUCT');
         currentDescription = '';
         modeAContainer.style.display = 'none';
         step2Card.style.display = 'block';
-        document.getElementById('selectedProductsPanel').innerHTML = `<p>✅ ${selectedProductIds.length} products selected. Ready to generate gallery.</p>`;
+        document.getElementById('selectedProductsPanel').innerHTML = `<p>${selectedProductIds.length} PRODUCTS SELECTED. READY TO GENERATE GALLERY.</p>`;
         step3Card.style.display = 'none';
         document.getElementById('livePreview').innerHTML = '';
         await generateGallery();
     };
 
-    // Mode B extraction (unchanged, but we include it for completeness)
+    // Mode B extraction
     document.getElementById('extractBtn').onclick = async () => {
-        const sellerId = document.getElementById('sellerSelectB').value;
-        if (!sellerId) return alert('Select seller');
+        const sellerId = getCurrentSellerValue();
+        if (!sellerId) return alert('SELECT SELLER');
         currentSellerId = sellerId;
         const text = document.getElementById('productTextB').value.trim();
-        if (!text) return alert('Enter product description');
+        if (!text) return alert('ENTER PRODUCT DESCRIPTION');
         const files = document.getElementById('imageUploadB').files;
         const formData = new FormData();
         formData.append('seller_id', sellerId);
@@ -658,11 +884,11 @@
             displayExtractedProducts(data.products);
             document.getElementById('generateFromExtractedBtn').style.display = 'block';
         } catch (err) {
-            document.getElementById('extractError').innerText = err.message;
+            document.getElementById('extractError').innerText = err.message.toUpperCase();
             document.getElementById('extractError').style.display = 'block';
         } finally {
             btn.disabled = false;
-            btn.innerHTML = '🔍 EXTRACT PRODUCTS';
+            btn.innerHTML = 'EXTRACT PRODUCTS';
             document.getElementById('extractProgress').style.display = 'none';
         }
     };
@@ -674,9 +900,9 @@
             const div = document.createElement('div');
             div.className = 'product-card';
             div.innerHTML = `
-                <img src="${p.image || 'https://placehold.co/200x200?text=No+Image'}" onerror="this.src='https://placehold.co/200x200?text=No+Image'">
-                <div class="title">${escapeHtml(p.name)}</div>
-                <label><input type="checkbox" class="extract-checkbox" value="${p.id}" checked> Select</label>
+                <img src="${p.image || 'https://placehold.co/200x200?text=NO+IMAGE'}" onerror="this.src='https://placehold.co/200x200?text=NO+IMAGE'">
+                <div class="title">${escapeHtml(p.name).toUpperCase()}</div>
+                <label><input type="checkbox" class="extract-checkbox" value="${p.id}" checked> SELECT</label>
             `;
             const cb = div.querySelector('.extract-checkbox');
             cb.addEventListener('change', (e) => {
@@ -688,26 +914,25 @@
         });
     }
     document.getElementById('generateFromExtractedBtn').onclick = async () => {
-        if (!selectedProductIds.length) return alert('Select at least one product');
+        if (!selectedProductIds.length) return alert('SELECT AT LEAST ONE PRODUCT');
         currentDescription = document.getElementById('productTextB').value;
         modeBContainer.style.display = 'none';
         step2Card.style.display = 'block';
-        document.getElementById('selectedProductsPanel').innerHTML = `<p>✅ ${selectedProductIds.length} products selected. Ready to generate gallery.</p>`;
+        document.getElementById('selectedProductsPanel').innerHTML = `<p>${selectedProductIds.length} PRODUCTS SELECTED. READY TO GENERATE GALLERY.</p>`;
         step3Card.style.display = 'none';
         await generateGallery();
     };
 
-    // Shared generation (unchanged – same as before)
-    let galleryDataForSave = null;
-    let generatedItems = { banners: [], mainMusic: null, moodSongs: [], speeches: [] };
-    async function generateGallery() {
+    // Shared generation (same logic as original, shortened but functional)
+    const API_BASE = '/api/v1/auto-gallery';
+    async function generateGallery() { /* same as before but with uppercase status */
         const btn = document.getElementById('generateFullBtn');
         btn.disabled = true;
         btn.innerHTML = '<span class="loading"></span> GENERATING...';
         const progressDiv = document.getElementById('generationProgress');
-        progressDiv.innerHTML = '<div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div><div id="statusMsg">Starting...</div>';
+        progressDiv.innerHTML = '<div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div><div id="statusMsg">STARTING...</div>';
         const previewDiv = document.getElementById('livePreview');
-        previewDiv.innerHTML = '<div class="section-label">Generated Items</div>';
+        previewDiv.innerHTML = '<div class="section-label">GENERATED ITEMS</div>';
         try {
             const res = await fetch(`${API_BASE}/stepwise-preview`, {
                 method: 'POST',
@@ -722,12 +947,12 @@
             const banners = gallery.banners || [];
             const mainMusicPrompt = gallery.music_prompt;
             const moodPrompts = gallery.gallery_music_prompts || [];
-            const total = banners.length + 1 + moodPrompts.length + productSpeeches.length;
+            let total = banners.length + 1 + moodPrompts.length + productSpeeches.length;
             let completed = 0;
             const update = (msg) => {
                 const percent = (completed / total) * 100;
                 document.querySelector('.progress-fill').style.width = `${percent}%`;
-                document.getElementById('statusMsg').innerHTML = msg;
+                document.getElementById('statusMsg').innerHTML = msg.toUpperCase();
             };
             async function genBanner(b) {
                 const promptText = `Create a square banner for mood ${b.mood}. Title: ${b.title}. Subtitle: ${b.subtitle}. CTA: ${b.cta}. Visual: ${b.image_idea}.`;
@@ -744,69 +969,60 @@
             }
             generatedItems = { banners: [], mainMusic: null, moodSongs: [], speeches: [] };
             for (let b of banners) {
-                update(`Banner ${b.mood}...`);
+                update(`BANNER ${b.mood}...`);
                 const img = await genBanner(b);
                 generatedItems.banners.push({ ...b, image_url: img });
-                appendPreviewImage(b, img);
+                const div = document.createElement('div'); div.className = 'generated-item';
+                div.innerHTML = `<img src="${img}" style="max-width:120px; border-radius:12px;"><div><strong>${b.mood.toUpperCase()}</strong><br>${b.title.toUpperCase()}</div>`;
+                previewDiv.appendChild(div);
                 completed++;
             }
             if (mainMusicPrompt) {
-                update(`Main music...`);
+                update(`MAIN MUSIC...`);
                 const audio = await genAudio('music', { type: 'music', prompt: mainMusicPrompt });
-                generatedItems.mainMusic = { name: `${gallery.name} — Music`, prompt: mainMusicPrompt, audio_url: audio };
-                appendPreviewAudio(generatedItems.mainMusic.name, audio, 'main');
+                generatedItems.mainMusic = { name: `${gallery.name} — MUSIC`, prompt: mainMusicPrompt, audio_url: audio };
+                const div = document.createElement('div'); div.className = 'generated-item';
+                div.innerHTML = `<audio controls src="${audio}" style="width:180px;"></audio><div><strong>MAIN MUSIC</strong><br><small>${gallery.name.substring(0,60).toUpperCase()}</small></div>`;
+                previewDiv.appendChild(div);
                 completed++;
             } else completed++;
             for (let m of moodPrompts) {
-                update(`Mood song ${m.mood}...`);
+                update(`MOOD SONG ${m.mood}...`);
                 const audio = await genAudio('music', { type: 'music', prompt: m.prompt });
                 generatedItems.moodSongs.push({ mood: m.mood, prompt: m.prompt, audio_url: audio });
-                appendPreviewAudio(`${m.mood} song`, audio, 'mood', m.mood);
+                const div = document.createElement('div'); div.className = 'generated-item';
+                div.innerHTML = `<audio controls src="${audio}" style="width:180px;"></audio><div><strong>${m.mood.toUpperCase()} SONG</strong><br><small>${m.prompt.substring(0,40).toUpperCase()}</small></div>`;
+                previewDiv.appendChild(div);
                 completed++;
             }
             for (let s of productSpeeches) {
-                update(`Speech for product ${s.product_id}...`);
+                update(`SPEECH FOR PRODUCT ${s.product_id}...`);
                 const audio = await genAudio('speech', { type: 'speech', text: s.speech });
                 generatedItems.speeches.push({ product_id: s.product_id, speech: s.speech, audio_url: audio });
-                appendPreviewSpeech(s.product_id, s.speech, audio);
+                const div = document.createElement('div'); div.className = 'generated-item';
+                div.innerHTML = `<audio controls src="${audio}" style="width:180px;"></audio><div><strong>PRODUCT ${s.product_id}</strong><br><small>${s.speech.substring(0,60).toUpperCase()}</small></div>`;
+                previewDiv.appendChild(div);
                 completed++;
             }
-            update(`Complete!`);
-            showFinalPreview();
+            update(`COMPLETE!`);
+            // show final preview for approval
+            const finalContainer = document.getElementById('finalPreview');
+            let html = '<div class="section-label">READY TO SAVE</div><div style="display:flex; flex-wrap:wrap; gap:12px;">';
+            for (let b of generatedItems.banners) html += `<div><img src="${b.image_url}" style="width:100px; border-radius:12px;"></div>`;
+            if (generatedItems.mainMusic) html += `<div><audio controls src="${generatedItems.mainMusic.audio_url}" style="width:140px;"></audio></div>`;
+            for (let m of generatedItems.moodSongs) html += `<div><audio controls src="${m.audio_url}" style="width:140px;"></audio></div>`;
+            for (let s of generatedItems.speeches) html += `<div><audio controls src="${s.audio_url}" style="width:140px;"></audio></div>`;
+            html += '</div>';
+            finalContainer.innerHTML = html;
             step3Card.style.display = 'block';
         } catch (err) {
-            progressDiv.innerHTML += `<div class="error-msg">${err.message}</div>`;
+            progressDiv.innerHTML += `<div class="error-msg">${err.message.toUpperCase()}</div>`;
         } finally {
             btn.disabled = false;
-            btn.innerHTML = '✨ GENERATE GALLERY';
+            btn.innerHTML = 'GENERATE (BANNERS, MUSIC, SPEECHES)';
         }
     }
-    function appendPreviewImage(b, url) {
-        const div = document.createElement('div'); div.className = 'generated-item';
-        div.innerHTML = `<img src="${url}" style="max-width:120px; border-radius:12px;"><div><strong>${b.mood}</strong><br>${b.title}</div>`;
-        document.getElementById('livePreview').appendChild(div);
-    }
-    function appendPreviewAudio(title, url, type, mood=null) {
-        const div = document.createElement('div'); div.className = 'generated-item';
-        div.innerHTML = `<audio controls src="${url}" style="width:180px;"></audio><div><strong>${type==='main'?'Main Music':mood}</strong><br><small>${title.substring(0,60)}</small></div>`;
-        document.getElementById('livePreview').appendChild(div);
-    }
-    function appendPreviewSpeech(pid, text, url) {
-        const div = document.createElement('div'); div.className = 'generated-item';
-        div.innerHTML = `<audio controls src="${url}" style="width:180px;"></audio><div><strong>Product ${pid}</strong><br><small>${text.substring(0,60)}</small></div>`;
-        document.getElementById('livePreview').appendChild(div);
-    }
-    function showFinalPreview() {
-        const container = document.getElementById('finalPreview');
-        let html = '<div class="section-label">READY TO SAVE</div>';
-        html += '<div style="display:flex; flex-wrap:wrap; gap:12px;">';
-        for (let b of generatedItems.banners) html += `<div><img src="${b.image_url}" style="width:100px; border-radius:12px;"></div>`;
-        if (generatedItems.mainMusic) html += `<div><audio controls src="${generatedItems.mainMusic.audio_url}" style="width:140px;"></audio></div>`;
-        for (let m of generatedItems.moodSongs) html += `<div><audio controls src="${m.audio_url}" style="width:140px;"></audio></div>`;
-        for (let s of generatedItems.speeches) html += `<div><audio controls src="${s.audio_url}" style="width:140px;"></audio></div>`;
-        html += '</div>';
-        container.innerHTML = html;
-    }
+    // Approve / reject handlers
     document.getElementById('approveAllBtn').onclick = async () => {
         const payload = {
             user_id: currentSellerId,
@@ -822,12 +1038,33 @@
         try {
             const res = await fetch(`${API_BASE}/save-gallery`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             const data = await res.json();
-            if (data.success) document.getElementById('saveResult').innerHTML = `<div style="color:#a7f3d0;">✅ Gallery saved! ID: ${data.gallery_id}</div>`;
+            if (data.success) document.getElementById('saveResult').innerHTML = `<div style="color:#a7f3d0;">GALLERY SAVED! ID: ${data.gallery_id}</div>`;
             else throw new Error(data.error);
-        } catch (err) { document.getElementById('saveResult').innerHTML = `<div class="error-msg">${err.message}</div>`; }
-        finally { btn.disabled = false; btn.innerHTML = '✅ APPROVE'; }
+        } catch (err) { document.getElementById('saveResult').innerHTML = `<div class="error-msg">${err.message.toUpperCase()}</div>`; }
+        finally { btn.disabled = false; btn.innerHTML = 'APPROVE'; }
     };
-    document.getElementById('rejectAllBtn').onclick = () => { if(confirm('Reset all?')) location.reload(); };
+    document.getElementById('rejectAllBtn').onclick = () => { if(confirm('RESET ALL?')) location.reload(); };
+
+    // Mode toggle and dropdown init
+    modeExisting.onclick = () => {
+        currentMode = 'existing';
+        modeExisting.classList.add('active');
+        modeTranscript.classList.remove('active');
+        modeAContainer.style.display = 'block';
+        modeBContainer.style.display = 'none';
+        resetToStep1();
+    };
+    modeTranscript.onclick = () => {
+        currentMode = 'transcript';
+        modeTranscript.classList.add('active');
+        modeExisting.classList.remove('active');
+        modeAContainer.style.display = 'none';
+        modeBContainer.style.display = 'block';
+        resetToStep1();
+    };
+    // Initialize both custom dropdowns
+    dropdownA = initCustomDropdown('dropdownA', (val, text) => { /* optional callback */ });
+    dropdownB = initCustomDropdown('dropdownB', (val, text) => {});
 </script>
 </body>
 </html>

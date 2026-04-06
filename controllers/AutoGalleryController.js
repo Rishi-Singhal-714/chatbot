@@ -534,6 +534,67 @@ const getSellerGalleries = async (req, res) => {
     }
 };
 
+// ──────────────────────────────────────────────────────────────
+// POST: Generate banner + music for a SINGLE mood of a gallery
+// ──────────────────────────────────────────────────────────────
+const generateSingleMoodAssetPost = async (req, res) => {
+  try {
+    const { gallery_id, mood } = req.body;
+    if (!gallery_id || !mood) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'gallery_id and mood are required in request body' 
+      });
+    }
+
+    // Optional: validate mood against allowed list
+    const allowedMoods = ["Calm", "Nostalgic", "Playful", "Confident", "Ambitious", "Introspective"];
+    if (!allowedMoods.includes(mood)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Invalid mood. Allowed: ${allowedMoods.join(', ')}` 
+      });
+    }
+
+    // Fetch gallery from DB
+    const [galleries] = await sequelize.query(
+      `SELECT id, name, heading, description, componentiIds, seller_id FROM galleries WHERE id = ?`,
+      { replacements: [gallery_id] }
+    );
+    if (!galleries.length) {
+      return res.status(404).json({ success: false, error: 'Gallery not found' });
+    }
+    const gallery = galleries[0];
+
+    // Generate banner image
+    const bannerData = {
+      image_idea: `${gallery.name || 'Gallery'} – ${mood} mood, elegant product display, clean background, premium aesthetic`,
+      title: gallery.heading || gallery.name || 'Our Collection',
+      subtitle: gallery.description || `Discover the ${mood} vibe`,
+      cta: 'Explore Now',
+      mood: mood
+    };
+    const b64Image = await generateBannerImageFromPrompt(bannerData);
+    const imageBase64 = `data:image/png;base64,${b64Image}`;
+
+    // Generate music
+    const musicPrompt = `Create a ${mood.toLowerCase()} mood instrumental piece. ${gallery.description || 'Elegant and atmospheric'}. Use soft textures, moderate tempo, and evoke a feeling of ${mood.toLowerCase()}.`;
+    const audioBuffer = await generateMusicWithRetry(musicPrompt, mood);
+    const audioBase64 = `data:audio/mpeg;base64,${audioBuffer.toString('base64')}`;
+
+    return res.json({
+      success: true,
+      gallery_id: parseInt(gallery_id),
+      mood: mood,
+      image: imageBase64,
+      audio: audioBase64
+    });
+  } catch (err) {
+    console.error('❌ generateSingleMoodAssetPost error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+};
+
 // Helper: use GPT to extract product names and keywords from text + images
 async function extractProductNamesFromInput(text, imageFiles) {
     // Build user message: include text and up to 5 images (to avoid token limits)
@@ -567,5 +628,6 @@ module.exports = {
   executeGalleries,
       getSellerProducts,
 getSellerGalleries,
+  generateSingleMoodAssetPost,
   extractProductsFromDescription,
 };

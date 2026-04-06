@@ -7499,6 +7499,7 @@ app.post("/api/v1/auto-gallery/save-gallery", AutoGalleryController.saveApproved
 app.post("/api/v1/auto-gallery/extract-products", upload.array('images', 10), AutoGalleryController.extractProductsFromDescription);
 app.get("/api/v1/auto-gallery/seller-products", AutoGalleryController.getSellerProducts);
 app.get("/api/v1/auto-gallery/seller-galleries", AutoGalleryController.getSellerGalleries);
+app.post("/api/v1/auto-gallery/generate-single-mood-asset", AutoGalleryController.generateSingleMoodAssetPost);
 // ----- The updated endpoint -----
 app.post('/api/ai/generate-galleries', async (req, res) => {
     try {
